@@ -13,8 +13,8 @@ using Volo.Abp.SettingManagement.EntityFrameworkCore;
 namespace SprintBoot.EntityFrameworkCore;
 
 /// <summary>
-/// DbContext hợp nhất: mọi module chạy chung một kết nối và transaction để outbox
-/// ghi cùng lúc với dữ liệu nghiệp vụ. Migration của toàn hệ thống nằm ở đây.
+/// Unified DbContext: all modules share one connection and transaction so the outbox
+/// commits together with business data. All migrations live here.
 /// </summary>
 [ConnectionStringName("Default")]
 [ReplaceDbContext(typeof(IIdentityDbContext))]

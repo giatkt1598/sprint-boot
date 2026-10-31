@@ -35,7 +35,7 @@ public class ArchitectureTests
             foreach (var reference in ProjectReferences(project))
             {
                 reference.EndsWith(".Contracts", StringComparison.Ordinal)
-                    .ShouldBeTrue($"{name} không được reference {reference}, chỉ được dùng .Contracts");
+                    .ShouldBeTrue($"{name} must not reference {reference}, only .Contracts projects");
             }
         }
     }

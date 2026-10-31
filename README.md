@@ -1,21 +1,21 @@
 # Sprint Boot
 
-Ứng dụng quản lý công việc kiểu Jira, tự host được.
+Self-hosted, Jira-style work management app.
 
-## Yêu cầu
+## Requirements
 
-.NET SDK 10, Node 24, pnpm 12, Docker kèm Compose.
+.NET SDK 10, Node 24, pnpm 12, Docker with Compose.
 
-## Chạy môi trường dev
+## Development
 
 ```sh
 pnpm install
 pnpm dev
 ```
 
-Lệnh này dựng PostgreSQL, Redis, RabbitMQ và Mailpit, chạy migration, rồi chạy API và web.
+This starts PostgreSQL, Redis, RabbitMQ and Mailpit, applies migrations, then runs the API and the web app.
 
-| Dịch vụ | Địa chỉ |
+| Service | Address |
 | --- | --- |
 | Web | http://localhost:5173 |
 | API | http://localhost:5080 |

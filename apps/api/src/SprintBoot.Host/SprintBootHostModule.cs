@@ -1,7 +1,9 @@
 using Medallion.Threading;
 using Medallion.Threading.Redis;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.OpenApi;
 using SprintBoot.EntityFrameworkCore;
+using SprintBoot.Host.HealthChecks;
 using SprintBoot.Platform;
 using StackExchange.Redis;
 using Volo.Abp;
@@ -29,7 +31,9 @@ namespace SprintBoot.Host;
     typeof(SprintBootEntityFrameworkCoreModule))]
 public class SprintBootHostModule : AbpModule
 {
-    /// <summary>Mọi API nghiệp vụ có version. Module mới thêm assembly vào đây.</summary>
+    private const string ReadyTag = "ready";
+
+    /// <summary>Assemblies exposing versioned APIs. Register each new module here.</summary>
     private static readonly System.Reflection.Assembly[] ApiAssemblies =
     [
         typeof(PlatformModule).Assembly,
@@ -39,6 +43,8 @@ public class SprintBootHostModule : AbpModule
     {
         var configuration = context.Services.GetConfiguration();
         var role = configuration.GetRuntimeRole();
+
+        ValidateStorage(configuration);
 
         Configure<AbpAspNetCoreMvcOptions>(options =>
         {
@@ -53,10 +59,15 @@ public class SprintBootHostModule : AbpModule
         Configure<AbpBackgroundWorkerOptions>(options => options.IsEnabled = role != RuntimeRole.Api);
 
         var redis = ConnectionMultiplexer.Connect(configuration["Redis:Configuration"]
-            ?? throw new InvalidOperationException("Thiếu cấu hình Redis:Configuration."));
+            ?? throw new InvalidOperationException("Missing configuration: Redis:Configuration."));
         context.Services.AddSingleton<IConnectionMultiplexer>(redis);
         context.Services.AddSingleton<IDistributedLockProvider>(
             _ => new RedisDistributedSynchronizationProvider(redis.GetDatabase()));
+
+        context.Services.AddHealthChecks()
+            .AddCheck<DatabaseHealthCheck>("postgres", tags: [ReadyTag])
+            .AddCheck<RedisHealthCheck>("redis", tags: [ReadyTag])
+            .AddCheck<RabbitMqHealthCheck>("rabbitmq", tags: [ReadyTag]);
 
         context.Services.AddAbpSwaggerGen(options =>
         {
@@ -81,7 +92,25 @@ public class SprintBootHostModule : AbpModule
         {
             app.UseSwagger();
             app.UseAbpSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "Sprint Boot API"));
-            app.UseConfiguredEndpoints();
+        }
+
+        app.UseConfiguredEndpoints(endpoints =>
+        {
+            endpoints.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
+            endpoints.MapHealthChecks("/health/ready", new HealthCheckOptions
+            {
+                Predicate = check => check.Tags.Contains(ReadyTag),
+            });
+        });
+    }
+
+    private static void ValidateStorage(IConfiguration configuration)
+    {
+        var storage = configuration.GetSection(StorageOptions.SectionName).Get<StorageOptions>() ?? new StorageOptions();
+        var missing = storage.GetMissingKeys();
+        if (missing.Count > 0)
+        {
+            throw new InvalidOperationException($"Missing storage configuration: {string.Join(", ", missing)}.");
         }
     }
 }

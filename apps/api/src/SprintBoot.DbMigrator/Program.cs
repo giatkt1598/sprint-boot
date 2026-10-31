@@ -8,7 +8,11 @@ Log.Logger = new LoggerConfiguration().WriteTo.Console().CreateLogger();
 
 try
 {
-    var builder = Host.CreateApplicationBuilder(args);
+    var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
+    {
+        Args = args,
+        ContentRootPath = AppContext.BaseDirectory,
+    });
     builder.Services.AddSerilog();
     builder.ConfigureContainer(builder.Services.AddAutofacServiceProviderFactory());
     await builder.Services.AddApplicationAsync<DbMigratorModule>();
@@ -21,7 +25,7 @@ try
 }
 catch (Exception exception)
 {
-    Log.Fatal(exception, "Migration thất bại");
+    Log.Fatal(exception, "Migration failed");
     return 1;
 }
 finally

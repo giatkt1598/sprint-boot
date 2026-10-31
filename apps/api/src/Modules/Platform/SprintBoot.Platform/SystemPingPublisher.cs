@@ -4,7 +4,7 @@ using Volo.Abp.Uow;
 
 namespace SprintBoot.Platform;
 
-/// <summary>Không lộ qua HTTP: GĐ0 chưa có xác thực nên không mở endpoint ghi.</summary>
+/// <summary>Not exposed over HTTP: there is no authentication yet, so no write endpoint is opened.</summary>
 public class SystemPingPublisher(IDistributedEventBus eventBus) : ITransientDependency
 {
     [UnitOfWork(isTransactional: true)]

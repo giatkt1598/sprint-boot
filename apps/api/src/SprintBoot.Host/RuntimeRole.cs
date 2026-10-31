@@ -1,6 +1,6 @@
 namespace SprintBoot.Host;
 
-/// <summary>Dev chạy All. Production tách API và Worker từ cùng một image.</summary>
+/// <summary>Dev runs All. Production splits Api and Worker from the same image.</summary>
 public enum RuntimeRole
 {
     All,
@@ -20,6 +20,6 @@ public static class RuntimeRoleExtensions
 
         return Enum.TryParse<RuntimeRole>(value, ignoreCase: true, out var role)
             ? role
-            : throw new InvalidOperationException($"Runtime:Role '{value}' không hợp lệ, chỉ nhận All, Api, Worker.");
+            : throw new InvalidOperationException($"Invalid Runtime:Role '{value}': expected All, Api or Worker.");
     }
 }

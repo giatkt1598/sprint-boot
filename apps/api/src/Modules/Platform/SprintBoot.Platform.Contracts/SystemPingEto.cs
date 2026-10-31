@@ -2,7 +2,7 @@ using Volo.Abp.EventBus;
 
 namespace SprintBoot.Platform;
 
-/// <summary>Event mẫu để chứng minh luồng outbox, RabbitMQ, inbox, consumer.</summary>
+/// <summary>Sample event proving the outbox, RabbitMQ, inbox and consumer path.</summary>
 [EventName("SprintBoot.Platform.SystemPing")]
 public class SystemPingEto
 {

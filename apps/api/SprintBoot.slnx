@@ -21,4 +21,5 @@
   <Project Path="src/SprintBoot.EntityFrameworkCore/SprintBoot.EntityFrameworkCore.csproj" />
   <Project Path="src/SprintBoot.Host/SprintBoot.Host.csproj" />
   <Project Path="test/SprintBoot.UnitTests/SprintBoot.UnitTests.csproj" />
+  <Project Path="test/SprintBoot.IntegrationTests/SprintBoot.IntegrationTests.csproj" />
 </Solution>

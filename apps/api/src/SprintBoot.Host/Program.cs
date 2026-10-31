@@ -27,7 +27,7 @@ try
 }
 catch (Exception exception) when (exception is not HostAbortedException)
 {
-    Log.Fatal(exception, "Host dừng do lỗi khởi động");
+    Log.Fatal(exception, "Host terminated during startup");
     return 1;
 }
 finally

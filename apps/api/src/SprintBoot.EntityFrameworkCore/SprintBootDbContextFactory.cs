@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Design;
 
 namespace SprintBoot.EntityFrameworkCore;
 
-/// <summary>Chỉ dùng cho lệnh dotnet ef lúc thiết kế, không kết nối DB.</summary>
+/// <summary>Design-time only, for dotnet ef commands. Never connects to a database.</summary>
 public class SprintBootDbContextFactory : IDesignTimeDbContextFactory<SprintBootDbContext>
 {
     public SprintBootDbContext CreateDbContext(string[] args)

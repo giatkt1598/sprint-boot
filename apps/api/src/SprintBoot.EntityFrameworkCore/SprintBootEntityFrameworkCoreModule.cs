@@ -17,6 +17,7 @@ using Volo.Abp.Identity.EntityFrameworkCore;
 using Volo.Abp.Modularity;
 using Volo.Abp.PermissionManagement.EntityFrameworkCore;
 using Volo.Abp.SettingManagement.EntityFrameworkCore;
+using Volo.Abp.Timing;
 
 namespace SprintBoot.EntityFrameworkCore;
 
@@ -45,6 +46,9 @@ public class SprintBootEntityFrameworkCoreModule : AbpModule
         });
 
         Configure<AbpDbContextOptions>(options => options.UseNpgsql());
+
+        // Npgsql only accepts UTC values for timestamp with time zone.
+        Configure<AbpClockOptions>(options => options.Kind = DateTimeKind.Utc);
 
         Configure<AbpDistributedEventBusOptions>(options =>
         {

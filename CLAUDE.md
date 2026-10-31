@@ -1,21 +1,22 @@
 # Sprint Boot
 
-Ứng dụng quản lý công việc kiểu Jira, tự host được. Yêu cầu, kế hoạch và task nằm trên Docmost, space `SB`. Thiết kế nằm trên Penpot, file "Sprint Boot (All Design)".
+Self-hosted, Jira-style work management app. Requirements, plans and tasks live on Docmost, space `SB`. Designs live on Penpot, file "Sprint Boot (All Design)".
 
-## Cấu trúc
+## Layout
 
-- `apps/api`: ABP modular monolith trên .NET 10.
+- `apps/api`: ABP modular monolith on .NET 10.
 - `apps/web`: React SPA.
-- `packages/api-client`: TypeScript client sinh từ OpenAPI, không sửa tay.
-- `deploy/docker`: Docker Compose cho dev.
+- `packages/api-client`: TypeScript client generated from OpenAPI. Do not edit by hand.
+- `deploy/docker`: Docker Compose for development.
 
-## Quy ước
+## Conventions
 
-- Module chỉ reference `.Contracts` của module khác, không truy cập bảng của nhau. `ArchitectureTests` canh quy tắc này.
-- Nghiệp vụ chỉ nằm ở application service. API có prefix `/api/v1`.
-- Kiểm tra quyền bằng permission key, không so tên role.
-- Giao diện gọi là Space, mã nguồn và tài liệu gọi là Project.
-- Màu và chữ lấy từ MUI theme, Tailwind chỉ dùng cho layout và spacing.
-- Token nằm ở `apps/web/src/theme/tokens.ts`, giá trị lấy từ Penpot. Line-height tối thiểu 1.4.
-- Font là SVN-Poppins, không trộn với Poppins gốc. Icon là Lucide, nét 1.5px.
-- Mọi chuỗi giao diện nằm trong file ngôn ngữ `en` và `vi`.
+- Everything in the repo is written in English: code, comments, logs, exceptions, docs, commit messages. Vietnamese UI strings live only in the `vi` locale file.
+- A module may only reference `.Contracts` of another module and never touches its tables. `ArchitectureTests` enforces this.
+- Business logic lives only in application services. APIs are prefixed `/api/v1`.
+- Check permissions by permission key, never by role name.
+- The UI says Space; code and docs say Project.
+- Colors and typography come from the MUI theme. Tailwind is for layout and spacing only.
+- Tokens live in `apps/web/src/theme/tokens.ts`, values come from Penpot. Minimum line-height is 1.4.
+- The font is SVN-Poppins, never mixed with stock Poppins. Icons are Lucide with a 1.5px stroke.
+- All UI strings live in the `en` and `vi` locale files.

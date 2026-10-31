@@ -26,18 +26,18 @@ public class DatabaseMigrator(
             await uow.CompleteAsync();
         }
 
-        logger.LogInformation("Đã chạy migration");
+        logger.LogInformation("Migrations applied");
 
         var password = configuration["Seed:AdminPassword"];
         if (string.IsNullOrEmpty(password))
         {
-            throw new InvalidOperationException("Thiếu cấu hình Seed:AdminPassword.");
+            throw new InvalidOperationException("Missing configuration: Seed:AdminPassword.");
         }
 
         await dataSeeder.SeedAsync(new DataSeedContext()
             .WithProperty(IdentityDataSeedContributor.AdminEmailPropertyName, configuration["Seed:AdminEmail"])
             .WithProperty(IdentityDataSeedContributor.AdminPasswordPropertyName, password));
 
-        logger.LogInformation("Đã seed dữ liệu");
+        logger.LogInformation("Data seeded");
     }
 }
