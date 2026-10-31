@@ -1,0 +1,55 @@
+using Microsoft.EntityFrameworkCore;
+using SprintBoot.Platform;
+using Volo.Abp.AuditLogging.EntityFrameworkCore;
+using Volo.Abp.Data;
+using Volo.Abp.DependencyInjection;
+using Volo.Abp.EntityFrameworkCore;
+using Volo.Abp.EntityFrameworkCore.DistributedEvents;
+using Volo.Abp.Identity;
+using Volo.Abp.Identity.EntityFrameworkCore;
+using Volo.Abp.PermissionManagement.EntityFrameworkCore;
+using Volo.Abp.SettingManagement.EntityFrameworkCore;
+
+namespace SprintBoot.EntityFrameworkCore;
+
+/// <summary>
+/// DbContext hợp nhất: mọi module chạy chung một kết nối và transaction để outbox
+/// ghi cùng lúc với dữ liệu nghiệp vụ. Migration của toàn hệ thống nằm ở đây.
+/// </summary>
+[ConnectionStringName("Default")]
+[ReplaceDbContext(typeof(IIdentityDbContext))]
+[ReplaceDbContext(typeof(IPlatformDbContext))]
+public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
+    : AbpDbContext<SprintBootDbContext>(options),
+        IIdentityDbContext,
+        IPlatformDbContext,
+        IHasEventOutbox,
+        IHasEventInbox
+{
+    public DbSet<IdentityUser> Users { get; set; } = null!;
+    public DbSet<IdentityRole> Roles { get; set; } = null!;
+    public DbSet<IdentityClaimType> ClaimTypes { get; set; } = null!;
+    public DbSet<OrganizationUnit> OrganizationUnits { get; set; } = null!;
+    public DbSet<IdentitySecurityLog> SecurityLogs { get; set; } = null!;
+    public DbSet<IdentityLinkUser> LinkUsers { get; set; } = null!;
+    public DbSet<IdentityUserDelegation> UserDelegations { get; set; } = null!;
+    public DbSet<IdentitySession> Sessions { get; set; } = null!;
+
+    public DbSet<SystemPingReceipt> SystemPingReceipts { get; set; } = null!;
+
+    public DbSet<OutgoingEventRecord> OutgoingEvents { get; set; } = null!;
+    public DbSet<IncomingEventRecord> IncomingEvents { get; set; } = null!;
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+
+        builder.ConfigureIdentity();
+        builder.ConfigurePermissionManagement();
+        builder.ConfigureSettingManagement();
+        builder.ConfigureAuditLogging();
+        builder.ConfigureEventOutbox();
+        builder.ConfigureEventInbox();
+        builder.ConfigurePlatform();
+    }
+}

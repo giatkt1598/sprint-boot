@@ -1,0 +1,24 @@
+<Solution>
+  <Project Path="src/Modules/Agile/SprintBoot.Agile.Contracts/SprintBoot.Agile.Contracts.csproj" />
+  <Project Path="src/Modules/Agile/SprintBoot.Agile/SprintBoot.Agile.csproj" />
+  <Project Path="src/Modules/DocsIntegration/SprintBoot.DocsIntegration.Contracts/SprintBoot.DocsIntegration.Contracts.csproj" />
+  <Project Path="src/Modules/DocsIntegration/SprintBoot.DocsIntegration/SprintBoot.DocsIntegration.csproj" />
+  <Project Path="src/Modules/GitIntegration/SprintBoot.GitIntegration.Contracts/SprintBoot.GitIntegration.Contracts.csproj" />
+  <Project Path="src/Modules/GitIntegration/SprintBoot.GitIntegration/SprintBoot.GitIntegration.csproj" />
+  <Project Path="src/Modules/Identity/SprintBoot.Identity.Contracts/SprintBoot.Identity.Contracts.csproj" />
+  <Project Path="src/Modules/Identity/SprintBoot.Identity/SprintBoot.Identity.csproj" />
+  <Project Path="src/Modules/Issues/SprintBoot.Issues.Contracts/SprintBoot.Issues.Contracts.csproj" />
+  <Project Path="src/Modules/Issues/SprintBoot.Issues/SprintBoot.Issues.csproj" />
+  <Project Path="src/Modules/Notifications/SprintBoot.Notifications.Contracts/SprintBoot.Notifications.Contracts.csproj" />
+  <Project Path="src/Modules/Notifications/SprintBoot.Notifications/SprintBoot.Notifications.csproj" />
+  <Project Path="src/Modules/Platform/SprintBoot.Platform.Contracts/SprintBoot.Platform.Contracts.csproj" />
+  <Project Path="src/Modules/Platform/SprintBoot.Platform/SprintBoot.Platform.csproj" />
+  <Project Path="src/Modules/Projects/SprintBoot.Projects.Contracts/SprintBoot.Projects.Contracts.csproj" />
+  <Project Path="src/Modules/Projects/SprintBoot.Projects/SprintBoot.Projects.csproj" />
+  <Project Path="src/Modules/Workflows/SprintBoot.Workflows.Contracts/SprintBoot.Workflows.Contracts.csproj" />
+  <Project Path="src/Modules/Workflows/SprintBoot.Workflows/SprintBoot.Workflows.csproj" />
+  <Project Path="src/SprintBoot.DbMigrator/SprintBoot.DbMigrator.csproj" />
+  <Project Path="src/SprintBoot.EntityFrameworkCore/SprintBoot.EntityFrameworkCore.csproj" />
+  <Project Path="src/SprintBoot.Host/SprintBoot.Host.csproj" />
+  <Project Path="test/SprintBoot.UnitTests/SprintBoot.UnitTests.csproj" />
+</Solution>
