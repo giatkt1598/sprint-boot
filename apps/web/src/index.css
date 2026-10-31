@@ -1,0 +1,15 @@
+/* Order matters: MUI sits below Tailwind utilities so layout classes win. */
+@layer theme, base, mui, components, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@import '../../../assets/fonts/svn-poppins/svn-poppins.css';
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

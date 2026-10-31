@@ -1,3 +1,5 @@
 packages:
   - apps/web
   - packages/*
+minimumReleaseAgeExclude:
+  - lucide-react@1.66.0

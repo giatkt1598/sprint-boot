@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Shouldly;
 using SprintBoot.Platform;
@@ -40,4 +41,23 @@ public class ApiTests(ApiFixture fixture)
         paths.ShouldContain("/api/v1/system/ping");
         paths.ShouldAllBe(path => path.StartsWith("/api/v1/"));
     }
+
+    [Fact]
+    public async Task OpenApi_document_matches_the_committed_client()
+    {
+        var served = await fixture.Factory.CreateClient().GetStringAsync("/swagger/v1/swagger.json", Token);
+        served = served.ReplaceLineEndings("\n").TrimEnd() + "\n";
+        var committedPath = Path.GetFullPath(Path.Combine(
+            ThisDirectory(), "..", "..", "..", "..", "packages", "api-client", "openapi.json"));
+
+        if (Environment.GetEnvironmentVariable("UPDATE_OPENAPI") == "1")
+        {
+            await File.WriteAllTextAsync(committedPath, served, Token);
+        }
+
+        var committed = (await File.ReadAllTextAsync(committedPath, Token)).ReplaceLineEndings("\n");
+        committed.ShouldBe(served, "API contract changed: run pnpm gen:api and commit the result.");
+    }
+
+    private static string ThisDirectory([CallerFilePath] string path = "") => Path.GetDirectoryName(path)!;
 }

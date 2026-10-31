@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Build
+        run: dotnet build apps/api/SprintBoot.slnx
+      - name: Lint
+        run: dotnet format apps/api/SprintBoot.slnx --verify-no-changes --no-restore --exclude src/SprintBoot.EntityFrameworkCore/Migrations
+      - name: Test (Testcontainers needs Docker on the runner)
+        run: dotnet test --solution apps/api/SprintBoot.slnx --no-build
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Generated client is up to date
+        run: |
+          pnpm --filter @sprint-boot/api-client generate
+          git diff --exit-code packages/api-client
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm build
+      - name: WCAG 2.2 AA
+        run: |
+          pnpm --filter @sprint-boot/web exec playwright install --with-deps chromium
+          pnpm test:a11y
