@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__penpot__high_level_overview",
+      "mcp__penpot__execute_code"
+    ]
+  }
+}

@@ -1,0 +1,49 @@
+/* SVN-Poppins dùng cho toàn bộ giao diện, không trộn với Poppins gốc theo unicode-range:
+   hai font khác độ rộng và số đo dọc nên sẽ lệch chữ ngay trong một từ tiếng Việt. */
+@font-face {
+  font-family: "SVN-Poppins";
+  src: url("./woff2/SVN-Poppins-Light.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SVN-Poppins";
+  src: url("./woff2/SVN-Poppins-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SVN-Poppins";
+  src: url("./woff2/SVN-Poppins-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SVN-Poppins";
+  src: url("./woff2/SVN-Poppins-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SVN-Poppins";
+  src: url("./woff2/SVN-Poppins-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SVN-Poppins";
+  src: url("./woff2/SVN-Poppins-Black.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
