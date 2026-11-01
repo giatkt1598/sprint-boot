@@ -14,7 +14,7 @@ public class UserRefDto
 /// <summary>Minimal user info any signed-in user may see, for pickers and display names.</summary>
 public interface IUserDirectoryAppService : IApplicationService
 {
-    Task<List<UserRefDto>> SearchAsync(string? search);
+    Task<List<UserRefDto>> GetSearchAsync(string? search);
 }
 
 public interface IUserDirectory

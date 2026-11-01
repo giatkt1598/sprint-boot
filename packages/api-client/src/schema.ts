@@ -28,7 +28,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["AttachmentDto"][];
                         "application/json": components["schemas"]["AttachmentDto"][];
                         "text/json": components["schemas"]["AttachmentDto"][];
                     };
@@ -39,7 +38,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -50,7 +48,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -61,7 +58,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -72,7 +68,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -83,7 +78,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -94,7 +88,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -142,7 +135,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["AttachmentDto"];
                         "application/json": components["schemas"]["AttachmentDto"];
                         "text/json": components["schemas"]["AttachmentDto"];
                     };
@@ -153,7 +145,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -164,7 +155,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -175,7 +165,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -186,7 +175,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -197,7 +185,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -208,7 +195,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -245,7 +231,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": string;
                         "application/json": string;
                         "text/json": string;
                     };
@@ -256,7 +241,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -267,7 +251,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -278,7 +261,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -289,7 +271,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -300,7 +281,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -311,7 +291,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -367,7 +346,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -378,7 +356,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -389,7 +366,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -400,7 +376,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -411,7 +386,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -422,7 +396,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -528,7 +501,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["CurrentUserDto"];
                         "application/json": components["schemas"]["CurrentUserDto"];
                         "text/json": components["schemas"]["CurrentUserDto"];
                     };
@@ -612,7 +584,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["ResetTokenStatusDto"];
                         "application/json": components["schemas"]["ResetTokenStatusDto"];
                         "text/json": components["schemas"]["ResetTokenStatusDto"];
                     };
@@ -732,7 +703,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["CurrentUserDto"];
                         "application/json": components["schemas"]["CurrentUserDto"];
                         "text/json": components["schemas"]["CurrentUserDto"];
                     };
@@ -770,7 +740,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["CommentDto"][];
                         "application/json": components["schemas"]["CommentDto"][];
                         "text/json": components["schemas"]["CommentDto"][];
                     };
@@ -781,7 +750,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -792,7 +760,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -803,7 +770,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -814,7 +780,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -825,7 +790,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -836,7 +800,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -865,7 +828,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["CommentDto"];
                         "application/json": components["schemas"]["CommentDto"];
                         "text/json": components["schemas"]["CommentDto"];
                     };
@@ -876,7 +838,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -887,7 +848,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -898,7 +858,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -909,7 +868,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -920,7 +878,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -931,7 +888,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -975,7 +931,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["CommentDto"];
                         "application/json": components["schemas"]["CommentDto"];
                         "text/json": components["schemas"]["CommentDto"];
                     };
@@ -986,7 +941,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -997,7 +951,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1008,7 +961,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1019,7 +971,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1030,7 +981,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1041,7 +991,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1080,7 +1029,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1091,7 +1039,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1102,7 +1049,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1113,7 +1059,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1124,7 +1069,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1135,7 +1079,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1179,7 +1122,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["CommentDto"];
                         "application/json": components["schemas"]["CommentDto"];
                         "text/json": components["schemas"]["CommentDto"];
                     };
@@ -1190,7 +1132,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1201,7 +1142,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1212,7 +1152,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1223,7 +1162,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1234,7 +1172,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1245,7 +1182,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1282,7 +1218,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["IssueTypeDto"][];
                         "application/json": components["schemas"]["IssueTypeDto"][];
                         "text/json": components["schemas"]["IssueTypeDto"][];
                     };
@@ -1293,7 +1228,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1304,7 +1238,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1315,7 +1248,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1326,7 +1258,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1337,7 +1268,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1348,7 +1278,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1385,7 +1314,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["PriorityDto"][];
                         "application/json": components["schemas"]["PriorityDto"][];
                         "text/json": components["schemas"]["PriorityDto"][];
                     };
@@ -1396,7 +1324,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1407,7 +1334,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1418,7 +1344,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1429,7 +1354,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1440,7 +1364,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1451,7 +1374,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1490,7 +1412,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["IssueDto"];
                         "application/json": components["schemas"]["IssueDto"];
                         "text/json": components["schemas"]["IssueDto"];
                     };
@@ -1501,7 +1422,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1512,7 +1432,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1523,7 +1442,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1534,7 +1452,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1545,7 +1462,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1556,7 +1472,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1601,7 +1516,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["IssueDto"];
                         "application/json": components["schemas"]["IssueDto"];
                         "text/json": components["schemas"]["IssueDto"];
                     };
@@ -1612,7 +1526,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1623,7 +1536,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1634,7 +1546,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1645,7 +1556,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1656,7 +1566,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1667,7 +1576,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1711,7 +1619,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["IssueDto"];
                         "application/json": components["schemas"]["IssueDto"];
                         "text/json": components["schemas"]["IssueDto"];
                     };
@@ -1722,7 +1629,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1733,7 +1639,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1744,7 +1649,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1755,7 +1659,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1766,7 +1669,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1777,7 +1679,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1816,7 +1717,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1827,7 +1727,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1838,7 +1737,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1849,7 +1747,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1860,7 +1757,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1871,7 +1767,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1921,7 +1816,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["IssueSearchResultDto"];
                         "application/json": components["schemas"]["IssueSearchResultDto"];
                         "text/json": components["schemas"]["IssueSearchResultDto"];
                     };
@@ -1932,7 +1826,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1943,7 +1836,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1954,7 +1846,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1965,7 +1856,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1976,7 +1866,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -1987,7 +1876,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2026,7 +1914,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": string[];
                         "application/json": string[];
                         "text/json": string[];
                     };
@@ -2037,7 +1924,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2048,7 +1934,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2059,7 +1944,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2070,7 +1954,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2081,7 +1964,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2092,7 +1974,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2131,7 +2012,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["IssueActivityDto"][];
                         "application/json": components["schemas"]["IssueActivityDto"][];
                         "text/json": components["schemas"]["IssueActivityDto"][];
                     };
@@ -2142,7 +2022,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2153,7 +2032,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2164,7 +2042,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2175,7 +2052,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2186,7 +2062,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2197,7 +2072,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2237,7 +2111,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["PagedResultDtoOfDeletedIssueDto"];
                         "application/json": components["schemas"]["PagedResultDtoOfDeletedIssueDto"];
                         "text/json": components["schemas"]["PagedResultDtoOfDeletedIssueDto"];
                     };
@@ -2248,7 +2121,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2259,7 +2131,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2270,7 +2141,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2281,7 +2151,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2292,7 +2161,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2303,7 +2171,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2358,7 +2225,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2369,7 +2235,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2380,7 +2245,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2391,7 +2255,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2402,7 +2265,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2413,7 +2275,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2448,7 +2309,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["ProjectDto"][];
                         "application/json": components["schemas"]["ProjectDto"][];
                         "text/json": components["schemas"]["ProjectDto"][];
                     };
@@ -2459,7 +2319,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2470,7 +2329,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2481,7 +2339,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2492,7 +2349,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2503,7 +2359,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2514,7 +2369,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2543,7 +2397,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["ProjectDto"];
                         "application/json": components["schemas"]["ProjectDto"];
                         "text/json": components["schemas"]["ProjectDto"];
                     };
@@ -2554,7 +2407,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2565,7 +2417,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2576,7 +2427,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2587,7 +2437,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2598,7 +2447,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2609,7 +2457,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2646,7 +2493,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["ProjectDto"];
                         "application/json": components["schemas"]["ProjectDto"];
                         "text/json": components["schemas"]["ProjectDto"];
                     };
@@ -2657,7 +2503,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2668,7 +2513,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2679,7 +2523,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2690,7 +2533,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2701,7 +2543,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2712,7 +2553,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2742,7 +2582,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["ProjectDto"];
                         "application/json": components["schemas"]["ProjectDto"];
                         "text/json": components["schemas"]["ProjectDto"];
                     };
@@ -2753,7 +2592,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2764,7 +2602,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2775,7 +2612,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2786,7 +2622,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2797,7 +2632,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2808,7 +2642,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2846,7 +2679,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["ProjectDto"];
                         "application/json": components["schemas"]["ProjectDto"];
                         "text/json": components["schemas"]["ProjectDto"];
                     };
@@ -2857,7 +2689,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2868,7 +2699,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2879,7 +2709,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2890,7 +2719,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2901,7 +2729,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2912,7 +2739,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2951,7 +2777,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["ProjectMemberDto"][];
                         "application/json": components["schemas"]["ProjectMemberDto"][];
                         "text/json": components["schemas"]["ProjectMemberDto"][];
                     };
@@ -2962,7 +2787,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2973,7 +2797,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2984,7 +2807,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -2995,7 +2817,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3006,7 +2827,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3017,7 +2837,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3064,7 +2883,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["ProjectMemberDto"];
                         "application/json": components["schemas"]["ProjectMemberDto"];
                         "text/json": components["schemas"]["ProjectMemberDto"];
                     };
@@ -3075,7 +2893,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3086,7 +2903,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3097,7 +2913,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3108,7 +2923,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3119,7 +2933,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3130,7 +2943,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3175,7 +2987,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["ProjectMemberDto"];
                         "application/json": components["schemas"]["ProjectMemberDto"];
                         "text/json": components["schemas"]["ProjectMemberDto"];
                     };
@@ -3186,7 +2997,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3197,7 +3007,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3208,7 +3017,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3219,7 +3027,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3230,7 +3037,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3241,7 +3047,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3281,7 +3086,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3292,7 +3096,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3303,7 +3106,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3314,7 +3116,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3325,7 +3126,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3336,7 +3136,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3370,7 +3169,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["StatusDto"][];
                         "application/json": components["schemas"]["StatusDto"][];
                         "text/json": components["schemas"]["StatusDto"][];
                     };
@@ -3381,7 +3179,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3392,7 +3189,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3403,7 +3199,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3414,7 +3209,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3425,7 +3219,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3436,7 +3229,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3473,7 +3265,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["SystemPingDto"];
                         "application/json": components["schemas"]["SystemPingDto"];
                         "text/json": components["schemas"]["SystemPingDto"];
                     };
@@ -3484,7 +3275,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3495,7 +3285,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3506,7 +3295,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3517,7 +3305,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3528,7 +3315,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3539,7 +3325,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3580,7 +3365,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["PagedResultDtoOfUserSummaryDto"];
                         "application/json": components["schemas"]["PagedResultDtoOfUserSummaryDto"];
                         "text/json": components["schemas"]["PagedResultDtoOfUserSummaryDto"];
                     };
@@ -3591,7 +3375,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3602,7 +3385,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3613,7 +3395,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3624,7 +3405,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3635,7 +3415,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3646,7 +3425,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3675,7 +3453,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["UserSummaryDto"];
                         "application/json": components["schemas"]["UserSummaryDto"];
                         "text/json": components["schemas"]["UserSummaryDto"];
                     };
@@ -3686,7 +3463,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3697,7 +3473,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3708,7 +3483,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3719,7 +3493,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3730,7 +3503,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3741,7 +3513,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3778,7 +3549,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["UserSummaryDto"];
                         "application/json": components["schemas"]["UserSummaryDto"];
                         "text/json": components["schemas"]["UserSummaryDto"];
                     };
@@ -3789,7 +3559,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3800,7 +3569,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3811,7 +3579,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3822,7 +3589,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3833,7 +3599,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3844,7 +3609,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3885,7 +3649,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["UserSummaryDto"];
                         "application/json": components["schemas"]["UserSummaryDto"];
                         "text/json": components["schemas"]["UserSummaryDto"];
                     };
@@ -3896,7 +3659,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3907,7 +3669,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3918,7 +3679,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3929,7 +3689,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3940,7 +3699,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3951,7 +3709,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -3990,7 +3747,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["UserSummaryDto"];
                         "application/json": components["schemas"]["UserSummaryDto"];
                         "text/json": components["schemas"]["UserSummaryDto"];
                     };
@@ -4001,7 +3757,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4012,7 +3767,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4023,7 +3777,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4034,7 +3787,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4045,7 +3797,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4056,7 +3807,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4101,7 +3851,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["UserSummaryDto"];
                         "application/json": components["schemas"]["UserSummaryDto"];
                         "text/json": components["schemas"]["UserSummaryDto"];
                     };
@@ -4112,7 +3861,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4123,7 +3871,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4134,7 +3881,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4145,7 +3891,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4156,7 +3901,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4167,7 +3911,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4187,9 +3930,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
-        put?: never;
-        post: {
+        get: {
             parameters: {
                 query?: {
                     search?: string;
@@ -4206,7 +3947,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["UserRefDto"][];
                         "application/json": components["schemas"]["UserRefDto"][];
                         "text/json": components["schemas"]["UserRefDto"][];
                     };
@@ -4217,7 +3957,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4228,7 +3967,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4239,7 +3977,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4250,7 +3987,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4261,7 +3997,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4272,13 +4007,14 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
                 };
             };
         };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -4309,7 +4045,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["WorkLogListDto"];
                         "application/json": components["schemas"]["WorkLogListDto"];
                         "text/json": components["schemas"]["WorkLogListDto"];
                     };
@@ -4320,7 +4055,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4331,7 +4065,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4342,7 +4075,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4353,7 +4085,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4364,7 +4095,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4375,7 +4105,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4404,7 +4133,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["WorkLogDto"];
                         "application/json": components["schemas"]["WorkLogDto"];
                         "text/json": components["schemas"]["WorkLogDto"];
                     };
@@ -4415,7 +4143,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4426,7 +4153,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4437,7 +4163,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4448,7 +4173,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4459,7 +4183,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4470,7 +4193,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4514,7 +4236,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["WorkLogDto"];
                         "application/json": components["schemas"]["WorkLogDto"];
                         "text/json": components["schemas"]["WorkLogDto"];
                     };
@@ -4525,7 +4246,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4536,7 +4256,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4547,7 +4266,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4558,7 +4276,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4569,7 +4286,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4580,7 +4296,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4619,7 +4334,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4630,7 +4344,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4641,7 +4354,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4652,7 +4364,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4663,7 +4374,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };
@@ -4674,7 +4384,6 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RemoteServiceErrorResponse"];
                         "application/json": components["schemas"]["RemoteServiceErrorResponse"];
                         "text/json": components["schemas"]["RemoteServiceErrorResponse"];
                     };

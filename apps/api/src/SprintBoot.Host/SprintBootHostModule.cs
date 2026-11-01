@@ -1,6 +1,8 @@
 using Medallion.Threading;
 using Medallion.Threading.Redis;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.OpenApi;
 using SprintBoot.EntityFrameworkCore;
 using SprintBoot.Identity;
@@ -62,6 +64,9 @@ public class SprintBootHostModule : AbpModule
                 options.ConventionalControllers.Create(assembly, setting => setting.RootPath = ApiRoutes.RootPath);
             }
         });
+
+        // JSON only, which also keeps text/plain out of the OpenAPI document.
+        Configure<MvcOptions>(options => options.OutputFormatters.RemoveType<StringOutputFormatter>());
 
         Configure<AbpDistributedCacheOptions>(options => options.KeyPrefix = "SprintBoot:");
 

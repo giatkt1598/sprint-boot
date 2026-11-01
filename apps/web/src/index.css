@@ -13,3 +13,40 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+.rich-text {
+  min-height: 1.4em;
+  overflow-wrap: anywhere;
+}
+
+.rich-text .ProseMirror,
+.ProseMirror.rich-text {
+  min-height: 72px;
+}
+
+.rich-text p {
+  margin: 0 0 8px;
+}
+
+.rich-text p:last-child {
+  margin-bottom: 0;
+}
+
+.rich-text ul,
+.rich-text ol {
+  margin: 0 0 8px;
+  padding-left: 24px;
+}
+
+.rich-text pre {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--sb-bg-subtle);
+  font-family: 'Source Code Pro', monospace;
+  overflow-x: auto;
+}
+
+.rich-text .mention {
+  color: var(--sb-text-accent);
+  font-weight: 500;
+}

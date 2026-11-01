@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
+// Screens that need no backend. Signed-in screens are checked in e2e-live.
 const wcag = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 const expectNoViolations = async (page: import('@playwright/test').Page) => {
@@ -12,7 +13,7 @@ for (const language of ['en', 'vi']) {
   test.describe(language, () => {
     test.use({ locale: language });
 
-    for (const path of ['/', '/dev/ui', '/missing-page']) {
+    for (const path of ['/login', '/forgot-password', '/session-expired', '/reset-password', '/dev/ui']) {
       test(`${path} has no WCAG violations`, async ({ page }) => {
         await page.goto(path);
         await page.locator('main').waitFor();

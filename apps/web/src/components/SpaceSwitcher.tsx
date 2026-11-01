@@ -1,12 +1,13 @@
 import ButtonBase from '@mui/material/ButtonBase';
 import { ChevronsUpDown } from 'lucide-react';
+import type { MouseEvent } from 'react';
 import { font, radius, sem } from '../theme/tokens';
 
 export interface SpaceSwitcherProps {
   spaceKey: string;
   name: string;
   label: string;
-  onClick?: () => void;
+  onClick?: (event: MouseEvent<HTMLElement>) => void;
 }
 
 export function SpaceSwitcher({ spaceKey, name, label, onClick }: SpaceSwitcherProps) {

@@ -9,6 +9,7 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:5080',
       '/connect': 'http://localhost:5080',
+      '/.well-known': 'http://localhost:5080',
     },
   },
   test: {

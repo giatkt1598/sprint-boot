@@ -16,3 +16,15 @@ export function AppShell() {
     </div>
   );
 }
+
+/** Settings areas replace the sidebar with their own menu. */
+export function BareShell() {
+  return (
+    <div className="flex h-screen flex-col">
+      <TopBar />
+      <div className="flex min-h-0 flex-1">
+        <Outlet />
+      </div>
+    </div>
+  );
+}

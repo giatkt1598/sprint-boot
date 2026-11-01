@@ -11,7 +11,7 @@ public class UserDirectoryAppService(IIdentityUserRepository users) : Applicatio
 {
     private const int MaxResults = 20;
 
-    public async Task<List<UserRefDto>> SearchAsync(string? search)
+    public async Task<List<UserRefDto>> GetSearchAsync(string? search)
     {
         var page = await users.GetListAsync(nameof(IdentityUser.Name), MaxResults, 0, search);
         return [.. page.Select(ToDto)];
