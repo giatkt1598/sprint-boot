@@ -51,7 +51,7 @@ function CardBody({ card }: { card: Card }) {
   );
 }
 
-const cardStyle = { backgroundColor: sem('bg-surface'), borderRadius: radius.card };
+const cardStyle = { backgroundColor: sem('bg-surface'), borderRadius: `${radius.card}px` };
 
 const BoardCard = memo(function BoardCard({ card, canDrag, onOpen }: { card: Card; canDrag: boolean; onOpen: (key: string) => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: card.id!, disabled: !canDrag });
