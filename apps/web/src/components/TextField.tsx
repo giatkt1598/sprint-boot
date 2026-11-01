@@ -11,15 +11,23 @@ interface FieldFrameProps {
   labelId?: string;
   helperId: string;
   error?: string;
+  quiet?: boolean;
   children: ReactNode;
 }
 
-function FieldFrame({ label, htmlFor, labelId, helperId, error, children }: FieldFrameProps) {
+/** Value-first look for property lists: no visible label, border only on hover and focus. */
+const quietStyles = {
+  '&:not(:hover):not(.Mui-focused) .MuiOutlinedInput-notchedOutline': { borderColor: 'transparent' },
+  '& .MuiOutlinedInput-input': { paddingInline: '8px' },
+};
+
+function FieldFrame({ label, htmlFor, labelId, helperId, error, quiet, children }: FieldFrameProps) {
   return (
     <div className="flex flex-col gap-1">
       <label
         id={labelId}
         htmlFor={htmlFor}
+        className={quiet ? 'sr-only' : undefined}
         style={{ fontSize: font.size.xs, fontWeight: font.weight.medium, color: sem('text-secondary') }}
       >
         {label}
@@ -42,20 +50,21 @@ const disabledStyles = {
 export interface TextFieldProps extends Omit<OutlinedInputProps, 'error' | 'label'> {
   label: string;
   error?: string;
+  quiet?: boolean;
 }
 
-export function TextField({ label, error, id, sx, ...props }: TextFieldProps) {
+export function TextField({ label, error, quiet, id, sx, ...props }: TextFieldProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const helperId = `${inputId}-helper`;
 
   return (
-    <FieldFrame label={label} htmlFor={inputId} helperId={helperId} error={error}>
+    <FieldFrame label={label} htmlFor={inputId} helperId={helperId} error={error} quiet={quiet}>
       <OutlinedInput
         id={inputId}
         error={Boolean(error)}
         aria-describedby={error ? helperId : undefined}
-        sx={[disabledStyles, ...(Array.isArray(sx) ? sx : [sx])]}
+        sx={[disabledStyles, quiet ? quietStyles : {}, ...(Array.isArray(sx) ? sx : [sx])]}
         {...props}
       />
     </FieldFrame>
@@ -71,20 +80,21 @@ export interface SelectFieldProps extends Omit<SelectProps<string>, 'error' | 'l
   label: string;
   options: SelectOption[];
   error?: string;
+  quiet?: boolean;
 }
 
-export function SelectField({ label, options, error, id, ...props }: SelectFieldProps) {
+export function SelectField({ label, options, error, quiet, id, ...props }: SelectFieldProps) {
   const generatedId = useId();
   const selectId = id ?? generatedId;
   const labelId = `${selectId}-label`;
 
   return (
-    <FieldFrame label={label} htmlFor={selectId} labelId={labelId} helperId={`${selectId}-helper`} error={error}>
+    <FieldFrame label={label} htmlFor={selectId} labelId={labelId} helperId={`${selectId}-helper`} error={error} quiet={quiet}>
       <Select
         id={selectId}
         labelId={labelId}
         error={Boolean(error)}
-        input={<OutlinedInput />}
+        input={<OutlinedInput sx={quiet ? quietStyles : undefined} />}
         {...props}
       >
         {options.map((option) => (

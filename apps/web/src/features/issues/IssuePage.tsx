@@ -240,7 +240,7 @@ function IssueView({ issue }: { issue: Issue }) {
               <div className="flex items-center">
                 <Typography variant="h3" component="h2" className="flex-1">{t('issues.subtasks')}</Typography>
                 {canEdit && issue.type?.hierarchy === 1 && (
-                  <Button kind="ghost" startIcon={<Plus size={16} strokeWidth={1.5} aria-hidden />} onClick={() => setAddingSubtask(true)}>
+                  <Button kind="link" startIcon={<Plus size={16} strokeWidth={1.5} aria-hidden />} onClick={() => setAddingSubtask(true)}>
                     {t('issues.addSubtask')}
                   </Button>
                 )}
@@ -309,6 +309,7 @@ function IssueView({ issue }: { issue: Issue }) {
           <DetailRow label={t('issues.priority')}>
             {canEdit ? (
               <SelectField
+                quiet
                 label={t('issues.priority')}
                 value={issue.priority?.id ?? ''}
                 onChange={(event) => update.mutate({ priority: event.target.value })}
@@ -322,6 +323,7 @@ function IssueView({ issue }: { issue: Issue }) {
             <DetailRow label={t('issues.epic')}>
               {canEdit ? (
                 <SelectField
+                  quiet
                   label={t('issues.epic')}
                   value={issue.parent?.id ?? ''}
                   displayEmpty
@@ -408,6 +410,7 @@ function EditableText({ label, value, type = 'text', disabled, onSave }: { label
 
   return (
     <TextField
+      quiet
       label={label}
       type={type}
       value={draft ?? value}
@@ -481,7 +484,7 @@ function Attachments({ issue, canEdit }: { issue: Issue; canEdit: boolean }) {
         {canEdit && (
           <>
             <input ref={input} type="file" hidden aria-label={t('issues.upload')} onChange={onPick} />
-            <Button kind="ghost" startIcon={<Upload size={16} strokeWidth={1.5} aria-hidden />} onClick={() => input.current?.click()}>
+            <Button kind="link" startIcon={<Upload size={16} strokeWidth={1.5} aria-hidden />} onClick={() => input.current?.click()}>
               {t('issues.upload')}
             </Button>
           </>

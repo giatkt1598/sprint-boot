@@ -40,6 +40,7 @@ export function UserPicker({ label, hideLabel, options, value, onChange, onInput
         renderInput={(params) => (
           <MuiTextField
             {...params}
+            sx={hideLabel ? { '&:not(:hover):not(:focus-within) fieldset': { borderColor: 'transparent' } } : undefined}
             slotProps={{
               ...params.slotProps,
               htmlInput: { ...params.slotProps.htmlInput, 'aria-label': hideLabel ? label : undefined },

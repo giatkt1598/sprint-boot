@@ -267,6 +267,7 @@ export function SpaceMembersPage() {
               render: (member) =>
                 canManage ? (
                   <SelectField
+                    quiet
                     label={`${t('spaces.role')}: ${member.user?.name}`}
                     value={member.role ?? 'Member'}
                     onChange={(event) => updateRole.mutate({ userId: member.user!.id!, role: event.target.value })}

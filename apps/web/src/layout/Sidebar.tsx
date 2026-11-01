@@ -13,7 +13,8 @@ const RECENT_SPACES = 5;
 
 export function Sidebar() {
   const { t } = useTranslation();
-  const { spaceKey } = useParams();
+  const { spaceKey: routeKey, issueKey } = useParams();
+  const spaceKey = routeKey ?? issueKey?.replace(/-\d+$/, '');
   const navigate = useNavigate();
   const space = useSpace(spaceKey);
   const spaces = useSpaces();

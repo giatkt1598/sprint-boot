@@ -1,8 +1,8 @@
 import MuiButton, { type ButtonProps as MuiButtonProps } from '@mui/material/Button';
 import type { ElementType } from 'react';
-import { sem } from '../theme/tokens';
+import { font, sem } from '../theme/tokens';
 
-export type ButtonKind = 'primary' | 'secondary' | 'ghost' | 'danger';
+export type ButtonKind = 'primary' | 'secondary' | 'ghost' | 'danger' | 'link';
 
 const kindStyles = {
   primary: {
@@ -21,6 +21,11 @@ const kindStyles = {
     color: sem('text-secondary'),
     '&:hover': { backgroundColor: sem('bg-hover') },
     '&.Mui-disabled': { color: sem('text-secondary') },
+  },
+  link: {
+    fontSize: font.size.xs,
+    color: sem('text-accent'),
+    '&:hover': { backgroundColor: sem('bg-hover') },
   },
   danger: {
     backgroundColor: sem('feedback-danger-text'),

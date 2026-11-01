@@ -73,7 +73,7 @@ test('sign in, run a space and an issue end to end', async ({ page }) => {
 
   // Attachment.
   await page.getByLabel('Upload').setInputFiles({ name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('hello') });
-  await expect(page.getByRole('button', { name: /notes\.txt/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Delete notes.txt' })).toBeVisible();
 
   // Work log.
   await page.getByRole('tab', { name: 'Work Log' }).click();
