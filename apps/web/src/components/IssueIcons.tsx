@@ -1,9 +1,9 @@
-import { Bookmark, Bug, ChevronsDown, ChevronsUp, CornerDownRight, Equal, SquareCheck, Zap, type LucideIcon } from 'lucide-react';
+import { Bookmark, Bug, ChevronDown, ChevronsDown, ChevronsUp, ChevronUp, CornerDownRight, Equal, SquareCheck, Zap, type LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { sem, type SemanticToken } from '../theme/tokens';
 
 export type IssueType = 'story' | 'task' | 'bug' | 'subtask' | 'epic';
-export type Priority = 'high' | 'medium' | 'low';
+export type Priority = 'highest' | 'high' | 'medium' | 'low' | 'lowest';
 
 const issueTypes: Record<IssueType, [LucideIcon, SemanticToken]> = {
   story: [Bookmark, 'type-story'],
@@ -14,9 +14,11 @@ const issueTypes: Record<IssueType, [LucideIcon, SemanticToken]> = {
 };
 
 const priorities: Record<Priority, [LucideIcon, SemanticToken]> = {
-  high: [ChevronsUp, 'feedback-danger-text'],
+  highest: [ChevronsUp, 'feedback-danger-text'],
+  high: [ChevronUp, 'feedback-danger-text'],
   medium: [Equal, 'text-secondary'],
-  low: [ChevronsDown, 'text-secondary'],
+  low: [ChevronDown, 'text-secondary'],
+  lowest: [ChevronsDown, 'text-secondary'],
 };
 
 export function IssueTypeIcon({ type }: { type: IssueType }) {

@@ -27,6 +27,65 @@ public sealed class FakeGitServer : HttpMessageHandler
 
     public bool Down { get; set; }
 
+    public int PollCalls { get; set; }
+
+    public List<object> Commits { get; } = [];
+
+    public List<object> MainCommits { get; } = [];
+
+    public List<object> Pulls { get; } = [];
+
+    public List<object> Statuses { get; } = [];
+
+    public void ResetPolling()
+    {
+        PollCalls = 0;
+        Commits.Clear();
+        MainCommits.Clear();
+        Pulls.Clear();
+        Statuses.Clear();
+        _branches.Clear();
+        _branches.Add("main");
+    }
+
+    public void AddBranch(string name) => _branches.Add(name);
+
+    public void RemoveBranch(string name) => _branches.Remove(name);
+
+    /// <summary>What both providers answer the same way when listing a repository's work.</summary>
+    private Task<HttpResponseMessage>? Listing(HttpRequestMessage request, string path)
+    {
+        if (request.Method != HttpMethod.Get || !path.Contains("/repos/acme/web/", StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        if (path.Contains("/pulls?", StringComparison.Ordinal))
+        {
+            PollCalls++;
+            return Reply(HttpStatusCode.OK, Pulls);
+        }
+
+        if (path.Contains("/check-runs", StringComparison.Ordinal))
+        {
+            return Reply(HttpStatusCode.OK, new { check_runs = Array.Empty<object>() });
+        }
+
+        if (path.EndsWith("/status", StringComparison.Ordinal))
+        {
+            return Reply(HttpStatusCode.OK, new { statuses = Statuses });
+        }
+
+        if (path.Contains("/commits?", StringComparison.Ordinal))
+        {
+            return Reply(HttpStatusCode.OK, path.Contains("sha=main", StringComparison.Ordinal) ? MainCommits : Commits);
+        }
+
+        return path.Contains("/branches?", StringComparison.Ordinal)
+            ? Reply(HttpStatusCode.OK, _branches.Select(name => new { name }))
+            : null;
+    }
+
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         if (Down)
@@ -42,7 +101,7 @@ public sealed class FakeGitServer : HttpMessageHandler
             return Reply(HttpStatusCode.Unauthorized, new { });
         }
 
-        return github ? GitHub(request, path) : Gitea(request, path);
+        return Listing(request, path) ?? (github ? GitHub(request, path) : Gitea(request, path));
     }
 
     private Task<HttpResponseMessage> GitHub(HttpRequestMessage request, string path)

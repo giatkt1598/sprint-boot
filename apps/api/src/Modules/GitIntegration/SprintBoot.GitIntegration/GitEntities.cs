@@ -79,6 +79,8 @@ public class GitRepository : Entity<Guid>
 
     public DateTime? LastEventAt { get; set; }
 
+    public DateTime? LastPolledAt { get; set; }
+
     protected GitRepository()
     {
     }

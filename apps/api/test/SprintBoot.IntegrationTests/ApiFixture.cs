@@ -144,6 +144,32 @@ public sealed class ApiFixture : IAsyncLifetime
         await uow.CompleteAsync();
     }
 
+    public async Task PollRepositoryAsync(Guid repositoryId)
+    {
+        using var scope = Factory.Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<SprintBoot.GitIntegration.GitPoller>().PollAsync(repositoryId);
+    }
+
+    public async Task ReplaceGitTokenAsync(Guid connectionId, string token)
+    {
+        using var scope = Factory.Services.CreateScope();
+        using var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true);
+        var connections = scope.ServiceProvider.GetRequiredService<Volo.Abp.Domain.Repositories.IRepository<SprintBoot.GitIntegration.GitConnection, Guid>>();
+        var access = scope.ServiceProvider.GetRequiredService<SprintBoot.GitIntegration.GitAccessProvider>();
+        var connection = await connections.GetAsync(connectionId);
+        var credentials = access.Read(connection);
+        credentials.Token = token;
+        access.Write(connection, credentials);
+        await connections.UpdateAsync(connection);
+        await uow.CompleteAsync();
+    }
+
+    public async Task RestrictGitOwnerAsync(Guid connectionId, string owner)
+    {
+        await using var dbContext = new SprintBootDbContext(new DbContextOptionsBuilder<SprintBootDbContext>().UseNpgsql(_postgres.GetConnectionString()).Options);
+        await dbContext.Database.ExecuteSqlInterpolatedAsync($"update git.connections set \"Owner\" = {owner} where \"Id\" = {connectionId}");
+    }
+
     public async Task DetachGitConnectionAsync(Guid connectionId)
     {
         await using var dbContext = new SprintBootDbContext(new DbContextOptionsBuilder<SprintBootDbContext>().UseNpgsql(_postgres.GetConnectionString()).Options);

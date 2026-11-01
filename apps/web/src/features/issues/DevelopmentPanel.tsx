@@ -23,6 +23,7 @@ type Repository = components['schemas']['BranchRepositoryDto'];
 type Development = components['schemas']['DevelopmentDto'];
 
 const POLL_MILLISECONDS = 5000;
+const REFRESH_MILLISECONDS = 60_000;
 const SHORT_SHA = 7;
 const PULL_STATES: [string, BadgeTone][] = [
   ['open', 'info'],
@@ -237,6 +238,18 @@ export function DevelopmentPanel({ issueId, label, canEdit }: { issueId: string;
     refetchInterval: POLL_MILLISECONDS,
     queryFn: () => unwrap(apiClient.GET('/api/v1/git-issue/development/{issueId}', { params: { path: { issueId } } })),
   });
+
+  // The fallback for webhooks that never arrive; what it finds shows up in the poll above.
+  useQuery({
+    queryKey: ['git', 'refresh', issueId],
+    refetchInterval: REFRESH_MILLISECONDS,
+    retry: false,
+    queryFn: async () => {
+      await unwrap(apiClient.POST('/api/v1/git-issue/refresh/{issueId}', { params: { path: { issueId } } }));
+      return null;
+    },
+  });
+
   const data = development.data;
   const canCreate = canEdit && data?.canCreateBranch;
   const branches = data?.branches?.length ?? 0;

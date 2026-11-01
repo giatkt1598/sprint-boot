@@ -503,6 +503,9 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("LastEventAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("LastPolledAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("WebUrl")
                         .IsRequired()
                         .HasMaxLength(512)

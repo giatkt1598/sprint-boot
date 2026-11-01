@@ -438,6 +438,119 @@ public class GitWebhookHandler(
     }
 }
 
+/// <summary>
+/// The fallback for webhooks that never arrive. It reads a repository's recent work and feeds it
+/// through the same processor, which already ignores what it has seen and links every issue of the space.
+/// </summary>
+public class GitPoller(
+    IRepository<GitConnection, Guid> connections,
+    IRepository<GitRepository, Guid> repositories,
+    IRepository<GitBranch, Guid> branches,
+    GitAccessProvider access,
+    GitEventProcessor processor,
+    IProjectAccess projects,
+    IUnitOfWorkManager unitOfWork,
+    ILogger<GitPoller> logger) : ITransientDependency
+{
+    public async Task PollAsync(Guid repositoryId)
+    {
+        try
+        {
+            using var uow = unitOfWork.Begin(requiresNew: true, isTransactional: true);
+            await PollRepositoryAsync(repositoryId);
+            await uow.CompleteAsync();
+        }
+        catch (GitAuthException failure)
+        {
+            logger.LogWarning("Polling repository {RepositoryId} lost access: {Reason}", repositoryId, failure.Message);
+            await FlagConnectionAsync(repositoryId);
+        }
+        catch (GitProviderException failure)
+        {
+            logger.LogInformation("Polling repository {RepositoryId} failed: {Reason}", repositoryId, failure.Message);
+        }
+        catch (DbUpdateException failure)
+        {
+            // A webhook delivered the same thing at the same moment; the next poll settles it.
+            logger.LogInformation(failure, "Polling repository {RepositoryId} overlapped a webhook", repositoryId);
+        }
+    }
+
+    private async Task PollRepositoryAsync(Guid repositoryId)
+    {
+        var repository = await repositories.FindAsync(repositoryId);
+        var connection = repository is null ? null : await connections.FindAsync(repository.ConnectionId);
+        if (repository is not { IsAccessible: true } || connection?.ProjectId is not { } projectId || !connection.Covers(repository.FullName))
+        {
+            return;
+        }
+
+        var type = connection.ProviderType;
+        var provider = access.Provider(type);
+        var credential = await access.GetAsync(connection);
+        var info = new GitRepoInfo(repository.ExternalId, repository.FullName, repository.DefaultBranch, repository.IsPrivate, repository.WebUrl);
+        var keys = new[] { (await projects.GetRefAsync(projectId)).Key };
+        Task ApplyAsync(GitEvent item) => processor.ApplyAsync(connection.Id, type, item, fromWebhook: false);
+
+        var names = await provider.ListBranchesAsync(credential, repository.FullName);
+        var main = await provider.ListCommitsAsync(credential, repository.FullName, repository.DefaultBranch);
+        await ApplyAsync(new GitPushEvent(info, repository.DefaultBranch, main));
+        var shas = main.Take(1).Select(commit => commit.Sha).ToList();
+        var inherited = main.Select(commit => commit.Sha).ToHashSet();
+
+        foreach (var name in names.Where(name => IssueKeyScanner.Scan(name, keys, ignoreCase: true).Count > 0))
+        {
+            await ApplyAsync(new GitBranchEvent(info, name, Deleted: false));
+
+            // A branch lists the history it grew from too, which is not work on this issue.
+            var commits = (await provider.ListCommitsAsync(credential, repository.FullName, name)).Where(commit => !inherited.Contains(commit.Sha)).ToList();
+            await ApplyAsync(new GitPushEvent(info, name, commits));
+            shas.InsertRange(0, commits.Take(1).Select(commit => commit.Sha));
+        }
+
+        var pulls = await provider.ListRecentPullRequestsAsync(credential, info);
+        foreach (var pull in pulls)
+        {
+            await ApplyAsync(pull);
+        }
+
+        var openHeads = pulls.Where(pull => pull.State == GitPullRequestState.Open).Select(pull => pull.HeadSha);
+        foreach (var sha in openHeads.Concat(shas).Distinct().Take(GitPolling.StatusLimit))
+        {
+            foreach (var status in await provider.ListStatusesAsync(credential, info, sha))
+            {
+                await ApplyAsync(status);
+            }
+        }
+
+        // A full page may have been cut off, and dropping a branch on that guess would lose its links.
+        if (names.Count < provider.BranchPageSize)
+        {
+            var stored = await branches.GetListAsync(item => item.RepositoryId == repository.Id);
+            foreach (var gone in stored.Where(item => !names.Contains(item.Name)))
+            {
+                await ApplyAsync(new GitBranchEvent(info, gone.Name, Deleted: true));
+            }
+        }
+    }
+
+    private async Task FlagConnectionAsync(Guid repositoryId)
+    {
+        using var uow = unitOfWork.Begin(requiresNew: true);
+        var repository = await repositories.GetAsync(repositoryId);
+        var connection = await connections.GetAsync(repository.ConnectionId);
+        connection.Status = GitConnectionStatus.NeedsAttention;
+        connection.Problem = GitConnectionProblem.TokenRevoked;
+        await connections.UpdateAsync(connection);
+        await uow.CompleteAsync();
+    }
+}
+
+public class GitPollHandler(GitPoller poller) : IDistributedEventHandler<GitPollRequestedEto>, ITransientDependency
+{
+    public Task HandleEventAsync(GitPollRequestedEto eventData) => poller.PollAsync(eventData.RepositoryId);
+}
+
 /// <summary>Provider-neutral: every test of this class holds for both GitHub and Gitea.</summary>
 public class GitEventProcessor(
     IRepository<GitConnection, Guid> connections,
@@ -452,7 +565,8 @@ public class GitEventProcessor(
     IGuidGenerator guids,
     IClock clock) : ITransientDependency
 {
-    public async Task ApplyAsync(Guid connectionId, GitProviderType provider, GitEvent gitEvent)
+    /// <param name="fromWebhook">False when we went looking: that says nothing about the webhook working.</param>
+    public async Task ApplyAsync(Guid connectionId, GitProviderType provider, GitEvent gitEvent, bool fromWebhook = true)
     {
         var connection = await connections.GetAsync(connectionId);
 
@@ -462,7 +576,7 @@ public class GitEventProcessor(
             return;
         }
 
-        var repository = await RepositoryAsync(connectionId, gitEvent.Repository);
+        var repository = await RepositoryAsync(connectionId, gitEvent.Repository, fromWebhook);
 
         // A connection serves its own space, so other spaces' keys are just text.
         List<string> projectKeys = [(await projects.GetRefAsync(projectId)).Key];
@@ -486,22 +600,30 @@ public class GitEventProcessor(
         }
     }
 
-    private async Task<GitRepository> RepositoryAsync(Guid connectionId, GitRepoInfo info)
+    private async Task<GitRepository> RepositoryAsync(Guid connectionId, GitRepoInfo info, bool fromWebhook)
     {
         var repository = await repositories.FirstOrDefaultAsync(item => item.ConnectionId == connectionId && item.ExternalId == info.ExternalId);
         if (repository is null)
         {
             repository = new GitRepository(guids.Create(), connectionId, info.ExternalId);
             GitSyncService.Apply(repository, info);
-            repository.WebhookState = GitWebhookState.Active;
-            repository.LastEventAt = clock.Now;
+            if (fromWebhook)
+            {
+                repository.WebhookState = GitWebhookState.Active;
+                repository.LastEventAt = clock.Now;
+            }
+
             return await repositories.InsertAsync(repository, autoSave: true);
         }
 
         // Repositories are matched by external id, so a rename just updates the name.
         GitSyncService.Apply(repository, info);
-        repository.WebhookState = GitWebhookState.Active;
-        repository.LastEventAt = clock.Now;
+        if (fromWebhook)
+        {
+            repository.WebhookState = GitWebhookState.Active;
+            repository.LastEventAt = clock.Now;
+        }
+
         return await repositories.UpdateAsync(repository);
     }
 

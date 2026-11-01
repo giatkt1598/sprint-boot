@@ -85,7 +85,6 @@ export const useEpics = (projectId: string | undefined) => {
 export const statusCategory = (status: Status | undefined) =>
   (['todo', 'inProgress', 'done'] as const)[status?.category ?? 0];
 
-export const priorityLevel = (priority: Priority | undefined) => {
-  const order = priority?.order ?? 2;
-  return order <= 1 ? 'high' : order === 2 ? 'medium' : 'low';
-};
+const PRIORITY_LEVELS = ['highest', 'high', 'medium', 'low', 'lowest'] as const;
+
+export const priorityLevel = (priority: Priority | undefined) => PRIORITY_LEVELS[priority?.order ?? 2] ?? 'medium';

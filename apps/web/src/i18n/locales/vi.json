@@ -64,7 +64,9 @@
     "priority": {
       "high": "Cao",
       "medium": "Trung bình",
-      "low": "Thấp"
+      "low": "Thấp",
+      "highest": "Cao nhất",
+      "lowest": "Thấp nhất"
     },
     "type": {
       "story": "Story",

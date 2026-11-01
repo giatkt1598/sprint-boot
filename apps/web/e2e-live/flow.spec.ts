@@ -941,7 +941,7 @@ test('a real Gitea connection links commits, pull requests and CI, and creates b
   await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click();
 
   const owner = `sbadmin/${repoName}`;
-  const commit = await gitea<{ commit: { sha: string } }>('POST', `/repos/${owner}/contents/a.txt`, {
+  await gitea('POST', `/repos/${owner}/contents/a.txt`, {
     content: Buffer.from('x').toString('base64'),
     message: `${key}-1 real commit`,
     branch,
@@ -954,7 +954,21 @@ test('a real Gitea connection links commits, pull requests and CI, and creates b
   await expect(page.getByRole('dialog').getByText(`${key}-1 real commit`)).toBeVisible();
   await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click();
 
+  // With every webhook gone, opening the issue still finds new work.
+  const hooks = await gitea<{ id: number }[]>('GET', `/repos/${owner}/hooks`);
+  for (const hook of hooks) {
+    await fetch(`${GITEA}/api/v1/repos/${owner}/hooks/${hook.id}`, { method: 'DELETE', headers: { Authorization: `token ${token}` } });
+  }
+  const polled = await gitea<{ commit: { sha: string } }>('POST', `/repos/${owner}/contents/b.txt`, {
+    content: Buffer.from('y').toString('base64'),
+    message: `${key}-1 polled commit`,
+    branch,
+  });
+  await page.reload();
+  await expect(page.getByRole('button', { name: '2 commits', exact: true })).toBeVisible({ timeout: 15_000 });
+
   await gitea('POST', `/repos/${owner}/pulls`, { title: `${key}-1 ready`, head: branch, base: 'main' });
+  await page.reload();
   const pullRow = page.getByRole('button', { name: /^1 pull request/ });
   await expect(pullRow).toContainText('Open', { timeout: 15_000 });
   await pullRow.click();
@@ -964,9 +978,11 @@ test('a real Gitea connection links commits, pull requests and CI, and creates b
   await expect(page.getByRole('dialog').getByText('Nothing here yet.')).toBeVisible();
   await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click();
 
-  await gitea('POST', `/repos/${owner}/statuses/${commit.commit.sha}`, { state: 'pending', context: 'ci/build', target_url: 'http://ci.local/1' });
+  await gitea('POST', `/repos/${owner}/statuses/${polled.commit.sha}`, { state: 'pending', context: 'ci/build', target_url: 'http://ci.local/1' });
+  await page.reload();
   await expect(page.getByRole('button', { name: /^1 build/ })).toContainText('Pending', { timeout: 15_000 });
-  await gitea('POST', `/repos/${owner}/statuses/${commit.commit.sha}`, { state: 'success', context: 'ci/build', target_url: 'http://ci.local/1' });
+  await gitea('POST', `/repos/${owner}/statuses/${polled.commit.sha}`, { state: 'success', context: 'ci/build', target_url: 'http://ci.local/1' });
+  await page.reload();
   await expect(page.getByRole('button', { name: /^1 build/ })).toContainText('Passed', { timeout: 15_000 });
   await expectAccessible(page);
 });

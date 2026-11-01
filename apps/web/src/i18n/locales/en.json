@@ -64,7 +64,9 @@
     "priority": {
       "high": "High",
       "medium": "Medium",
-      "low": "Low"
+      "low": "Low",
+      "highest": "Highest",
+      "lowest": "Lowest"
     },
     "type": {
       "story": "Story",

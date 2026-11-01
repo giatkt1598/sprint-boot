@@ -343,4 +343,126 @@ public class GitIntegrationTests(ApiFixture fixture)
         moved.StatusCode.ShouldBe(HttpStatusCode.OK, await moved.Content.ReadAsStringAsync(Token));
         (await DevelopmentAsync(owner, issue))!.CanCreateBranch.ShouldBeTrue();
     }
+
+    private static object ListedCommit(string sha, string message) => new
+    {
+        sha,
+        html_url = $"http://git.fake/{sha}",
+        commit = new { message, author = new { name = "Dev", date = DateTime.UtcNow } },
+    };
+
+    private static object ListedPull(int number, string title, string sha, string state = "open", DateTime? mergedAt = null) => new
+    {
+        number,
+        title,
+        body = "body",
+        state,
+        merged_at = mergedAt,
+        html_url = $"http://git.fake/pr/{number}",
+        head = new { sha, @ref = "topic" },
+    };
+
+    private static Task RefreshAsync(AuthClient client, IssueDto issue) =>
+        client.Http.PostAsync($"/api/v1/git-issue/refresh/{issue.Id}", null, Token);
+
+    [Theory]
+    [InlineData(GitProviderType.GitHub)]
+    [InlineData(GitProviderType.Gitea)]
+    public async Task Opening_an_issue_finds_work_no_webhook_reported_and_leaves_the_webhook_state_alone(GitProviderType provider)
+    {
+        var (client, project, issue) = await IssueAsync();
+        var harness = await ConnectAsync(client, project, provider);
+        var sha = Guid.NewGuid().ToString("N");
+        var fake = FakeGitServer.Instance;
+        fake.ResetPolling();
+        fake.AddBranch($"feature/{issue.Key.ToLowerInvariant()}-work");
+        fake.Commits.Add(ListedCommit(sha, $"{issue.Key} polled"));
+
+        // History the branch inherited from main is not work on this issue.
+        fake.Commits.Add(ListedCommit("inherited", "Initial commit"));
+        fake.MainCommits.Add(ListedCommit("inherited", "Initial commit"));
+        fake.Pulls.Add(ListedPull(9, $"{issue.Key} polled pull", sha));
+        fake.Pulls.Add(ListedPull(10, $"{issue.Key} merged pull", sha, "closed", DateTime.UtcNow));
+        fake.Statuses.Add(new { context = "ci/build", status = "success", state = "success", target_url = "http://ci/9" });
+
+        await RefreshAsync(client, issue);
+
+        var found = await WaitAsync(client, issue, item => item.Builds.Count > 0);
+        found.Branches.ShouldHaveSingleItem();
+        found.Commits.Single().Sha.ShouldBe(sha);
+        found.PullRequests.Single(pull => pull.Number == 10).State.ShouldBe(GitPullRequestState.Merged);
+        found.Builds.Single().State.ShouldBe(GitCiState.Success);
+
+        var repository = (await client.Http.GetFromJsonAsync<List<GitRepositoryDto>>($"/api/v1/git-connection/{harness.Connection.Id}/repositories", Token))!.Single();
+        repository.WebhookState.ShouldBe(harness.Repository.WebhookState);
+        repository.LastEventAt.ShouldBe(harness.Repository.LastEventAt);
+
+        // Within the interval nobody calls the provider again.
+        var calls = fake.PollCalls;
+        await RefreshAsync(client, issue);
+        await Task.Delay(1000, Token);
+        fake.PollCalls.ShouldBe(calls);
+    }
+
+    [Fact]
+    public async Task A_provider_outage_leaves_refresh_and_the_issue_working()
+    {
+        var (client, project, issue) = await IssueAsync();
+        var harness = await ConnectAsync(client, project, GitProviderType.Gitea);
+        FakeGitServer.Instance.Down = true;
+        try
+        {
+            (await client.Http.PostAsync($"/api/v1/git-issue/refresh/{issue.Id}", null, Token)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+            await fixture.PollRepositoryAsync(harness.Repository.Id);
+            (await client.Http.GetAsync($"/api/v1/git-issue/development/{issue.Id}", Token)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        }
+        finally
+        {
+            FakeGitServer.Instance.Down = false;
+        }
+    }
+
+    [Fact]
+    public async Task A_refused_token_flags_the_connection_during_a_poll()
+    {
+        var (client, project, _) = await IssueAsync();
+        var harness = await ConnectAsync(client, project, GitProviderType.Gitea);
+        (await client.Http.PutAsJsonAsync($"/api/v1/git-connection/{harness.Connection.Id}", new { name = "n", authType = GitAuthType.AccessToken }, Token)).EnsureSuccessStatusCode();
+        await fixture.ReplaceGitTokenAsync(harness.Connection.Id, "revoked");
+
+        await fixture.PollRepositoryAsync(harness.Repository.Id);
+
+        var connection = await client.Http.GetFromJsonAsync<GitConnectionDto>($"/api/v1/git-connection/{harness.Connection.Id}", Token);
+        connection!.Status.ShouldBe(GitConnectionStatus.NeedsAttention);
+    }
+
+    [Fact]
+    public async Task A_poll_drops_a_deleted_branch_and_ignores_other_spaces_and_organizations()
+    {
+        var (client, project, issue) = await IssueAsync();
+        var (other, _, otherIssue) = await IssueAsync();
+        var harness = await ConnectAsync(client, project, GitProviderType.Gitea);
+        var fake = FakeGitServer.Instance;
+        fake.ResetPolling();
+        var name = $"feature/{issue.Key}-a";
+        fake.AddBranch(name);
+        fake.AddBranch($"feature/{otherIssue.Key}-b");
+
+        await fixture.PollRepositoryAsync(harness.Repository.Id);
+        (await DevelopmentAsync(client, issue))!.Branches.Single().Name.ShouldBe(name);
+        (await DevelopmentAsync(other, otherIssue))!.Branches.ShouldBeEmpty();
+
+        fake.RemoveBranch(name);
+        await fixture.PollRepositoryAsync(harness.Repository.Id);
+        (await DevelopmentAsync(client, issue))!.Branches.ShouldBeEmpty();
+
+        // Scoped to another organization, the repository is not this connection's business.
+        var scoped = await ConnectAsync(client, project, GitProviderType.Gitea, $"{FakeGitServer.GiteaUrl}/acme");
+        await fixture.RestrictGitOwnerAsync(scoped.Connection.Id, "elsewhere");
+        var calls = fake.PollCalls;
+        fake.Commits.Add(ListedCommit(Guid.NewGuid().ToString("N"), $"{issue.Key} not ours"));
+        await fixture.PollRepositoryAsync(scoped.Repository.Id);
+        (await DevelopmentAsync(client, issue))!.Commits.ShouldBeEmpty();
+        fake.PollCalls.ShouldBe(calls);
+    }
 }

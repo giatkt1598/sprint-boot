@@ -297,6 +297,9 @@ public interface IGitIssueAppService : IApplicationService
     Task<List<string>> GetBranchesAsync(Guid issueId, Guid repositoryId);
 
     Task<GitBranchRowDto> CreateBranchAsync(Guid issueId, CreateBranchInput input);
+
+    /// <summary>Asks providers for news, for repositories whose webhooks may not be reaching us. Never waits for them.</summary>
+    Task RefreshAsync(Guid issueId);
 }
 
 /// <summary>Lets workflow rules ask about development work without touching Git tables.</summary>
@@ -309,6 +312,12 @@ public interface IIssueGitFacts
 public class GitWebhookReceivedEto
 {
     public Guid DeliveryId { get; set; }
+}
+
+[EventName("SprintBoot.Git.PollRequested")]
+public class GitPollRequestedEto
+{
+    public Guid RepositoryId { get; set; }
 }
 
 public static class GitErrors

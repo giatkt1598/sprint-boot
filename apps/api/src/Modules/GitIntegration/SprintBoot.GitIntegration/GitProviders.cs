@@ -49,7 +49,17 @@ public interface IGitProvider
 
     Task<IReadOnlyList<GitRepoInfo>> ListRepositoriesAsync(GitAccess access);
 
+    /// <summary>A list this long may be cut off, so absence from it proves nothing.</summary>
+    int BranchPageSize { get; }
+
     Task<IReadOnlyList<string>> ListBranchesAsync(GitAccess access, string fullName);
+
+    /// <summary>Recently updated pull requests in every state, newest first.</summary>
+    Task<IReadOnlyList<GitPullRequestEvent>> ListRecentPullRequestsAsync(GitAccess access, GitRepoInfo repository);
+
+    Task<IReadOnlyList<GitCommitInfo>> ListCommitsAsync(GitAccess access, string fullName, string branch);
+
+    Task<IReadOnlyList<GitStatusEvent>> ListStatusesAsync(GitAccess access, GitRepoInfo repository, string sha);
 
     Task CreateBranchAsync(GitAccess access, string fullName, string name, string baseBranch);
 
@@ -62,6 +72,12 @@ public interface IGitProvider
 
     /// <summary>Null for events the product has no use for.</summary>
     GitEvent? Parse(string eventName, string payload);
+}
+
+public static class GitPolling
+{
+    public const int CommitLimit = 30;
+    public const int StatusLimit = 10;
 }
 
 public static class GitHttp
@@ -197,16 +213,19 @@ public static class GitPayloads
         return new GitPushEvent(repository, branch, commits);
     }
 
-    private static GitPullRequestEvent PullRequest(GitRepoInfo repository, JsonElement root)
+    private static GitPullRequestEvent PullRequest(GitRepoInfo repository, JsonElement root) =>
+        PullRequest(repository, root.GetProperty("pull_request"), root.GetProperty("number").GetInt32());
+
+    /// <summary>GitHub's list has no merged flag, only the time it happened.</summary>
+    public static GitPullRequestEvent PullRequest(GitRepoInfo repository, JsonElement pull, int number)
     {
-        var pull = root.GetProperty("pull_request");
-        var merged = pull.TryGetProperty("merged", out var flag) && flag.ValueKind == JsonValueKind.True;
+        var merged = (pull.TryGetProperty("merged", out var flag) && flag.ValueKind == JsonValueKind.True) || Text(pull, "merged_at") is not null;
         var state = merged ? GitPullRequestState.Merged
             : Text(pull, "state") == "open" ? GitPullRequestState.Open : GitPullRequestState.Closed;
         var head = pull.GetProperty("head");
         return new GitPullRequestEvent(
             repository,
-            root.GetProperty("number").GetInt32(),
+            number,
             pull.GetProperty("title").GetString()!,
             Text(pull, "body"),
             state,
@@ -214,6 +233,30 @@ public static class GitPayloads
             head.GetProperty("sha").GetString()!,
             head.GetProperty("ref").GetString()!);
     }
+
+    /// <summary>Commit lists nest what webhooks keep flat.</summary>
+    public static GitCommitInfo Commit(JsonElement item)
+    {
+        var commit = item.GetProperty("commit");
+        var author = commit.GetProperty("author");
+        return new GitCommitInfo(
+            item.GetProperty("sha").GetString()!,
+            commit.GetProperty("message").GetString() ?? string.Empty,
+            Text(author, "name"),
+            author.GetProperty("date").GetDateTimeOffset().UtcDateTime,
+            item.GetProperty("html_url").GetString()!);
+    }
+
+    /// <summary>The combined status of a commit, which keeps only the latest of each context.</summary>
+    public static IEnumerable<GitStatusEvent> Statuses(GitRepoInfo repository, string sha, JsonElement combined) =>
+        combined.TryGetProperty("statuses", out var statuses) && statuses.ValueKind == JsonValueKind.Array
+            ? statuses.EnumerateArray().Select(status => new GitStatusEvent(
+                repository,
+                sha,
+                Text(status, "context") ?? "status",
+                FromStatus(Text(status, "status") ?? Text(status, "state")),
+                Text(status, "target_url")))
+            : [];
 
     private static GitCiState FromStatus(string? state) => state switch
     {
@@ -256,11 +299,28 @@ public class GiteaProvider(IHttpClientFactory clients) : IGitProvider, ITransien
         }
     }
 
+    public int BranchPageSize => PageSize;
+
     public async Task<IReadOnlyList<string>> ListBranchesAsync(GitAccess access, string fullName)
     {
         var rows = await GitHttp.ReadAsync(await SendAsync(access, HttpMethod.Get, $"/repos/{fullName}/branches?limit={PageSize}"));
         return [.. rows.EnumerateArray().Select(row => row.GetProperty("name").GetString()!)];
     }
+
+    public async Task<IReadOnlyList<GitPullRequestEvent>> ListRecentPullRequestsAsync(GitAccess access, GitRepoInfo repository)
+    {
+        var rows = await GitHttp.ReadAsync(await SendAsync(access, HttpMethod.Get, $"/repos/{repository.FullName}/pulls?state=all&sort=recentupdate&limit={PageSize}"));
+        return [.. rows.EnumerateArray().Select(row => GitPayloads.PullRequest(repository, row, row.GetProperty("number").GetInt32()))];
+    }
+
+    public async Task<IReadOnlyList<GitCommitInfo>> ListCommitsAsync(GitAccess access, string fullName, string branch)
+    {
+        var rows = await GitHttp.ReadAsync(await SendAsync(access, HttpMethod.Get, $"/repos/{fullName}/commits?sha={Uri.EscapeDataString(branch)}&limit={GitPolling.CommitLimit}&stat=false&files=false"));
+        return [.. rows.EnumerateArray().Select(GitPayloads.Commit)];
+    }
+
+    public async Task<IReadOnlyList<GitStatusEvent>> ListStatusesAsync(GitAccess access, GitRepoInfo repository, string sha) =>
+        [.. GitPayloads.Statuses(repository, sha, await GitHttp.ReadAsync(await SendAsync(access, HttpMethod.Get, $"/repos/{repository.FullName}/commits/{sha}/status")))];
 
     public async Task CreateBranchAsync(GitAccess access, string fullName, string name, string baseBranch)
     {
@@ -329,10 +389,35 @@ public class GitHubProvider(IHttpClientFactory clients, IConfiguration configura
         }
     }
 
+    public int BranchPageSize => PageSize;
+
     public async Task<IReadOnlyList<string>> ListBranchesAsync(GitAccess access, string fullName)
     {
         var rows = await GitHttp.ReadAsync(await SendAsync(access, HttpMethod.Get, $"/repos/{fullName}/branches?per_page={PageSize}"));
         return [.. rows.EnumerateArray().Select(row => row.GetProperty("name").GetString()!)];
+    }
+
+    public async Task<IReadOnlyList<GitPullRequestEvent>> ListRecentPullRequestsAsync(GitAccess access, GitRepoInfo repository)
+    {
+        var rows = await GitHttp.ReadAsync(await SendAsync(access, HttpMethod.Get, $"/repos/{repository.FullName}/pulls?state=all&sort=updated&direction=desc&per_page=50"));
+        return [.. rows.EnumerateArray().Select(row => GitPayloads.PullRequest(repository, row, row.GetProperty("number").GetInt32()))];
+    }
+
+    public async Task<IReadOnlyList<GitCommitInfo>> ListCommitsAsync(GitAccess access, string fullName, string branch)
+    {
+        var rows = await GitHttp.ReadAsync(await SendAsync(access, HttpMethod.Get, $"/repos/{fullName}/commits?sha={Uri.EscapeDataString(branch)}&per_page={GitPolling.CommitLimit}"));
+        return [.. rows.EnumerateArray().Select(GitPayloads.Commit)];
+    }
+
+    public async Task<IReadOnlyList<GitStatusEvent>> ListStatusesAsync(GitAccess access, GitRepoInfo repository, string sha)
+    {
+        var combined = await GitHttp.ReadAsync(await SendAsync(access, HttpMethod.Get, $"/repos/{repository.FullName}/commits/{sha}/status"));
+        var runs = await GitHttp.ReadAsync(await SendAsync(access, HttpMethod.Get, $"/repos/{repository.FullName}/commits/{sha}/check-runs"));
+        return
+        [
+            .. GitPayloads.Statuses(repository, sha, combined),
+            .. runs.GetProperty("check_runs").EnumerateArray().Select(run => CheckRun(repository, run)),
+        ];
     }
 
     public async Task CreateBranchAsync(GitAccess access, string fullName, string name, string baseBranch)
@@ -357,12 +442,13 @@ public class GitHubProvider(IHttpClientFactory clients, IConfiguration configura
     {
         using var document = JsonDocument.Parse(payload);
         var root = document.RootElement;
-        return eventName == "check_run" ? CheckRun(root) : GitPayloads.Parse(eventName, root);
+        return eventName == "check_run"
+            ? CheckRun(GitPayloads.Repository(root.GetProperty("repository")), root.GetProperty("check_run"))
+            : GitPayloads.Parse(eventName, root);
     }
 
-    private static GitStatusEvent CheckRun(JsonElement root)
+    private static GitStatusEvent CheckRun(GitRepoInfo repository, JsonElement run)
     {
-        var run = root.GetProperty("check_run");
         var conclusion = GitPayloads.Text(run, "conclusion");
         var state = GitPayloads.Text(run, "status") switch
         {
@@ -371,7 +457,7 @@ public class GitHubProvider(IHttpClientFactory clients, IConfiguration configura
             _ => GitCiState.Pending,
         };
         return new GitStatusEvent(
-            GitPayloads.Repository(root.GetProperty("repository")),
+            repository,
             run.GetProperty("head_sha").GetString()!,
             run.GetProperty("name").GetString()!,
             state,

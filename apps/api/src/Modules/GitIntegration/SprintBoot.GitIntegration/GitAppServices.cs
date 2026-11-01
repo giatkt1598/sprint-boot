@@ -10,6 +10,7 @@ using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.Security.Encryption;
 using Volo.Abp.Timing;
 
@@ -313,9 +314,14 @@ public class GitIssueAppService(
     IIssueFactsProvider facts,
     IProjectAccess projects,
     GitAccessProvider access,
-    GitEventProcessor processor)
+    GitEventProcessor processor,
+    IDistributedEventBus eventBus,
+    IConfiguration configuration)
     : ApplicationService, IGitIssueAppService
 {
+    private const int DefaultPollSeconds = 60;
+    private const int DefaultPollRepositories = 10;
+
     public async Task<DevelopmentDto> GetDevelopmentAsync(Guid issueId)
     {
         await projects.CheckAsync(await issues.GetProjectIdAsync(issueId), ProjectPermissions.ViewIssues);
@@ -427,6 +433,49 @@ public class GitIssueAppService(
             RepositoryName = repository.FullName,
             Url = BranchUrl(connection, repository, branch.Name),
         };
+    }
+
+    public async Task RefreshAsync(Guid issueId)
+    {
+        var projectId = await issues.GetProjectIdAsync(issueId);
+        await projects.CheckAsync(projectId, ProjectPermissions.ViewIssues);
+
+        var usable = (await connections.GetListAsync(item => item.ProjectId == projectId && item.Status == GitConnectionStatus.Connected))
+            .Select(item => item.Id).ToList();
+        var repos = await repositories.GetListAsync(item => item.IsAccessible && usable.Contains(item.ConnectionId));
+        var linked = await RepositoriesOfIssueAsync(issueId);
+        var cutoff = Clock.Now.AddSeconds(-configuration.GetValue("Git:Polling:IntervalSeconds", DefaultPollSeconds));
+        var due = repos
+            .Where(item => item.LastPolledAt is null || item.LastPolledAt < cutoff)
+            .OrderByDescending(item => linked.Contains(item.Id))
+            .ThenByDescending(item => item.LastEventAt)
+            .Take(configuration.GetValue("Git:Polling:MaxRepositories", DefaultPollRepositories))
+            .Select(item => item.Id);
+
+        var query = await repositories.GetQueryableAsync();
+        var now = Clock.Now;
+        foreach (var id in due.ToList())
+        {
+            // Claimed in the database, so several readers on several replicas poll it once.
+            var claimed = await query
+                .Where(item => item.Id == id && (item.LastPolledAt == null || item.LastPolledAt < cutoff))
+                .ExecuteUpdateAsync(setters => setters.SetProperty(item => item.LastPolledAt, now));
+            if (claimed > 0)
+            {
+                await eventBus.PublishAsync(new GitPollRequestedEto { RepositoryId = id }, useOutbox: true);
+            }
+        }
+    }
+
+    private async Task<HashSet<Guid>> RepositoriesOfIssueAsync(Guid issueId)
+    {
+        var ids = (await links.GetListAsync(item => item.IssueId == issueId)).Select(item => item.TargetId).ToList();
+        return
+        [
+            .. (await branches.GetListAsync(item => ids.Contains(item.Id))).Select(item => item.RepositoryId),
+            .. (await commits.GetListAsync(item => ids.Contains(item.Id))).Select(item => item.RepositoryId),
+            .. (await pullRequests.GetListAsync(item => ids.Contains(item.Id))).Select(item => item.RepositoryId),
+        ];
     }
 
     private async Task<HashSet<Guid>> UsedRepositoriesAsync(Guid projectId)
