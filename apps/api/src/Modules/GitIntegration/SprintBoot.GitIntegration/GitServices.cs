@@ -61,10 +61,14 @@ public static partial class IssueKeyScanner
 
     public static string BranchName(string? template, string key, string title)
     {
-        var name = (string.IsNullOrWhiteSpace(template) ? "feature/{key}-{slug}" : template)
+        var slug = Slug(title);
+
+        // {key} and {slug} are the older spellings, kept for templates already saved.
+        var name = (string.IsNullOrWhiteSpace(template) ? "feature/{issue_key}-{issue_title}" : template)
             .Replace("{issue_key}", key, StringComparison.Ordinal)
+            .Replace("{issue_title}", slug, StringComparison.Ordinal)
             .Replace("{key}", key, StringComparison.Ordinal)
-            .Replace("{slug}", Slug(title), StringComparison.Ordinal);
+            .Replace("{slug}", slug, StringComparison.Ordinal);
         return name.TrimEnd('-', '/');
     }
 

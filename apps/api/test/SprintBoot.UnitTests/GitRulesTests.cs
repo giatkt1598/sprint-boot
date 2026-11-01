@@ -25,7 +25,8 @@ public class GitRulesTests
     [Theory]
     [InlineData(null, "SB-123", "Sửa lỗi đăng nhập!", "feature/SB-123-sua-loi-dang-nhap")]
     [InlineData("bug/{key}", "SB-1", "Anything", "bug/SB-1")]
-    [InlineData("feature/{issue_key}", "SB-1", "Anything", "feature/SB-1")]
+    [InlineData("feature/{issue_key}", "DOC-123", "Anything", "feature/DOC-123")]
+    [InlineData("feature/{issue_key}-{issue_title}", "DOC-123", "Sửa lỗi", "feature/DOC-123-sua-loi")]
     public void Branch_names_follow_the_template(string? template, string key, string title, string expected)
     {
         IssueKeyScanner.BranchName(template, key, title).ShouldBe(expected);

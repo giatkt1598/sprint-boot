@@ -152,7 +152,7 @@ export function SpaceGeneralPage() {
       <Typography variant="h1">{t('spaces.general')}</Typography>
       <TextField label={t('spaces.name')} value={name} disabled={!canManage} onChange={(event) => setName(event.target.value)} />
       <TextField label={t('spaces.key')} value={space.key ?? ''} disabled />
-      <TextField label={t('spaces.branchTemplate')} placeholder="feature/{issue_key}" value={template} disabled={!canManage} onChange={(event) => setTemplate(event.target.value)} />
+      <TextField label={t('spaces.branchTemplate')} placeholder="feature/{issue_key}-{issue_title}" value={template} disabled={!canManage} onChange={(event) => setTemplate(event.target.value)} />
       {space.type === 0 && (
         <>
           <SelectField
