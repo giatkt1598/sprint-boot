@@ -1518,3 +1518,48 @@ test('the invite dialog picks several spaces, each with its own role', async ({ 
   const content = (await list.count()) * (((await row.boundingBox())!.height) + 4);
   expect(overflow.filter((item) => item.scroll > content + 8)).toEqual([]);
 });
+
+test('a person creates API and MCP tokens that work, then revokes one', async ({ page, context, request }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/account/tokens');
+  await expectAccessible(page);
+
+  const create = async (button: string, name: string) => {
+    await page.getByRole('button', { name: button, exact: true }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByLabel('Name').fill(name);
+    await dialog.getByRole('button', { name: 'Create', exact: true }).click();
+    const value = await dialog.getByRole('textbox', { name: 'Token' }).inputValue();
+    await expectAccessible(page);
+    await dialog.getByRole('button', { name: 'Close' }).click();
+    await expect(page.getByRole('cell', { name, exact: true })).toBeVisible();
+    return value;
+  };
+
+  const apiToken = await create('Create Token', `Script ${suffix()}`);
+  expect(apiToken).toMatch(/^sb_api_/);
+  const headers = { Authorization: `Bearer ${apiToken}` };
+  expect((await request.get('/api/v1/project', { headers })).ok()).toBe(true);
+
+  const mcpToken = await create('Create MCP Token', `Agent ${suffix()}`);
+  const tools = await request.post('/mcp', {
+    headers: { Authorization: `Bearer ${mcpToken}`, Accept: 'application/json, text/event-stream' },
+    data: { jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} },
+  });
+  expect(await tools.text()).toContain('transition_issue');
+
+  await expect(page.getByRole('link', { name: 'API Documentation' })).toHaveAttribute('href', '/swagger');
+  expect((await request.get('/swagger/v1/swagger.json')).ok()).toBe(true);
+
+  await page.getByRole('link', { name: 'MCP Documentation' }).click();
+  await expect(page.getByRole('heading', { name: 'MCP Documentation' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'transition_issue' })).toBeVisible();
+  await expectAccessible(page);
+
+  await page.getByRole('link', { name: 'Back to tokens' }).click();
+  await page.getByRole('button', { name: /^Revoke Script/ }).first().click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Revoke' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect.poll(async () => (await request.get('/api/v1/project', { headers })).status()).toBe(401);
+});

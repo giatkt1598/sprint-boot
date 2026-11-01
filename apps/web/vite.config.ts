@@ -8,7 +8,7 @@ export default defineConfig({
     port: Number(process.env.WEB_PORT ?? 5173),
     // Keep the browser's host so the auth server issues same-origin URLs and cookies.
     proxy: Object.fromEntries(
-      ['/api', '/connect', '/.well-known', '/hubs'].map((path) => [
+      ['/api', '/connect', '/.well-known', '/hubs', '/swagger', '/mcp'].map((path) => [
         path,
         { target: process.env.API_TARGET ?? 'http://localhost:5080', ws: path === '/hubs', headers: { host: `localhost:${process.env.WEB_PORT ?? 5173}` } },
       ]),

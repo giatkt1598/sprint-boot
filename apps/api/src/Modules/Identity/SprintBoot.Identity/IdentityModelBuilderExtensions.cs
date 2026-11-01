@@ -22,6 +22,16 @@ public static class IdentityModelBuilderExtensions
             b.Property(item => item.NameClaim).HasMaxLength(64);
             b.HasIndex(item => item.Name).IsUnique();
         });
+        builder.Entity<PersonalToken>(b =>
+        {
+            b.ToTable("personal_tokens", Schema);
+            b.Property(token => token.Name).HasMaxLength(128).IsRequired();
+            b.Property(token => token.TokenHash).HasMaxLength(64).IsRequired();
+            b.Property(token => token.Prefix).HasMaxLength(16).IsRequired();
+            b.HasIndex(token => token.TokenHash).IsUnique();
+            b.HasIndex(token => token.UserId);
+        });
+
         builder.Entity<AuthPolicy>(b =>
         {
             b.ToTable("auth_policy", Schema);

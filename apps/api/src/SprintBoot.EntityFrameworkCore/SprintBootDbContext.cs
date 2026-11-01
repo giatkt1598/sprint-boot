@@ -45,6 +45,7 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
 
     public DbSet<ExternalProviderConfig> ExternalProviders { get; set; } = null!;
     public DbSet<AuthPolicy> AuthPolicies { get; set; } = null!;
+    public DbSet<PersonalToken> PersonalTokens { get; set; } = null!;
     public DbSet<Invitation> Invitations { get; set; } = null!;
     public DbSet<InvitationProject> InvitationProjects { get; set; } = null!;
 

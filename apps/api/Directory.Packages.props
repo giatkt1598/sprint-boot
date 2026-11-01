@@ -23,6 +23,7 @@
     <PackageVersion Include="Volo.Abp.Identity.Domain" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.Identity.EntityFrameworkCore" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.Identity.AspNetCore" Version="$(AbpVersion)" />
+    <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="2.3.0" />
     <PackageVersion Include="Volo.Abp.MailKit" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.OpenIddict.AspNetCore" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.OpenIddict.EntityFrameworkCore" Version="$(AbpVersion)" />

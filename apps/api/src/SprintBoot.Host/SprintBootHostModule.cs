@@ -25,6 +25,7 @@ using Volo.Abp.Caching.StackExchangeRedis;
 using Volo.Abp.DistributedLocking;
 using Volo.Abp.EventBus.RabbitMq;
 using Volo.Abp.Modularity;
+using SprintBoot.Host.Mcp;
 using Volo.Abp.OpenIddict;
 using Volo.Abp.Swashbuckle;
 
@@ -97,7 +98,22 @@ public class SprintBootHostModule : AbpModule
             options.DocInclusionPredicate((_, description) =>
                 description.RelativePath?.StartsWith(ApiRoutes.Prefix, StringComparison.Ordinal) == true);
             options.CustomSchemaIds(SchemaId);
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                Description = "An API token from Account settings.",
+            });
+            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+            {
+                [new OpenApiSecuritySchemeReference("Bearer", document)] = [],
+            });
         });
+
+        // Stateless, so every call runs as a plain request with its token's user.
+        context.Services.AddMcpServer()
+            .WithHttpTransport(options => options.Stateless = true)
+            .WithTools<SprintBootMcpTools>();
     }
 
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
@@ -133,6 +149,7 @@ public class SprintBootHostModule : AbpModule
         });
         app.UseAuthentication();
         app.UseAbpOpenIddictValidation();
+        app.UsePersonalTokenGate();
         app.UseUnitOfWork();
         app.UseAuthorization();
 
@@ -146,6 +163,7 @@ public class SprintBootHostModule : AbpModule
         {
             endpoints.MapHub<BoardHub>(BoardHub.Path);
             endpoints.MapHub<NotificationHub>(NotificationHub.Path);
+            endpoints.MapMcp(PersonalTokenGate.McpPath);
             endpoints.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
             endpoints.MapHealthChecks("/health/ready", new HealthCheckOptions
             {

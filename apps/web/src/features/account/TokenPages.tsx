@@ -1,0 +1,261 @@
+import Link from '@mui/material/Link';
+import Typography from '@mui/material/Typography';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link as RouterLink } from 'react-router';
+import type { components } from '@sprint-boot/api-client';
+import { apiClient, unwrap } from '../../api';
+import { Badge } from '../../components/Badge';
+import { Button } from '../../components/Button';
+import { Checkbox } from '../../components/Checkbox';
+import { CopyField } from '../../components/CopyField';
+import { Dialog, DialogConfirm, DialogFooter } from '../../components/Dialog';
+import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
+import { Table } from '../../components/Table';
+import { SelectField, TextField } from '../../components/TextField';
+import { useToast } from '../../components/ToastHost';
+import { useErrorMessage } from '../../lib/errors';
+import { formatDate, formatRelative } from '../../lib/format';
+
+type PersonalToken = components['schemas']['PersonalTokenDto'];
+type Kind = 0 | 1;
+
+const API: Kind = 0;
+const MCP: Kind = 1;
+const KEY = ['account', 'tokens'];
+const LIFETIMES = ['30', '90', '365', 'never'];
+
+function CreateTokenDialog({ kind, onClose }: { kind: Kind; onClose: () => void }) {
+  const { t } = useTranslation();
+  const toMessage = useErrorMessage();
+  const queryClient = useQueryClient();
+  const [name, setName] = useState('');
+  const [lifetime, setLifetime] = useState('90');
+  const [readOnly, setReadOnly] = useState(false);
+
+  const create = useMutation({
+    mutationFn: () =>
+      unwrap(apiClient.POST('/api/v1/personal-token', {
+        body: { name, kind, readOnly, expiresInDays: lifetime === 'never' ? null : Number(lifetime) },
+      })),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: KEY }),
+  });
+
+  if (create.data) {
+    return (
+      <Dialog
+        open
+        title={t('tokens.createdTitle')}
+        onClose={onClose}
+        footer={<Button onClick={onClose}>{t('common.close')}</Button>}
+      >
+        <Typography role="alert" variant="body2" color="textSecondary">{t('tokens.createdHint')}</Typography>
+        <CopyField label={t('tokens.token')} value={create.data.token ?? ''} copyLabel={t('tokens.copy')} copiedMessage={t('tokens.copied')} />
+      </Dialog>
+    );
+  }
+
+  return (
+    <Dialog
+      open
+      title={t(kind === MCP ? 'tokens.createMcp' : 'tokens.createApi')}
+      onClose={onClose}
+      footer={
+        <DialogFooter
+          confirmLabel={t('tokens.create')}
+          confirmDisabled={!name.trim() || create.isPending}
+          onCancel={onClose}
+          onConfirm={() => create.mutate()}
+        />
+      }
+    >
+      <TextField label={t('account.name')} autoFocus value={name} onChange={(event) => setName(event.target.value)} />
+      <SelectField
+        label={t('tokens.expires')}
+        value={lifetime}
+        onChange={(event) => setLifetime(event.target.value)}
+        options={LIFETIMES.map((value) => ({ value, label: t(`tokens.lifetime.${value}`) }))}
+      />
+      <Checkbox label={t('tokens.readOnly')} checked={readOnly} onChange={(event) => setReadOnly(event.target.checked)} />
+      {create.isError && <Typography role="alert" color="error" variant="body2">{toMessage(create.error)}</Typography>}
+    </Dialog>
+  );
+}
+
+function TokenSection({ kind, tokens, title, hint, docs, createLabel }: {
+  kind: Kind;
+  tokens: PersonalToken[];
+  title: string;
+  hint: string;
+  docs: React.ReactNode;
+  createLabel: string;
+}) {
+  const { t, i18n } = useTranslation();
+  const toast = useToast();
+  const toMessage = useErrorMessage();
+  const queryClient = useQueryClient();
+  const [creating, setCreating] = useState(false);
+  const [revoking, setRevoking] = useState<PersonalToken | null>(null);
+
+  const revoke = useMutation({
+    mutationFn: (token: PersonalToken) => unwrap(apiClient.DELETE('/api/v1/personal-token/{id}', { params: { path: { id: token.id! } } })),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: KEY }),
+    onError: (failure) => toast('error', toMessage(failure)),
+    onSettled: () => setRevoking(null),
+  });
+
+  return (
+    <section className="flex flex-col gap-3">
+      <div className="flex items-start gap-2">
+        <div className="flex-1">
+          <Typography variant="h2">{title}</Typography>
+          <Typography variant="body2" color="textSecondary">{hint}</Typography>
+        </div>
+        {docs}
+        <Button onClick={() => setCreating(true)}>{createLabel}</Button>
+      </div>
+      {tokens.length === 0 ? (
+        <EmptyState title={t('tokens.empty')} />
+      ) : (
+        <Table
+          label={title}
+          rows={tokens}
+          rowKey={(token) => token.id!}
+          columns={[
+            { key: 'name', header: t('account.name'), render: (token) => token.name },
+            { key: 'prefix', header: t('tokens.token'), render: (token) => `${token.prefix}…` },
+            {
+              key: 'access',
+              header: t('tokens.access'),
+              render: (token) => <Badge tone={token.readOnly ? 'neutral' : 'info'}>{t(token.readOnly ? 'tokens.accessRead' : 'tokens.accessWrite')}</Badge>,
+            },
+            { key: 'used', header: t('tokens.lastUsed'), render: (token) => (token.lastUsedAt ? formatRelative(token.lastUsedAt, i18n.language) : t('tokens.neverUsed')) },
+            { key: 'expires', header: t('tokens.expires'), render: (token) => (token.expiresAt ? formatDate(token.expiresAt, i18n.language) : t('tokens.lifetime.never')) },
+            {
+              key: 'revoke',
+              header: <span className="sr-only">{t('tokens.revoke')}</span>,
+              render: (token) => (
+                <Link component="button" variant="body2" aria-label={`${t('tokens.revoke')} ${token.name}`} onClick={() => setRevoking(token)}>
+                  {t('tokens.revoke')}
+                </Link>
+              ),
+            },
+          ]}
+        />
+      )}
+      {creating && <CreateTokenDialog kind={kind} onClose={() => setCreating(false)} />}
+      <DialogConfirm
+        open={revoking !== null}
+        title={t('tokens.revokeTitle', { name: revoking?.name })}
+        description={t('tokens.revokeBody')}
+        confirmLabel={t('tokens.revoke')}
+        onCancel={() => setRevoking(null)}
+        onConfirm={() => revoking && revoke.mutate(revoking)}
+      />
+    </section>
+  );
+}
+
+export function TokensPage() {
+  const { t } = useTranslation();
+  const tokens = useQuery({ queryKey: KEY, queryFn: () => unwrap(apiClient.GET('/api/v1/personal-token')) });
+
+  if (tokens.isPending) {
+    return <LoadingState />;
+  }
+  if (tokens.isError) {
+    return <ErrorState onRetry={() => void tokens.refetch()} />;
+  }
+
+  const ofKind = (kind: Kind) => tokens.data.filter((token) => token.kind === kind);
+
+  return (
+    <div className="flex flex-col gap-8">
+      <Typography variant="h1">{t('tokens.title')}</Typography>
+      <TokenSection
+        kind={API}
+        tokens={ofKind(API)}
+        title={t('tokens.apiTitle')}
+        hint={t('tokens.apiHint')}
+        createLabel={t('tokens.createApi')}
+        docs={<Button kind="secondary" component="a" href="/swagger" {...{ target: '_blank', rel: 'noreferrer' }}>{t('tokens.apiDocs')}</Button>}
+      />
+      <TokenSection
+        kind={MCP}
+        tokens={ofKind(MCP)}
+        title={t('tokens.mcpTitle')}
+        hint={t('tokens.mcpHint')}
+        createLabel={t('tokens.createMcp')}
+        docs={<Button kind="secondary" component={RouterLink} to="/account/mcp-docs">{t('tokens.mcpDocs')}</Button>}
+      />
+    </div>
+  );
+}
+
+const MCP_TOOLS: { name: string; write: boolean }[] = [
+  { name: 'list_spaces', write: false },
+  { name: 'search_issues', write: false },
+  { name: 'get_issue', write: false },
+  { name: 'list_transitions', write: false },
+  { name: 'create_issue', write: true },
+  { name: 'update_issue', write: true },
+  { name: 'transition_issue', write: true },
+  { name: 'add_comment', write: true },
+];
+
+function CodeBlock({ code }: { code: string }) {
+  return <div className="rich-text"><pre><code>{code}</code></pre></div>;
+}
+
+export function McpDocsPage() {
+  const { t } = useTranslation();
+  const url = `${window.location.origin}/mcp`;
+  const claudeCode = `claude mcp add --transport http sprint-boot ${url} \\\n  --header "Authorization: Bearer YOUR_MCP_TOKEN"`;
+  const config = JSON.stringify(
+    { mcpServers: { 'sprint-boot': { type: 'http', url, headers: { Authorization: 'Bearer YOUR_MCP_TOKEN' } } } },
+    null,
+    2,
+  );
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-1">
+        <Link component={RouterLink} to="/account/tokens" variant="body2">{t('mcp.back')}</Link>
+        <Typography variant="h1">{t('mcp.title')}</Typography>
+        <Typography variant="body2" color="textSecondary">{t('mcp.intro')}</Typography>
+      </div>
+      <section className="flex flex-col gap-2">
+        <Typography variant="h2">{t('mcp.connectTitle')}</Typography>
+        <Typography variant="body2" color="textSecondary">{t('mcp.connectHint')}</Typography>
+        <CopyField label={t('mcp.url')} value={url} copyLabel={t('mcp.copyUrl')} copiedMessage={t('mcp.urlCopied')} />
+        <Typography variant="h3" component="h3">Claude Code</Typography>
+        <CodeBlock code={claudeCode} />
+        <Typography variant="h3" component="h3">{t('mcp.otherClients')}</Typography>
+        <CodeBlock code={config} />
+      </section>
+      <section className="flex flex-col gap-2">
+        <Typography variant="h2">{t('mcp.toolsTitle')}</Typography>
+        <Typography variant="body2" color="textSecondary">{t('mcp.toolsHint')}</Typography>
+        <Table
+          label={t('mcp.toolsTitle')}
+          rows={MCP_TOOLS}
+          rowKey={(tool) => tool.name}
+          columns={[
+            { key: 'name', header: t('mcp.tool'), render: (tool) => <code>{tool.name}</code> },
+            { key: 'purpose', header: t('mcp.purpose'), render: (tool) => t(`mcp.tools.${tool.name}`) },
+            {
+              key: 'access',
+              header: t('tokens.access'),
+              render: (tool) => <Badge tone={tool.write ? 'info' : 'neutral'}>{t(tool.write ? 'tokens.accessWrite' : 'tokens.accessRead')}</Badge>,
+            },
+          ]}
+        />
+      </section>
+      <section className="flex flex-col gap-2">
+        <Typography variant="h2">{t('mcp.securityTitle')}</Typography>
+        <Typography variant="body2" color="textSecondary">{t('mcp.securityBody')}</Typography>
+      </section>
+    </div>
+  );
+}

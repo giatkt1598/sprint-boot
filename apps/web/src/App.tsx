@@ -3,6 +3,7 @@ import { RequireAuth } from './auth/AuthProvider';
 import { AuthCallbackPage, AcceptInvitationPage, ForgotPasswordPage, LoginPage, ResetPasswordPage, SessionExpiredPage } from './auth/AuthPages';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastHost } from './components/ToastHost';
+import { McpDocsPage, TokensPage } from './features/account/TokenPages';
 import { AccountIndex, AccountLayout, ProfilePage, SecurityPage } from './features/account/AccountPages';
 import { AdminIndex, AdminLayout, DeletedIssuesPage, ManageUserPage, UsersPage } from './features/admin/AdminPages';
 import { GitConnectionsPage, GitRepositoriesPage } from './features/admin/GitPages';
@@ -46,6 +47,8 @@ export function App() {
               <Route index element={<AccountIndex />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="security" element={<SecurityPage />} />
+              <Route path="tokens" element={<TokensPage />} />
+              <Route path="mcp-docs" element={<McpDocsPage />} />
               <Route path="notifications" element={<NotificationPreferencesPage />} />
             </Route>
             <Route path="admin" element={<AdminLayout />}>

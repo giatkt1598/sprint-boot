@@ -59,6 +59,8 @@ public class IdentityModule : AbpModule
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        context.Services.AddAuthentication().AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, PersonalTokenHandler>(PersonalTokenHandler.SchemeName, null);
+
         // Schemes are added at runtime, so their handlers cannot be registered through AddOpenIdConnect.
         context.Services.AddTransient<OpenIdConnectHandler>();
         context.Services.AddTransient<OAuthHandler<OAuthOptions>>();
@@ -73,13 +75,21 @@ public class IdentityModule : AbpModule
             options.LoginPath = "/login";
 
             options.ForwardDefaultSelector = http =>
-                http.Request.Headers.Authorization.ToString().StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
-                    ? OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme
-                    : null;
+            {
+                var header = http.Request.Headers.Authorization.ToString();
+                if (!header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    return null;
+                }
+
+                return header["Bearer ".Length..].TrimStart().StartsWith(PersonalTokenSecret.Marker, StringComparison.Ordinal)
+                    ? PersonalTokenHandler.SchemeName
+                    : OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
+            };
 
             options.Events.OnRedirectToLogin = http =>
             {
-                if (http.Request.Path.StartsWithSegments("/api"))
+                if (http.Request.Path.StartsWithSegments("/api") || http.Request.Path.StartsWithSegments(PersonalTokenGate.McpPath))
                 {
                     http.Response.StatusCode = StatusCodes.Status401Unauthorized;
                     return Task.CompletedTask;
