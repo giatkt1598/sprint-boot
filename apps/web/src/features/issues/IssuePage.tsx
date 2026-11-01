@@ -1,11 +1,13 @@
+import Box from '@mui/material/Box';
+import ButtonBase from '@mui/material/ButtonBase';
 import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Menu from '@mui/material/Menu';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { DevelopmentPanel } from './DevelopmentPanel';
-import { Ellipsis, Eye, Link2, Plus, Trash2, Upload } from 'lucide-react';
-import { useRef, useState, type ChangeEvent, type ReactNode } from 'react';
+import { ChevronDown, ChevronRight, Ellipsis, Eye, Link2, Plus, Trash2, Upload } from 'lucide-react';
+import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router';
 import { ApiError, apiClient, unwrap } from '../../api';
@@ -18,6 +20,7 @@ import { MenuItem } from '../../components/Menu';
 import { Popover } from '../../components/Popover';
 import { ErrorState, LoadingState } from '../../components/StateViews';
 import { Tabs } from '../../components/Tabs';
+import { TagInput } from '../../components/TagInput';
 import { SelectField, TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { UserPicker } from '../../components/UserPicker';
@@ -32,7 +35,7 @@ import { EpicProgress } from '../agile/EpicProgress';
 import { backlogKey, useBacklog } from '../agile/api';
 import { CreateIssueDialog } from './CreateIssueDialog';
 import { RichTextEditor, RichTextView } from './RichTextEditor';
-import { priorityLevel, statusCategory, uploadAttachment, useEpics, usePriorities, type Issue } from './api';
+import { priorityLevel, statusCategory, uploadAttachment, useEpics, useLabels, usePriorities, type Issue } from './api';
 import { DatePicker } from '../../components/DatePicker';
 
 function DetailRow({ label, children }: { label: string; children: ReactNode }) {
@@ -121,6 +124,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
   const [description, setDescription] = useState(issue.description ?? '');
+  const [descriptionOpen, setDescriptionOpen] = useState(true);
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [addingSubtask, setAddingSubtask] = useState(false);
@@ -132,7 +136,11 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
       unwrap(
         apiClient.PUT('/api/v1/issue/{id}', {
           params: { path: { id: issue.id! } },
-          body: { concurrencyStamp: issue.concurrencyStamp!, fields: fields as never },
+          // From the cache: a second edit can run before this view renders the first result.
+          body: {
+            concurrencyStamp: queryClient.getQueryData<Issue>(['issues', issue.key])?.concurrencyStamp ?? issue.concurrencyStamp!,
+            fields: fields as never,
+          },
         }),
       ),
     onSuccess: (next) => {
@@ -238,7 +246,21 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
       <div className={compact ? 'flex flex-col gap-6' : 'flex min-h-0 flex-1 gap-8'}>
         <div className={compact ? 'flex min-w-0 flex-1 flex-col gap-6' : 'flex min-w-0 flex-1 flex-col gap-6 overflow-y-auto pr-2'}>
           <section className="flex flex-col gap-2">
-            <Typography variant="h3" component="h2">{t('issues.description')}</Typography>
+            {issue.description && !editingDescription ? (
+              <Typography variant="h2" component="h2">
+                <ButtonBase
+                  aria-expanded={descriptionOpen}
+                  onClick={() => setDescriptionOpen(!descriptionOpen)}
+                  className="flex items-center gap-1"
+                  sx={{ font: 'inherit', borderRadius: `${radius.control}px` }}
+                >
+                  {descriptionOpen ? <ChevronDown size={16} strokeWidth={1.5} aria-hidden /> : <ChevronRight size={16} strokeWidth={1.5} aria-hidden />}
+                  {t('issues.description')}
+                </ButtonBase>
+              </Typography>
+            ) : (
+              <Typography variant="h2" component="h2">{t('issues.description')}</Typography>
+            )}
             {editingDescription ? (
               <>
                 <RichTextEditor label={t('issues.description')} initialValue={issue.description ?? ''} people={people} autoFocus onChange={setDescription} />
@@ -248,7 +270,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
                 </div>
               </>
             ) : issue.description ? (
-              <div
+              descriptionOpen && <Box
                 role={canEdit ? 'button' : undefined}
                 tabIndex={canEdit ? 0 : undefined}
                 onClick={(event) => {
@@ -259,9 +281,10 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
                   }
                 }}
                 onKeyDown={(event) => event.key === 'Enter' && canEdit && setEditingDescription(true)}
+                sx={{ padding: 1, borderRadius: `${radius.control}px`, '&:hover': { backgroundColor: sem('bg-hover') } }}
               >
                 <RichTextView html={issue.description} />
-              </div>
+              </Box>
             ) : canEdit ? (
               <div><Button kind="ghost" onClick={() => setEditingDescription(true)}>{t('issues.addDescription')}</Button></div>
             ) : null}
@@ -270,7 +293,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
           {issue.type?.hierarchy !== 0 && (
             <section className="flex flex-col gap-2">
               <div className="flex items-center">
-                <Typography variant="h3" component="h2" className="flex-1">{t(issue.type?.hierarchy === 2 ? 'agile.childIssues' : 'issues.subtasks')}</Typography>
+                <Typography variant="h2" component="h2" className="flex-1">{t(issue.type?.hierarchy === 2 ? 'agile.childIssues' : 'issues.subtasks')}</Typography>
                 {canEdit && issue.type?.hierarchy === 1 && (
                   <Button kind="link" startIcon={<Plus size={16} strokeWidth={1.5} aria-hidden />} onClick={() => setAddingSubtask(true)}>
                     {t('issues.addSubtask')}
@@ -349,7 +372,11 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
                 label={t('issues.priority')}
                 value={issue.priority?.id ?? ''}
                 onChange={(event) => update.mutate({ priority: event.target.value })}
-                options={(priorities.data ?? []).map((item) => ({ value: item.id!, label: item.name! }))}
+                options={(priorities.data ?? []).map((item) => ({
+                  value: item.id!,
+                  label: item.name!,
+                  icon: <PriorityIcon priority={priorityLevel(item)} />,
+                }))}
               />
             ) : (
               <span className="flex items-center gap-2"><PriorityIcon priority={priorityLevel(issue.priority)} />{issue.priority?.name}</span>
@@ -379,20 +406,17 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
             </DetailRow>
           )}
           <DetailRow label={t('issues.labels')}>
-            <EditableText
-              label={t('issues.labels')}
-              value={(issue.labels ?? []).join(', ')}
+            <LabelsField
+              issue={issue}
               disabled={!canEdit}
-              onSave={(text) => update.mutate({ labels: text.split(',').map((item) => item.trim()).filter(Boolean) })}
+              onSave={(labels, onSettled) => update.mutate({ labels }, { onSettled: (_, failure) => onSettled(!failure) })}
             />
           </DetailRow>
           <DetailRow label={t('issues.points')}>
-            <EditableText
-              label={t('issues.points')}
-              type="number"
+            <PointsField
               value={issue.storyPoints?.toString() ?? ''}
               disabled={!canEdit}
-              onSave={(text) => update.mutate({ storyPoints: text ? Number(text) : null })}
+              onSave={(text, onSettled) => update.mutate({ storyPoints: text ? Number(text) : null }, { onSettled })}
             />
           </DetailRow>
           <DetailRow label={t('issues.startDate')}>
@@ -521,30 +545,97 @@ function Person({ name }: { name?: string | null }) {
   );
 }
 
-function EditableText({ label, value, type = 'text', disabled, onSave }: { label: string; value: string; type?: string; disabled: boolean; onSave: (value: string) => void }) {
+const POINTS_PATTERN = /^\d*\.?\d*$/;
+
+function PointsField({ value, disabled, onSave }: { value: string; disabled: boolean; onSave: (value: string, onSettled: () => void) => void }) {
   const { t } = useTranslation();
   const [draft, setDraft] = useState<string | null>(null);
+  const pill = { backgroundColor: sem('bg-subtle'), borderRadius: `${radius.control}px` };
 
   if (disabled) {
-    return <span>{value || t('common.none')}</span>;
+    return value ? <Box component="span" sx={{ ...pill, paddingInline: 1 }}>{value}</Box> : <span>{t('common.none')}</span>;
   }
 
   const commit = () => {
-    if (draft !== null && draft !== value) {
-      onSave(draft);
+    if (draft === null || Number(draft) === Number(value)) {
+      setDraft(null);
+    } else {
+      // The typed number stays until the saved one arrives, so the field never jumps back.
+      onSave(draft, () => setDraft(null));
     }
-    setDraft(null);
   };
 
   return (
     <TextField
       quiet
-      label={label}
-      type={type}
+      label={t('issues.points')}
+      inputMode="decimal"
       value={draft ?? value}
-      onChange={(event) => setDraft(event.target.value)}
+      sx={{ ...pill, width: 72 }}
+      onChange={(event) => POINTS_PATTERN.test(event.target.value) && setDraft(event.target.value)}
       onBlur={commit}
-      onKeyDown={(event) => event.key === 'Enter' && commit()}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') {
+          (event.target as HTMLElement).blur();
+        }
+        if (event.key === 'Escape') {
+          setDraft(null);
+        }
+      }}
+    />
+  );
+}
+
+/** Tags show at once. Saves run one at a time, each from the result of the last. */
+function LabelsField({ issue, disabled, onSave }: { issue: Issue; disabled: boolean; onSave: (labels: string[], onSettled: (saved: boolean) => void) => void }) {
+  const { t } = useTranslation();
+  const known = useLabels(issue.projectId);
+  const stored = issue.labels ?? [];
+  const storedKey = stored.join('\n');
+  const [tags, setTags] = useState(stored);
+  const wanted = useRef(stored);
+  const saving = useRef(false);
+
+  useEffect(() => {
+    if (!saving.current) {
+      const next = storedKey ? storedKey.split('\n') : [];
+      wanted.current = next;
+      setTags(next);
+    }
+  }, [storedKey]);
+
+  if (disabled) {
+    return <span>{stored.join(', ') || t('common.none')}</span>;
+  }
+
+  const push = () => {
+    if (saving.current) {
+      return;
+    }
+    saving.current = true;
+    const sent = wanted.current;
+    onSave(sent, (saved) => {
+      saving.current = false;
+      if (!saved) {
+        wanted.current = stored;
+        setTags(stored);
+      } else if (wanted.current !== sent) {
+        push();
+      }
+    });
+  };
+
+  return (
+    <TagInput
+      hideLabel
+      label={t('issues.labels')}
+      value={tags}
+      options={known.data ?? []}
+      onChange={(next) => {
+        wanted.current = next;
+        setTags(next);
+        push();
+      }}
     />
   );
 }
@@ -597,7 +688,7 @@ function Attachments({ issue, canEdit }: { issue: Issue; canEdit: boolean }) {
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-center">
-        <Typography variant="h3" component="h2" className="flex-1">{t('issues.attachments')}</Typography>
+        <Typography variant="h2" component="h2" className="flex-1">{t('issues.attachments')}</Typography>
         {canEdit && (
           <>
             <input ref={input} type="file" hidden aria-label={t('issues.upload')} onChange={onPick} />

@@ -966,7 +966,34 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await expectAccessible(page);
   await dialog.getByRole('button', { name: 'Create', exact: true }).click();
   await page.waitForURL(`**/issues/${key}-1`);
-  await expect(page.getByLabel('Labels')).toHaveValue('alpha, beta');
+  await expect(page.getByRole('heading', { name: 'Attachments' })).toHaveCSS('font-size', '16px');
+
+  // Sidebar edits: tags save one after another, points hold what was typed.
+  const sidebarLabels = page.getByLabel('Labels');
+  await sidebarLabels.pressSequentially('one,');
+  await sidebarLabels.pressSequentially('two,');
+  await sidebarLabels.pressSequentially('three,');
+  const chips = page.locator('aside .MuiChip-root');
+  await expect(chips).toHaveCount(5);
+  await chips.nth(0).locator('.MuiChip-deleteIcon').click();
+  await expect(chips).toHaveCount(4);
+  const points = page.getByLabel('Points');
+  await points.pressSequentially('3x.5');
+  await expect(points).toHaveValue('3.5');
+  await points.press('Enter');
+  await expect(points).toHaveValue('3.5');
+  await expect(page.getByText('Someone else changed this')).toHaveCount(0);
+  await expect(page.locator('aside').getByRole('combobox', { name: 'Priority' }).locator('svg')).toBeVisible();
+  await page.reload();
+  await expect(chips).toHaveCount(4);
+  await expect(page.getByLabel('Points')).toHaveValue('3.5');
+
+  // Description folds, and its heading is the control.
+  const toggle = page.getByRole('button', { name: 'Description' });
+  await toggle.click();
+  await expect(page.getByText('Select this sentence with the mouse')).toHaveCount(0);
+  await toggle.click();
+  await expect(page.getByText('Select this sentence with the mouse')).toBeVisible();
 
   // Dragging selects text; only a plain click starts editing.
   const drag = async (text: string) => {
