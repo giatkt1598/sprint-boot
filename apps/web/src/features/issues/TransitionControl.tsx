@@ -46,7 +46,11 @@ function useExecute(issue: TransitionIssue, onConflict: () => void, onDone: () =
         }),
       ),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['issues'] });
+      // Attachments, worklogs and the sprint of the open issue did not change, so they are left alone.
+      const untouched = ['attachments', 'worklogs', 'sprint'];
+      await queryClient.invalidateQueries({
+        predicate: ({ queryKey }) => queryKey[0] === 'issues' && !(queryKey[1] === issue.id && untouched.includes(String(queryKey[2]))),
+      });
       onDone();
     },
     onError: (failure) => {

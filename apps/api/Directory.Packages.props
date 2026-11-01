@@ -29,6 +29,7 @@
     <PackageVersion Include="Volo.Abp.PermissionManagement.Domain.Identity" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.PermissionManagement.EntityFrameworkCore" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.SettingManagement.EntityFrameworkCore" Version="$(AbpVersion)" />
+    <PackageVersion Include="Volo.Abp.SettingManagement.Domain" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.Swashbuckle" Version="$(AbpVersion)" />
     <PackageVersion Include="DistributedLock.Redis" Version="1.1.1" />
     <PackageVersion Include="HtmlSanitizer" Version="9.2.1039" />

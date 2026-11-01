@@ -1471,3 +1471,21 @@ test('configure board columns from the board, five fit on a 1920px screen', asyn
   await expect(page.getByTestId('column-Done')).toHaveCount(0);
   await expect(sections).toHaveCount(4);
 });
+
+test('an admin configures SMTP and a test email arrives', async ({ page, request }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/admin/email');
+  await expect(page.getByLabel('SMTP host')).not.toHaveValue('');
+  await expectAccessible(page);
+
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByText('Email settings saved')).toBeVisible();
+
+  const address = `smtp-${suffix().toLowerCase()}@test.local`;
+  await page.getByLabel('Send to').fill(address);
+  await page.getByRole('button', { name: 'Send test' }).click();
+  await expect(page.getByText(`Test email sent to ${address}`)).toBeVisible();
+  await expect
+    .poll(async () => (await (await request.get(`${MAILPIT}/search?query=${encodeURIComponent(`to:${address}`)}`)).json()).messages_count)
+    .toBe(1);
+});

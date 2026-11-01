@@ -196,7 +196,8 @@
     "TransitionLinkedPullRequest": "This issue needs a linked pull request.",
     "WorkflowOutOfScope": "That workflow or status belongs to another scope.",
     "StatusInUse": "A replacement is needed while issues or a published workflow use this status.",
-    "WorkflowMigrationRunning": "Issues are still moving to a new workflow version. Try again when that finishes."
+    "WorkflowMigrationRunning": "Issues are still moving to a new workflow version. Try again when that finishes.",
+    "EmailTestFailed": "The test email could not be sent. Check the settings and try again."
   },
   "auth": {
     "signIn": "Sign in",
@@ -958,5 +959,24 @@
     "restoreBody": "It replaces the current draft. The published version stays live until you publish.",
     "versionSummary": "{{statuses}} statuses, {{transitions}} transitions",
     "reorder": "Reorder {{name}}"
+  },
+  "email": {
+    "title": "Email",
+    "subtitle": "The SMTP server Sprint Boot sends invitations, password resets and notifications through.",
+    "host": "SMTP host",
+    "port": "Port",
+    "enableSsl": "Use SSL",
+    "sslHint": "Turn on for port 465. On other ports the connection upgrades to TLS when the server offers it.",
+    "userName": "User name",
+    "password": "Password",
+    "passwordKept": "Saved. Leave blank to keep it.",
+    "fromAddress": "From address",
+    "fromName": "From name",
+    "saved": "Email settings saved",
+    "testTitle": "Send a test email",
+    "testHint": "Uses the saved settings, so save your changes first.",
+    "testAddress": "Send to",
+    "sendTest": "Send test",
+    "testSent": "Test email sent to {{address}}"
   }
 }

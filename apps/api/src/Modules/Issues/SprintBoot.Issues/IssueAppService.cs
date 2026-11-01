@@ -294,7 +294,7 @@ public partial class IssueAppService(
 
         var list = await activities.GetListAsync(activity => activity.IssueId == id);
         var users = await userDirectory.GetByIdsAsync(list.Select(activity => activity.ActorId));
-        return [.. list.OrderBy(activity => activity.CreatedAt).Select(activity => new IssueActivityDto
+        return [.. list.OrderByDescending(activity => activity.CreatedAt).Select(activity => new IssueActivityDto
         {
             Id = activity.Id,
             Actor = users.GetValueOrDefault(activity.ActorId),

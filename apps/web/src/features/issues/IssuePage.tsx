@@ -177,9 +177,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
       )}
 
       <nav aria-label="breadcrumb" className="flex items-center gap-1" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>
-        <Link component={RouterLink} to="/" color="inherit">{t('spaces.title')}</Link>
-        <span aria-hidden>/</span>
-        <Link component={RouterLink} to={`/spaces/${issue.projectKey}/issues`} color="inherit">{issue.projectName}</Link>
+        <Link component={RouterLink} to={`/spaces/${issue.projectKey}/backlog`} color="inherit">{issue.projectName}</Link>
         <span aria-hidden>/</span>
         {issue.parent && (
           <>

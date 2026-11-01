@@ -196,7 +196,8 @@
     "TransitionLinkedPullRequest": "Issue này cần có pull request liên kết.",
     "WorkflowOutOfScope": "Workflow hoặc status này thuộc phạm vi khác.",
     "StatusInUse": "Cần chọn status thay thế khi issue hoặc workflow đã publish còn dùng status này.",
-    "WorkflowMigrationRunning": "Issue vẫn đang chuyển sang phiên bản workflow mới. Hãy thử lại khi xong."
+    "WorkflowMigrationRunning": "Issue vẫn đang chuyển sang phiên bản workflow mới. Hãy thử lại khi xong.",
+    "EmailTestFailed": "Không gửi được email thử. Hãy kiểm tra cấu hình rồi thử lại."
   },
   "auth": {
     "signIn": "Đăng nhập",
@@ -958,5 +959,24 @@
     "restoreBody": "Bản nháp hiện tại sẽ bị thay thế. Phiên bản đã publish vẫn chạy cho tới khi cậu publish.",
     "versionSummary": "{{statuses}} status, {{transitions}} transition",
     "reorder": "Đổi thứ tự {{name}}"
+  },
+  "email": {
+    "title": "Email",
+    "subtitle": "Máy chủ SMTP Sprint Boot dùng để gửi lời mời, đặt lại mật khẩu và thông báo.",
+    "host": "SMTP host",
+    "port": "Cổng",
+    "enableSsl": "Dùng SSL",
+    "sslHint": "Bật với cổng 465. Ở cổng khác, kết nối tự nâng lên TLS khi máy chủ hỗ trợ.",
+    "userName": "Tên đăng nhập",
+    "password": "Mật khẩu",
+    "passwordKept": "Đã lưu. Để trống để giữ nguyên.",
+    "fromAddress": "Địa chỉ gửi",
+    "fromName": "Tên người gửi",
+    "saved": "Đã lưu cấu hình email",
+    "testTitle": "Gửi email thử",
+    "testHint": "Dùng cấu hình đã lưu, nên hãy lưu thay đổi trước.",
+    "testAddress": "Gửi tới",
+    "sendTest": "Gửi thử",
+    "testSent": "Đã gửi email thử tới {{address}}"
   }
 }

@@ -14,6 +14,7 @@ using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.Identity;
 using Volo.Abp.Identity.AspNetCore;
 using Volo.Abp.MailKit;
+using Volo.Abp.SettingManagement;
 using Volo.Abp.Modularity;
 using Volo.Abp.OpenIddict;
 using Volo.Abp.PermissionManagement.Identity;
@@ -29,6 +30,7 @@ namespace SprintBoot.Identity;
     typeof(AbpIdentityAspNetCoreModule),
     typeof(AbpOpenIddictAspNetCoreModule),
     typeof(AbpMailKitModule),
+    typeof(AbpSettingManagementDomainModule),
     typeof(AbpPermissionManagementDomainIdentityModule))]
 public class IdentityModule : AbpModule
 {

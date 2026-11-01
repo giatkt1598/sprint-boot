@@ -6,6 +6,7 @@ import { ToastHost } from './components/ToastHost';
 import { AccountIndex, AccountLayout, ProfilePage, SecurityPage } from './features/account/AccountPages';
 import { AdminIndex, AdminLayout, DeletedIssuesPage, ManageUserPage, UsersPage } from './features/admin/AdminPages';
 import { GitConnectionsPage, GitRepositoriesPage } from './features/admin/GitPages';
+import { EmailSettingsPage } from './features/admin/EmailSettingsPage';
 import { WorkflowDesignerPage } from './features/workflows/WorkflowDesignerPage';
 import { HomePage } from './features/spaces/HomePage';
 import { InvitationsPage } from './features/admin/InvitationPages';
@@ -55,6 +56,7 @@ export function App() {
               <Route path="invitations" element={<InvitationsPage />} />
               <Route path="sso" element={<SsoPage />} />
               <Route path="sso/:providerId" element={<SsoProviderPage />} />
+              <Route path="email" element={<EmailSettingsPage />} />
               <Route path="workflows" element={<WorkflowsPage />} />
               <Route path="notification-schemes" element={<NotificationSchemesPage />} />
               <Route path="notification-schemes/:schemeId" element={<EditSchemePage />} />
