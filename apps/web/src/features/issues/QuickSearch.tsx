@@ -1,3 +1,4 @@
+import MenuList from '@mui/material/MenuList';
 import Popper from '@mui/material/Popper';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
@@ -73,7 +74,7 @@ export function QuickSearch() {
         }}
       />
       <Popper open={open && debounced.length > 0} anchorEl={anchor.current} placement="bottom-end" style={{ zIndex: 1300 }}>
-        <div
+        <MenuList
           className="mt-1 flex flex-col p-2"
           style={{ width: 400, backgroundColor: sem('bg-surface'), border: `1px solid ${sem('border-default')}`, borderRadius: radius.card, boxShadow: shadow.popover }}
         >
@@ -86,7 +87,7 @@ export function QuickSearch() {
           ))}
           {results.data?.totalCount === 0 && <MenuItem disabled>{t('issues.noResultsHint')}</MenuItem>}
           <MenuItem onClick={seeAll}>{t('issues.seeAll')}</MenuItem>
-        </div>
+        </MenuList>
       </Popper>
     </div>
   );

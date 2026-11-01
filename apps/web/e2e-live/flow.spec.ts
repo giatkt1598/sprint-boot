@@ -63,6 +63,14 @@ test('sign in, run a space and an issue end to end', async ({ page }) => {
   await page.getByRole('button', { name: 'Like' }).click();
   await expect(page.getByRole('button', { name: 'Like' })).toHaveAttribute('aria-pressed', 'true');
 
+  // Mention suggestions.
+  await page.getByLabel('Add a comment').click();
+  await page.getByRole('textbox', { name: 'Add a comment' }).pressSequentially('@adm');
+  await expect(page.getByRole('option').first()).toBeVisible();
+  await page.keyboard.press('Enter');
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.locator('article .mention')).toBeVisible();
+
   // Attachment.
   await page.getByLabel('Upload').setInputFiles({ name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('hello') });
   await expect(page.getByRole('button', { name: /notes\.txt/ })).toBeVisible();
@@ -78,7 +86,6 @@ test('sign in, run a space and an issue end to end', async ({ page }) => {
   await page.getByRole('button', { name: 'Add subtask' }).click();
   await page.getByRole('dialog').getByLabel('Title').fill('Child work');
   await page.getByRole('dialog').getByRole('button', { name: 'Create', exact: true }).click();
-  await page.reload();
   await expect(page.getByRole('link', { name: `${key}-2` })).toBeVisible();
 
   // Ctrl K goes straight to an exact key.
@@ -95,7 +102,7 @@ test('sign in, run a space and an issue end to end', async ({ page }) => {
   await page.goto(`/spaces/${key}/issues`);
   await page.getByRole('button', { name: 'Filter' }).click();
   await page.getByRole('button', { name: 'Issue type' }).click();
-  await page.getByLabel('Subtask').check();
+  await page.getByRole('checkbox', { name: 'Subtask' }).click();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('cell', { name: 'Child work' })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Build đăng nhập screen' })).toHaveCount(0);
@@ -144,6 +151,7 @@ test('member flow: created by admin, forgets password, resets by email, signs ou
   await page.waitForURL('**/login**');
 
   await page.getByRole('link', { name: 'Forgot password?' }).click();
+  await expect(page.getByRole('heading', { name: 'Reset your password' })).toBeVisible();
   await page.getByLabel('Email').fill(email);
   await page.getByRole('button', { name: 'Send reset link' }).click();
   await expect(page.getByRole('status')).toBeVisible();
@@ -186,7 +194,6 @@ test('member flow: created by admin, forgets password, resets by email, signs ou
 });
 
 test('Vietnamese UI has no accessibility regressions', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('i18nextLng', 'vi'));
   await signIn(page, ADMIN.email, ADMIN.password);
   await page.goto('/account/profile');
   await page.getByLabel('Language').click();

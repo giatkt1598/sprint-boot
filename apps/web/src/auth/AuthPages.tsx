@@ -96,12 +96,15 @@ export function LoginPage() {
   );
 }
 
+// The code can be redeemed once, and StrictMode runs effects twice.
+let pendingCallback: ReturnType<typeof userManager.signinCallback> | null = null;
+
 export function AuthCallbackPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    userManager
-      .signinCallback()
+    pendingCallback ??= userManager.signinCallback();
+    pendingCallback
       .then((user) => {
         const state = user?.state as { returnTo?: string } | undefined;
         void navigate(state?.returnTo ?? '/', { replace: true });

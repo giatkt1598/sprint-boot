@@ -1,6 +1,7 @@
 import { Navigate, Route, BrowserRouter, Routes } from 'react-router';
 import { RequireAuth } from './auth/AuthProvider';
 import { AuthCallbackPage, ForgotPasswordPage, LoginPage, ResetPasswordPage, SessionExpiredPage } from './auth/AuthPages';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastHost } from './components/ToastHost';
 import { AccountIndex, AccountLayout, ProfilePage, SecurityPage } from './features/account/AccountPages';
 import { AdminIndex, AdminLayout, DeletedIssuesPage, ManageUserPage, UsersPage } from './features/admin/AdminPages';
@@ -16,6 +17,7 @@ export function App() {
   return (
     <BrowserRouter>
       <ToastHost>
+        <ErrorBoundary>
         <Routes>
           <Route path="login" element={<LoginPage />} />
           <Route path="forgot-password" element={<ForgotPasswordPage />} />
@@ -52,6 +54,7 @@ export function App() {
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
+        </ErrorBoundary>
       </ToastHost>
     </BrowserRouter>
   );

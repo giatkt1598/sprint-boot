@@ -26,7 +26,7 @@ import { useMembers, useSpace } from '../spaces/api';
 import { IssueActivityPanel } from './IssueActivityPanel';
 import { CreateIssueDialog } from './CreateIssueDialog';
 import { RichTextEditor, RichTextView } from './RichTextEditor';
-import { priorityLevel, statusCategory, usePriorities, type Issue } from './api';
+import { priorityLevel, statusCategory, useEpics, usePriorities, type Issue } from './api';
 
 function DetailRow({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -71,6 +71,7 @@ function IssueView({ issue }: { issue: Issue }) {
   const space = useSpace(issue.projectKey ?? undefined);
   const members = useMembers(issue.projectId);
   const priorities = usePriorities();
+  const epics = useEpics(issue.projectId);
   const canEdit = space.data?.permissions?.includes('Issue.Edit') ?? false;
   const people = (members.data ?? []).map((member) => member.user!);
 
@@ -292,7 +293,19 @@ function IssueView({ issue }: { issue: Issue }) {
               <Person name={issue.assignee?.name} />
             )}
           </DetailRow>
-          <DetailRow label={t('issues.reporter')}><Person name={issue.reporter?.name} /></DetailRow>
+          <DetailRow label={t('issues.reporter')}>
+            {canEdit ? (
+              <UserPicker
+                hideLabel
+                label={t('issues.reporter')}
+                options={people}
+                value={issue.reporter ?? null}
+                onChange={(user) => update.mutate({ reporter: user?.id ?? null })}
+              />
+            ) : (
+              <Person name={issue.reporter?.name} />
+            )}
+          </DetailRow>
           <DetailRow label={t('issues.priority')}>
             {canEdit ? (
               <SelectField
@@ -305,9 +318,21 @@ function IssueView({ issue }: { issue: Issue }) {
               <span className="flex items-center gap-2"><PriorityIcon priority={priorityLevel(issue.priority)} />{issue.priority?.name}</span>
             )}
           </DetailRow>
-          {issue.parent && (
+          {issue.type?.hierarchy === 1 && (
             <DetailRow label={t('issues.epic')}>
-              <Link component={RouterLink} to={`/issues/${issue.parent.key}`}>{issue.parent.key} {issue.parent.title}</Link>
+              {canEdit ? (
+                <SelectField
+                  label={t('issues.epic')}
+                  value={issue.parent?.id ?? ''}
+                  displayEmpty
+                  onChange={(event) => update.mutate({ parent: event.target.value || null })}
+                  options={[{ value: '', label: t('common.none') }, ...(epics.data?.items ?? []).map((epic) => ({ value: epic.id!, label: `${epic.key} ${epic.title}` }))]}
+                />
+              ) : issue.parent ? (
+                <Link component={RouterLink} to={`/issues/${issue.parent.key}`}>{issue.parent.key} {issue.parent.title}</Link>
+              ) : (
+                t('common.none')
+              )}
             </DetailRow>
           )}
           <DetailRow label={t('issues.labels')}>
@@ -433,6 +458,12 @@ function Attachments({ issue, canEdit }: { issue: Issue; canEdit: boolean }) {
     }
   };
 
+  const remove = useMutation({
+    mutationFn: (id: string) => unwrap(apiClient.DELETE('/api/v1/attachment/{id}', { params: { path: { id } } })),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['issues', issue.id] }),
+    onError: (failure) => toast('error', toMessage(failure)),
+  });
+
   const download = async (id: string, name: string) => {
     const { response } = await apiClient.GET('/api/v1/attachment/{id}/download', { params: { path: { id } }, parseAs: 'stream' });
     const url = URL.createObjectURL(await response.blob());
@@ -460,17 +491,27 @@ function Attachments({ issue, canEdit }: { issue: Issue; canEdit: boolean }) {
       {list.data?.length === 0 && !uploading && <Typography variant="body2" color="textSecondary">{t('issues.noAttachments')}</Typography>}
       <div className="flex flex-wrap gap-2">
         {(list.data ?? []).map((attachment) => (
-          <button
+          <div
             key={attachment.id}
-            type="button"
-            className="flex flex-col items-start px-3 py-2 text-left"
-            title={formatDateTime(attachment.createdAt, i18n.language)}
-            style={{ width: 240, background: 'none', cursor: 'pointer', border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}
-            onClick={() => void download(attachment.id!, attachment.fileName!)}
+            className="flex items-center gap-1 pr-1"
+            style={{ width: 240, border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}
           >
-            <span className="w-full truncate" style={{ fontSize: font.size.xs }}>{attachment.fileName}</span>
-            <span style={{ fontSize: font.size.xs, color: sem('text-tertiary') }}>{formatSize(attachment.size ?? 0)}</span>
-          </button>
+            <button
+              type="button"
+              className="flex min-w-0 flex-1 flex-col items-start px-3 py-2 text-left"
+              title={formatDateTime(attachment.createdAt, i18n.language)}
+              style={{ background: 'none', border: 0, cursor: 'pointer' }}
+              onClick={() => void download(attachment.id!, attachment.fileName!)}
+            >
+              <span className="w-full truncate" style={{ fontSize: font.size.xs }}>{attachment.fileName}</span>
+              <span style={{ fontSize: font.size.xs, color: sem('text-tertiary') }}>{formatSize(attachment.size ?? 0)}</span>
+            </button>
+            {canEdit && (
+              <IconButton size="small" aria-label={`${t('common.delete')} ${attachment.fileName}`} onClick={() => remove.mutate(attachment.id!)}>
+                <Trash2 size={16} strokeWidth={1.5} aria-hidden />
+              </IconButton>
+            )}
+          </div>
         ))}
       </div>
     </section>

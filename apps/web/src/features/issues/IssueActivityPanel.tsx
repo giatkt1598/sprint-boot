@@ -4,6 +4,7 @@ import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Pencil, Reply, ThumbsUp, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import type { components } from '@sprint-boot/api-client';
 import { useTranslation } from 'react-i18next';
 import { apiClient, unwrap } from '../../api';
 import { useCurrentUser } from '../../auth/AuthProvider';
@@ -200,19 +201,26 @@ function ActivityLine({ item }: { item: Activity }) {
   );
 }
 
-function WorkLogDialog({ issueId, onClose }: { issueId: string; onClose: () => void }) {
+type WorkLog = components['schemas']['WorkLogDto'];
+
+function WorkLogDialog({ issueId, log: existing, onClose }: { issueId: string; log?: WorkLog; onClose: () => void }) {
   const { t } = useTranslation();
   const toMessage = useErrorMessage();
   const queryClient = useQueryClient();
-  const [time, setTime] = useState('');
-  const [workDate, setWorkDate] = useState(new Date().toISOString().slice(0, 10));
-  const [note, setNote] = useState('');
+  const [time, setTime] = useState(existing ? formatMinutes(existing.minutes ?? 0) : '');
+  const [workDate, setWorkDate] = useState(existing?.workDate ?? new Date().toISOString().slice(0, 10));
+  const [note, setNote] = useState(existing?.note ?? '');
   const [touched, setTouched] = useState(false);
   const minutes = parseDuration(time);
   const invalid = !minutes;
 
   const log = useMutation({
-    mutationFn: () => unwrap(apiClient.POST('/api/v1/work-log', { body: { issueId, minutes: minutes!, workDate, note: note || null } })),
+    mutationFn: () =>
+      unwrap<unknown>(
+        existing
+          ? apiClient.PUT('/api/v1/work-log/{id}', { params: { path: { id: existing.id! } }, body: { minutes: minutes!, workDate, note: note || null } })
+          : apiClient.POST('/api/v1/work-log', { body: { issueId, minutes: minutes!, workDate, note: note || null } }),
+      ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['issues', issueId] });
       onClose();
@@ -253,6 +261,7 @@ function WorkLogPanel({ issue, canEdit, canManage }: { issue: Issue; canEdit: bo
   const toast = useToast();
   const queryClient = useQueryClient();
   const [logging, setLogging] = useState(false);
+  const [editingLog, setEditingLog] = useState<WorkLog | null>(null);
 
   const logs = useQuery({
     queryKey: ['issues', issue.id, 'worklogs'],
@@ -280,6 +289,11 @@ function WorkLogPanel({ issue, canEdit, canManage }: { issue: Issue; canEdit: bo
           <span style={{ fontWeight: font.weight.medium }}>{formatMinutes(log.minutes ?? 0)}</span>
           <span style={{ fontSize: font.size.xs, color: sem('text-tertiary') }}>{formatDate(log.workDate, i18n.language)}</span>
           <span className="flex-1 truncate">{log.note}</span>
+          {log.author?.id === me.id && (
+            <IconButton size="small" aria-label={t('common.edit')} onClick={() => setEditingLog(log)}>
+              <Pencil size={16} strokeWidth={1.5} aria-hidden />
+            </IconButton>
+          )}
           {(log.author?.id === me.id || canManage) && (
             <IconButton size="small" aria-label={t('common.delete')} onClick={() => remove.mutate(log.id!)}>
               <Trash2 size={16} strokeWidth={1.5} aria-hidden />
@@ -288,6 +302,7 @@ function WorkLogPanel({ issue, canEdit, canManage }: { issue: Issue; canEdit: bo
         </div>
       ))}
       {logging && <WorkLogDialog issueId={issue.id!} onClose={() => setLogging(false)} />}
+      {editingLog && <WorkLogDialog issueId={issue.id!} log={editingLog} onClose={() => setEditingLog(null)} />}
     </div>
   );
 }

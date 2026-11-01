@@ -38,6 +38,22 @@ export const useLabels = (projectId: string | undefined) =>
     queryFn: () => unwrap(apiClient.GET('/api/v1/issue/labels/{projectId}', { params: { path: { projectId: projectId! } } })),
   });
 
+/** Epics of a project, for the parent pickers. */
+export const useEpics = (projectId: string | undefined) => {
+  const types = useIssueTypes(projectId);
+  const epicTypeId = types.data?.find((type) => type.hierarchy === 2)?.id;
+  return useQuery({
+    queryKey: ['issues', 'epics', projectId],
+    enabled: Boolean(epicTypeId),
+    queryFn: () =>
+      unwrap(
+        apiClient.GET('/api/v1/issue/search', {
+          params: { query: { ProjectId: projectId, TypeIds: [epicTypeId!], MaxResultCount: 100 } },
+        }),
+      ),
+  });
+};
+
 /** Backend status categories mapped to badge categories. */
 export const statusCategory = (status: Status | undefined) =>
   (['todo', 'inProgress', 'done'] as const)[status?.category ?? 0];

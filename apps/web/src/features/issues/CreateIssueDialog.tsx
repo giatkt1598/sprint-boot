@@ -11,8 +11,12 @@ import { useToast } from '../../components/ToastHost';
 import { UserPicker, type PickerUser } from '../../components/UserPicker';
 import { useErrorMessage } from '../../lib/errors';
 import { useMembers, useSpaces } from '../spaces/api';
-import { usePriorities, useIssueTypes } from './api';
+import { useCurrentUser } from '../../auth/AuthProvider';
+import { useEpics, usePriorities, useIssueTypes, type IssueType } from './api';
 import { RichTextEditor } from './RichTextEditor';
+
+const allowedTypesOf = (types: IssueType[] | undefined, parent: unknown) =>
+  (types ?? []).filter((type) => (parent ? type.hierarchy === 0 : type.hierarchy !== 0));
 
 interface CreateIssueDialogProps {
   onClose: () => void;
@@ -38,6 +42,11 @@ export function CreateIssueDialog({ onClose, parent }: CreateIssueDialogProps) {
   const [editorKey, setEditorKey] = useState(0);
   const [priorityId, setPriorityId] = useState('');
   const [assignee, setAssignee] = useState<PickerUser | null>(null);
+  const me = useCurrentUser();
+  const [reporter, setReporter] = useState<PickerUser | null>({ id: me.id, name: me.name });
+  const [epicId, setEpicId] = useState('');
+  const [points, setPoints] = useState('');
+  const [labels, setLabels] = useState('');
   const [startDate, setStartDate] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [another, setAnother] = useState(false);
@@ -45,7 +54,9 @@ export function CreateIssueDialog({ onClose, parent }: CreateIssueDialogProps) {
   const members = useMembers(projectId || undefined);
   const types = useIssueTypes(projectId || undefined);
   const priorities = usePriorities();
-  const allowedTypes = (types.data ?? []).filter((type) => (parent ? type.hierarchy === 0 : type.hierarchy !== 0));
+  const epics = useEpics(projectId || undefined);
+  const allowedTypes = allowedTypesOf(types.data, parent);
+  const canHaveEpic = !parent && allowedTypes.find((type) => type.id === typeId)?.hierarchy === 1;
   const people = (members.data ?? []).map((member) => member.user!);
   const titleError = titleTouched && !title.trim() ? t('errors.IssueTitleRequired') : undefined;
   const dateError = startDate && dueDate && dueDate < startDate ? t('errors.DueDateBeforeStartDate') : undefined;
@@ -74,7 +85,10 @@ export function CreateIssueDialog({ onClose, parent }: CreateIssueDialogProps) {
             description: description || null,
             priorityId: priorityId || null,
             assigneeId: assignee?.id ?? null,
-            parentId: parent?.id ?? null,
+            reporterId: reporter?.id ?? null,
+            parentId: parent?.id ?? (canHaveEpic && epicId ? epicId : null),
+            storyPoints: points ? Number(points) : null,
+            labels: labels.split(',').map((item) => item.trim()).filter(Boolean),
             startDate: startDate || null,
             dueDate: dueDate || null,
           },
@@ -147,6 +161,18 @@ export function CreateIssueDialog({ onClose, parent }: CreateIssueDialogProps) {
           onChange={(event) => setPriorityId(event.target.value)}
           options={(priorities.data ?? []).map((priority) => ({ value: priority.id!, label: priority.name! }))}
         />
+        <UserPicker label={t('issues.reporter')} options={people} value={reporter} onChange={setReporter} />
+        <TextField label={t('issues.points')} type="number" value={points} onChange={(event) => setPoints(event.target.value)} />
+        {canHaveEpic && (
+          <SelectField
+            label={t('issues.epic')}
+            value={epicId}
+            displayEmpty
+            onChange={(event) => setEpicId(event.target.value)}
+            options={[{ value: '', label: t('common.none') }, ...(epics.data?.items ?? []).map((epic) => ({ value: epic.id!, label: `${epic.key} ${epic.title}` }))]}
+          />
+        )}
+        <TextField label={t('issues.labels')} value={labels} onChange={(event) => setLabels(event.target.value)} />
         <TextField label={t('issues.startDate')} type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
         <TextField label={t('issues.dueDate')} type="date" value={dueDate} error={dateError} onChange={(event) => setDueDate(event.target.value)} />
       </div>

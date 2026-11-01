@@ -88,7 +88,11 @@ public class IdentityModule : AbpModule
         }
 
         // APIs authenticate by bearer token, so only the anonymous cookie endpoints validate CSRF, explicitly.
-        Configure<AbpAntiForgeryOptions>(options => options.AutoValidate = false);
+        Configure<AbpAntiForgeryOptions>(options =>
+        {
+            options.AutoValidate = false;
+            options.TokenCookie.SameSite = SameSiteMode.Lax;
+        });
 
         Configure<IdentityOptions>(options =>
         {
