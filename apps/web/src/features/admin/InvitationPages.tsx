@@ -8,6 +8,7 @@ import { apiClient, unwrap } from '../../api';
 import { useCan } from '../../auth/AuthProvider';
 import { Badge, type BadgeTone } from '../../components/Badge';
 import { Button } from '../../components/Button';
+import { Checkbox } from '../../components/Checkbox';
 import { Dialog, DialogConfirm, DialogFooter } from '../../components/Dialog';
 import { Pagination } from '../../components/Pagination';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
@@ -16,7 +17,7 @@ import { SelectField, TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { formatDate } from '../../lib/format';
-import { sem } from '../../theme/tokens';
+import { font, sem } from '../../theme/tokens';
 import { useSpaces } from '../spaces/api';
 
 type Invitation = components['schemas']['InvitationDto'];
@@ -98,9 +99,9 @@ function InviteUserDialog({ onClose }: { onClose: () => void }) {
   const spaces = useSpaces();
   const [email, setEmail] = useState('');
   const [systemRole, setSystemRole] = useState('member');
-  const [spaceId, setSpaceId] = useState('');
-  const [role, setRole] = useState('Member');
+  const [picked, setPicked] = useState<Record<string, string>>({});
   const invite = useInvite(onClose);
+  const projects = Object.entries(picked).map(([projectId, role]) => ({ projectId, role }));
 
   return (
     <Dialog
@@ -110,13 +111,13 @@ function InviteUserDialog({ onClose }: { onClose: () => void }) {
       footer={
         <DialogFooter
           confirmLabel={t('invitations.send')}
-          confirmDisabled={!email || (!canManageUsers && !spaceId) || invite.isPending}
+          confirmDisabled={!email || (!canManageUsers && projects.length === 0) || invite.isPending}
           onCancel={onClose}
           onConfirm={() =>
             invite.mutate({
               email,
               systemRole: canManageUsers ? systemRole : null,
-              projects: spaceId ? [{ projectId: spaceId, role }] : [],
+              projects,
             })
           }
         />
@@ -134,16 +135,30 @@ function InviteUserDialog({ onClose }: { onClose: () => void }) {
           ]}
         />
       )}
-      <SelectField
-        label={t('invitations.space')}
-        value={spaceId}
-        onChange={(event) => setSpaceId(event.target.value)}
-        options={[
-          { value: '', label: t('invitations.noSpace') },
-          ...(spaces.data ?? []).map((space) => ({ value: space.id!, label: space.name ?? '' })),
-        ]}
-      />
-      {spaceId && <SelectField label={t('invitations.spaceRole')} value={role} onChange={(event) => setRole(event.target.value)} options={roles} />}
+      <fieldset className="m-0 flex flex-col gap-1 border-0 p-0">
+        <legend className="p-0" style={{ fontSize: font.size.xs, fontWeight: font.weight.medium, color: sem('text-secondary') }}>{t('invitations.spaces')}</legend>
+        <div className="flex max-h-64 flex-col gap-1 overflow-y-auto">
+          {(spaces.data ?? []).map((space) => (
+            <div key={space.id} className="relative grid grid-cols-[1fr_160px] items-center gap-3">
+              <Checkbox
+                label={space.name ?? ''}
+                checked={space.id! in picked}
+                onChange={(event) => {
+                  setPicked(event.target.checked ? { ...picked, [space.id!]: 'Member' } : Object.fromEntries(Object.entries(picked).filter(([id]) => id !== space.id)));
+                }}
+              />
+              <SelectField
+                quiet
+                label={t('invitations.roleFor', { space: space.name })}
+                disabled={!(space.id! in picked)}
+                value={picked[space.id!] ?? 'Member'}
+                onChange={(event) => setPicked({ ...picked, [space.id!]: event.target.value })}
+                options={roles}
+              />
+            </div>
+          ))}
+        </div>
+      </fieldset>
       <Typography variant="body2" color="textSecondary">{t('invitations.roleCap')}</Typography>
       {invite.isError && <Typography role="alert" color="error" variant="body2">{toMessage(invite.error)}</Typography>}
     </Dialog>

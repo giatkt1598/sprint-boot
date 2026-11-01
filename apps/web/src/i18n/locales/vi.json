@@ -419,7 +419,8 @@
     "moreReactions": "Thêm cảm xúc khác",
     "loadMore": "Tải thêm",
     "searchEpics": "Tìm Epic",
-    "searchPeople": "Tìm người"
+    "searchPeople": "Tìm người",
+    "resizeSidebar": "Đổi độ rộng phần chi tiết issue"
   },
   "workflows": {
     "title": "Workflow",
@@ -597,8 +598,6 @@
     "copied": "Đã sao chép liên kết mới. Liên kết trước không còn dùng được.",
     "memberHint": "Người đã có tài khoản được thêm ngay. Người mới sẽ nhận lời mời qua email.",
     "roleCap": "Bạn chỉ có thể gán vai trò tối đa bằng vai trò của mình.",
-    "space": "Space",
-    "noSpace": "Không chọn Space",
     "spaceRole": "Vai trò trong Space",
     "access": "Quyền truy cập",
     "invitedBy": "Người mời",
@@ -635,7 +634,9 @@
       "queued": "Đang chờ gửi",
       "sent": "Đã gửi",
       "failed": "Gửi lỗi"
-    }
+    },
+    "spaces": "Space",
+    "roleFor": "Space role trong {{space}}"
   },
   "sso": {
     "title": "Đăng nhập một lần",

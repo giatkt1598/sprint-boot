@@ -83,6 +83,69 @@ export function IssueContent({ issueKey, compact }: { issueKey: string | undefin
   return <IssueView key={issue.data.id} issue={issue.data} compact={compact} />;
 }
 
+const SIDEBAR_WIDTH_KEY = 'sprint-boot.issue-sidebar-width';
+const SIDEBAR_MIN = 280;
+const SIDEBAR_MAX = 560;
+const SIDEBAR_STEP = 16;
+
+const clampSidebar = (width: number) => Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, width));
+
+function useSidebarWidth() {
+  const [width, setWidth] = useState(() => clampSidebar(Number(localStorage.getItem(SIDEBAR_WIDTH_KEY)) || 320));
+  const change = (next: number) => {
+    const clamped = clampSidebar(next);
+    setWidth(clamped);
+    localStorage.setItem(SIDEBAR_WIDTH_KEY, String(clamped));
+  };
+  return [width, change] as const;
+}
+
+/** The line only shows on hover or focus; dragging left widens the details. */
+function SidebarResizer({ width, onChange }: { width: number; onChange: (width: number) => void }) {
+  const { t } = useTranslation();
+
+  const startDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    const startX = event.clientX;
+    const startWidth = width;
+    const handle = event.currentTarget;
+    handle.setPointerCapture(event.pointerId);
+    const move = (next: PointerEvent) => onChange(startWidth + startX - next.clientX);
+    const stop = () => {
+      handle.removeEventListener('pointermove', move);
+      handle.removeEventListener('pointerup', stop);
+      handle.removeEventListener('pointercancel', stop);
+    };
+    handle.addEventListener('pointermove', move);
+    handle.addEventListener('pointerup', stop);
+    handle.addEventListener('pointercancel', stop);
+  };
+
+  return (
+    <Box
+      role="separator"
+      aria-orientation="vertical"
+      aria-label={t('issues.resizeSidebar')}
+      aria-valuemin={SIDEBAR_MIN}
+      aria-valuemax={SIDEBAR_MAX}
+      aria-valuenow={width}
+      tabIndex={0}
+      className="flex w-2 shrink-0 cursor-col-resize justify-center"
+      onPointerDown={startDrag}
+      onKeyDown={(event) => {
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+          event.preventDefault();
+          onChange(width + (event.key === 'ArrowLeft' ? SIDEBAR_STEP : -SIDEBAR_STEP));
+        }
+      }}
+      sx={{
+        touchAction: 'none',
+        '&::after': { content: '""', width: '2px', backgroundColor: 'transparent' },
+        '&:hover::after, &:focus-visible::after, &:active::after': { backgroundColor: sem('border-focus') },
+      }}
+    />
+  );
+}
+
 function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
   const { t, i18n } = useTranslation();
   const toMessage = useErrorMessage();
@@ -107,6 +170,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [addingSubtask, setAddingSubtask] = useState(false);
   const [tab, setTab] = useState('comments');
+  const [sidebarWidth, setSidebarWidth] = useSidebarWidth();
   const [fieldError, setFieldError] = useState<string | null>(null);
 
   const update = useMutation({
@@ -232,7 +296,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
       </div>
 
       {/* On the full page the content and the sidebar scroll on their own; the panel has one scroll. */}
-      <div className={compact ? 'flex flex-col gap-6' : 'flex min-h-0 flex-1 gap-8'}>
+      <div className={compact ? 'flex flex-col gap-6' : 'flex min-h-0 flex-1 gap-3'}>
         <div className={compact ? 'flex min-w-0 flex-1 flex-col gap-6' : 'flex min-w-0 flex-1 flex-col gap-6 overflow-y-auto pr-2'}>
           <section className="flex flex-col gap-2">
             {issue.description && !editingDescription ? (
@@ -260,7 +324,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
                   }
                 }}
                 onKeyDown={(event) => event.key === 'Enter' && canEdit && setEditingDescription(true)}
-                sx={{ padding: 1, borderRadius: `${radius.control}px`, '&:hover': { backgroundColor: sem('bg-hover') } }}
+                sx={{ padding: 1, borderRadius: `${radius.control}px`, '&:hover': { backgroundColor: sem('bg-page') } }}
               >
                 <RichTextView html={issue.description} />
               </Box>
@@ -326,7 +390,8 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
           </section>
         </div>
 
-        <div className={compact ? 'flex shrink-0 flex-col gap-4' : 'flex shrink-0 flex-col gap-4 overflow-y-auto'} style={{ width: compact ? '100%' : 320 }}>
+        {!compact && <SidebarResizer width={sidebarWidth} onChange={setSidebarWidth} />}
+        <div className={compact ? 'flex shrink-0 flex-col gap-4' : 'flex shrink-0 flex-col gap-4 overflow-y-auto'} style={{ width: compact ? '100%' : sidebarWidth }}>
         <aside
           className="flex shrink-0 flex-col gap-1 p-3"
           style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}

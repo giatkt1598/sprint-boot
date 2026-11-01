@@ -35,6 +35,13 @@ export function UserPicker({ label, hideLabel, options, value, onChange, onInput
       <Autocomplete
         id={id}
         size="small"
+        // The clear button sits on the arrow, so names get all the width up to it.
+        sx={{
+          '& .MuiAutocomplete-inputRoot.MuiOutlinedInput-root': { paddingRight: '28px' },
+          '& .MuiAutocomplete-endAdornment': { right: '4px' },
+          '& .MuiAutocomplete-clearIndicator': { position: 'absolute', right: 0, zIndex: 1, marginRight: 0, backgroundColor: sem('bg-surface') },
+          '& .MuiAutocomplete-clearIndicator:hover': { backgroundColor: sem('bg-hover') },
+        }}
         options={options}
         value={value}
         getOptionLabel={(option) => option.name ?? ''}

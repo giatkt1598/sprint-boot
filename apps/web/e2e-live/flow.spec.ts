@@ -1188,7 +1188,7 @@ test('create issue form, backlog cards and home follow the last space', async ({
     await expect(page.locator('[contenteditable="true"]')).toBeFocused();
     await page.getByRole('textbox', { name: 'Add a comment' }).pressSequentially(`Extra ${index}`);
     await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByText(`Extra ${index}`)).toBeVisible();
+    await expect(page.getByRole('article').filter({ hasText: `Extra ${index}` })).toBeVisible();
   }
   await page.reload();
   await expect(page.getByRole('article')).toHaveCount(3);
@@ -1392,6 +1392,15 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await expect(page.getByRole('button', { name: `Priority: High ${key}-2` })).toBeVisible();
   await expectAccessible(page);
 
+  // The details widen from the divider, by keyboard as well as by dragging.
+  await page.goto(`/issues/${key}-1`);
+  const divider = page.getByRole('separator', { name: 'Resize issue details' });
+  const width = Number(await divider.getAttribute('aria-valuenow'));
+  await divider.focus();
+  await divider.press('ArrowLeft');
+  await expect(divider).toHaveAttribute('aria-valuenow', String(width + 16));
+  await divider.press('ArrowRight');
+
   // Breadcrumb: change the type, copy the link.
   await page.goto(`/issues/${key}-1`);
   await page.getByRole('button', { name: 'Issue type: Task' }).click();
@@ -1488,4 +1497,24 @@ test('an admin configures SMTP and a test email arrives', async ({ page, request
   await expect
     .poll(async () => (await (await request.get(`${MAILPIT}/search?query=${encodeURIComponent(`to:${address}`)}`)).json()).messages_count)
     .toBe(1);
+});
+
+test('the invite dialog picks several spaces, each with its own role', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/admin/invitations');
+  await page.getByRole('button', { name: 'Invite user' }).click();
+  const dialog = page.getByRole('dialog');
+  const row = dialog.locator('fieldset .grid').first();
+  await expect(row.getByRole('combobox')).toBeDisabled();
+  await row.getByRole('checkbox').check();
+  await expect(row.getByRole('combobox')).toBeEnabled();
+  await expectAccessible(page);
+
+  // Nothing but the list may scroll, and only when it has more to show.
+  const overflow = await dialog.locator('*').evaluateAll((items) =>
+    items.filter((item) => item.scrollHeight > item.clientHeight + 1 && ['auto', 'scroll'].includes(getComputedStyle(item).overflowY)).map((item) => ({ scroll: item.scrollHeight, client: item.clientHeight, cls: item.className })),
+  );
+  const list = dialog.locator('fieldset .grid');
+  const content = (await list.count()) * (((await row.boundingBox())!.height) + 4);
+  expect(overflow.filter((item) => item.scroll > content + 8)).toEqual([]);
 });
