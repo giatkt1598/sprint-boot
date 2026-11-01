@@ -95,7 +95,11 @@ export function IssuesListPage() {
                   </span>
                 ),
               },
-              { key: 'title', header: t('issues.titleField'), render: (issue) => issue.title },
+              {
+                key: 'title',
+                header: t('issues.titleField'),
+                render: (issue) => <Link component={RouterLink} to={`/issues/${issue.key}`} color="inherit">{issue.title}</Link>,
+              },
               { key: 'status', header: t('issues.status'), render: (issue) => <StatusBadge status={statusCategory(issue.status)} label={issue.status?.name} /> },
               { key: 'priority', header: t('issues.priority'), render: (issue) => <PriorityIcon priority={priorityLevel(issue.priority)} /> },
               {
@@ -103,6 +107,13 @@ export function IssuesListPage() {
                 header: t('issues.assignee'),
                 render: (issue) => issue.assignee && <span className="flex items-center gap-2"><Avatar name={issue.assignee.name ?? ''} />{issue.assignee.name}</span>,
               },
+              {
+                key: 'reporter',
+                header: t('issues.reporter'),
+                render: (issue) => issue.reporter && <span className="flex items-center gap-2"><Avatar name={issue.reporter.name ?? ''} />{issue.reporter.name}</span>,
+              },
+              { key: 'sprint', header: t('agile.sprint'), render: (issue) => issue.sprintName },
+              { key: 'created', header: t('issues.createdAt'), render: (issue) => formatDate(issue.createdAt, i18n.language) },
               { key: 'updated', header: t('issues.updatedAt'), render: (issue) => formatDate(issue.updatedAt, i18n.language) },
             ]}
           />

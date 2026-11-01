@@ -44,6 +44,13 @@ public interface IIssueFactsProvider
     Task<IssueFacts?> FindAsync(Guid issueId);
 }
 
+/// <summary>Sprints belong to Agile, which depends on Issues; lists read their names through this.</summary>
+public interface IIssueSprintNames
+{
+    /// <summary>The current sprint of each issue; issues in no sprint are left out.</summary>
+    Task<Dictionary<Guid, string>> GetAsync(IReadOnlyCollection<Guid> issueIds);
+}
+
 public record IssueRef(Guid IssueId, Guid ProjectId);
 
 /// <summary>For background work with no calling user. Keys that match no issue are left out.</summary>

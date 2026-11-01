@@ -67,6 +67,7 @@ function TitleEditor({ label, initial, onSave, onCancel }: { label: string; init
 
   return (
     <TextField
+      quiet
       label={label}
       autoFocus
       value={title}

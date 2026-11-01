@@ -12244,6 +12244,10 @@ export interface components {
             status: components["schemas"]["StatusDto"];
             priority: components["schemas"]["PriorityDto"];
             assignee: components["schemas"]["UserRefDto"];
+            reporter: components["schemas"]["UserRefDto"];
+            sprintName: string | null;
+            /** Format: date-time */
+            createdAt: string;
             /** Format: date-time */
             updatedAt: string;
         };

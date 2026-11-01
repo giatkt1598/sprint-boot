@@ -111,6 +111,12 @@ public class IssueSummaryDto
 
     public required UserRefDto? Assignee { get; set; }
 
+    public required UserRefDto? Reporter { get; set; }
+
+    public required string? SprintName { get; set; }
+
+    public required DateTime CreatedAt { get; set; }
+
     public required DateTime UpdatedAt { get; set; }
 }
 

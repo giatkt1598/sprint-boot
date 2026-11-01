@@ -1012,6 +1012,11 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await expect(page.getByRole('textbox', { name: 'Description' })).toBeVisible();
   await page.getByRole('button', { name: 'Cancel' }).click();
 
+  await page.getByRole('heading', { name: 'Card row' }).click();
+  await expect(page.getByRole('textbox', { name: 'Title' })).toBeVisible();
+  await expect(page.locator('label', { hasText: /^Title$/ })).toHaveClass(/sr-only/);
+  await page.keyboard.press('Escape');
+
   await page.goto(`/spaces/${key}/backlog`);
   await expectAccessible(page);
   await page.getByRole('link', { name: `${key}-1` }).click();
@@ -1024,6 +1029,14 @@ test('create issue form, backlog cards and home follow the last space', async ({
     return { main: getComputedStyle(main).overflowY, mainScrolls: main.scrollHeight > main.clientHeight + 1 };
   });
   expect(scrollers.mainScrolls).toBe(false);
+
+  await page.goto(`/spaces/${key}/issues`);
+  await expect(page.getByRole('columnheader', { name: 'Reporter' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Sprint' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Created' })).toBeVisible();
+  await expectAccessible(page);
+  await page.getByRole('link', { name: 'Card row' }).click();
+  await page.waitForURL(`**/issues/${key}-1`);
 
   await page.goto('/');
   await page.waitForURL(`**/spaces/${key}/backlog`);

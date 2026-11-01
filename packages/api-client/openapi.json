@@ -17378,10 +17378,13 @@
       "IssueSummaryDto": {
         "required": [
           "assignee",
+          "createdAt",
           "id",
           "key",
           "priority",
           "projectKey",
+          "reporter",
+          "sprintName",
           "status",
           "title",
           "type",
@@ -17416,6 +17419,17 @@
           },
           "assignee": {
             "$ref": "#/components/schemas/UserRefDto"
+          },
+          "reporter": {
+            "$ref": "#/components/schemas/UserRefDto"
+          },
+          "sprintName": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
           },
           "updatedAt": {
             "type": "string",

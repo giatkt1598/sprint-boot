@@ -304,4 +304,20 @@ public class AgileTests(ApiFixture fixture)
         (await viewer.Http.PostAsJsonAsync($"/api/v1/board/rank/{issues[0].Id}", new { }, Token)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await viewer.Http.PostAsJsonAsync("/api/v1/sprint", new { projectId = project.Id, name = "X" }, Token)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
+
+    [Fact]
+    public async Task Search_results_name_the_sprint_and_the_reporter()
+    {
+        var client = await fixture.CreateUserClientAsync(Token);
+        var project = await CreateProjectAsync(client);
+        var issues = await CreateIssuesAsync(client, project, 2);
+        var sprint = await (await client.Http.PostAsJsonAsync($"/api/v1/sprint", new { projectId = project.Id, name = "Named sprint" }, Token)).Content.ReadFromJsonAsync<SprintSummaryDto>(Token);
+        (await client.Http.PostAsJsonAsync($"/api/v1/sprint/move-issue/{issues[0].Id}", new { sprintId = sprint!.Id }, Token)).EnsureSuccessStatusCode();
+
+        var found = await client.Http.GetFromJsonAsync<IssueSearchResultDto>($"/api/v1/issue/search?ProjectId={project.Id}", Token);
+
+        found!.Items.Single(item => item.Id == issues[0].Id).SprintName.ShouldBe("Named sprint");
+        found.Items.Single(item => item.Id == issues[1].Id).SprintName.ShouldBeNull();
+        found.Items.ShouldAllBe(item => item.Reporter != null);
+    }
 }

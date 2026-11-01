@@ -16,6 +16,7 @@ public class IssueMapper(
     IStatusLookup statusLookup,
     IProjectAccess projectAccess,
     IUserDirectory userDirectory,
+    IIssueSprintNames sprintNames,
     IIssueFieldPolicy fieldPolicy) : ITransientDependency
 {
     public static IssueTypeDto ToDto(IssueType type) => new()
@@ -40,7 +41,9 @@ public class IssueMapper(
         var typeMap = (await types.GetListAsync(type => typeIds.Contains(type.Id))).ToDictionary(type => type.Id);
         var priorityMap = (await priorities.GetListAsync()).ToDictionary(priority => priority.Id);
         var statusMap = (await statusLookup.GetListAsync()).ToDictionary(status => status.Id);
-        var users = await userDirectory.GetByIdsAsync(list.Where(i => i.AssigneeId.HasValue).Select(i => i.AssigneeId!.Value));
+        var users = await userDirectory.GetByIdsAsync(
+            list.SelectMany(issue => new[] { issue.AssigneeId, issue.ReporterId }).Where(id => id.HasValue).Select(id => id!.Value).Distinct());
+        var sprints = await sprintNames.GetAsync([.. list.Select(issue => issue.Id)]);
 
         return [.. list.Select(issue => new IssueSummaryDto
         {
@@ -52,6 +55,9 @@ public class IssueMapper(
             Status = statusMap[issue.StatusId],
             Priority = ToDto(priorityMap[issue.PriorityId]),
             Assignee = issue.AssigneeId is { } id ? users.GetValueOrDefault(id) : null,
+            Reporter = issue.ReporterId is { } reporterId ? users.GetValueOrDefault(reporterId) : null,
+            SprintName = sprints.GetValueOrDefault(issue.Id),
+            CreatedAt = issue.CreationTime,
             UpdatedAt = issue.LastModificationTime ?? issue.CreationTime,
         })];
     }
