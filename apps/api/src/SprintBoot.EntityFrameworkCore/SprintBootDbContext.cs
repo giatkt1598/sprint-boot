@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SprintBoot.Agile;
+using SprintBoot.Identity;
 using SprintBoot.Issues;
 using SprintBoot.Notifications;
 using SprintBoot.Platform;
@@ -40,6 +41,11 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
     public DbSet<IdentityLinkUser> LinkUsers { get; set; } = null!;
     public DbSet<IdentityUserDelegation> UserDelegations { get; set; } = null!;
     public DbSet<IdentitySession> Sessions { get; set; } = null!;
+
+    public DbSet<ExternalProviderConfig> ExternalProviders { get; set; } = null!;
+    public DbSet<AuthPolicy> AuthPolicies { get; set; } = null!;
+    public DbSet<Invitation> Invitations { get; set; } = null!;
+    public DbSet<InvitationProject> InvitationProjects { get; set; } = null!;
 
     public DbSet<SystemPingReceipt> SystemPingReceipts { get; set; } = null!;
 
@@ -98,6 +104,7 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
         builder.ConfigureEventOutbox();
         builder.ConfigureEventInbox();
         builder.ConfigurePlatform();
+        builder.ConfigureSprintIdentity();
         builder.ConfigureProjects();
         builder.ConfigureWorkflows();
         builder.ConfigureIssues();

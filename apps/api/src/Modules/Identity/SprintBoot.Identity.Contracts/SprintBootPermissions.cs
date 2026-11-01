@@ -7,6 +7,8 @@ public static class SprintBootPermissions
     public const string ManageUsers = Group + ".Users.Manage";
     public const string RestoreIssues = Group + ".Issues.Restore";
     public const string ManageNotificationSchemes = Group + ".NotificationSchemes.Manage";
+    public const string ManageSso = Group + ".Sso.Manage";
+    public const string ManageInvitations = Group + ".Invitations.Manage";
     public const string ManageWorkflows = Group + ".Workflows.Manage";
     public const string AccessAllProjects = Group + ".Projects.AccessAll";
 }

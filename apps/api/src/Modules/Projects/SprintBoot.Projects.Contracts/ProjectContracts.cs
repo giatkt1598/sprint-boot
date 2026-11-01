@@ -154,6 +154,13 @@ public interface IProjectAccess
     Task<int> NextIssueNumberAsync(Guid projectId);
 }
 
+/// <summary>Adds someone without a calling Project Admin, for invitations already authorized.</summary>
+public interface IProjectMembership
+{
+    /// <summary>Does nothing when the project is gone or the user already belongs to it.</summary>
+    Task AddAsync(Guid projectId, Guid userId, string role, Guid actorId);
+}
+
 public record ProjectRef(Guid Id, string Key, string Name, BoardType Type);
 
 /// <summary>Raised in-process inside the creating transaction so modules can add defaults.</summary>

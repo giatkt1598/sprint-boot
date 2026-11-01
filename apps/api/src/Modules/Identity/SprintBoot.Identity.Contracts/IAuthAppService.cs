@@ -9,6 +9,12 @@ public interface IAuthAppService : IApplicationService
 
     Task<CurrentUserDto> GetMeAsync();
 
+    Task<SignInMethodsDto> GetMethodsAsync();
+
+    Task<InvitationPreviewDto> GetInvitationAsync(TokenInput input);
+
+    Task AcceptInvitationAsync(AcceptInvitationInput input);
+
     /// <summary>Always succeeds so the response never reveals whether an email exists.</summary>
     Task ForgotPasswordAsync(ForgotPasswordInput input);
 

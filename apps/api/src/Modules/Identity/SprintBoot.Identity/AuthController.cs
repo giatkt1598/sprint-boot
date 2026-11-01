@@ -28,10 +28,26 @@ public class AuthController(IAuthAppService authAppService, IAbpAntiForgeryManag
         {
             case LoginOutcome.LockedOut:
                 throw new UserFriendlyException("Account is locked", AuthErrors.LockedOut);
+            case LoginOutcome.LocalDisabled:
+                throw new UserFriendlyException("Sign in with single sign-on", AuthErrors.LocalDisabled);
             case LoginOutcome.InvalidCredentials:
                 throw new UserFriendlyException("Invalid email or password", AuthErrors.InvalidCredentials);
         }
     }
+
+    [HttpGet("methods")]
+    [AllowAnonymous]
+    public Task<SignInMethodsDto> GetMethodsAsync() => authAppService.GetMethodsAsync();
+
+    [HttpPost("invitation")]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public Task<InvitationPreviewDto> GetInvitationAsync([FromBody] TokenInput input) => authAppService.GetInvitationAsync(input);
+
+    [HttpPost("accept-invitation")]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public Task AcceptInvitationAsync([FromBody] AcceptInvitationInput input) => authAppService.AcceptInvitationAsync(input);
 
     [HttpGet("me")]
     [Authorize]

@@ -7,5 +7,6 @@ public static class AuthErrors
     public const string ResetLinkInvalid = "SprintBoot:ResetLinkInvalid";
     public const string CurrentPasswordInvalid = "SprintBoot:CurrentPasswordInvalid";
     public const string PasswordRejected = "SprintBoot:PasswordRejected";
+    public const string LocalDisabled = SsoErrors.LocalDisabled;
     public const string CannotLockSelf = "SprintBoot:CannotLockSelf";
 }

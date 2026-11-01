@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -55,6 +57,11 @@ public class IdentityModule : AbpModule
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        // Schemes are added at runtime, so their handlers cannot be registered through AddOpenIdConnect.
+        context.Services.AddTransient<OpenIdConnectHandler>();
+        context.Services.AddTransient<OAuthHandler<OAuthOptions>>();
+        context.Services.AddHttpClient();
+
         context.Services.ConfigureApplicationCookie(options =>
         {
             options.Cookie.Name = "sb.session";

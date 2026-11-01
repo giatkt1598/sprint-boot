@@ -7,6 +7,7 @@ public enum LoginOutcome
     Succeeded,
     InvalidCredentials,
     LockedOut,
+    LocalDisabled,
 }
 
 public class LoginInput

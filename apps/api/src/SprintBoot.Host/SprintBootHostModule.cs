@@ -106,6 +106,19 @@ public class SprintBootHostModule : AbpModule
         app.UseCorrelationId();
         app.UseRouting();
         app.UseAbpSerilogEnrichers();
+        // An IdP callback can reach a replica that has not seen this scheme yet.
+        app.Use(async (http, next) =>
+        {
+            var path = http.Request.Path.Value ?? string.Empty;
+            if (path.StartsWith(ExternalSchemeRegistry.CallbackPrefix, StringComparison.Ordinal))
+            {
+                await http.RequestServices.GetRequiredService<ExternalSchemeRegistry>()
+                    .EnsureAsync(path[ExternalSchemeRegistry.CallbackPrefix.Length..]);
+            }
+
+            await next();
+        });
+
         // Browsers cannot set headers on a WebSocket handshake, so the hub token arrives in the query.
         app.Use((http, next) =>
         {

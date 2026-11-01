@@ -4,6 +4,7 @@ using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Authorization;
 using Volo.Abp.Data;
+using Volo.Abp.Domain.Repositories;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.Identity;
 using Volo.Abp.Identity.AspNetCore;
@@ -17,7 +18,10 @@ namespace SprintBoot.Identity;
 public class AuthAppService(
     AbpSignInManager signInManager,
     IdentityUserManager userManager,
-    IDistributedEventBus eventBus)
+    IDistributedEventBus eventBus,
+    IRepository<AuthPolicy, Guid> policies,
+    IRepository<ExternalProviderConfig, Guid> providers,
+    InvitationAcceptor invitationAcceptor)
     : ApplicationService, IAuthAppService
 {
     public const string LanguageProperty = "Language";
@@ -30,6 +34,13 @@ public class AuthAppService(
         if (user is null)
         {
             return LoginOutcome.InvalidCredentials;
+        }
+
+        var policy = await policies.FirstOrDefaultAsync();
+        if (policy is { LocalLoginEnabled: false } && !await userManager.IsInRoleAsync(user, SystemRoles.Admin))
+        {
+            // Admins keep local sign-in so an IdP outage cannot lock everyone out.
+            return LoginOutcome.LocalDisabled;
         }
 
         var result = await signInManager.PasswordSignInAsync(user, input.Password, isPersistent: false, lockoutOnFailure: true);
@@ -46,6 +57,51 @@ public class AuthAppService(
     {
         var user = await userManager.GetByIdAsync(CurrentUser.GetId());
         return await ToDtoAsync(user);
+    }
+
+    [AllowAnonymous]
+    public async Task<SignInMethodsDto> GetMethodsAsync()
+    {
+        var policy = await policies.FirstOrDefaultAsync();
+        var enabled = await providers.GetListAsync(item => item.IsEnabled);
+        return new SignInMethodsDto
+        {
+            LocalLoginEnabled = policy?.LocalLoginEnabled ?? true,
+            Providers = [.. enabled.OrderBy(item => item.DisplayName).Select(item => new SignInProviderDto { Name = item.Name, DisplayName = item.DisplayName })],
+        };
+    }
+
+    [AllowAnonymous]
+    public async Task<InvitationPreviewDto> GetInvitationAsync(TokenInput input)
+    {
+        var invitation = await invitationAcceptor.GetUsableAsync(input.Token);
+        var methods = await GetMethodsAsync();
+        return new InvitationPreviewDto
+        {
+            Email = invitation.Email,
+            LocalLoginEnabled = methods.LocalLoginEnabled,
+            Providers = methods.Providers,
+        };
+    }
+
+    [AllowAnonymous]
+    public async Task AcceptInvitationAsync(AcceptInvitationInput input)
+    {
+        var invitation = await invitationAcceptor.GetUsableAsync(input.Token);
+        var policy = await policies.FirstOrDefaultAsync();
+        if (policy is { LocalLoginEnabled: false })
+        {
+            throw new UserFriendlyException("Sign in with single sign-on", AuthErrors.LocalDisabled);
+        }
+
+        if (await userManager.FindByEmailAsync(invitation.Email) is not null)
+        {
+            throw new BusinessException(InvitationErrors.Invalid);
+        }
+
+        var user = new IdentityUser(GuidGenerator.Create(), invitation.Email, invitation.Email) { Name = input.Name };
+        ThrowIfRejected(await userManager.CreateAsync(user, input.Password));
+        await invitationAcceptor.ApplyAsync(invitation, user);
     }
 
     [AllowAnonymous]
@@ -119,7 +175,7 @@ public class AuthAppService(
     private async Task<CurrentUserDto> ToDtoAsync(IdentityUser user)
     {
         var permissions = new List<string>();
-        foreach (var permission in new[] { SprintBootPermissions.ManageUsers, SprintBootPermissions.RestoreIssues, SprintBootPermissions.ManageWorkflows, SprintBootPermissions.ManageNotificationSchemes })
+        foreach (var permission in new[] { SprintBootPermissions.ManageUsers, SprintBootPermissions.RestoreIssues, SprintBootPermissions.ManageWorkflows, SprintBootPermissions.ManageNotificationSchemes, SprintBootPermissions.ManageSso, SprintBootPermissions.ManageInvitations })
         {
             if (await AuthorizationService.IsGrantedAsync(permission))
             {

@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using SprintBoot.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
 using Volo.Abp.Data;
@@ -72,7 +74,12 @@ public sealed class ApiFixture : IAsyncLifetime
         }
 
         Factory = new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(builder => builder.UseEnvironment("Testing"));
+            .WithWebHostBuilder(builder =>
+            {
+                builder.UseEnvironment("Testing");
+                builder.ConfigureTestServices(services =>
+                    services.Replace(ServiceDescriptor.Transient<Volo.Abp.Emailing.IEmailSender, ScriptedEmailSender>()));
+            });
         _ = Factory.Server;
 
         using var scope = Factory.Services.CreateScope();
@@ -111,6 +118,17 @@ public sealed class ApiFixture : IAsyncLifetime
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>();
         using var uow = unitOfWork.Begin(requiresNew: true);
         return await users.GeneratePasswordResetTokenAsync(await users.GetByIdAsync(userId));
+    }
+
+    public async Task ExpireInvitationAsync(Guid id)
+    {
+        using var scope = Factory.Services.CreateScope();
+        using var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true);
+        var invitations = scope.ServiceProvider.GetRequiredService<Volo.Abp.Domain.Repositories.IRepository<SprintBoot.Identity.Invitation, Guid>>();
+        var invitation = await invitations.GetAsync(id);
+        invitation.ExpiresAt = DateTime.UtcNow.AddMinutes(-1);
+        await invitations.UpdateAsync(invitation);
+        await uow.CompleteAsync();
     }
 
     public async Task RunNotificationAsync(SprintBoot.Notifications.NotificationEvent item)
