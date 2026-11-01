@@ -12413,7 +12413,7 @@ export interface components {
             branches: components["schemas"]["GitBranchRowDto"][] | null;
             commits: components["schemas"]["GitCommitRowDto"][] | null;
             pullRequests: components["schemas"]["GitPullRequestRowDto"][] | null;
-            latestBuild: components["schemas"]["GitBuildRowDto"];
+            builds: components["schemas"]["GitBuildRowDto"][] | null;
         };
         EpicRowDto: {
             /** Format: uuid */
@@ -12483,6 +12483,8 @@ export interface components {
             name: string | null;
             state: components["schemas"]["GitCiState"];
             url: string | null;
+            /** Format: date-time */
+            updatedAt: string;
         };
         /**
          * Format: int32

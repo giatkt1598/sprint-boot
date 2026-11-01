@@ -1,5 +1,6 @@
 import Autocomplete from '@mui/material/Autocomplete';
-import Link from '@mui/material/Link';
+import ButtonBase from '@mui/material/ButtonBase';
+import MuiLink from '@mui/material/Link';
 import MuiTextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -9,19 +10,24 @@ import { useTranslation } from 'react-i18next';
 import type { components } from '@sprint-boot/api-client';
 import { ApiError, apiClient, unwrap } from '../../api';
 import { Badge, type BadgeTone } from '../../components/Badge';
+import { Button } from '../../components/Button';
+import { CollapseHeading } from '../../components/CollapseHeading';
 import { Dialog, DialogFooter } from '../../components/Dialog';
+import { Tabs } from '../../components/Tabs';
 import { SelectField, TextField } from '../../components/TextField';
 import { useErrorMessage } from '../../lib/errors';
+import { formatDateTime } from '../../lib/format';
 import { font, radius, sem } from '../../theme/tokens';
 
 type Repository = components['schemas']['BranchRepositoryDto'];
+type Development = components['schemas']['DevelopmentDto'];
 
 const POLL_MILLISECONDS = 5000;
 const SHORT_SHA = 7;
 const PULL_STATES: [string, BadgeTone][] = [
-  ['open', 'success'],
-  ['merged', 'info'],
-  ['closed', 'neutral'],
+  ['open', 'info'],
+  ['merged', 'success'],
+  ['closed', 'danger'],
 ];
 const BUILD_STATES: [string, BadgeTone][] = [
   ['pending', 'neutral'],
@@ -29,16 +35,6 @@ const BUILD_STATES: [string, BadgeTone][] = [
   ['success', 'success'],
   ['failure', 'danger'],
 ];
-
-function Row({ icon, children, badge }: { icon: ReactNode; children: ReactNode; badge?: ReactNode }) {
-  return (
-    <div className="flex items-center gap-2" style={{ minHeight: 28 }}>
-      <span className="flex shrink-0" style={{ color: sem('text-secondary') }} aria-hidden>{icon}</span>
-      <div className="min-w-0 flex-1 truncate">{children}</div>
-      {badge}
-    </div>
-  );
-}
 
 function CreateBranchDialog({ issueId, label, onClose }: { issueId: string; label: string; onClose: () => void }) {
   const { t } = useTranslation();
@@ -131,9 +127,110 @@ function CreateBranchDialog({ issueId, label, onClose }: { issueId: string; labe
   );
 }
 
+type DevelopmentTab = 'branches' | 'commits' | 'pullRequests' | 'builds';
+
+function StateBadge({ tone, children }: { tone: BadgeTone; children: ReactNode }) {
+  return <span style={{ textTransform: 'uppercase' }}><Badge tone={tone}>{children}</Badge></span>;
+}
+
+function PullBadge({ state }: { state: number }) {
+  const { t } = useTranslation();
+  const [name, tone] = PULL_STATES[state]!;
+  return <StateBadge tone={tone}>{t(`development.pull.${name}`)}</StateBadge>;
+}
+
+function BuildBadge({ state }: { state: number }) {
+  const { t } = useTranslation();
+  const [name, tone] = BUILD_STATES[state]!;
+  return <StateBadge tone={tone}>{t(`development.build.${name}`)}</StateBadge>;
+}
+
+function SummaryRow({ icon, label, badge, onClick }: { icon: ReactNode; label: string; badge?: ReactNode; onClick: () => void }) {
+  return (
+    <ButtonBase
+      onClick={onClick}
+      className="flex w-full items-center gap-2 px-1"
+      sx={{
+        justifyContent: 'flex-start',
+        minHeight: 32,
+        fontSize: font.size.md,
+        borderRadius: `${radius.control}px`,
+        '&:hover': { backgroundColor: sem('bg-hover') },
+      }}
+    >
+      <span aria-hidden className="flex shrink-0" style={{ color: sem('text-secondary') }}>{icon}</span>
+      <span className="min-w-0 flex-1 truncate text-left">{label}</span>
+      {badge}
+    </ButtonBase>
+  );
+}
+
+function DetailRow({ children, badge }: { children: ReactNode; badge?: ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 py-2" style={{ borderBottom: `1px solid ${sem('border-default')}` }}>
+      <div className="min-w-0 flex-1">{children}</div>
+      {badge}
+    </div>
+  );
+}
+
+function DevelopmentDialog({ data, tab, onTab, onClose }: { data: Development; tab: DevelopmentTab; onTab: (tab: DevelopmentTab) => void; onClose: () => void }) {
+  const { t, i18n } = useTranslation();
+  const external = { target: '_blank', rel: 'noreferrer', variant: 'body2' } as const;
+  const empty = <Typography variant="body2" color="textSecondary" className="py-2">{t('development.noneInTab')}</Typography>;
+  const secondary = (text: string | null | undefined) => <Typography variant="body2" color="textSecondary">{text}</Typography>;
+
+  return (
+    <Dialog open width={640} title={t('development.title')} onClose={onClose} footer={<div className="flex justify-end"><Button kind="ghost" onClick={onClose}>{t('common.close')}</Button></div>}>
+      <Tabs
+        label={t('development.title')}
+        value={tab}
+        onChange={(next) => onTab(next as DevelopmentTab)}
+        items={[
+          { value: 'branches', label: t('development.tabBranch') },
+          { value: 'commits', label: t('development.tabCommit') },
+          { value: 'pullRequests', label: t('development.tabPullRequest') },
+          { value: 'builds', label: t('development.tabBuild') },
+        ]}
+      />
+      <div className="flex max-h-96 flex-col overflow-y-auto">
+        {tab === 'branches' && (data.branches?.length ? data.branches.map((branch) => (
+          <DetailRow key={branch.url}>
+            <MuiLink href={branch.url ?? undefined} {...external}>{branch.name}</MuiLink>
+            {secondary(branch.repositoryName)}
+          </DetailRow>
+        )) : empty)}
+        {tab === 'commits' && (data.commits?.length ? data.commits.map((commit) => (
+          <DetailRow key={commit.sha}>
+            <MuiLink href={commit.url ?? undefined} {...external}>{commit.sha?.slice(0, SHORT_SHA)}</MuiLink>
+            <Typography component="span" variant="body2"> {commit.message?.split('\n')[0]}</Typography>
+            {secondary(`${commit.authorName ?? ''} · ${formatDateTime(commit.committedAt, i18n.language)}`)}
+          </DetailRow>
+        )) : empty)}
+        {tab === 'pullRequests' && (data.pullRequests?.length ? data.pullRequests.map((pull) => (
+          <DetailRow key={pull.url} badge={<PullBadge state={pull.state ?? 0} />}>
+            <MuiLink href={pull.url ?? undefined} {...external}>#{pull.number} {pull.title}</MuiLink>
+          </DetailRow>
+        )) : empty)}
+        {tab === 'builds' && (data.builds?.length ? data.builds.map((build, index) => (
+          <DetailRow key={`${build.name}-${index}`} badge={<BuildBadge state={build.state ?? 0} />}>
+            {build.url ? <MuiLink href={build.url} {...external}>{build.name}</MuiLink> : <Typography variant="body2">{build.name}</Typography>}
+            {secondary(formatDateTime(build.updatedAt, i18n.language))}
+          </DetailRow>
+        )) : empty)}
+      </div>
+    </Dialog>
+  );
+}
+
+/** The state that matters most: open work, then merged, then closed. */
+const headlinePullState = (states: number[]) => [0, 1, 2].find((state) => states.includes(state)) ?? 0;
+
 export function DevelopmentPanel({ issueId, label, canEdit }: { issueId: string; label: string; canEdit: boolean }) {
   const { t } = useTranslation();
   const [creating, setCreating] = useState(false);
+  const [tab, setTab] = useState<DevelopmentTab | null>(null);
+  const [open, setOpen] = useState(true);
 
   const development = useQuery({
     queryKey: ['git', 'development', issueId],
@@ -142,48 +239,43 @@ export function DevelopmentPanel({ issueId, label, canEdit }: { issueId: string;
   });
   const data = development.data;
   const canCreate = canEdit && data?.canCreateBranch;
-  const isEmpty = !data || ((data.branches?.length ?? 0) + (data.commits?.length ?? 0) + (data.pullRequests?.length ?? 0) === 0 && !data.latestBuild);
+  const branches = data?.branches?.length ?? 0;
+  const commits = data?.commits?.length ?? 0;
+  const pulls = data?.pullRequests ?? [];
+  const builds = data?.builds ?? [];
+  const isEmpty = branches + commits + pulls.length + builds.length === 0;
 
   // Nothing to show and nothing to do: no Git connection, or a failed read that must not disturb the page.
   if (isEmpty && !canCreate) {
     return null;
   }
 
-  const build = data?.latestBuild;
-  const [buildState, buildTone] = BUILD_STATES[build?.state ?? 0]!;
-  const external = { target: '_blank', rel: 'noreferrer', variant: 'body2' } as const;
-
   return (
     <section className="flex shrink-0 flex-col gap-1 p-3" style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}>
       <div className="flex items-center justify-between pb-1">
-        <Typography variant="h3" component="h2">{t('development.title')}</Typography>
-        {canCreate && <Link component="button" variant="body2" onClick={() => setCreating(true)}>{t('development.createBranch')}</Link>}
+        <CollapseHeading label={t('development.title')} open={open} onToggle={() => setOpen(!open)} />
+        {canCreate && <MuiLink component="button" variant="body2" onClick={() => setCreating(true)}>{t('development.createBranch')}</MuiLink>}
       </div>
-      {isEmpty && <Typography variant="body2" color="textSecondary">{t('development.empty')}</Typography>}
-      {data?.branches?.map((branch) => (
-        <Row key={branch.url} icon={<GitBranch size={16} strokeWidth={1.5} />}>
-          <Link href={branch.url ?? undefined} title={branch.repositoryName ?? undefined} {...external}>{branch.name}</Link>
-        </Row>
-      ))}
-      {data?.commits?.map((commit) => (
-        <Row key={commit.sha} icon={<GitCommitHorizontal size={16} strokeWidth={1.5} />}>
-          <Link href={commit.url ?? undefined} {...external}>{commit.sha?.slice(0, SHORT_SHA)}</Link>
-          <Typography component="span" variant="body2"> {commit.message?.split('\n')[0]}</Typography>
-        </Row>
-      ))}
-      {data?.pullRequests?.map((pull) => {
-        const [state, tone] = PULL_STATES[pull.state ?? 0]!;
-        return (
-          <Row key={pull.url} icon={<GitPullRequest size={16} strokeWidth={1.5} />} badge={<Badge tone={tone}>{t(`development.pull.${state}`)}</Badge>}>
-            <Link href={pull.url ?? undefined} {...external}>#{pull.number} {pull.title}</Link>
-          </Row>
-        );
-      })}
-      {build && (
-        <Row icon={<Check size={16} strokeWidth={1.5} />} badge={<Badge tone={buildTone}>{t(`development.build.${buildState}`)}</Badge>}>
-          {build.url ? <Link href={build.url} {...external}>{build.name}</Link> : <Typography variant="body2">{build.name}</Typography>}
-        </Row>
+      {open && isEmpty && <Typography variant="body2" color="textSecondary">{t('development.empty')}</Typography>}
+      {open && branches > 0 && <SummaryRow icon={<GitBranch size={16} strokeWidth={1.5} />} label={t('development.branches', { count: branches })} onClick={() => setTab('branches')} />}
+      {open && commits > 0 && <SummaryRow icon={<GitCommitHorizontal size={16} strokeWidth={1.5} />} label={t('development.commits', { count: commits })} onClick={() => setTab('commits')} />}
+      {open && pulls.length > 0 && (
+        <SummaryRow
+          icon={<GitPullRequest size={16} strokeWidth={1.5} />}
+          label={t('development.pullRequests', { count: pulls.length })}
+          badge={<PullBadge state={headlinePullState(pulls.map((pull) => pull.state ?? 0))} />}
+          onClick={() => setTab('pullRequests')}
+        />
       )}
+      {open && builds.length > 0 && (
+        <SummaryRow
+          icon={<Check size={16} strokeWidth={1.5} />}
+          label={t('development.builds', { count: builds.length })}
+          badge={<BuildBadge state={builds[0]!.state ?? 0} />}
+          onClick={() => setTab('builds')}
+        />
+      )}
+      {tab && data && <DevelopmentDialog data={data} tab={tab} onTab={setTab} onClose={() => setTab(null)} />}
       {creating && <CreateBranchDialog issueId={issueId} label={label} onClose={() => setCreating(false)} />}
     </section>
   );

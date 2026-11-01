@@ -316,8 +316,6 @@ public class GitIssueAppService(
     GitEventProcessor processor)
     : ApplicationService, IGitIssueAppService
 {
-    private const int RecentCommits = 10;
-
     public async Task<DevelopmentDto> GetDevelopmentAsync(Guid issueId)
     {
         await projects.CheckAsync(await issues.GetProjectIdAsync(issueId), ProjectPermissions.ViewIssues);
@@ -334,7 +332,7 @@ public class GitIssueAppService(
         var owners = (await connections.GetListAsync(item => connectionIds.Contains(item.Id))).ToDictionary(item => item.Id);
 
         var shas = commitRows.Select(item => item.Sha).Concat(pullRows.Select(item => item.HeadSha)).ToList();
-        var build = (await statuses.GetListAsync(item => shas.Contains(item.Sha))).MaxBy(item => item.UpdatedAt);
+        var builds = await statuses.GetListAsync(item => shas.Contains(item.Sha));
 
         return new DevelopmentDto
         {
@@ -345,7 +343,7 @@ public class GitIssueAppService(
                 RepositoryName = repos[item.RepositoryId].FullName,
                 Url = BranchUrl(owners[repos[item.RepositoryId].ConnectionId], repos[item.RepositoryId], item.Name),
             })],
-            Commits = [.. commitRows.OrderByDescending(item => item.CommittedAt).Take(RecentCommits).Select(item => new GitCommitRowDto
+            Commits = [.. commitRows.OrderByDescending(item => item.CommittedAt).Select(item => new GitCommitRowDto
             {
                 Sha = item.Sha,
                 Message = item.Message,
@@ -360,7 +358,13 @@ public class GitIssueAppService(
                 State = item.State,
                 Url = item.Url,
             })],
-            LatestBuild = build is null ? null : new GitBuildRowDto { Name = build.Name, State = build.State, Url = build.Url },
+            Builds = [.. builds.OrderByDescending(item => item.UpdatedAt).Select(item => new GitBuildRowDto
+            {
+                Name = item.Name,
+                State = item.State,
+                Url = item.Url,
+                UpdatedAt = item.UpdatedAt,
+            })],
         };
     }
 

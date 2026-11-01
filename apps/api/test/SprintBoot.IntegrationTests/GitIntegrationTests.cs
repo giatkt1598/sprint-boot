@@ -214,10 +214,10 @@ public class GitIntegrationTests(ApiFixture fixture)
         await WaitAsync(client, issue, item => item.PullRequests.Any(pull => pull.State == GitPullRequestState.Open));
 
         (await SendAsync(harness, "status", new { sha, context = "ci/build", state = "pending", target_url = "http://ci/1" })).EnsureSuccessStatusCode();
-        await WaitAsync(client, issue, item => item.LatestBuild?.State == GitCiState.Pending);
+        await WaitAsync(client, issue, item => item.Builds.FirstOrDefault()?.State == GitCiState.Pending);
         (await SendAsync(harness, "status", new { sha, context = "ci/build", state = "success", target_url = "http://ci/1" })).EnsureSuccessStatusCode();
-        var built = await WaitAsync(client, issue, item => item.LatestBuild?.State == GitCiState.Success);
-        built.LatestBuild!.Url.ShouldBe("http://ci/1");
+        var built = await WaitAsync(client, issue, item => item.Builds.FirstOrDefault()?.State == GitCiState.Success);
+        built.Builds[0].Url.ShouldBe("http://ci/1");
 
         (await SendAsync(harness, "pull_request", Pull("closed", merged: true))).EnsureSuccessStatusCode();
         await WaitAsync(client, issue, item => item.PullRequests.Single().State == GitPullRequestState.Merged);

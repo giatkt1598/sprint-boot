@@ -7,7 +7,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { DevelopmentPanel } from './DevelopmentPanel';
-import { ChevronDown, ChevronRight, Ellipsis, Eye, Link2, Plus, Trash2, Upload } from 'lucide-react';
+import { Ellipsis, Eye, Link2, Plus, Trash2, Upload } from 'lucide-react';
 import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router';
@@ -15,6 +15,7 @@ import { ApiError, apiClient, unwrap } from '../../api';
 import { useCurrentUser } from '../../auth/AuthProvider';
 import { Avatar, UnassignedAvatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
+import { CollapseHeading } from '../../components/CollapseHeading';
 import { DialogConfirm } from '../../components/Dialog';
 import { IssueTypeIcon, PriorityIcon, type IssueType as IconType } from '../../components/IssueIcons';
 import { MenuItem } from '../../components/Menu';
@@ -101,6 +102,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
   const [editingDescription, setEditingDescription] = useState(false);
   const [description, setDescription] = useState(issue.description ?? '');
   const [descriptionOpen, setDescriptionOpen] = useState(true);
+  const [detailsOpen, setDetailsOpen] = useState(true);
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [addingSubtask, setAddingSubtask] = useState(false);
@@ -236,17 +238,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
         <div className={compact ? 'flex min-w-0 flex-1 flex-col gap-6' : 'flex min-w-0 flex-1 flex-col gap-6 overflow-y-auto pr-2'}>
           <section className="flex flex-col gap-2">
             {issue.description && !editingDescription ? (
-              <Typography variant="h2" component="h2">
-                <ButtonBase
-                  aria-expanded={descriptionOpen}
-                  onClick={() => setDescriptionOpen(!descriptionOpen)}
-                  className="flex items-center gap-1"
-                  sx={{ font: 'inherit', borderRadius: `${radius.control}px` }}
-                >
-                  {descriptionOpen ? <ChevronDown size={16} strokeWidth={1.5} aria-hidden /> : <ChevronRight size={16} strokeWidth={1.5} aria-hidden />}
-                  {t('issues.description')}
-                </ButtonBase>
-              </Typography>
+              <CollapseHeading variant="h2" label={t('issues.description')} open={descriptionOpen} onToggle={() => setDescriptionOpen(!descriptionOpen)} />
             ) : (
               <Typography variant="h2" component="h2">{t('issues.description')}</Typography>
             )}
@@ -341,7 +333,9 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
           className="flex shrink-0 flex-col gap-1 p-3"
           style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}
         >
-          <Typography variant="h3" component="h2" className="pb-1">{t('issues.details')}</Typography>
+          <CollapseHeading label={t('issues.details')} open={detailsOpen} onToggle={() => setDetailsOpen(!detailsOpen)} />
+          {detailsOpen && (
+          <>
           <DetailRow label={t('issues.status')}>
             <TransitionControl issue={issue} people={people} onConflict={() => setConflict(true)} />
           </DetailRow>
@@ -425,12 +419,14 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
             <DatePicker quiet label={t('issues.dueDate')} value={issue.dueDate ?? ''} disabled={!canEdit} onChange={(text) => update.mutate({ dueDate: text || null })} />
           </DetailRow>
           {fieldError && <Typography role="alert" variant="body2" color="error">{fieldError}</Typography>}
+          </>
+          )}
         </aside>
+        <DevelopmentPanel issueId={issue.id!} label={`${issue.key} ${issue.title}`} canEdit={canEdit} />
         <div className="flex shrink-0 flex-col gap-2 px-3" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>
           <span title={formatDateTime(issue.createdAt, i18n.language)}>{t('issues.createdAt')} {formatRelative(issue.createdAt, i18n.language)}</span>
           <span title={formatDateTime(issue.updatedAt, i18n.language)}>{t('issues.updatedAt')} {formatRelative(issue.updatedAt, i18n.language)}</span>
         </div>
-        <DevelopmentPanel issueId={issue.id!} label={`${issue.key} ${issue.title}`} canEdit={canEdit} />
         </div>
       </div>
 

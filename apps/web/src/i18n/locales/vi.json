@@ -755,7 +755,20 @@
       "running": "Đang chạy",
       "success": "Đạt",
       "failure": "Lỗi"
-    }
+    },
+    "branches_one": "{{count}} branch",
+    "branches_other": "{{count}} branch",
+    "commits_one": "{{count}} commit",
+    "commits_other": "{{count}} commit",
+    "pullRequests_one": "{{count}} pull request",
+    "pullRequests_other": "{{count}} pull request",
+    "builds_one": "{{count}} build",
+    "builds_other": "{{count}} build",
+    "tabBranch": "Branch",
+    "tabCommit": "Commit",
+    "tabPullRequest": "Pull request",
+    "tabBuild": "Build",
+    "noneInTab": "Chưa có gì ở đây."
   },
   "editor": {
     "placeholder": "Gõ / để mở lệnh, @ để nhắc tên",

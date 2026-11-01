@@ -236,6 +236,8 @@ public class GitBuildRowDto
     public required GitCiState State { get; set; }
 
     public required string? Url { get; set; }
+
+    public required DateTime UpdatedAt { get; set; }
 }
 
 public class DevelopmentDto
@@ -248,7 +250,8 @@ public class DevelopmentDto
 
     public required List<GitPullRequestRowDto> PullRequests { get; set; }
 
-    public required GitBuildRowDto? LatestBuild { get; set; }
+    /// <summary>Newest first.</summary>
+    public required List<GitBuildRowDto> Builds { get; set; }
 }
 
 public class BranchRepositoryDto

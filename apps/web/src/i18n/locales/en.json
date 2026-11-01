@@ -755,7 +755,20 @@
       "running": "Running",
       "success": "Passed",
       "failure": "Failed"
-    }
+    },
+    "branches_one": "{{count}} branch",
+    "branches_other": "{{count}} branches",
+    "commits_one": "{{count}} commit",
+    "commits_other": "{{count}} commits",
+    "pullRequests_one": "{{count}} pull request",
+    "pullRequests_other": "{{count}} pull requests",
+    "builds_one": "{{count}} build",
+    "builds_other": "{{count}} builds",
+    "tabBranch": "Branch",
+    "tabCommit": "Commit",
+    "tabPullRequest": "Pull request",
+    "tabBuild": "Build",
+    "noneInTab": "Nothing here yet."
   },
   "editor": {
     "placeholder": "Type / for commands, @ to mention",

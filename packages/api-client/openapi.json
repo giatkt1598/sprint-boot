@@ -16935,9 +16935,9 @@
       "DevelopmentDto": {
         "required": [
           "branches",
+          "builds",
           "canCreateBranch",
           "commits",
-          "latestBuild",
           "pullRequests"
         ],
         "type": "object",
@@ -16966,8 +16966,12 @@
             },
             "nullable": true
           },
-          "latestBuild": {
-            "$ref": "#/components/schemas/GitBuildRowDto"
+          "builds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GitBuildRowDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -17196,6 +17200,7 @@
         "required": [
           "name",
           "state",
+          "updatedAt",
           "url"
         ],
         "type": "object",
@@ -17210,6 +17215,10 @@
           "url": {
             "type": "string",
             "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false

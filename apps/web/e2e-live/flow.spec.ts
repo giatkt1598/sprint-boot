@@ -928,7 +928,9 @@ test('a real Gitea connection links commits, pull requests and CI, and creates b
   await page.getByRole('option', { name: new RegExp(repoName) }).click();
   await expectAccessible(page);
   await branchDialog.getByRole('button', { name: 'Create branch' }).click();
+  await page.getByRole('button', { name: '1 branch', exact: true }).click();
   await expect(page.getByRole('link', { name: `feature/${key}-1-connect-the-dong-ho` })).toBeVisible();
+  await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click();
   const branch = `feature/${key}-1-connect-the-dong-ho`;
 
   await page.getByRole('button', { name: 'Create branch' }).click();
@@ -944,15 +946,28 @@ test('a real Gitea connection links commits, pull requests and CI, and creates b
     message: `${key}-1 real commit`,
     branch,
   });
-  await expect(page.getByText(`${key}-1 real commit`)).toBeVisible({ timeout: 15_000 });
+  await page.getByRole('button', { name: 'Development' }).click();
+  await expect(page.getByRole('button', { name: '1 branch', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Development' }).click();
+  await page.getByRole('button', { name: '1 commit', exact: true }).click({ timeout: 15_000 });
+  await expect(page.getByRole('dialog').getByRole('tab', { name: 'Commit' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('dialog').getByText(`${key}-1 real commit`)).toBeVisible();
+  await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click();
 
   await gitea('POST', `/repos/${owner}/pulls`, { title: `${key}-1 ready`, head: branch, base: 'main' });
-  await expect(page.getByRole('link', { name: `#1 ${key}-1 ready` })).toBeVisible({ timeout: 15_000 });
+  const pullRow = page.getByRole('button', { name: /^1 pull request/ });
+  await expect(pullRow).toContainText('Open', { timeout: 15_000 });
+  await pullRow.click();
+  await expect(page.getByRole('link', { name: `#1 ${key}-1 ready` })).toBeVisible();
+  await expectAccessible(page);
+  await page.getByRole('dialog').getByRole('tab', { name: 'Build' }).click();
+  await expect(page.getByRole('dialog').getByText('Nothing here yet.')).toBeVisible();
+  await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click();
 
   await gitea('POST', `/repos/${owner}/statuses/${commit.commit.sha}`, { state: 'pending', context: 'ci/build', target_url: 'http://ci.local/1' });
-  await expect(page.getByText('Pending')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('button', { name: /^1 build/ })).toContainText('Pending', { timeout: 15_000 });
   await gitea('POST', `/repos/${owner}/statuses/${commit.commit.sha}`, { state: 'success', context: 'ci/build', target_url: 'http://ci.local/1' });
-  await expect(page.getByText('Passed')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('button', { name: /^1 build/ })).toContainText('Passed', { timeout: 15_000 });
   await expectAccessible(page);
 });
 
@@ -1040,6 +1055,12 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await page.reload();
   await expect(page.locator('aside [data-tag]')).toHaveCount(4);
   await expect(page.getByLabel('Points')).toHaveValue('3.5');
+
+  // Details folds too.
+  await page.getByRole('button', { name: 'Details' }).click();
+  await expect(page.getByLabel('Points')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Details' }).click();
+  await expect(page.getByLabel('Points')).toBeVisible();
 
   // Description folds, and its heading is the control.
   const toggle = page.getByRole('button', { name: 'Description' });
