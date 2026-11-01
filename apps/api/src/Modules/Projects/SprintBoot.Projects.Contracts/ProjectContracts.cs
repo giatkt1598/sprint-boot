@@ -138,6 +138,8 @@ public interface IProjectAccess
 
     Task<ProjectRef?> FindRefByKeyAsync(string key);
 
+    Task<List<ProjectRef>> GetAllRefsAsync();
+
     Task<Dictionary<Guid, ProjectRef>> GetRefsAsync(IEnumerable<Guid> projectIds);
 
     Task<bool> IsMemberAsync(Guid projectId, Guid userId);
@@ -149,7 +151,7 @@ public interface IProjectAccess
     Task<int> NextIssueNumberAsync(Guid projectId);
 }
 
-public record ProjectRef(Guid Id, string Key, string Name);
+public record ProjectRef(Guid Id, string Key, string Name, BoardType Type);
 
 /// <summary>Raised in-process inside the creating transaction so modules can add defaults.</summary>
 public record ProjectCreatedEvent(Guid ProjectId);

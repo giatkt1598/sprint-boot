@@ -111,6 +111,8 @@ public class Issue : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// <summary>Only the workflow gateway calls this; nothing else writes status.</summary>
     public void MoveTo(Guid statusId) => StatusId = statusId;
 
+    public void SetRank(string rank) => Rank = rank;
+
     public void SetWorkflowVersion(Guid versionId) => WorkflowVersionId = versionId;
 
     public void SetResolution(string? resolution) => Resolution = resolution;

@@ -22,6 +22,8 @@ public interface IIssueAppService : IApplicationService
 
     Task<List<string>> GetLabelsAsync(Guid projectId);
 
+    Task<List<EpicRowDto>> GetEpicsAsync(Guid projectId);
+
     Task<List<IssueActivityDto>> GetActivityAsync(Guid id);
 
     Task<PagedResultDto<DeletedIssueDto>> GetDeletedListAsync(PagedResultRequestDto input);

@@ -1,10 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="..\SprintBoot.Agile.Contracts\SprintBoot.Agile.Contracts.csproj" />
+    <ProjectReference Include="..\..\Identity\SprintBoot.Identity.Contracts\SprintBoot.Identity.Contracts.csproj" />
+    <ProjectReference Include="..\..\Issues\SprintBoot.Issues.Contracts\SprintBoot.Issues.Contracts.csproj" />
+    <ProjectReference Include="..\..\Projects\SprintBoot.Projects.Contracts\SprintBoot.Projects.Contracts.csproj" />
+    <ProjectReference Include="..\..\Workflows\SprintBoot.Workflows.Contracts\SprintBoot.Workflows.Contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Volo.Abp.Ddd.Application" />
     <PackageReference Include="Volo.Abp.Ddd.Domain" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Volo.Abp.EntityFrameworkCore" />
   </ItemGroup>
 </Project>

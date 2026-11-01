@@ -25,6 +25,8 @@ import { font, radius, sem } from '../../theme/tokens';
 import { useMembers, useSpace } from '../spaces/api';
 import { IssueActivityPanel } from './IssueActivityPanel';
 import { TransitionControl } from './TransitionControl';
+import { EpicProgress } from '../agile/EpicProgress';
+import { backlogKey, useBacklog } from '../agile/api';
 import { CreateIssueDialog } from './CreateIssueDialog';
 import { RichTextEditor, RichTextView } from './RichTextEditor';
 import { priorityLevel, statusCategory, uploadAttachment, useEpics, usePriorities, type Issue } from './api';
@@ -48,6 +50,11 @@ const useIssue = (key: string | undefined) =>
 
 export function IssuePage() {
   const { issueKey } = useParams();
+  return <IssueContent issueKey={issueKey} />;
+}
+
+/** Same content on the full page and in the board panel; compact stacks the details. */
+export function IssueContent({ issueKey, compact }: { issueKey: string | undefined; compact?: boolean }) {
   const { t } = useTranslation();
   const issue = useIssue(issueKey);
 
@@ -61,10 +68,10 @@ export function IssuePage() {
       <ErrorState onRetry={() => void issue.refetch()} />
     );
   }
-  return <IssueView key={issue.data.id} issue={issue.data} />;
+  return <IssueView key={issue.data.id} issue={issue.data} compact={compact} />;
 }
 
-function IssueView({ issue }: { issue: Issue }) {
+function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
   const { t, i18n } = useTranslation();
   const toMessage = useErrorMessage();
   const toast = useToast();
@@ -211,7 +218,7 @@ function IssueView({ issue }: { issue: Issue }) {
         </Menu>
       </div>
 
-      <div className="flex items-start gap-8">
+      <div className={compact ? 'flex flex-col gap-6' : 'flex items-start gap-8'}>
         <div className="flex min-w-0 flex-1 flex-col gap-6">
           <section className="flex flex-col gap-2">
             <Typography variant="h3" component="h2">{t('issues.description')}</Typography>
@@ -240,13 +247,14 @@ function IssueView({ issue }: { issue: Issue }) {
           {issue.type?.hierarchy !== 0 && (
             <section className="flex flex-col gap-2">
               <div className="flex items-center">
-                <Typography variant="h3" component="h2" className="flex-1">{t('issues.subtasks')}</Typography>
+                <Typography variant="h3" component="h2" className="flex-1">{t(issue.type?.hierarchy === 2 ? 'agile.childIssues' : 'issues.subtasks')}</Typography>
                 {canEdit && issue.type?.hierarchy === 1 && (
                   <Button kind="link" startIcon={<Plus size={16} strokeWidth={1.5} aria-hidden />} onClick={() => setAddingSubtask(true)}>
                     {t('issues.addSubtask')}
                   </Button>
                 )}
               </div>
+              {issue.type?.hierarchy === 2 && <EpicProgress total={issue.children?.length ?? 0} done={countIn(issue, 2)} inProgress={countIn(issue, 1)} />}
               {(issue.children ?? []).map((child) => (
                 <div key={child.id} className="flex h-9 items-center gap-3 px-2">
                   <IssueTypeIcon type={child.typeIcon as IconType} />
@@ -278,7 +286,7 @@ function IssueView({ issue }: { issue: Issue }) {
 
         <aside
           className="flex shrink-0 flex-col gap-1 p-3"
-          style={{ width: 320, border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}
+          style={{ width: compact ? '100%' : 320, border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}
         >
           <Typography variant="h3" component="h2" className="pb-1">{t('issues.details')}</Typography>
           <DetailRow label={t('issues.status')}>
@@ -323,6 +331,11 @@ function IssueView({ issue }: { issue: Issue }) {
               <span className="flex items-center gap-2"><PriorityIcon priority={priorityLevel(issue.priority)} />{issue.priority?.name}</span>
             )}
           </DetailRow>
+          {issue.type?.hierarchy === 1 && space.data?.type === 0 && (
+            <DetailRow label={t('agile.sprint')}>
+              <SprintField issue={issue} canEdit={canEdit} onError={(failure) => toast('error', toMessage(failure))} />
+            </DetailRow>
+          )}
           {issue.type?.hierarchy === 1 && (
             <DetailRow label={t('issues.epic')}>
               {canEdit ? (
@@ -385,6 +398,52 @@ function IssueView({ issue }: { issue: Issue }) {
         />
       )}
     </div>
+  );
+}
+
+const countIn = (issue: Issue, category: number) =>
+  (issue.children ?? []).filter((child) => child.status?.category === category).length;
+
+function SprintField({ issue, canEdit, onError }: { issue: Issue; canEdit: boolean; onError: (failure: unknown) => void }) {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const backlog = useBacklog(issue.projectId);
+  const current = useQuery({
+    queryKey: ['issues', issue.id, 'sprint'],
+    queryFn: () => unwrap(apiClient.GET('/api/v1/sprint/for-issue/{issueId}', { params: { path: { issueId: issue.id! } } })),
+  });
+
+  const move = useMutation({
+    mutationFn: (sprintId: string) =>
+      unwrap(
+        apiClient.POST('/api/v1/sprint/move-issue/{issueId}', {
+          params: { path: { issueId: issue.id! } },
+          body: { sprintId: sprintId || null },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['issues', issue.id] });
+      await queryClient.invalidateQueries({ queryKey: backlogKey(issue.projectId) });
+    },
+    onError,
+  });
+
+  if (!canEdit) {
+    return <span>{current.data?.name ?? t('common.none')}</span>;
+  }
+
+  const closed = current.data?.state === 2;
+  const options = (backlog.data?.sprints ?? []).map((item) => ({ value: item.sprint!.id!, label: item.sprint!.name! }));
+
+  return (
+    <SelectField
+      quiet
+      label={t('agile.sprint')}
+      value={closed ? '' : (current.data?.id ?? '')}
+      displayEmpty
+      onChange={(event) => move.mutate(event.target.value)}
+      options={[{ value: '', label: t('common.none') }, ...options]}
+    />
   );
 }
 

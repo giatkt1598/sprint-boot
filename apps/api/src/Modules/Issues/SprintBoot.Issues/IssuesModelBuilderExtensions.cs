@@ -30,7 +30,8 @@ public static class IssuesModelBuilderExtensions
             b.ToTable("issues", Schema);
             b.ConfigureByConvention();
             b.Property(issue => issue.Title).HasMaxLength(255).IsRequired();
-            b.Property(issue => issue.Rank).HasMaxLength(64);
+            b.Property(issue => issue.Rank).HasMaxLength(128).UseCollation("C");
+            b.HasIndex(issue => new { issue.ProjectId, issue.Rank });
             b.Property(issue => issue.Resolution).HasMaxLength(64);
             b.Property(issue => issue.StoryPoints).HasPrecision(6, 2);
             b.HasIndex(issue => new { issue.ProjectId, issue.Number }).IsUnique();

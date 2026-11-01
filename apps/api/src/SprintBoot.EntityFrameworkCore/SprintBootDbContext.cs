@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SprintBoot.Agile;
 using SprintBoot.Issues;
 using SprintBoot.Platform;
 using SprintBoot.Projects;
@@ -67,6 +68,13 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
     public DbSet<IssueActivity> IssueActivities { get; set; } = null!;
     public DbSet<WorkLog> WorkLogs { get; set; } = null!;
 
+    public DbSet<Board> Boards { get; set; } = null!;
+    public DbSet<BoardColumn> BoardColumns { get; set; } = null!;
+    public DbSet<BoardColumnStatus> BoardColumnStatuses { get; set; } = null!;
+    public DbSet<BoardEntry> BoardEntries { get; set; } = null!;
+    public DbSet<Sprint> Sprints { get; set; } = null!;
+    public DbSet<SprintIssue> SprintIssues { get; set; } = null!;
+
     public DbSet<OutgoingEventRecord> OutgoingEvents { get; set; } = null!;
     public DbSet<IncomingEventRecord> IncomingEvents { get; set; } = null!;
 
@@ -85,5 +93,6 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
         builder.ConfigureProjects();
         builder.ConfigureWorkflows();
         builder.ConfigureIssues();
+        builder.ConfigureAgile();
     }
 }

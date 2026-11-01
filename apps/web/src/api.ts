@@ -1,10 +1,21 @@
 import { createApiClient } from '@sprint-boot/api-client';
 import { getAccessToken } from './auth/oidc';
 
+const ANONYMOUS_PATHS = [
+  '/api/v1/auth/login',
+  '/api/v1/auth/forgot-password',
+  '/api/v1/auth/validate-reset-token',
+  '/api/v1/auth/reset-password',
+];
+
 export const apiClient = createApiClient();
 
 apiClient.use({
   async onRequest({ request }) {
+    // CSRF tokens for these are issued anonymously, so a leftover session must not change who is calling.
+    if (ANONYMOUS_PATHS.some((path) => new URL(request.url).pathname === path)) {
+      return request;
+    }
     const token = await getAccessToken();
     if (token) {
       request.headers.set('Authorization', `Bearer ${token}`);

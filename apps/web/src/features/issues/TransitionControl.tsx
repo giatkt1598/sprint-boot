@@ -18,17 +18,19 @@ import { useErrorMessage } from '../../lib/errors';
 import { font, radius, sem } from '../../theme/tokens';
 import { statusCategory, type Issue } from './api';
 
-type Available = components['schemas']['AvailableTransitionDto'];
+export type Available = components['schemas']['AvailableTransitionDto'];
 
 const DATE_FIELDS = ['startDate', 'dueDate'];
 
+export type TransitionIssue = Pick<Issue, 'id' | 'key' | 'status' | 'assignee' | 'concurrencyStamp'>;
+
 interface ControlProps {
-  issue: Issue;
+  issue: TransitionIssue;
   people: PickerUser[];
   onConflict: () => void;
 }
 
-function useExecute(issue: Issue, onConflict: () => void, onDone: () => void) {
+function useExecute(issue: TransitionIssue, onConflict: () => void, onDone: () => void) {
   const toMessage = useErrorMessage();
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -56,7 +58,7 @@ function useExecute(issue: Issue, onConflict: () => void, onDone: () => void) {
   });
 }
 
-function TransitionDialog({ issue, transition, people, onConflict, onClose }: ControlProps & { transition: Available; onClose: () => void }) {
+export function TransitionDialog({ issue, transition, people, onConflict, onClose }: ControlProps & { transition: Available; onClose: () => void }) {
   const { t, i18n } = useTranslation();
   const execute = useExecute(issue, onConflict, onClose);
   const [comment, setComment] = useState('');

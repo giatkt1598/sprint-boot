@@ -36,5 +36,7 @@ export async function getAccessToken() {
 
 export async function signOut() {
   await userManager.revokeTokens(['refresh_token']).catch(() => undefined);
-  await userManager.signoutRedirect();
+  const idToken = (await userManager.getUser())?.id_token;
+  await userManager.removeUser();
+  await userManager.signoutRedirect({ id_token_hint: idToken });
 }

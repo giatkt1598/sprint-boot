@@ -5,6 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Modules\Platform\SprintBoot.Platform\SprintBoot.Platform.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Issues\SprintBoot.Issues\SprintBoot.Issues.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />

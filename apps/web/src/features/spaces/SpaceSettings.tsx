@@ -68,6 +68,7 @@ export function SpaceSettingsLayout() {
         <>
           <SettingsMenuItem to="general" label={t('spaces.general')} />
           <SettingsMenuItem to="members" label={t('spaces.members')} />
+          <SettingsMenuItem to="board" label={t('agile.board')} />
           <SettingsMenuItem to="workflows" label={t('workflows.title')} />
         </>
       }

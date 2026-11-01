@@ -29,6 +29,7 @@ public partial class IssueAppService(
     IProjectAccess projectAccess,
     IIssueFieldPolicy fieldPolicy,
     IWorkflowRuntime workflowRuntime,
+    IStatusLookup statusLookup,
     IUserDirectory userDirectory,
     ICurrentActor currentActor,
     IClock clock,
@@ -87,6 +88,7 @@ public partial class IssueAppService(
         };
         var (html, text) = sanitizer.Clean(input.Description);
         issue.SetDescription(html, text);
+        issue.SetRank(RankMath.Between(await GetLastRankAsync(input.ProjectId), null));
 
         await issues.InsertAsync(issue, autoSave: true);
         await SetLabelsAsync(issue, input.Labels ?? []);
@@ -225,6 +227,38 @@ public partial class IssueAppService(
         await projectAccess.CheckAsync(projectId, ProjectPermissions.ViewIssues);
         var list = await labels.GetListAsync(label => label.ProjectId == projectId);
         return [.. list.Select(label => label.Name).Order()];
+    }
+
+    public async Task<List<EpicRowDto>> GetEpicsAsync(Guid projectId)
+    {
+        await projectAccess.CheckAsync(projectId, ProjectPermissions.ViewIssues);
+
+        var epicTypes = await types.GetListAsync(type => type.ProjectId == projectId && type.Hierarchy == IssueHierarchy.Epic);
+        var epicTypeIds = epicTypes.Select(type => type.Id).ToList();
+        var epics = await issues.GetListAsync(issue => issue.ProjectId == projectId && epicTypeIds.Contains(issue.TypeId));
+        var epicIds = epics.Select(epic => epic.Id).ToList();
+        var children = await issues.GetListAsync(issue => issue.ParentId != null && epicIds.Contains(issue.ParentId.Value));
+
+        var project = await projectAccess.GetRefAsync(projectId);
+        var statuses = (await statusLookup.GetListAsync()).ToDictionary(status => status.Id);
+        var leads = await userDirectory.GetByIdsAsync(epics.Where(epic => epic.AssigneeId.HasValue).Select(epic => epic.AssigneeId!.Value));
+
+        return [.. epics.OrderBy(epic => epic.Number).Select(epic =>
+        {
+            var own = children.Where(child => child.ParentId == epic.Id).ToList();
+            return new EpicRowDto
+            {
+                Id = epic.Id,
+                Key = $"{project.Key}-{epic.Number}",
+                Title = epic.Title,
+                Status = statuses[epic.StatusId],
+                DueDate = epic.DueDate,
+                Lead = epic.AssigneeId is { } lead ? leads.GetValueOrDefault(lead) : null,
+                Total = own.Count,
+                Done = own.Count(child => statuses[child.StatusId].Category == StatusCategory.Done),
+                InProgress = own.Count(child => statuses[child.StatusId].Category == StatusCategory.InProgress),
+            };
+        })];
     }
 
     public async Task<List<IssueActivityDto>> GetActivityAsync(Guid id)
@@ -370,6 +404,12 @@ public partial class IssueAppService(
         return project is null
             ? null
             : await issues.FirstOrDefaultAsync(issue => issue.ProjectId == project.Id && issue.Number == number);
+    }
+
+    private async Task<string?> GetLastRankAsync(Guid projectId)
+    {
+        var query = await issues.GetQueryableAsync();
+        return await query.Where(issue => issue.ProjectId == projectId).MaxAsync(issue => (string?)issue.Rank);
     }
 
     private async Task<Guid> GetDefaultPriorityIdAsync()

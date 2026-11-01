@@ -6,9 +6,13 @@ import { ToastHost } from './components/ToastHost';
 import { AccountIndex, AccountLayout, ProfilePage, SecurityPage } from './features/account/AccountPages';
 import { AdminIndex, AdminLayout, DeletedIssuesPage, ManageUserPage, UsersPage } from './features/admin/AdminPages';
 import { StatusesPage, WorkflowsPage } from './features/admin/WorkflowPages';
+import { BacklogPage } from './features/agile/BacklogPage';
+import { BoardPage } from './features/agile/BoardPage';
+import { EpicsPage } from './features/agile/EpicsPage';
 import { IssuePage } from './features/issues/IssuePage';
 import { IssuesListPage } from './features/issues/IssuesListPage';
 import { SpaceGeneralPage, SpaceMembersPage, SpaceSettingsIndex, SpaceSettingsLayout } from './features/spaces/SpaceSettings';
+import { SpaceBoardPage } from './features/spaces/SpaceBoardPage';
 import { SpacesPage } from './features/spaces/SpacesPage';
 import { SpaceWorkflowsPage } from './features/spaces/SpaceWorkflowsPage';
 import { AppShell, BareShell } from './layout/AppShell';
@@ -46,6 +50,7 @@ export function App() {
               <Route index element={<SpaceSettingsIndex />} />
               <Route path="general" element={<SpaceGeneralPage />} />
               <Route path="members" element={<SpaceMembersPage />} />
+              <Route path="board" element={<SpaceBoardPage />} />
               <Route path="workflows" element={<SpaceWorkflowsPage />} />
             </Route>
           </Route>
@@ -53,6 +58,9 @@ export function App() {
           <Route element={<RequireAuth><AppShell /></RequireAuth>}>
             <Route index element={<Navigate to="spaces" replace />} />
             <Route path="spaces" element={<SpacesPage />} />
+            <Route path="spaces/:spaceKey/backlog" element={<BacklogPage />} />
+            <Route path="spaces/:spaceKey/board" element={<BoardPage />} />
+            <Route path="spaces/:spaceKey/epics" element={<EpicsPage />} />
             <Route path="spaces/:spaceKey/issues" element={<IssuesListPage />} />
             <Route path="issues/:issueKey" element={<IssuePage />} />
             <Route path="search" element={<IssuesListPage />} />

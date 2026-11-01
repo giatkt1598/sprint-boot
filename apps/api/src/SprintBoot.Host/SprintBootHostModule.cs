@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.OpenApi;
+using SprintBoot.Agile;
 using SprintBoot.EntityFrameworkCore;
 using SprintBoot.Identity;
 using SprintBoot.Issues;
@@ -48,6 +49,7 @@ public class SprintBootHostModule : AbpModule
         typeof(ProjectsModule).Assembly,
         typeof(WorkflowsModule).Assembly,
         typeof(IssuesModule).Assembly,
+        typeof(AgileModule).Assembly,
     ];
 
     public override void ConfigureServices(ServiceConfigurationContext context)
@@ -78,6 +80,8 @@ public class SprintBootHostModule : AbpModule
         context.Services.AddSingleton<IDistributedLockProvider>(
             _ => new RedisDistributedSynchronizationProvider(redis.GetDatabase()));
 
+        context.Services.AddSignalR().AddStackExchangeRedis(configuration["Redis:Configuration"]!);
+
         context.Services.AddHealthChecks()
             .AddCheck<DatabaseHealthCheck>("postgres", tags: [ReadyTag])
             .AddCheck<RedisHealthCheck>("redis", tags: [ReadyTag])
@@ -100,6 +104,16 @@ public class SprintBootHostModule : AbpModule
         app.UseCorrelationId();
         app.UseRouting();
         app.UseAbpSerilogEnrichers();
+        // Browsers cannot set headers on a WebSocket handshake, so the hub token arrives in the query.
+        app.Use((http, next) =>
+        {
+            if (http.Request.Path.StartsWithSegments("/hubs") && http.Request.Query.TryGetValue("access_token", out var token))
+            {
+                http.Request.Headers.Authorization = $"Bearer {token}";
+            }
+
+            return next();
+        });
         app.UseAuthentication();
         app.UseAbpOpenIddictValidation();
         app.UseUnitOfWork();
@@ -113,6 +127,7 @@ public class SprintBootHostModule : AbpModule
 
         app.UseConfiguredEndpoints(endpoints =>
         {
+            endpoints.MapHub<BoardHub>(BoardHub.Path);
             endpoints.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
             endpoints.MapHealthChecks("/health/ready", new HealthCheckOptions
             {

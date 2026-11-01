@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SprintBoot.Platform;
+using Volo.Abp;
 using Volo.Abp.Application;
+using Volo.Abp.BackgroundWorkers;
 using Volo.Abp.BlobStoring;
 using Volo.Abp.BlobStoring.Aws;
 using Volo.Abp.BlobStoring.FileSystem;
@@ -17,9 +19,13 @@ namespace SprintBoot.Issues;
     typeof(AbpDddDomainModule),
     typeof(AbpEntityFrameworkCoreModule),
     typeof(AbpBlobStoringFileSystemModule),
-    typeof(AbpBlobStoringAwsModule))]
+    typeof(AbpBlobStoringAwsModule),
+    typeof(AbpBackgroundWorkersModule))]
 public class IssuesModule : AbpModule
 {
+    public override Task OnApplicationInitializationAsync(ApplicationInitializationContext context) =>
+        context.AddBackgroundWorkerAsync<RankRebalanceWorker>();
+
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         var storage = context.Services.GetConfiguration().GetSection(StorageOptions.SectionName).Get<StorageOptions>()

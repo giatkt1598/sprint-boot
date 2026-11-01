@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SprintBoot.EntityFrameworkCore;
@@ -111,6 +112,25 @@ public sealed class ApiFixture : IAsyncLifetime
         using var uow = unitOfWork.Begin(requiresNew: true);
         return await users.GeneratePasswordResetTokenAsync(await users.GetByIdAsync(userId));
     }
+
+    public async Task<Dictionary<Guid, string>> GetRanksAsync(Guid projectId)
+    {
+        using var scope = Factory.Services.CreateScope();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>();
+        using var uow = unitOfWork.Begin(requiresNew: true);
+        var issues = scope.ServiceProvider.GetRequiredService<Volo.Abp.Domain.Repositories.IRepository<SprintBoot.Issues.Issue, Guid>>();
+        return (await issues.GetListAsync(issue => issue.ProjectId == projectId)).ToDictionary(issue => issue.Id, issue => issue.Rank);
+    }
+
+    public HubConnection CreateBoardConnection(AuthClient client) =>
+        new HubConnectionBuilder()
+            .WithUrl(new Uri(Factory.Server.BaseAddress, "hubs/board"), options =>
+            {
+                options.HttpMessageHandlerFactory = _ => Factory.Server.CreateHandler();
+                options.AccessTokenProvider = () => Task.FromResult(client.AccessToken);
+                options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.LongPolling;
+            })
+            .Build();
 
     public async Task<Guid> FindTransitionIdAsync(Guid projectId, Guid typeId, string name)
     {

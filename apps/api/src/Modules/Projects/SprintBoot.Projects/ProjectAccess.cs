@@ -85,6 +85,8 @@ public class ProjectAccess(
         return project is null ? null : ToRef(project);
     }
 
+    public async Task<List<ProjectRef>> GetAllRefsAsync() => [.. (await projects.GetListAsync()).Select(ToRef)];
+
     public async Task<Dictionary<Guid, ProjectRef>> GetRefsAsync(IEnumerable<Guid> projectIds)
     {
         var ids = projectIds.Distinct().ToList();
@@ -122,5 +124,5 @@ public class ProjectAccess(
 
     private Task<bool> IsSystemAdminAsync() => permissionChecker.IsGrantedAsync(SprintBootPermissions.AccessAllProjects);
 
-    private static ProjectRef ToRef(Project project) => new(project.Id, project.Key, project.Name);
+    private static ProjectRef ToRef(Project project) => new(project.Id, project.Key, project.Name, project.DefaultBoardType);
 }

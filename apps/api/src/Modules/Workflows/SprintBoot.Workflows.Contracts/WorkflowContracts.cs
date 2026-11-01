@@ -196,6 +196,9 @@ public record InitialState(Guid StatusId, Guid VersionId);
 public interface IWorkflowRuntime
 {
     Task<InitialState> GetInitialStateAsync(Guid projectId, Guid issueTypeId);
+
+    /// <summary>Every status the project's published workflows use, for board columns.</summary>
+    Task<List<Guid>> GetProjectStatusIdsAsync(Guid projectId);
 }
 
 public record TransitionSubject(

@@ -434,6 +434,23 @@ public class WorkflowRuntime(IRepository<ProjectWorkflowMapping, Guid> mappings,
         var version = await store.FindPublishedAsync(workflowId) ?? throw new BusinessException(WorkflowErrors.NotPublished);
         return new InitialState(version.InitialStatusId, version.Id);
     }
+
+    public async Task<List<Guid>> GetProjectStatusIdsAsync(Guid projectId)
+    {
+        var mapped = await mappings.GetListAsync(item => item.ProjectId == projectId);
+        var workflowIds = mapped.Select(item => item.WorkflowId).Append(WorkflowsDataSeedContributor.DefaultWorkflowId).Distinct();
+
+        var result = new HashSet<Guid>();
+        foreach (var workflowId in workflowIds)
+        {
+            if (await store.FindPublishedAsync(workflowId) is { } version)
+            {
+                result.UnionWith((await store.LoadAsync(version)).StatusIds);
+            }
+        }
+
+        return [.. result];
+    }
 }
 
 public record EvaluatedTransition(Transition Transition, List<TransitionRule> Rules);

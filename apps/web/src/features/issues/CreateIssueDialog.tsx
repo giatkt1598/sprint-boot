@@ -15,6 +15,7 @@ import { useToast } from '../../components/ToastHost';
 import { UserPicker, type PickerUser } from '../../components/UserPicker';
 import { useErrorMessage } from '../../lib/errors';
 import { useMembers, useSpaces } from '../spaces/api';
+import { useBacklog } from '../agile/api';
 import { useCurrentUser } from '../../auth/AuthProvider';
 import { uploadAttachment, useEpics, usePriorities, useIssueTypes, type IssueType } from './api';
 import { RichTextEditor } from './RichTextEditor';
@@ -26,9 +27,11 @@ interface CreateIssueDialogProps {
   onClose: () => void;
   /** Set when adding a subtask from an issue page. */
   parent?: { id: string; projectKey: string };
+  /** Opens as Create epic: the type is fixed and Assignee reads as Lead. */
+  epic?: boolean;
 }
 
-export function CreateIssueDialog({ onClose, parent }: CreateIssueDialogProps) {
+export function CreateIssueDialog({ onClose, parent, epic }: CreateIssueDialogProps) {
   const { t } = useTranslation();
   const toMessage = useErrorMessage();
   const toast = useToast();
@@ -66,7 +69,9 @@ export function CreateIssueDialog({ onClose, parent }: CreateIssueDialogProps) {
   const types = useIssueTypes(projectId || undefined);
   const priorities = usePriorities();
   const epics = useEpics(projectId || undefined);
-  const allowedTypes = allowedTypesOf(types.data, parent);
+  const backlog = useBacklog(projectId || undefined);
+  const allowedTypes = allowedTypesOf(types.data, parent).filter((type) => !epic || type.hierarchy === 2);
+  const [sprintId, setSprintId] = useState('');
   const canHaveEpic = !parent && allowedTypes.find((type) => type.id === typeId)?.hierarchy === 1;
   const people = (members.data ?? []).map((member) => member.user!);
   const titleError = titleTouched && !title.trim() ? t('errors.IssueTitleRequired') : undefined;
@@ -107,6 +112,11 @@ export function CreateIssueDialog({ onClose, parent }: CreateIssueDialogProps) {
       ),
     onSuccess: async (issue) => {
       // The issue exists at this point, so a failed file must not lose it or block the rest.
+      if (sprintId) {
+        await unwrap(
+          apiClient.POST('/api/v1/sprint/move-issue/{issueId}', { params: { path: { issueId: issue.id! } }, body: { sprintId } }),
+        ).catch((failure: unknown) => toast('error', toMessage(failure)));
+      }
       for (const file of files) {
         await uploadAttachment(issue.id!, file).catch((failure: unknown) => toast('error', `${file.name}: ${toMessage(failure)}`));
       }
@@ -138,7 +148,7 @@ export function CreateIssueDialog({ onClose, parent }: CreateIssueDialogProps) {
     <Dialog
       open
       width={640}
-      title={t(parent ? 'issues.addSubtask' : 'issues.create')}
+      title={t(parent ? 'issues.addSubtask' : epic ? 'agile.createEpic' : 'issues.create')}
       onClose={onClose}
       footer={
         <div className="flex items-center justify-between">
@@ -170,7 +180,7 @@ export function CreateIssueDialog({ onClose, parent }: CreateIssueDialogProps) {
       <TextField label={t('issues.titleField')} autoFocus value={title} error={titleError} onBlur={() => setTitleTouched(true)} onChange={(event) => setTitle(event.target.value)} />
       <RichTextEditor key={editorKey} label={t('issues.description')} people={people} onChange={setDescription} />
       <div className="grid grid-cols-2 gap-4">
-        <UserPicker label={t('issues.assignee')} options={people} value={assignee} onChange={setAssignee} />
+        <UserPicker label={t(epic ? 'agile.lead' : 'issues.assignee')} options={people} value={assignee} onChange={setAssignee} />
         <SelectField
           label={t('issues.priority')}
           value={priorityId || (priorities.data?.find((priority) => priority.name === 'Medium')?.id ?? '')}
@@ -186,6 +196,15 @@ export function CreateIssueDialog({ onClose, parent }: CreateIssueDialogProps) {
             displayEmpty
             onChange={(event) => setEpicId(event.target.value)}
             options={[{ value: '', label: t('common.none') }, ...(epics.data?.items ?? []).map((epic) => ({ value: epic.id!, label: `${epic.key} ${epic.title}` }))]}
+          />
+        )}
+        {canHaveEpic && backlog.data?.type === 0 && (
+          <SelectField
+            label={t('agile.sprint')}
+            value={sprintId}
+            displayEmpty
+            onChange={(event) => setSprintId(event.target.value)}
+            options={[{ value: '', label: t('common.none') }, ...(backlog.data.sprints ?? []).map((item) => ({ value: item.sprint!.id!, label: item.sprint!.name! }))]}
           />
         )}
         <TextField label={t('issues.labels')} value={labels} onChange={(event) => setLabels(event.target.value)} />
