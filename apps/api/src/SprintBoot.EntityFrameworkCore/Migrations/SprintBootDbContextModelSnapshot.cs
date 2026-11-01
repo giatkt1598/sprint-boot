@@ -1482,6 +1482,11 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.Property<int>("NextIssueNumber")
                         .HasColumnType("integer");
 
+                    b.Property<int>("SprintLengthDays")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(14);
+
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("TenantId");

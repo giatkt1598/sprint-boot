@@ -18,6 +18,7 @@ import { DialogConfirm } from '../../components/Dialog';
 import { IssueTypeIcon, PriorityIcon, type IssueType as IconType } from '../../components/IssueIcons';
 import { MenuItem } from '../../components/Menu';
 import { Popover } from '../../components/Popover';
+import { SearchInput } from '../../components/SearchInput';
 import { ErrorState, LoadingState } from '../../components/StateViews';
 import { Tabs } from '../../components/Tabs';
 import { TagInput } from '../../components/TagInput';
@@ -26,7 +27,7 @@ import { useToast } from '../../components/ToastHost';
 import { UserPicker } from '../../components/UserPicker';
 import { useErrorMessage } from '../../lib/errors';
 import { hasSelectedText } from '../../lib/selection';
-import { formatDateTime, formatSize } from '../../lib/format';
+import { formatDateTime, formatRelative, formatSize } from '../../lib/format';
 import { font, radius, sem } from '../../theme/tokens';
 import { useMembers, useSpace } from '../spaces/api';
 import { IssueActivityPanel } from './IssueActivityPanel';
@@ -275,20 +276,30 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
                 )}
               </div>
               {issue.type?.hierarchy === 2 && <EpicProgress total={issue.children?.length ?? 0} done={countIn(issue, 2)} inProgress={countIn(issue, 1)} />}
-              {(issue.children?.length ?? 0) > 0 && <div style={{ borderTop: `1px solid ${sem('border-default')}` }} />}
-              {(issue.children ?? []).map((child) => (
-                <Box
-                  key={child.id}
-                  className="flex h-9 items-center gap-3 px-2"
-                  sx={{ borderBottom: `1px solid ${sem('border-default')}`, '&:hover': { backgroundColor: sem('bg-hover') } }}
-                >
-                  <IssueTypeIcon type={child.typeIcon as IconType} />
-                  <Link component={RouterLink} to={`/issues/${child.key}`} color="inherit" variant="body2">{child.key}</Link>
-                  <QuickTitle issue={child} canEdit={canEdit} />
-                  <span className="pr-3"><QuickAssignee issue={child} canEdit={canEdit} people={people} showName /></span>
-                  <span className="pr-12"><QuickStatus issue={child} canEdit={canEdit} people={people} /></span>
-                </Box>
-              ))}
+              {(issue.children?.length ?? 0) > 0 && (
+                <table className="w-full" aria-label={t(issue.type?.hierarchy === 2 ? 'agile.childIssues' : 'issues.subtasks')} style={{ borderCollapse: 'collapse', borderTop: `1px solid ${sem('border-default')}` }}>
+                  <tbody>
+                    {issue.children?.map((child) => (
+                      <Box
+                        component="tr"
+                        key={child.id}
+                        sx={{ height: 36, borderBottom: `1px solid ${sem('border-default')}`, '&:hover': { backgroundColor: sem('bg-hover') } }}
+                      >
+                        <td className="pl-2 pr-3"><span className="flex"><IssueTypeIcon type={child.typeIcon as IconType} /></span></td>
+                        <td className="whitespace-nowrap pr-3">
+                          <Link component={RouterLink} to={`/issues/${child.key}`} color="inherit" variant="body2">{child.key}</Link>
+                        </td>
+                        {/* Zero max-width with full width lets the title truncate and take the spare room. */}
+                        <td className="w-full pr-3" style={{ maxWidth: 0 }}>
+                          <span className="flex"><QuickTitle issue={child} canEdit={canEdit} /></span>
+                        </td>
+                        <td className="whitespace-nowrap pr-3"><QuickAssignee issue={child} canEdit={canEdit} people={people} showName /></td>
+                        <td className="whitespace-nowrap pr-12"><QuickStatus issue={child} canEdit={canEdit} people={people} /></td>
+                      </Box>
+                    ))}
+                  </tbody>
+                </table>
+              )}
               {addingSubtask && <SubtaskRow issue={issue} onClose={() => setAddingSubtask(false)} />}
             </section>
           )}
@@ -376,20 +387,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
           )}
           {issue.type?.hierarchy === 1 && (
             <DetailRow label={t('issues.epic')}>
-              {canEdit ? (
-                <SelectField
-                  quiet
-                  label={t('issues.epic')}
-                  value={issue.parent?.id ?? ''}
-                  displayEmpty
-                  onChange={(event) => update.mutate({ parent: event.target.value || null })}
-                  options={[{ value: '', label: t('common.none') }, ...(epics.data?.items ?? []).map((epic) => ({ value: epic.id!, label: `${epic.key} ${epic.title}` }))]}
-                />
-              ) : issue.parent ? (
-                <Link component={RouterLink} to={`/issues/${issue.parent.key}`}>{issue.parent.key} {issue.parent.title}</Link>
-              ) : (
-                t('common.none')
-              )}
+              <EpicField issue={issue} canEdit={canEdit} epics={epics.data?.items ?? []} onPick={(epicId) => update.mutate({ parent: epicId })} />
             </DetailRow>
           )}
           <DetailRow label={t('issues.labels')}>
@@ -413,9 +411,11 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
             <DatePicker quiet label={t('issues.dueDate')} value={issue.dueDate ?? ''} disabled={!canEdit} onChange={(text) => update.mutate({ dueDate: text || null })} />
           </DetailRow>
           {fieldError && <Typography role="alert" variant="body2" color="error">{fieldError}</Typography>}
-          <DetailRow label={t('issues.createdAt')}>{formatDateTime(issue.createdAt, i18n.language)}</DetailRow>
-          <DetailRow label={t('issues.updatedAt')}>{formatDateTime(issue.updatedAt, i18n.language)}</DetailRow>
         </aside>
+        <div className="flex shrink-0 flex-col gap-2 px-3" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>
+          <span title={formatDateTime(issue.createdAt, i18n.language)}>{t('issues.createdAt')} {formatRelative(issue.createdAt, i18n.language)}</span>
+          <span title={formatDateTime(issue.updatedAt, i18n.language)}>{t('issues.updatedAt')} {formatRelative(issue.updatedAt, i18n.language)}</span>
+        </div>
         <DevelopmentPanel issueId={issue.id!} label={`${issue.key} ${issue.title}`} canEdit={canEdit} />
         </div>
       </div>
@@ -429,6 +429,69 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
         onConfirm={() => remove.mutate()}
       />
     </div>
+  );
+}
+
+const epicTagStyle = {
+  display: '-webkit-box',
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+  overflowWrap: 'anywhere',
+  padding: '2px 6px',
+  textAlign: 'left',
+  fontSize: font.size.xs,
+  fontWeight: font.weight.medium,
+  color: sem('status-merged-text'),
+  backgroundColor: sem('status-merged-bg'),
+  borderRadius: radius.control,
+} as const;
+
+function EpicField({ issue, canEdit, epics, onPick }: { issue: Issue; canEdit: boolean; epics: { id?: string; key?: string | null; title?: string | null }[]; onPick: (epicId: string | null) => void }) {
+  const { t } = useTranslation();
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const [search, setSearch] = useState('');
+  const parent = issue.parent;
+  const name = parent ? `${parent.key} ${parent.title}` : null;
+  const tag = name ? <span style={epicTagStyle} title={name}>{name}</span> : <span>{t('common.none')}</span>;
+
+  if (!canEdit) {
+    return parent ? <RouterLink to={`/issues/${parent.key}`} style={{ textDecoration: 'none' }}>{tag}</RouterLink> : tag;
+  }
+
+  const pick = (epicId: string | null) => {
+    setAnchor(null);
+    setSearch('');
+    onPick(epicId);
+  };
+  const text = search.toLowerCase();
+  const matches = epics.filter((epic) => `${epic.key} ${epic.title}`.toLowerCase().includes(text));
+  const row = { justifyContent: 'flex-start', width: '100%', padding: 1, textAlign: 'left', fontSize: font.size.md, borderRadius: `${radius.control}px`, '&:hover': { backgroundColor: sem('bg-hover') } };
+
+  return (
+    <>
+      <ButtonBase
+        aria-haspopup="dialog"
+        onClick={(event) => setAnchor(event.currentTarget)}
+        sx={{ justifyContent: 'flex-start', width: '100%', minHeight: 32, paddingInline: 1, fontSize: 'inherit', borderRadius: `${radius.control}px` }}
+      >
+        <span className="sr-only">{t('issues.epic')}:</span>
+        {tag}
+      </ButtonBase>
+      <Popover open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}>
+        <div role="group" aria-label={t('issues.epic')} className="flex flex-col gap-1 p-1">
+          <SearchInput label={t('issues.searchEpics')} autoFocus value={search} onChange={(event) => setSearch(event.target.value)} />
+          <div className="flex max-h-64 flex-col overflow-y-auto">
+            <ButtonBase sx={row} onClick={() => pick(null)}>{t('common.none')}</ButtonBase>
+            {matches.map((epic) => (
+              <ButtonBase key={epic.id} sx={row} aria-pressed={epic.id === parent?.id} onClick={() => pick(epic.id!)}>
+                {epic.key} {epic.title}
+              </ButtonBase>
+            ))}
+          </div>
+        </div>
+      </Popover>
+    </>
   );
 }
 
@@ -630,6 +693,7 @@ function LabelsField({ issue, disabled, onSave }: { issue: Issue; disabled: bool
   const [tags, setTags] = useState(stored);
   const wanted = useRef(stored);
   const saving = useRef(false);
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     if (!saving.current) {
@@ -639,8 +703,36 @@ function LabelsField({ issue, disabled, onSave }: { issue: Issue; disabled: bool
     }
   }, [storedKey]);
 
+  const tagList = tags.length > 0 ? (
+    <span className="flex flex-wrap gap-1">
+      {tags.map((tag) => (
+        <span
+          key={tag}
+          data-tag
+          className="px-1"
+          style={{ fontSize: font.size.xs, border: `1px solid ${sem('text-tertiary')}`, borderRadius: 4 }}
+        >
+          {tag}
+        </span>
+      ))}
+    </span>
+  ) : t('common.none');
+
   if (disabled) {
-    return <span>{stored.join(', ') || t('common.none')}</span>;
+    return tagList;
+  }
+
+  if (!editing) {
+    return (
+      <ButtonBase
+        onClick={() => setEditing(true)}
+        className="w-full"
+        sx={{ justifyContent: 'flex-start', minHeight: 32, paddingInline: 1, fontSize: 'inherit', borderRadius: `${radius.control}px`, '&:hover': { backgroundColor: sem('bg-hover') } }}
+      >
+        <span className="sr-only">{t('issues.labels')}:</span>
+        {tagList}
+      </ButtonBase>
+    );
   }
 
   const push = () => {
@@ -661,17 +753,26 @@ function LabelsField({ issue, disabled, onSave }: { issue: Issue; disabled: bool
   };
 
   return (
-    <TagInput
-      hideLabel
-      label={t('issues.labels')}
-      value={tags}
-      options={known.data ?? []}
-      onChange={(next) => {
-        wanted.current = next;
-        setTags(next);
-        push();
+    <div
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          setEditing(false);
+        }
       }}
-    />
+    >
+      <TagInput
+        hideLabel
+        autoFocus
+        label={t('issues.labels')}
+        value={tags}
+        options={known.data ?? []}
+        onChange={(next) => {
+          wanted.current = next;
+          setTags(next);
+          push();
+        }}
+      />
+    </div>
   );
 }
 

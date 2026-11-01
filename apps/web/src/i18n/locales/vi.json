@@ -299,7 +299,10 @@
     "pickPerson": "Chọn người dùng",
     "back": "Quay lại Space",
     "membersHint": "Role quyết định mỗi người được làm gì trong Space này.",
-    "joined": "Tham gia"
+    "joined": "Tham gia",
+    "sprintLength": "Thời lượng sprint",
+    "sprintLengthCustom": "Tùy chỉnh",
+    "sprintLengthDays": "Số ngày của sprint"
   },
   "issues": {
     "title": "Issue",
@@ -408,7 +411,8 @@
     "noTransitions": "Không có bước chuyển nào",
     "assignToMe": "Giao cho tôi",
     "moreReactions": "Thêm cảm xúc khác",
-    "loadMore": "Tải thêm"
+    "loadMore": "Tải thêm",
+    "searchEpics": "Tìm Epic"
   },
   "workflows": {
     "title": "Workflow",
@@ -500,7 +504,11 @@
     "saveChanges": "Lưu thay đổi",
     "addStatus": "Thêm status",
     "addStatusTo": "Thêm status vào {{name}}",
-    "removeStatus": "Bỏ {{name}} khỏi cột này"
+    "removeStatus": "Bỏ {{name}} khỏi cột này",
+    "lengthWeeks_one": "{{count}} tuần",
+    "lengthWeeks_other": "{{count}} tuần",
+    "lengthDays_one": "{{count}} ngày",
+    "lengthDays_other": "{{count}} ngày"
   },
   "notifications": {
     "bellUnread": "Thông báo, {{count}} chưa đọc",

@@ -299,7 +299,10 @@
     "pickPerson": "Choose a person",
     "back": "Back to space",
     "membersHint": "Roles decide what each person can do in this space.",
-    "joined": "Joined"
+    "joined": "Joined",
+    "sprintLength": "Sprint length",
+    "sprintLengthCustom": "Custom",
+    "sprintLengthDays": "Sprint length in days"
   },
   "issues": {
     "title": "Issues",
@@ -408,7 +411,8 @@
     "noTransitions": "No moves available",
     "assignToMe": "Assign to me",
     "moreReactions": "More reactions",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "searchEpics": "Search epics"
   },
   "workflows": {
     "title": "Workflows",
@@ -500,7 +504,11 @@
     "saveChanges": "Save changes",
     "addStatus": "Add status",
     "addStatusTo": "Add a status to {{name}}",
-    "removeStatus": "Remove {{name}} from this column"
+    "removeStatus": "Remove {{name}} from this column",
+    "lengthWeeks_one": "{{count}} week",
+    "lengthWeeks_other": "{{count}} weeks",
+    "lengthDays_one": "{{count}} day",
+    "lengthDays_other": "{{count}} days"
   },
   "notifications": {
     "bellUnread": "Notifications, {{count}} unread",

@@ -129,10 +129,11 @@ function Composer({ issueId, parentId, people, placeholder, onDone }: { issueId:
   const post = useMutation({
     mutationFn: () => unwrap(apiClient.POST('/api/v1/comment', { body: { issueId, parentId: parentId ?? null, body } })),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['issues', issueId, 'comments'] });
+      // Closes first: text typed during the refetch would vanish with the editor.
       setOpen(false);
       setBody('');
       onDone?.();
+      await queryClient.invalidateQueries({ queryKey: ['issues', issueId, 'comments'] });
     },
     onError: (failure) => toast('error', toMessage(failure)),
   });

@@ -109,6 +109,10 @@ function BackHeader({ title, backTo }: { title: string; backTo: string }) {
   );
 }
 
+const SPRINT_PRESETS = [14, 21, 28];
+const DEFAULT_SPRINT_DAYS = 14;
+const CUSTOM_LENGTH = 'custom';
+
 export function SpaceGeneralPage() {
   const { t } = useTranslation();
   const space = useOutletContext<Space>();
@@ -118,13 +122,15 @@ export function SpaceGeneralPage() {
   const canManage = space.permissions?.includes(SpacePermission.manage);
   const [name, setName] = useState(space.name ?? '');
   const [template, setTemplate] = useState(space.branchNameTemplate ?? '');
+  const [lengthDays, setLengthDays] = useState(space.sprintLengthDays ?? DEFAULT_SPRINT_DAYS);
+  const [customLength, setCustomLength] = useState(!SPRINT_PRESETS.includes(space.sprintLengthDays ?? DEFAULT_SPRINT_DAYS));
 
   const save = useMutation({
     mutationFn: () =>
       unwrap(
         apiClient.PUT('/api/v1/project/{id}', {
           params: { path: { id: space.id! } },
-          body: { name, leadId: space.lead?.id, branchNameTemplate: template || null },
+          body: { name, leadId: space.lead?.id, branchNameTemplate: template || null, sprintLengthDays: lengthDays },
         }),
       ),
     onSuccess: async () => {
@@ -145,6 +151,35 @@ export function SpaceGeneralPage() {
       <TextField label={t('spaces.name')} value={name} disabled={!canManage} onChange={(event) => setName(event.target.value)} />
       <TextField label={t('spaces.key')} value={space.key ?? ''} disabled />
       <TextField label={t('spaces.branchTemplate')} value={template} disabled={!canManage} onChange={(event) => setTemplate(event.target.value)} />
+      {space.type === 0 && (
+        <>
+          <SelectField
+            label={t('spaces.sprintLength')}
+            value={customLength ? CUSTOM_LENGTH : String(lengthDays)}
+            disabled={!canManage}
+            onChange={(event) => {
+              const custom = event.target.value === CUSTOM_LENGTH;
+              setCustomLength(custom);
+              if (!custom) {
+                setLengthDays(Number(event.target.value));
+              }
+            }}
+            options={[
+              ...SPRINT_PRESETS.map((days) => ({ value: String(days), label: t('agile.lengthWeeks', { count: days / 7 }) })),
+              { value: CUSTOM_LENGTH, label: t('spaces.sprintLengthCustom') },
+            ]}
+          />
+          {customLength && (
+            <TextField
+              label={t('spaces.sprintLengthDays')}
+              type="number"
+              disabled={!canManage}
+              value={lengthDays}
+              onChange={(event) => setLengthDays(Math.min(365, Math.max(1, Number(event.target.value) || 1)))}
+            />
+          )}
+        </>
+      )}
       <SpaceSchemeField projectId={space.id!} disabled={!canManage} />
       {canManage && (
         <div>

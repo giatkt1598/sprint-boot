@@ -184,9 +184,9 @@ test('sign in, run a space and an issue end to end', async ({ page }) => {
   await page.waitForURL(`**/issues/${key}-3`);
   await expect(page.getByRole('button', { name: 'Delete plan.txt' })).toBeVisible();
   await page.goto(`/issues/${key}-1`);
-  await page.getByRole('combobox', { name: 'Epic' }).click();
-  await page.getByRole('option', { name: `${key}-3 Launch epic` }).click();
-  await expect(page.getByRole('link', { name: `${key}-3` }).first()).toBeVisible();
+  await page.getByRole('button', { name: /^Epic:/ }).click();
+  await page.getByRole('button', { name: `${key}-3 Launch epic` }).click();
+  await expect(page.getByRole('button', { name: `Epic: ${key}-3 Launch epic` })).toBeVisible();
   await page.goto(`/spaces/${key}/issues`);
   await page.getByRole('button', { name: 'Filter' }).click();
   await page.getByRole('button', { name: 'Epic' }).click();
@@ -433,11 +433,6 @@ test('run a sprint: plan by dragging, work the board, complete', async ({ page }
   // Start it.
   await page.getByRole('button', { name: 'Start sprint' }).click();
   const dialog = page.getByRole('dialog');
-  await expect(dialog.getByRole('button', { name: 'Start', exact: true })).toBeDisabled();
-  await dialog.getByRole('button', { name: 'Start date' }).click();
-  await page.getByRole('button', { name: /^10 / }).click();
-  await dialog.getByRole('button', { name: 'End date' }).click();
-  await page.getByRole('button', { name: /^20 / }).click();
   await expectAccessible(page);
   await dialog.getByRole('button', { name: 'Start', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Complete sprint' })).toBeVisible();
@@ -1010,7 +1005,9 @@ test('create issue form, backlog cards and home follow the last space', async ({
   expect((await blank.boundingBox())!.height).toBeGreaterThan(15);
 
   // Sidebar edits: tags save one after another, points hold what was typed.
-  const sidebarLabels = page.getByLabel('Labels');
+  await expect(page.locator('aside [data-tag]')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Labels' }).click();
+  const sidebarLabels = page.getByRole('combobox', { name: 'Labels' });
   await sidebarLabels.pressSequentially('one,');
   await sidebarLabels.pressSequentially('two,');
   await sidebarLabels.pressSequentially('three,');
@@ -1025,8 +1022,9 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await expect(points).toHaveValue('3.5');
   await expect(page.getByText('Someone else changed this')).toHaveCount(0);
   await expect(page.locator('aside').getByRole('combobox', { name: 'Priority' }).locator('svg')).toBeVisible();
+  await expect(page.getByText(/^Created .* ago$|^Created a few seconds ago$/)).toBeVisible();
   await page.reload();
-  await expect(chips).toHaveCount(4);
+  await expect(page.locator('aside [data-tag]')).toHaveCount(4);
   await expect(page.getByLabel('Points')).toHaveValue('3.5');
 
   // Description folds, and its heading is the control.
@@ -1127,6 +1125,18 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await thread.getByRole('button', { name: 'Load more' }).click();
   await expect(thread.getByText('Reply 1')).toBeVisible();
 
+  // Sprint length comes from the space and fills a new sprint.
+  await page.goto(`/spaces/${key}/settings/general`);
+  await page.getByLabel('Sprint length', { exact: true }).click();
+  await page.getByRole('option', { name: '3 weeks' }).click();
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByText('Changes saved')).toBeVisible();
+  await page.goto(`/spaces/${key}/backlog`);
+  await page.getByRole('button', { name: 'Create sprint' }).click();
+  await expect(page.getByRole('dialog').getByLabel('Name')).toHaveValue('Sprint 1');
+  await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByText(/3 weeks · 0 issues · 0 of 0 points/)).toBeVisible();
+
   // Status, priority and assignee change right in the rows.
   const quickEdit = async () => {
     await page.getByRole('button', { name: new RegExp(`^Priority: .* ${key}-1$`) }).click();
@@ -1157,6 +1167,14 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await page.getByRole('menuitem', { name: 'High', exact: true }).click();
   await expect(page.getByRole('button', { name: `Priority: High ${key}-2` })).toBeVisible();
   await expectAccessible(page);
+
+  // The epic field is a purple tag with a searchable picker.
+  await page.goto(`/issues/${key}-1`);
+  await page.getByRole('button', { name: /^Epic:/ }).click();
+  await page.getByLabel('Search epics').fill('quick');
+  await expectAccessible(page);
+  await page.getByRole('button', { name: `${key}-2 Quick epic` }).click();
+  await expect(page.getByRole('button', { name: `Epic: ${key}-2 Quick epic` })).toBeVisible();
 
   await page.goto(`/spaces/${key}/issues`);
   await expect(page.getByRole('columnheader', { name: 'Reporter' })).toBeVisible();

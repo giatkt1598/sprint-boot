@@ -20,6 +20,8 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public string? BranchNameTemplate { get; set; }
 
+    public int SprintLengthDays { get; set; } = 14;
+
     protected Project()
     {
     }

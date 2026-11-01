@@ -22,6 +22,8 @@ public class ProjectDto
 
     public required string? BranchNameTemplate { get; set; }
 
+    public required int SprintLengthDays { get; set; }
+
     public required UserRefDto? Lead { get; set; }
 
     public required int IssueCount { get; set; }
@@ -57,6 +59,10 @@ public class UpdateProjectInput
 
     [StringLength(128)]
     public string? BranchNameTemplate { get; set; }
+
+    /// <summary>Blank keeps the current length.</summary>
+    [Range(1, 365)]
+    public int? SprintLengthDays { get; set; }
 }
 
 public class ProjectMemberDto
@@ -137,6 +143,8 @@ public interface IProjectAccess
     Task<ProjectRef> GetRefAsync(Guid projectId);
 
     Task<string?> GetBranchTemplateAsync(Guid projectId);
+
+    Task<int> GetSprintLengthDaysAsync(Guid projectId);
 
     Task<ProjectRef?> FindRefByKeyAsync(string key);
 

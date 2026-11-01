@@ -16,6 +16,7 @@ public static class ProjectsModelBuilderExtensions
             b.Property(project => project.Key).HasMaxLength(10).IsRequired();
             b.Property(project => project.Name).HasMaxLength(128).IsRequired();
             b.Property(project => project.BranchNameTemplate).HasMaxLength(128);
+            b.Property(project => project.SprintLengthDays).HasDefaultValue(14);
             b.HasIndex(project => project.Key).IsUnique();
         });
 

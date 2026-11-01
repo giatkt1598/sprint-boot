@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using SprintBoot.Issues;
 using SprintBoot.Projects;
@@ -34,6 +36,29 @@ public class SprintMapper(IRepository<SprintIssue, Guid> sprintIssues, IIssuePla
         TotalPoints = cards.Sum(card => card.StoryPoints ?? 0),
         DonePoints = cards.Where(card => card.Status.Category == StatusCategory.Done).Sum(card => card.StoryPoints ?? 0),
     };
+}
+
+public static partial class SprintPlanner
+{
+    /// <summary>One past the highest trailing number, so "Sprint 2" is followed by "Sprint 3".</summary>
+    public static string NextName(IEnumerable<string> names)
+    {
+        var numbers = names.Select(name => TrailingNumber().Match(name))
+            .Where(match => match.Success && int.TryParse(match.Value, out _))
+            .Select(match => int.Parse(match.Value, CultureInfo.InvariantCulture))
+            .ToList();
+        return $"Sprint {(numbers.Count == 0 ? 0 : numbers.Max()) + 1}";
+    }
+
+    /// <summary>The day after the last planned end, but never in the past.</summary>
+    public static DateOnly NextStart(IEnumerable<DateOnly?> ends, DateOnly today)
+    {
+        var last = ends.Max();
+        return last is { } end && end >= today ? end.AddDays(1) : today;
+    }
+
+    [GeneratedRegex(@"\d+$")]
+    private static partial Regex TrailingNumber();
 }
 
 [Authorize]
@@ -100,6 +125,22 @@ public class SprintAppService(
         };
     }
 
+    public async Task<SprintDefaultsDto> GetNewDefaultsAsync(Guid projectId)
+    {
+        await projectAccess.CheckAsync(projectId, ProjectPermissions.ManageSprints);
+        var board = await boards.GetAsync(projectId);
+        var list = await sprints.GetListAsync(item => item.BoardId == board.Id);
+        var days = await projectAccess.GetSprintLengthDaysAsync(projectId);
+        var start = SprintPlanner.NextStart(list.Select(item => item.EndDate), DateOnly.FromDateTime(clock.Now));
+        return new SprintDefaultsDto
+        {
+            Name = SprintPlanner.NextName(list.Select(item => item.Name)),
+            StartDate = start,
+            EndDate = start.AddDays(days - 1),
+            LengthDays = days,
+        };
+    }
+
     public async Task<SprintSummaryDto> CreateAsync(CreateSprintInput input)
     {
         await projectAccess.CheckAsync(input.ProjectId, ProjectPermissions.ManageSprints);
@@ -125,13 +166,35 @@ public class SprintAppService(
     {
         var (sprint, projectId) = await LoadForManagingAsync(id);
         EnsureDates(input);
+        var previousEnd = sprint.EndDate;
         sprint.Name = input.Name;
         sprint.Goal = input.Goal;
         sprint.StartDate = input.StartDate;
         sprint.EndDate = input.EndDate;
         await sprints.UpdateAsync(sprint, autoSave: true);
+        await PushFollowingAsync(sprint, previousEnd);
         await notifier.ChangedAsync(projectId);
         return await mapper.ToSummaryAsync(sprint, projectId);
+    }
+
+    /// <summary>A sprint that ends later moves the planned ones after it by the same number of days.</summary>
+    private async Task PushFollowingAsync(Sprint sprint, DateOnly? previousEnd)
+    {
+        if (previousEnd is not { } before || sprint.EndDate is not { } after || after <= before)
+        {
+            return;
+        }
+
+        var days = after.DayNumber - before.DayNumber;
+        var following = await sprints.GetListAsync(item =>
+            item.BoardId == sprint.BoardId && item.Id != sprint.Id && item.State == SprintState.Future && item.StartDate > before);
+        foreach (var item in following)
+        {
+            item.StartDate = item.StartDate?.AddDays(days);
+            item.EndDate = item.EndDate?.AddDays(days);
+        }
+
+        await sprints.UpdateManyAsync(following, autoSave: true);
     }
 
     public async Task DeleteAsync(Guid id)
@@ -168,12 +231,14 @@ public class SprintAppService(
             throw new BusinessException(AgileErrors.ActiveSprintExists);
         }
 
+        var previousEnd = sprint.EndDate;
         sprint.Name = input.Name;
         sprint.Goal = input.Goal;
         sprint.StartDate = input.StartDate;
         sprint.EndDate = input.EndDate;
         sprint.State = SprintState.Active;
         await sprints.UpdateAsync(sprint, autoSave: true);
+        await PushFollowingAsync(sprint, previousEnd);
         await PublishStateAsync(sprint, projectId);
         await notifier.ChangedAsync(projectId);
         return await mapper.ToSummaryAsync(sprint, projectId);

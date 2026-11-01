@@ -1,6 +1,6 @@
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiClient, unwrap } from '../../api';
 import { DatePicker } from '../../components/DatePicker';
@@ -11,6 +11,12 @@ import { IssueRow } from './BacklogPage';
 import type { SprintSummary } from './api';
 
 const BACKLOG_TARGET = 'backlog';
+
+const addDays = (iso: string, days: number) => {
+  const date = new Date(`${iso}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+};
 
 interface SprintFormProps {
   mode: 'create' | 'edit' | 'start';
@@ -27,6 +33,28 @@ export function SprintDialog({ mode, projectId, sprint, onClose }: SprintFormPro
   const [goal, setGoal] = useState(sprint?.goal ?? '');
   const [startDate, setStartDate] = useState(sprint?.startDate ?? '');
   const [endDate, setEndDate] = useState(sprint?.endDate ?? '');
+  const defaults = useQuery({
+    queryKey: ['sprints', projectId, 'new-defaults'],
+    enabled: mode === 'create',
+    gcTime: 0,
+    queryFn: () => unwrap(apiClient.GET('/api/v1/sprint/new-defaults/{projectId}', { params: { path: { projectId } } })),
+  });
+
+  useEffect(() => {
+    if (defaults.data) {
+      setName(defaults.data.name ?? '');
+      setStartDate(defaults.data.startDate ?? '');
+      setEndDate(defaults.data.endDate ?? '');
+    }
+  }, [defaults.data]);
+
+  const pickStart = (next: string) => {
+    setStartDate(next);
+    // Picking a start on a new sprint keeps the space's sprint length.
+    if (next && defaults.data?.lengthDays) {
+      setEndDate(addDays(next, defaults.data.lengthDays - 1));
+    }
+  };
   const datesInvalid = Boolean(startDate && endDate && endDate < startDate);
   const incomplete = !name.trim() || (mode === 'start' && (!startDate || !endDate));
 
@@ -62,7 +90,7 @@ export function SprintDialog({ mode, projectId, sprint, onClose }: SprintFormPro
     >
       <TextField label={t('account.name')} autoFocus value={name} onChange={(event) => setName(event.target.value)} />
       <div className="grid grid-cols-2 gap-4">
-        <DatePicker label={t('issues.startDate')} value={startDate} onChange={setStartDate} />
+        <DatePicker label={t('issues.startDate')} value={startDate} onChange={pickStart} />
         <DatePicker label={t('agile.endDate')} value={endDate} onChange={setEndDate} />
       </div>
       <TextField label={t('agile.goal')} value={goal} onChange={(event) => setGoal(event.target.value)} />

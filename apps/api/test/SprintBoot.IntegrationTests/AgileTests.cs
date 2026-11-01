@@ -320,4 +320,36 @@ public class AgileTests(ApiFixture fixture)
         found.Items.Single(item => item.Id == issues[1].Id).SprintName.ShouldBeNull();
         found.Items.ShouldAllBe(item => item.Reporter != null);
     }
+
+    [Fact]
+    public async Task New_sprints_continue_the_name_and_dates_and_later_ones_move_with_an_earlier_one()
+    {
+        var client = await fixture.CreateUserClientAsync(Token);
+        var project = await CreateProjectAsync(client);
+        (await client.Http.PutAsJsonAsync($"/api/v1/project/{project.Id}", new { name = "Agile", sprintLengthDays = 21 }, Token)).EnsureSuccessStatusCode();
+
+        async Task<SprintDefaultsDto> DefaultsAsync() =>
+            (await client.Http.GetFromJsonAsync<SprintDefaultsDto>($"/api/v1/sprint/new-defaults/{project.Id}", Token))!;
+
+        async Task<SprintSummaryDto> CreateAsync(SprintDefaultsDto defaults) =>
+            (await (await client.Http.PostAsJsonAsync("/api/v1/sprint", new { projectId = project.Id, name = defaults.Name, startDate = defaults.StartDate, endDate = defaults.EndDate }, Token)).Content.ReadFromJsonAsync<SprintSummaryDto>(Token))!;
+
+        var first = await DefaultsAsync();
+        first.Name.ShouldBe("Sprint 1");
+        first.EndDate.ShouldBe(first.StartDate.AddDays(20));
+        var one = await CreateAsync(first);
+
+        var second = await DefaultsAsync();
+        second.Name.ShouldBe("Sprint 2");
+        second.StartDate.ShouldBe(first.EndDate.AddDays(1));
+        var two = await CreateAsync(second);
+
+        var moved = first.EndDate.AddDays(5);
+        (await client.Http.PutAsJsonAsync($"/api/v1/sprint/{one.Id}", new { name = one.Name, startDate = first.StartDate, endDate = moved }, Token)).EnsureSuccessStatusCode();
+
+        var backlog = await client.Http.GetFromJsonAsync<BacklogDto>($"/api/v1/sprint/backlog/{project.Id}", Token);
+        var shifted = backlog!.Sprints.Single(item => item.Sprint.Id == two.Id).Sprint;
+        shifted.StartDate.ShouldBe(second.StartDate.AddDays(5));
+        shifted.EndDate.ShouldBe(second.EndDate.AddDays(5));
+    }
 }

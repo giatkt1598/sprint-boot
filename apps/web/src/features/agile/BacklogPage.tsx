@@ -167,6 +167,15 @@ function IssueList({ id, cards, canDrag, onOpen, actions, empty }: ListProps) {
   );
 }
 
+const DAY_MILLISECONDS = 86_400_000;
+const WEEK_DAYS = 7;
+
+/** Both dates count, so Monday to the Sunday after next is 2 weeks. */
+function sprintLength(start: string, end: string, t: (key: string, options: { count: number }) => string) {
+  const days = (Date.parse(end) - Date.parse(start)) / DAY_MILLISECONDS + 1;
+  return days % WEEK_DAYS === 0 ? t('agile.lengthWeeks', { count: days / WEEK_DAYS }) : t('agile.lengthDays', { count: days });
+}
+
 function SprintHeader({ sprint, canManage, shown, futureSprints, projectId }: { sprint: SprintSummary; canManage: boolean; shown: number; futureSprints: SprintSummary[]; projectId: string }) {
   const { t, i18n } = useTranslation();
   const toMessage = useErrorMessage();
@@ -187,15 +196,14 @@ function SprintHeader({ sprint, canManage, shown, futureSprints, projectId }: { 
     value ? new Intl.DateTimeFormat(i18n.language, { month: 'short', day: 'numeric' }).format(new Date(`${value}T00:00:00`)) : '';
   const range = sprint.startDate && sprint.endDate ? `${date(sprint.startDate)} – ${date(sprint.endDate)}` : '';
   const total = sprint.issueCount ?? 0;
+  const length = sprint.startDate && sprint.endDate ? sprintLength(sprint.startDate, sprint.endDate, t) : '';
   const count = shown === total ? t('agile.issueCount', { count: total }) : t('agile.issueCountFiltered', { shown, total });
-  const points = active
-    ? t('agile.pointsProgress', { done: sprint.donePoints, total: sprint.totalPoints })
-    : t('agile.points', { total: sprint.totalPoints });
+  const points = t('agile.pointsProgress', { done: sprint.donePoints, total: sprint.totalPoints });
 
   return (
     <div className="flex items-center gap-2 px-2">
       <Typography variant="h3" component="h2">{sprint.name}</Typography>
-      <Typography variant="body2" color="textSecondary" className="flex-1">{[range, count, points].filter(Boolean).join(' · ')}</Typography>
+      <Typography variant="body2" color="textSecondary" className="flex-1">{[range, length, count, points].filter(Boolean).join(' · ')}</Typography>
       {canManage && active && <Button kind="ghost" onClick={() => setDialog('complete')}>{t('agile.completeSprint')}</Button>}
       {canManage && !active && <Button kind="ghost" onClick={() => setDialog('start')}>{t('agile.startSprint')}</Button>}
       {canManage && (

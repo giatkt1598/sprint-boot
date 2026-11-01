@@ -84,6 +84,7 @@ public class ProjectAppService(
         project.Name = input.Name;
         project.LeadId = input.LeadId;
         project.BranchNameTemplate = input.BranchNameTemplate;
+        project.SprintLengthDays = input.SprintLengthDays ?? project.SprintLengthDays;
         await projects.UpdateAsync(project, autoSave: true);
         return (await ToDtosAsync([project])).Single();
     }
@@ -186,6 +187,7 @@ public class ProjectAppService(
                 Name = project.Name,
                 Type = project.DefaultBoardType,
                 BranchNameTemplate = project.BranchNameTemplate,
+                SprintLengthDays = project.SprintLengthDays,
                 Lead = project.LeadId is { } leadId ? leads.GetValueOrDefault(leadId) : null,
                 IssueCount = stat?.Count ?? 0,
                 UpdatedAt = stat?.UpdatedAt ?? project.LastModificationTime ?? project.CreationTime,

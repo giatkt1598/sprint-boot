@@ -10,13 +10,14 @@ export interface TagInputProps {
   options: string[];
   /** For property lists: no visible label, border only on hover and focus. */
   hideLabel?: boolean;
+  autoFocus?: boolean;
   onChange: (tags: string[]) => void;
 }
 
 const SEPARATOR = /[,\n]/;
 
 /** Enter or a comma turns the text into a tag; leaving the field keeps what was typed. */
-export function TagInput({ label, value, options, hideLabel, onChange }: TagInputProps) {
+export function TagInput({ label, value, options, hideLabel, autoFocus, onChange }: TagInputProps) {
   const id = useId();
   const [text, setText] = useState('');
 
@@ -63,6 +64,7 @@ export function TagInput({ label, value, options, hideLabel, onChange }: TagInpu
         renderInput={(params) => (
           <MuiTextField
             {...params}
+            autoFocus={autoFocus}
             sx={hideLabel ? { '&:not(:hover):not(:focus-within) fieldset': { borderColor: 'transparent' } } : undefined}
           />
         )}

@@ -88,6 +88,18 @@ public class SprintSummaryDto
     public required decimal DonePoints { get; set; }
 }
 
+/// <summary>What a new sprint starts from; everything can still be changed.</summary>
+public class SprintDefaultsDto
+{
+    public required string Name { get; set; }
+
+    public required DateOnly StartDate { get; set; }
+
+    public required DateOnly EndDate { get; set; }
+
+    public required int LengthDays { get; set; }
+}
+
 public class SprintWithIssuesDto
 {
     public required SprintSummaryDto Sprint { get; set; }
@@ -189,6 +201,8 @@ public interface IBoardAppService : IApplicationService
 public interface ISprintAppService : IApplicationService
 {
     Task<BacklogDto> GetBacklogAsync(Guid projectId);
+
+    Task<SprintDefaultsDto> GetNewDefaultsAsync(Guid projectId);
 
     Task<SprintSummaryDto> CreateAsync(CreateSprintInput input);
 

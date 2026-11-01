@@ -80,6 +80,9 @@ public class ProjectAccess(
     public async Task<string?> GetBranchTemplateAsync(Guid projectId) =>
         (await projects.GetAsync(projectId)).BranchNameTemplate;
 
+    public async Task<int> GetSprintLengthDaysAsync(Guid projectId) =>
+        (await projects.GetAsync(projectId)).SprintLengthDays;
+
     public async Task<ProjectRef> GetRefAsync(Guid projectId) => ToRef(await projects.GetAsync(projectId));
 
     public async Task<ProjectRef?> FindRefByKeyAsync(string key)
