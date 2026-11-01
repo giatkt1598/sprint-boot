@@ -1,6 +1,6 @@
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,16 +9,16 @@ import ButtonBase from '@mui/material/ButtonBase';
 import { apiClient, unwrap } from '../../api';
 import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
-import { Dialog, DialogConfirm, DialogFooter } from '../../components/Dialog';
+import { DialogConfirm } from '../../components/Dialog';
 import { ErrorState, LoadingState } from '../../components/StateViews';
 import { Table } from '../../components/Table';
 import { SelectField, TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
-import { UserPicker, type PickerUser } from '../../components/UserPicker';
 import { useErrorMessage } from '../../lib/errors';
 import { formatDate } from '../../lib/format';
 import { font, radius, sem, size } from '../../theme/tokens';
 import { SpaceSchemeField } from '../notifications/NotificationPages';
+import { InviteMemberDialog } from '../admin/InvitationPages';
 import { SpacePermission, useMembers, useSpace, type Space, type SpaceMember } from './api';
 
 const ROLE_LABELS: Record<string, string> = {
@@ -155,59 +155,6 @@ export function SpaceGeneralPage() {
   );
 }
 
-function AddMemberDialog({ space, onClose }: { space: Space; onClose: () => void }) {
-  const { t } = useTranslation();
-  const toMessage = useErrorMessage();
-  const queryClient = useQueryClient();
-  const [search, setSearch] = useState('');
-  const [user, setUser] = useState<PickerUser | null>(null);
-  const [role, setRole] = useState('Member');
-
-  const users = useQuery({
-    queryKey: ['users', 'directory', search],
-    queryFn: () => unwrap(apiClient.GET('/api/v1/user-directory/search', { params: { query: { search } } })),
-  });
-
-  const add = useMutation({
-    mutationFn: () =>
-      unwrap(
-        apiClient.POST('/api/v1/project/{id}/member', {
-          params: { path: { id: space.id! } },
-          body: { userId: user!.id!, role },
-        }),
-      ),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['spaces', space.id, 'members'] });
-      onClose();
-    },
-  });
-
-  return (
-    <Dialog
-      open
-      title={t('spaces.addMember')}
-      onClose={onClose}
-      footer={
-        <DialogFooter
-          confirmLabel={t('spaces.addMember')}
-          confirmDisabled={!user || add.isPending}
-          onCancel={onClose}
-          onConfirm={() => add.mutate()}
-        />
-      }
-    >
-      <UserPicker label={t('spaces.person')} options={users.data ?? []} value={user} onChange={setUser} onInputChange={setSearch} />
-      <SelectField
-        label={t('spaces.role')}
-        value={role}
-        onChange={(event) => setRole(event.target.value)}
-        options={Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label: t(label) }))}
-      />
-      {add.isError && <Typography role="alert" color="error" variant="body2">{toMessage(add.error)}</Typography>}
-    </Dialog>
-  );
-}
-
 export function SpaceMembersPage() {
   const { t, i18n } = useTranslation();
   const space = useOutletContext<Space>();
@@ -248,7 +195,7 @@ export function SpaceMembersPage() {
           <Typography variant="h1">{t('spaces.members')}</Typography>
           <Typography variant="body2" color="textSecondary">{t('spaces.membersHint')}</Typography>
         </div>
-        {canManage && <Button onClick={() => setAdding(true)}>{t('spaces.addMember')}</Button>}
+        {canManage && <Button onClick={() => setAdding(true)}>{t('invitations.inviteMember')}</Button>}
       </div>
       {members.isPending && <LoadingState />}
       {members.isError && <ErrorState onRetry={() => void members.refetch()} />}
@@ -299,7 +246,7 @@ export function SpaceMembersPage() {
           ]}
         />
       )}
-      {adding && <AddMemberDialog space={space} onClose={() => setAdding(false)} />}
+      {adding && <InviteMemberDialog spaceId={space.id!} spaceName={space.name ?? ''} onClose={() => setAdding(false)} />}
       <DialogConfirm
         open={Boolean(removing)}
         title={t('spaces.removeTitle')}

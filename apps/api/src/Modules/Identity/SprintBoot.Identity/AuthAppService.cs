@@ -4,6 +4,7 @@ using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Authorization;
 using Volo.Abp.Data;
+using SprintBoot.Projects;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.Identity;
@@ -21,7 +22,10 @@ public class AuthAppService(
     IDistributedEventBus eventBus,
     IRepository<AuthPolicy, Guid> policies,
     IRepository<ExternalProviderConfig, Guid> providers,
-    InvitationAcceptor invitationAcceptor)
+    InvitationAcceptor invitationAcceptor,
+    IRepository<InvitationProject, Guid> invitationProjects,
+    IProjectAccess projectAccess,
+    IUserDirectory userDirectory)
     : ApplicationService, IAuthAppService
 {
     public const string LanguageProperty = "Language";
@@ -76,9 +80,20 @@ public class AuthAppService(
     {
         var invitation = await invitationAcceptor.GetUsableAsync(input.Token);
         var methods = await GetMethodsAsync();
+        var projects = await invitationProjects.GetListAsync(item => item.InvitationId == invitation.Id);
+        var names = await projectAccess.GetRefsAsync(projects.Select(item => item.ProjectId));
+        var people = await userDirectory.GetByIdsAsync([invitation.InvitedById]);
         return new InvitationPreviewDto
         {
             Email = invitation.Email,
+            InvitedBy = people.GetValueOrDefault(invitation.InvitedById)?.Name,
+            SystemRole = invitation.SystemRole,
+            Projects = [.. projects.Select(item => new InvitationProjectDto
+            {
+                ProjectId = item.ProjectId,
+                ProjectName = names.GetValueOrDefault(item.ProjectId)?.Name ?? string.Empty,
+                Role = item.ProjectRole,
+            })],
             LocalLoginEnabled = methods.LocalLoginEnabled,
             Providers = methods.Providers,
         };

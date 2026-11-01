@@ -1,0 +1,67 @@
+{
+  "realm": "sprint-boot",
+  "enabled": true,
+  "clients": [
+    {
+      "clientId": "sprint-boot",
+      "secret": "sprint-boot-dev-secret",
+      "enabled": true,
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "redirectUris": [
+        "http://localhost:*"
+      ],
+      "webOrigins": [
+        "+"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "alice",
+      "email": "alice@sso.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Alice",
+      "lastName": "Sso",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Sso123!dev",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "mallory",
+      "email": "admin@sprintboot.local",
+      "emailVerified": false,
+      "enabled": true,
+      "firstName": "Mallory",
+      "lastName": "Sso",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Sso123!dev",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "invitee",
+      "email": "invitee@sso.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Invitee",
+      "lastName": "Sso",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Sso123!dev",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

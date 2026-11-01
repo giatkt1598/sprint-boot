@@ -6,6 +6,9 @@ const ANONYMOUS_PATHS = [
   '/api/v1/auth/forgot-password',
   '/api/v1/auth/validate-reset-token',
   '/api/v1/auth/reset-password',
+  '/api/v1/auth/methods',
+  '/api/v1/auth/invitation',
+  '/api/v1/auth/accept-invitation',
 ];
 
 export const apiClient = createApiClient();

@@ -8,7 +8,7 @@ import { sem } from '../theme/tokens';
 
 export interface TableColumn<Row> {
   key: string;
-  header: string;
+  header: ReactNode;
   render: (row: Row) => ReactNode;
 }
 

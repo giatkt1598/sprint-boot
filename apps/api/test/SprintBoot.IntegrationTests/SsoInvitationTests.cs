@@ -1,6 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Shouldly;
 using SprintBoot.Identity;
 using SprintBoot.Projects;
@@ -118,6 +121,70 @@ public class SsoInvitationTests(ApiFixture fixture)
         (await response.Content.ReadAsStringAsync(Token)).ShouldContain(SsoErrors.LastMethod);
     }
 
+    private static object Provider(string name, string clientId, bool enabled) => new
+    {
+        name,
+        displayName = name,
+        type = 0,
+        discoveryUrl = "http://localhost:1/realms/x",
+        clientId,
+        clientSecret = "secret",
+        isEnabled = enabled,
+    };
+
+    [Fact]
+    public async Task Provider_changes_reach_the_running_scheme_without_a_restart()
+    {
+        var admin = await AdminAsync();
+        var name = $"live{Random.Shared.Next(1000, 9999)}";
+        var created = await admin.Http.PostAsJsonAsync("/api/v1/sso-admin/provider", Provider(name, "first", enabled: true), Token);
+        var provider = (await created.Content.ReadFromJsonAsync<ExternalProviderDto>(Token))!;
+        var registry = fixture.Factory.Services.GetRequiredService<ExternalSchemeRegistry>();
+        var options = fixture.Factory.Services.GetRequiredService<IOptionsMonitor<OpenIdConnectOptions>>();
+        var schemes = fixture.Factory.Services.GetRequiredService<IAuthenticationSchemeProvider>();
+        var scheme = ExternalSchemeRegistry.SchemeName(name);
+
+        (await registry.EnsureAsync(name)).ShouldBeTrue();
+        options.Get(scheme).ClientId.ShouldBe("first");
+
+        (await admin.Http.PutAsJsonAsync($"/api/v1/sso-admin/{provider.Id}/provider", Provider(name, "second", enabled: true), Token)).EnsureSuccessStatusCode();
+        (await registry.EnsureAsync(name)).ShouldBeTrue();
+        options.Get(scheme).ClientId.ShouldBe("second");
+
+        (await admin.Http.PutAsJsonAsync($"/api/v1/sso-admin/{provider.Id}/provider", Provider(name, "second", enabled: false), Token)).EnsureSuccessStatusCode();
+        (await registry.EnsureAsync(name)).ShouldBeFalse();
+        (await schemes.GetSchemeAsync(scheme)).ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task With_local_sign_in_off_only_admins_keep_the_password_route()
+    {
+        var admin = await AdminAsync();
+        var (member, password) = await fixture.CreateUserAsync(Token);
+        var created = await admin.Http.PostAsJsonAsync("/api/v1/sso-admin/provider", Provider($"off{Random.Shared.Next(1000, 9999)}", "client", enabled: true), Token);
+        var provider = (await created.Content.ReadFromJsonAsync<ExternalProviderDto>(Token))!;
+        await SetPolicyAsync(selfRegistration: false, local: false);
+        try
+        {
+            var client = new AuthClient(fixture);
+            var csrf = await client.GetCsrfTokenAsync(Token);
+            var refused = await client.PostJsonAsync("/api/v1/auth/login", new { email = member.Email, password }, csrf, Token);
+            (await refused.Content.ReadAsStringAsync(Token)).ShouldContain(SsoErrors.LocalDisabled);
+
+            var again = new AuthClient(fixture);
+            await again.SignInAsync(ApiFixture.AdminEmail, ApiFixture.AdminPassword, Token);
+
+            // Switching off the provider now would leave nobody a way in.
+            var last = await admin.Http.PutAsJsonAsync($"/api/v1/sso-admin/{provider.Id}/provider", Provider(provider.Name, "client", enabled: false), Token);
+            (await last.Content.ReadAsStringAsync(Token)).ShouldContain(SsoErrors.LastMethod);
+        }
+        finally
+        {
+            await SetPolicyAsync(selfRegistration: false);
+            (await admin.Http.PutAsJsonAsync($"/api/v1/sso-admin/{provider.Id}/provider", Provider(provider.Name, "client", enabled: false), Token)).EnsureSuccessStatusCode();
+        }
+    }
+
     [Fact]
     public async Task Provider_secret_is_write_only_and_a_member_cannot_read_providers()
     {
@@ -220,6 +287,35 @@ public class SsoInvitationTests(ApiFixture fixture)
         plain.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
         (await InviteAsync(owner, new { email = NewEmail(), projects = new[] { new { projectId = own.Id, role = ProjectRoleNames.Admin } } })).Link.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task Project_invitation_gives_a_new_person_the_basic_system_role()
+    {
+        var owner = await fixture.CreateUserClientAsync(Token);
+        var project = await ProjectAsync(owner);
+        var email = NewEmail();
+        var invited = await InviteAsync(owner, new { email, projects = new[] { new { projectId = project.Id, role = ProjectRoleNames.Member } } });
+
+        (await AcceptAsync(TokenOf(invited.Link!))).EnsureSuccessStatusCode();
+
+        var person = new AuthClient(fixture);
+        await person.SignInAsync(email, "Accepted123!x", Token);
+        (await person.Http.GetAsync("/api/v1/project", Token)).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task Closed_invitations_stay_closed_and_a_copied_link_replaces_the_old_one()
+    {
+        var admin = await AdminAsync();
+        var first = await InviteAsync(admin, new { email = NewEmail(), systemRole = "member" });
+        var copied = (await (await admin.Http.PostAsync($"/api/v1/invitation/{first.Invitation!.Id}/link", null, Token)).Content.ReadFromJsonAsync<InvitationLinkDto>(Token))!;
+
+        (await (await AcceptAsync(TokenOf(first.Link!))).Content.ReadAsStringAsync(Token)).ShouldContain(InvitationErrors.Invalid);
+        (await AcceptAsync(TokenOf(copied.Link!))).EnsureSuccessStatusCode();
+
+        var resend = await admin.Http.PostAsync($"/api/v1/invitation/{first.Invitation.Id}/resend", null, Token);
+        (await resend.Content.ReadAsStringAsync(Token)).ShouldContain(InvitationErrors.Invalid);
     }
 
     [Fact]

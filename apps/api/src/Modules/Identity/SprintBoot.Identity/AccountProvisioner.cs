@@ -43,9 +43,14 @@ public class InvitationAcceptor(
 
     public async Task ApplyAsync(Invitation invitation, IdentityUser user)
     {
-        if (invitation.SystemRole is not null)
+        // A project invitation carries no system role, yet a new person still needs the basic one.
+        var role = invitation.SystemRole ?? SystemRoles.Member;
+        if (invitation.SystemRole is not null || (await userManager.GetRolesAsync(user)).Count == 0)
         {
-            (await userManager.AddToRoleAsync(user, invitation.SystemRole)).CheckErrors();
+            if (!await userManager.IsInRoleAsync(user, role))
+            {
+                (await userManager.AddToRoleAsync(user, role)).CheckErrors();
+            }
         }
 
         foreach (var project in await invitationProjects.GetListAsync(item => item.InvitationId == invitation.Id))

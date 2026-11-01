@@ -1,4 +1,6 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Logging;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
@@ -10,7 +12,8 @@ namespace SprintBoot.Identity;
 public class SsoAdminAppService(
     IRepository<ExternalProviderConfig, Guid> providers,
     IRepository<AuthPolicy, Guid> policies,
-    IStringEncryptionService encryption)
+    IStringEncryptionService encryption,
+    IHttpClientFactory httpClients)
     : ApplicationService, ISsoAdminAppService
 {
     public async Task<List<ExternalProviderDto>> GetProvidersAsync()
@@ -45,6 +48,24 @@ public class SsoAdminAppService(
     {
         await EnsureAMethodRemainsAsync(null, id, enabled: false);
         await providers.DeleteAsync(id);
+    }
+
+    public async Task<ConnectionTestDto> TestConnectionAsync(TestConnectionInput input)
+    {
+        var url = $"{ExternalSchemeRegistry.ToAuthority(input.DiscoveryUrl)}/.well-known/openid-configuration";
+        try
+        {
+            using var client = httpClients.CreateClient();
+            client.Timeout = TimeSpan.FromSeconds(10);
+            using var document = JsonDocument.Parse(await client.GetStringAsync(url));
+            var issuer = document.RootElement.GetProperty("issuer").GetString();
+            return new ConnectionTestDto { Succeeded = issuer is not null, Issuer = issuer };
+        }
+        catch (Exception failure) when (failure is HttpRequestException or TaskCanceledException or JsonException or KeyNotFoundException or UriFormatException or InvalidOperationException)
+        {
+            Logger.LogInformation(failure, "Discovery test failed for {Url}", url);
+            return new ConnectionTestDto { Succeeded = false, Issuer = null };
+        }
     }
 
     public async Task<AuthPolicyDto> GetPolicyAsync() => ToDto(await GetOrCreatePolicyAsync());

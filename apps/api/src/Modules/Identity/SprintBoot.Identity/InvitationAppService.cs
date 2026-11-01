@@ -1,5 +1,6 @@
 using System.Net;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using SprintBoot.Projects;
@@ -50,8 +51,9 @@ public class InvitationAppService(
         var ids = page.Select(item => item.Id).ToList();
         var projects = await invitationProjects.GetListAsync(item => ids.Contains(item.InvitationId));
         var people = await userDirectory.GetByIdsAsync(page.Select(item => item.InvitedById));
+        var names = await projectAccess.GetRefsAsync(projects.Select(item => item.ProjectId));
 
-        return new PagedResultDto<InvitationDto>(filtered.Count, [.. page.Select(item => ToDto(item, projects, people))]);
+        return new PagedResultDto<InvitationDto>(filtered.Count, [.. page.Select(item => ToDto(item, projects, people, names))]);
     }
 
     public async Task<InvitationLinkDto> CreateAsync(CreateInvitationInput input)
@@ -101,45 +103,60 @@ public class InvitationAppService(
             input.Projects.Select(project => new InvitationProject(GuidGenerator.Create(), pending.Id, project.ProjectId, project.Role)),
             autoSave: true);
 
-        return await LinkAsync(pending, token);
+        return await LinkAsync(pending, token, sendEmail: true);
     }
 
     public async Task<InvitationLinkDto> ResendAsync(Guid id)
     {
-        var invitation = await GetOwnAsync(id);
-        var token = InvitationToken.NewToken();
-        invitation.TokenHash = InvitationToken.Hash(token);
-        invitation.ExpiresAt = clock.Now.AddDays(configuration.GetValue("Invitations:ExpiryDays", 7));
-        invitation.Status = InvitationStatus.Pending;
+        var invitation = await GetPendingAsync(id);
+        var token = await RotateAsync(invitation);
         invitation.EmailStatus = InvitationEmailStatus.Queued;
-        await invitations.UpdateAsync(invitation, autoSave: true);
-        return await LinkAsync(invitation, token);
+        return await LinkAsync(invitation, token, sendEmail: true);
+    }
+
+    public async Task<InvitationLinkDto> CreateLinkAsync(Guid id)
+    {
+        var invitation = await GetPendingAsync(id);
+        return await LinkAsync(invitation, await RotateAsync(invitation), sendEmail: false);
     }
 
     public async Task RevokeAsync(Guid id)
     {
-        var invitation = await GetOwnAsync(id);
+        var invitation = await GetPendingAsync(id);
         invitation.Status = InvitationStatus.Revoked;
         await invitations.UpdateAsync(invitation);
     }
 
-    private async Task<InvitationLinkDto> LinkAsync(Invitation invitation, string token)
+    private async Task<string> RotateAsync(Invitation invitation)
     {
-        await eventBus.PublishAsync(
-            new InvitationEmailEto { InvitationId = invitation.Id, EncryptedToken = encryption.Encrypt(token)! },
-            useOutbox: true);
+        var token = InvitationToken.NewToken();
+        invitation.TokenHash = InvitationToken.Hash(token);
+        invitation.ExpiresAt = clock.Now.AddDays(configuration.GetValue("Invitations:ExpiryDays", 7));
+        await invitations.UpdateAsync(invitation, autoSave: true);
+        return token;
+    }
+
+    private async Task<InvitationLinkDto> LinkAsync(Invitation invitation, string token, bool sendEmail)
+    {
+        if (sendEmail)
+        {
+            await eventBus.PublishAsync(
+                new InvitationEmailEto { InvitationId = invitation.Id, EncryptedToken = encryption.Encrypt(token)! },
+                useOutbox: true);
+        }
 
         var projects = await invitationProjects.GetListAsync(item => item.InvitationId == invitation.Id);
         var people = await userDirectory.GetByIdsAsync([invitation.InvitedById]);
         return new InvitationLinkDto
         {
-            Invitation = ToDto(invitation, projects, people),
+            Invitation = ToDto(invitation, projects, people, await projectAccess.GetRefsAsync(projects.Select(item => item.ProjectId))),
             Link = InvitationLinks.Build(configuration, token),
             AddedDirectly = false,
         };
     }
 
-    private async Task<Invitation> GetOwnAsync(Guid id)
+    /// <summary>Accepted and revoked invitations stay closed. An expired one may be renewed.</summary>
+    private async Task<Invitation> GetPendingAsync(Guid id)
     {
         var invitation = await invitations.GetAsync(id);
         if (invitation.InvitedById != CurrentUser.GetId() && !await CanManageAllAsync())
@@ -147,7 +164,9 @@ public class InvitationAppService(
             throw new AbpAuthorizationException(code: InvitationErrors.Forbidden);
         }
 
-        return invitation;
+        return invitation.Status == InvitationStatus.Pending
+            ? invitation
+            : throw new BusinessException(InvitationErrors.Invalid);
     }
 
     private async Task<bool> CanManageAllAsync() => await AuthorizationService.IsGrantedAsync(SprintBootPermissions.ManageInvitations);
@@ -197,7 +216,11 @@ public class InvitationAppService(
         }
     }
 
-    private InvitationDto ToDto(Invitation item, List<InvitationProject> projects, Dictionary<Guid, UserRefDto> people) => new()
+    private InvitationDto ToDto(
+        Invitation item,
+        List<InvitationProject> projects,
+        Dictionary<Guid, UserRefDto> people,
+        Dictionary<Guid, ProjectRef> names) => new()
     {
         Id = item.Id,
         Email = item.Email,
@@ -208,7 +231,12 @@ public class InvitationAppService(
         ExpiresAt = item.ExpiresAt,
         CreationTime = item.CreationTime,
         Projects = [.. projects.Where(project => project.InvitationId == item.Id)
-            .Select(project => new InvitationProjectInput { ProjectId = project.ProjectId, Role = project.ProjectRole })],
+            .Select(project => new InvitationProjectDto
+            {
+                ProjectId = project.ProjectId,
+                ProjectName = names.GetValueOrDefault(project.ProjectId)?.Name ?? string.Empty,
+                Role = project.ProjectRole,
+            })],
     };
 }
 
@@ -232,24 +260,27 @@ public class InvitationEmailHandler(
     [UnitOfWork]
     public virtual async Task HandleEventAsync(InvitationEmailEto eventData)
     {
+        var token = encryption.Decrypt(eventData.EncryptedToken)!;
         var invitation = await invitations.FindAsync(eventData.InvitationId);
-        if (invitation is null)
+
+        // A revoked, accepted or rotated invitation has nothing left to deliver.
+        if (invitation is null || invitation.Status != InvitationStatus.Pending || invitation.TokenHash != InvitationToken.Hash(token))
         {
             return;
         }
 
-        var link = InvitationLinks.Build(configuration, encryption.Decrypt(eventData.EncryptedToken)!);
+        var link = InvitationLinks.Build(configuration, token);
         var texts = EmailTexts.Load("en");
         var body = $"<p>{WebUtility.HtmlEncode(texts["inviteBody"])}</p>" +
             $"<p><a href=\"{WebUtility.HtmlEncode(link)}\">{WebUtility.HtmlEncode(texts["inviteAction"])}</a></p>";
 
-        invitation.EmailStatus = InvitationEmailStatus.Failed;
+        var status = InvitationEmailStatus.Failed;
         for (var attempt = 1; attempt <= Attempts; attempt++)
         {
             try
             {
                 await emailSender.SendAsync(invitation.Email, texts["inviteSubject"], body);
-                invitation.EmailStatus = InvitationEmailStatus.Sent;
+                status = InvitationEmailStatus.Sent;
                 break;
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
@@ -259,6 +290,10 @@ public class InvitationEmailHandler(
             }
         }
 
-        await invitations.UpdateAsync(invitation);
+        // Bypasses the concurrency stamp: sending is slow, and the invitation may be accepted meanwhile.
+        var hash = invitation.TokenHash;
+        await (await invitations.GetQueryableAsync())
+            .Where(item => item.Id == invitation.Id && item.TokenHash == hash)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(item => item.EmailStatus, status));
     }
 }

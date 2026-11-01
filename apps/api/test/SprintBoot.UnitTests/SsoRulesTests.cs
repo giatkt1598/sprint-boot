@@ -28,6 +28,14 @@ public class SsoRulesTests
         GitHubEmails.Pick(emails).ShouldBe(("me@x.io", false));
     }
 
+    [Theory]
+    [InlineData("https://id.corp.com/realms/x/.well-known/openid-configuration", "https://id.corp.com/realms/x")]
+    [InlineData("https://id.corp.com/realms/x/", "https://id.corp.com/realms/x")]
+    public void Discovery_address_becomes_an_authority(string url, string expected)
+    {
+        ExternalSchemeRegistry.ToAuthority(url).ShouldBe(expected);
+    }
+
     [Fact]
     public void Invitation_tokens_are_random_and_hashed()
     {

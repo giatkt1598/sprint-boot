@@ -1,8 +1,10 @@
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router';
+import type { components } from '@sprint-boot/api-client';
 import logo from '../../../../assets/brand/sprint-boot-logo.png';
 import { ApiError, apiClient, fetchCsrfToken, unwrap } from '../api';
 import { Button } from '../components/Button';
@@ -47,10 +49,51 @@ function FormError({ message }: { message: string | null }) {
   ) : null;
 }
 
-export function LoginPage() {
+type SignInProvider = components['schemas']['SignInProviderDto'];
+
+/** Full page navigation, because the server redirects to the identity provider. */
+function ProviderButtons({ providers, query }: { providers: SignInProvider[]; query: string }) {
   const { t } = useTranslation();
+
+  return providers.map((provider) => (
+    <Button
+      key={provider.name}
+      kind="secondary"
+      component="a"
+      href={`/connect/external/${provider.name}/challenge?${query}`}
+    >
+      {t('auth.continueWith', { provider: provider.displayName })}
+    </Button>
+  ));
+}
+
+function OrDivider() {
+  const { t } = useTranslation();
+
+  return (
+    <div className="flex items-center gap-2" aria-hidden>
+      <span className="flex-1" style={{ borderTop: `1px solid ${sem('border-default')}` }} />
+      <Typography variant="body2" color="textSecondary">{t('auth.or')}</Typography>
+      <span className="flex-1" style={{ borderTop: `1px solid ${sem('border-default')}` }} />
+    </div>
+  );
+}
+
+export function LoginPage() {
+  const { t, i18n } = useTranslation();
   const toMessage = useErrorMessage();
   const [params] = useSearchParams();
+  const [showPassword, setShowPassword] = useState(false);
+  const methods = useQuery({
+    queryKey: ['auth', 'methods'],
+    queryFn: () => unwrap(apiClient.GET('/api/v1/auth/methods')),
+  });
+  const providers = methods.data?.providers ?? [];
+  const localEnabled = methods.data?.localLoginEnabled ?? true;
+  const returnUrl = params.get('ReturnUrl');
+  const challengeQuery = returnUrl ? `returnUrl=${encodeURIComponent(returnUrl)}` : '';
+  const externalError = params.get('error');
+  const externalMessage = externalError && i18n.exists(`errors.${externalError}`) ? t(`errors.${externalError}`) : null;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +112,6 @@ export function LoginPage() {
         }),
       );
       // Only continue an authorize request of our own, never an arbitrary URL.
-      const returnUrl = params.get('ReturnUrl');
       if (returnUrl?.startsWith('/connect/authorize')) {
         window.location.assign(returnUrl);
       } else {
@@ -83,15 +125,22 @@ export function LoginPage() {
 
   return (
     <AuthCard title={t('auth.signIn')}>
-      <form className="flex flex-col gap-4" onSubmit={(event) => void submit(event)}>
-        <TextField label={t('auth.email')} type="email" required autoFocus autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} />
-        <TextField label={t('auth.password')} type="password" required autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} />
-        <FormError message={error} />
-        <div className="flex justify-end">
-          <Link component={RouterLink} to="/forgot-password" variant="body2">{t('auth.forgotLink')}</Link>
-        </div>
-        <Button type="submit" disabled={busy}>{t('auth.signIn')}</Button>
-      </form>
+      <FormError message={externalMessage} />
+      <ProviderButtons providers={providers} query={challengeQuery} />
+      {providers.length > 0 && localEnabled && <OrDivider />}
+      {localEnabled || showPassword ? (
+        <form className="flex flex-col gap-4" onSubmit={(event) => void submit(event)}>
+          <TextField label={t('auth.email')} type="email" required autoFocus autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} />
+          <TextField label={t('auth.password')} type="password" required autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} />
+          <FormError message={error} />
+          <div className="flex justify-end">
+            <Link component={RouterLink} to="/forgot-password" variant="body2">{t('auth.forgotLink')}</Link>
+          </div>
+          <Button type="submit" disabled={busy}>{t('auth.signIn')}</Button>
+        </form>
+      ) : (
+        <Link component="button" variant="body2" onClick={() => setShowPassword(true)}>{t('auth.adminPassword')}</Link>
+      )}
     </AuthCard>
   );
 }
@@ -227,6 +276,97 @@ export function ResetPasswordPage() {
         <FormError message={error} />
         <Button type="submit">{t('auth.setPasswordAction')}</Button>
       </form>
+    </AuthCard>
+  );
+}
+
+function invitationSummary(t: ReturnType<typeof useTranslation>['t'], preview: components['schemas']['InvitationPreviewDto']) {
+  const inviter = preview.invitedBy ?? t('app.name');
+  const project = preview.projects?.[0];
+  return project
+    ? t('invitations.joinSpace', { inviter, space: project.projectName, role: t(`invitations.roles.${project.role}`) })
+    : t('invitations.joinApp', { inviter });
+}
+
+export function AcceptInvitationPage() {
+  const { t } = useTranslation();
+  const toMessage = useErrorMessage();
+  const [params] = useSearchParams();
+  const token = params.get('token') ?? '';
+  const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [gone, setGone] = useState(false);
+
+  const preview = useQuery({
+    queryKey: ['auth', 'invitation', token],
+    retry: false,
+    queryFn: async () => {
+      const csrf = await fetchCsrfToken();
+      return unwrap(
+        apiClient.POST('/api/v1/auth/invitation', { body: { token }, headers: { RequestVerificationToken: csrf } }),
+      );
+    },
+  });
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    setError(null);
+    try {
+      const email = preview.data?.email ?? '';
+      const csrf = await fetchCsrfToken();
+      await unwrap(
+        apiClient.POST('/api/v1/auth/accept-invitation', {
+          body: { token, name, password },
+          headers: { RequestVerificationToken: csrf },
+        }),
+      );
+      await unwrap(
+        apiClient.POST('/api/v1/auth/login', {
+          body: { email, password },
+          headers: { RequestVerificationToken: await fetchCsrfToken() },
+        }),
+      );
+      await userManager.signinRedirect();
+    } catch (failure) {
+      if (failure instanceof ApiError && failure.code?.endsWith('InvitationInvalid')) {
+        setGone(true);
+      } else {
+        setError(toMessage(failure));
+      }
+    }
+  };
+
+  if (preview.isPending) {
+    return null;
+  }
+
+  if (preview.isError || gone) {
+    return (
+      <AuthCard title={t('invitations.invalidTitle')}>
+        <Typography color="textSecondary">{t('invitations.invalidBody')}</Typography>
+        <Button kind="secondary" component={RouterLink} to="/login">{t('auth.backToSignIn')}</Button>
+      </AuthCard>
+    );
+  }
+
+  const providers = preview.data.providers ?? [];
+  const localEnabled = preview.data.localLoginEnabled ?? true;
+
+  return (
+    <AuthCard title={t('invitations.joinTitle')}>
+      <Typography color="textSecondary">{invitationSummary(t, preview.data)}</Typography>
+      <ProviderButtons providers={providers} query={`invitation=${encodeURIComponent(token)}`} />
+      {providers.length > 0 && localEnabled && <OrDivider />}
+      {localEnabled && (
+        <form className="flex flex-col gap-4" onSubmit={(event) => void submit(event)}>
+          <TextField label={t('auth.email')} type="email" value={preview.data.email ?? ''} disabled />
+          <TextField label={t('invitations.fullName')} required autoFocus autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} />
+          <TextField label={t('auth.password')} type="password" required autoComplete="new-password" placeholder={t('invitations.passwordHint')} value={password} onChange={(event) => setPassword(event.target.value)} />
+          <FormError message={error} />
+          <Button type="submit">{t('invitations.createAccount')}</Button>
+        </form>
+      )}
     </AuthCard>
   );
 }

@@ -92,6 +92,20 @@ public class SaveAuthPolicyInput
     public string? AllowedDomains { get; set; }
 }
 
+public class TestConnectionInput
+{
+    [Required]
+    [StringLength(512)]
+    public required string DiscoveryUrl { get; set; }
+}
+
+public class ConnectionTestDto
+{
+    public required bool Succeeded { get; set; }
+
+    public required string? Issuer { get; set; }
+}
+
 public class SignInProviderDto
 {
     public required string Name { get; set; }
@@ -115,6 +129,8 @@ public interface ISsoAdminAppService : IApplicationService
     Task<ExternalProviderDto> UpdateProviderAsync(Guid id, SaveProviderInput input);
 
     Task DeleteProviderAsync(Guid id);
+
+    Task<ConnectionTestDto> TestConnectionAsync(TestConnectionInput input);
 
     Task<AuthPolicyDto> GetPolicyAsync();
 
@@ -188,7 +204,16 @@ public class InvitationDto
 
     public required DateTime CreationTime { get; set; }
 
-    public required List<InvitationProjectInput> Projects { get; set; }
+    public required List<InvitationProjectDto> Projects { get; set; }
+}
+
+public class InvitationProjectDto
+{
+    public required Guid ProjectId { get; set; }
+
+    public required string ProjectName { get; set; }
+
+    public required string Role { get; set; }
 }
 
 public class InvitationLinkDto
@@ -209,6 +234,12 @@ public class InvitationListInput : PagedResultRequestDto
 public class InvitationPreviewDto
 {
     public required string Email { get; set; }
+
+    public required string? InvitedBy { get; set; }
+
+    public required string? SystemRole { get; set; }
+
+    public required List<InvitationProjectDto> Projects { get; set; }
 
     public required bool LocalLoginEnabled { get; set; }
 
@@ -241,6 +272,11 @@ public interface IInvitationAppService : IApplicationService
     Task<InvitationLinkDto> CreateAsync(CreateInvitationInput input);
 
     Task<InvitationLinkDto> ResendAsync(Guid id);
+
+    /// <summary>
+    /// Only a hash is stored, so copying a link replaces it. The link sent by email stops working.
+    /// </summary>
+    Task<InvitationLinkDto> CreateLinkAsync(Guid id);
 
     Task RevokeAsync(Guid id);
 }

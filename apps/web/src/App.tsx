@@ -1,10 +1,12 @@
 import { Navigate, Route, BrowserRouter, Routes } from 'react-router';
 import { RequireAuth } from './auth/AuthProvider';
-import { AuthCallbackPage, ForgotPasswordPage, LoginPage, ResetPasswordPage, SessionExpiredPage } from './auth/AuthPages';
+import { AuthCallbackPage, AcceptInvitationPage, ForgotPasswordPage, LoginPage, ResetPasswordPage, SessionExpiredPage } from './auth/AuthPages';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastHost } from './components/ToastHost';
 import { AccountIndex, AccountLayout, ProfilePage, SecurityPage } from './features/account/AccountPages';
 import { AdminIndex, AdminLayout, DeletedIssuesPage, ManageUserPage, UsersPage } from './features/admin/AdminPages';
+import { InvitationsPage } from './features/admin/InvitationPages';
+import { SsoPage, SsoProviderPage } from './features/admin/SsoPages';
 import { StatusesPage, WorkflowsPage } from './features/admin/WorkflowPages';
 import { BacklogPage } from './features/agile/BacklogPage';
 import { BoardPage } from './features/agile/BoardPage';
@@ -29,6 +31,7 @@ export function App() {
           <Route path="login" element={<LoginPage />} />
           <Route path="forgot-password" element={<ForgotPasswordPage />} />
           <Route path="reset-password" element={<ResetPasswordPage />} />
+          <Route path="accept-invitation" element={<AcceptInvitationPage />} />
           <Route path="session-expired" element={<SessionExpiredPage />} />
           <Route path="auth/callback" element={<AuthCallbackPage />} />
           <Route path="dev/ui" element={<main className="p-8"><DevUiPage /></main>} />
@@ -44,6 +47,9 @@ export function App() {
               <Route index element={<AdminIndex />} />
               <Route path="users" element={<UsersPage />} />
               <Route path="users/:userId" element={<ManageUserPage />} />
+              <Route path="invitations" element={<InvitationsPage />} />
+              <Route path="sso" element={<SsoPage />} />
+              <Route path="sso/:providerId" element={<SsoProviderPage />} />
               <Route path="workflows" element={<WorkflowsPage />} />
               <Route path="notification-schemes" element={<NotificationSchemesPage />} />
               <Route path="notification-schemes/:schemeId" element={<EditSchemePage />} />

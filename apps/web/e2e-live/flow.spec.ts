@@ -650,3 +650,140 @@ test('Vietnamese UI has no accessibility regressions', async ({ page }) => {
   await page.getByRole('button', { name: 'Lưu' }).click();
   await expect(page.getByRole('heading', { name: 'Profile' })).toBeVisible();
 });
+
+const KEYCLOAK = 'http://localhost:8180/realms/sprint-boot';
+
+const keycloakAvailable = async () => {
+  try {
+    return (await fetch(`${KEYCLOAK}/.well-known/openid-configuration`)).ok;
+  } catch {
+    return false;
+  }
+};
+
+const signInAtKeycloak = async (page: Page, username: string) => {
+  await page.getByLabel(/username/i).fill(username);
+  await page.getByLabel('Password', { exact: true }).fill('Sso123!dev');
+  await page.getByRole('button', { name: 'Sign In' }).click();
+};
+
+test('an admin adds an OIDC provider and SSO works without a restart', async ({ page, browser }) => {
+  test.setTimeout(150_000);
+  test.skip(!(await keycloakAvailable()), 'Start Keycloak with the sso compose profile');
+
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/admin/sso');
+  await expect(page.getByRole('heading', { name: 'Single sign-on' })).toBeVisible();
+  await expectAccessible(page);
+  await page.getByRole('button', { name: 'Add provider' }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Display name').fill('Company SSO');
+  await dialog.getByLabel('Discovery URL').fill(`${KEYCLOAK}/.well-known/openid-configuration`);
+  await dialog.getByLabel('Client ID').fill('sprint-boot');
+  await dialog.getByLabel('Client secret').fill('sprint-boot-dev-secret');
+  await expectAccessible(page);
+  await dialog.getByRole('button', { name: 'Add provider' }).click();
+  await expect(page.getByRole('cell', { name: 'Company SSO', exact: true })).toBeVisible();
+  await page.getByRole('link', { name: 'Edit Company SSO' }).click();
+  await page.getByRole('button', { name: 'Test connection' }).click();
+  await expect(page.getByText('Connection works.')).toBeVisible();
+  await expectAccessible(page);
+
+  // An unverified IdP email must not reach the existing admin account.
+  const attacker = await (await browser.newContext()).newPage();
+  await attacker.goto('/login');
+  await attacker.getByRole('link', { name: 'Continue with Company SSO' }).click();
+  await signInAtKeycloak(attacker, 'mallory');
+  await expect(attacker.getByRole('alert')).toHaveText('Your provider has not verified this email, so it cannot be linked.');
+  await attacker.context().close();
+
+  // Closed registration refuses a stranger.
+  const stranger = await (await browser.newContext()).newPage();
+  await stranger.goto('/login');
+  await stranger.getByRole('link', { name: 'Continue with Company SSO' }).click();
+  await signInAtKeycloak(stranger, 'alice');
+  await expect(stranger.getByRole('alert')).toContainText('has not been invited');
+  await stranger.context().close();
+
+  // A real invitation accepted through the provider signs the person in.
+  // The address is fixed by the realm, so mail from an earlier run must not be read as this one.
+  await fetch(`${MAILPIT}/search?query=${encodeURIComponent('to:invitee@sso.local')}`, { method: 'DELETE' });
+  await page.goto('/admin/invitations');
+  await expectAccessible(page);
+  await page.getByRole('button', { name: 'Invite user' }).click();
+  await page.getByRole('dialog').getByLabel('Email').fill('invitee@sso.local');
+  await page.getByRole('dialog').getByRole('button', { name: 'Send invitation' }).click();
+  await expect(page.getByRole('cell', { name: 'invitee@sso.local', exact: true })).toBeVisible();
+  await expectAccessible(page);
+
+  const search = async () =>
+    await (await fetch(`${MAILPIT}/search?query=${encodeURIComponent('to:invitee@sso.local')}`)).json() as { messages: { ID: string }[] };
+  await expect.poll(async () => (await search()).messages.length, { timeout: 30_000 }).toBeGreaterThan(0);
+  const found = await search();
+  const mail = await (await fetch(`${MAILPIT}/message/${found.messages[0]!.ID}`)).json() as { HTML: string };
+  const link = /href="[^"]*(\/accept-invitation[^"]+)"/.exec(mail.HTML)![1]!.replaceAll('&amp;', '&');
+
+  const invitee = await (await browser.newContext()).newPage();
+  await invitee.goto(link);
+  await expect(invitee.getByRole('heading', { name: 'Join Sprint Boot' })).toBeVisible();
+  await expectAccessible(invitee);
+  await invitee.getByRole('link', { name: 'Continue with Company SSO' }).click();
+  await signInAtKeycloak(invitee, 'invitee');
+  await invitee.waitForURL('**/spaces');
+
+  await invitee.goto(link);
+  await expect(invitee.getByRole('heading', { name: 'This invitation is no longer valid' })).toBeVisible();
+  await expectAccessible(invitee);
+  await invitee.context().close();
+
+  // Removing it takes effect at once: the button is gone from the sign-in page.
+  await page.goto('/admin/sso');
+  await page.getByRole('link', { name: 'Edit Company SSO' }).click();
+  await page.getByRole('button', { name: 'Delete provider' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Delete provider' }).click();
+  await page.waitForURL('**/admin/sso');
+  const anonymous = await (await browser.newContext()).newPage();
+  await anonymous.goto('/login');
+  await expect(anonymous.getByRole('button', { name: 'Sign in' })).toBeVisible();
+  await expect(anonymous.getByRole('link', { name: 'Continue with Company SSO' })).toHaveCount(0);
+  await anonymous.context().close();
+});
+
+test('a space admin invites by email, the person accepts with a password and joins', async ({ page, browser, context }) => {
+  test.setTimeout(90_000);
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  const email = `joiner-${suffix().toLowerCase()}@test.local`;
+  await signIn(page, ADMIN.email, ADMIN.password);
+  const key = `I${suffix()}`;
+  await page.getByRole('button', { name: 'Create space' }).click();
+  await page.getByLabel('Name').fill(`Space ${key}`);
+  await page.getByLabel('Key').fill(key);
+  await page.getByRole('dialog').getByRole('button', { name: 'Create space' }).click();
+  await page.waitForURL(`**/spaces/${key}/issues`);
+
+  await page.goto(`/spaces/${key}/settings/members`);
+  await page.getByRole('button', { name: 'Invite member' }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Email').fill(email);
+  await expectAccessible(page);
+  await dialog.getByRole('button', { name: 'Send invitation' }).click();
+  await expect(page.getByText('Invitation sent.')).toBeVisible();
+
+  await page.goto('/admin/invitations');
+  await page.getByRole('button', { name: `Copy link ${email}` }).click();
+  await expect(page.getByText('New link copied')).toBeVisible();
+  const link = await page.evaluate(() => navigator.clipboard.readText());
+
+  const joiner = await (await browser.newContext()).newPage();
+  await joiner.goto(link);
+  await expect(joiner.getByText(`invited you to the Space ${key} space as a Member.`)).toBeVisible();
+  await joiner.getByLabel('Full name').fill('Joiner Person');
+  await joiner.getByLabel('Password').fill('Joiner123!x');
+  await joiner.getByRole('button', { name: 'Create account' }).click();
+  await joiner.waitForURL('**/spaces');
+  await expect(joiner.getByText(`Space ${key}`).first()).toBeVisible();
+  await joiner.context().close();
+
+  await page.reload();
+  await expect(page.getByRole('row', { name: new RegExp(email) }).getByText('Accepted')).toBeVisible();
+});

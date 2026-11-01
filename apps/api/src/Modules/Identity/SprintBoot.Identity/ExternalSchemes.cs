@@ -76,6 +76,10 @@ public class ExternalSchemeRegistry(
         }
     }
 
+    /// <summary>Admins paste either the issuer or the full discovery document address.</summary>
+    public static string? ToAuthority(string? discoveryUrl) =>
+        discoveryUrl?.Trim().Replace("/.well-known/openid-configuration", string.Empty, StringComparison.OrdinalIgnoreCase).TrimEnd('/');
+
     private void Remove(string name)
     {
         schemes.RemoveScheme(name);
@@ -98,7 +102,7 @@ public class ExternalSchemeRegistry(
         var oidc = new OpenIdConnectOptions
         {
             SignInScheme = IdentityConstants.ExternalScheme,
-            Authority = config.Type == ExternalProviderType.Google ? GoogleDiscovery : config.DiscoveryUrl,
+            Authority = config.Type == ExternalProviderType.Google ? GoogleDiscovery : ToAuthority(config.DiscoveryUrl),
             ClientId = config.ClientId,
             ClientSecret = secret,
             ResponseType = "code",
@@ -116,7 +120,9 @@ public class ExternalSchemeRegistry(
 
         // Lax survives the redirect back from the IdP, also over plain HTTP in development.
         oidc.CorrelationCookie.SameSite = SameSiteMode.Lax;
+        oidc.CorrelationCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
         oidc.NonceCookie.SameSite = SameSiteMode.Lax;
+        oidc.NonceCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
         new OpenIdConnectPostConfigureOptions(dataProtection).PostConfigure(name, oidc);
         oidcOptions.TryAdd(name, oidc);
         schemes.AddScheme(new AuthenticationScheme(name, config.DisplayName, typeof(OpenIdConnectHandler)));
@@ -138,6 +144,7 @@ public class ExternalSchemeRegistry(
         options.Scope.Add("read:user");
         options.Scope.Add("user:email");
         options.CorrelationCookie.SameSite = SameSiteMode.Lax;
+        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
         options.Events.OnCreatingTicket = LoadGitHubIdentityAsync;
         return options;
     }
