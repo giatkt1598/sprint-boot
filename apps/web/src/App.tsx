@@ -5,10 +5,12 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastHost } from './components/ToastHost';
 import { AccountIndex, AccountLayout, ProfilePage, SecurityPage } from './features/account/AccountPages';
 import { AdminIndex, AdminLayout, DeletedIssuesPage, ManageUserPage, UsersPage } from './features/admin/AdminPages';
+import { StatusesPage, WorkflowsPage } from './features/admin/WorkflowPages';
 import { IssuePage } from './features/issues/IssuePage';
 import { IssuesListPage } from './features/issues/IssuesListPage';
 import { SpaceGeneralPage, SpaceMembersPage, SpaceSettingsIndex, SpaceSettingsLayout } from './features/spaces/SpaceSettings';
 import { SpacesPage } from './features/spaces/SpacesPage';
+import { SpaceWorkflowsPage } from './features/spaces/SpaceWorkflowsPage';
 import { AppShell, BareShell } from './layout/AppShell';
 import { DevUiPage } from './pages/DevUiPage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -36,12 +38,15 @@ export function App() {
               <Route index element={<AdminIndex />} />
               <Route path="users" element={<UsersPage />} />
               <Route path="users/:userId" element={<ManageUserPage />} />
+              <Route path="workflows" element={<WorkflowsPage />} />
+              <Route path="statuses" element={<StatusesPage />} />
               <Route path="deleted-issues" element={<DeletedIssuesPage />} />
             </Route>
             <Route path="spaces/:spaceKey/settings" element={<SpaceSettingsLayout />}>
               <Route index element={<SpaceSettingsIndex />} />
               <Route path="general" element={<SpaceGeneralPage />} />
               <Route path="members" element={<SpaceMembersPage />} />
+              <Route path="workflows" element={<SpaceWorkflowsPage />} />
             </Route>
           </Route>
 

@@ -5,9 +5,12 @@
   <ItemGroup>
     <PackageReference Include="Volo.Abp.Ddd.Application" />
     <PackageReference Include="Volo.Abp.Ddd.Domain" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Volo.Abp.DistributedLocking.Abstractions" />
     <PackageReference Include="Volo.Abp.EntityFrameworkCore" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Identity\SprintBoot.Identity.Contracts\SprintBoot.Identity.Contracts.csproj" />
+    <ProjectReference Include="..\..\Projects\SprintBoot.Projects.Contracts\SprintBoot.Projects.Contracts.csproj" />
   </ItemGroup>
 </Project>

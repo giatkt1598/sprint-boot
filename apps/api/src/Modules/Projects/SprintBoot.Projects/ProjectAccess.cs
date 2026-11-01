@@ -95,6 +95,17 @@ public class ProjectAccess(
     public Task<bool> IsMemberAsync(Guid projectId, Guid userId) =>
         members.AnyAsync(item => item.ProjectId == projectId && item.UserId == userId);
 
+    public async Task<string?> GetCurrentRoleAsync(Guid projectId)
+    {
+        if (currentUser.Id is not { } userId)
+        {
+            return null;
+        }
+
+        var member = await members.FirstOrDefaultAsync(item => item.ProjectId == projectId && item.UserId == userId);
+        return member?.Role;
+    }
+
     public async Task<int> NextIssueNumberAsync(Guid projectId)
     {
         // A single UPDATE takes the row lock until commit, so concurrent creates serialize here.

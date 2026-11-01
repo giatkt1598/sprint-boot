@@ -143,7 +143,19 @@
     "IssueTitleRequired": "Title is required.",
     "AttachmentTooLarge": "This file is larger than the allowed size.",
     "WorkLogInvalidTime": "Time must be greater than 0.",
-    "CommentEmpty": "Write something first."
+    "CommentEmpty": "Write something first.",
+    "InvalidTransition": "This move is no longer available. Reload the issue.",
+    "TransitionConditionFailed": "You cannot make this move.",
+    "TransitionValidationFailed": "This issue does not meet the requirements for this move.",
+    "TransitionCommentRequired": "A comment is required.",
+    "TransitionMissingField": "A required field is empty.",
+    "InvalidWorkflowDefinition": "The workflow definition is invalid.",
+    "UnreachableStatus": "Every status must be reachable from the initial status.",
+    "WorkflowNeedsDoneStatus": "A workflow needs at least one Done status.",
+    "UnknownWorkflowRule": "The workflow uses an unknown rule.",
+    "StatusMappingRequired": "Choose a replacement for the removed statuses.",
+    "WorkflowHasNoDraft": "There are no draft changes to publish.",
+    "WorkflowNotPublished": "This workflow is not published yet."
   },
   "auth": {
     "signIn": "Sign in",
@@ -243,11 +255,13 @@
     "remove": "Remove",
     "removeTitle": "Remove member?",
     "removeBody": "{{name}} will lose access to this space. Issues assigned to them stay as they are.",
-    "roleProjectAdmin": "Project Admin",
+    "roleProjectAdmin": "Space admin",
     "roleMember": "Member",
     "roleViewer": "Viewer",
     "pickPerson": "Choose a person",
-    "back": "Back to space"
+    "back": "Back to space",
+    "membersHint": "Roles decide what each person can do in this space.",
+    "joined": "Joined"
   },
   "issues": {
     "title": "Issues",
@@ -343,10 +357,43 @@
       "startDate": "Start date",
       "dueDate": "Due date",
       "workLog": "Work log",
-      "attachment": "Attachment"
+      "attachment": "Attachment",
+      "status": "Status"
     },
     "addReaction": "Add reaction",
     "reactWith": "React with {{emoji}}",
-    "commentMore": "More comment actions"
+    "commentMore": "More comment actions",
+    "moveTo": "Move to",
+    "moveSummary": "{{key}} moves from {{from}} to {{to}}.",
+    "commentRequired": "Comment (required)"
+  },
+  "workflows": {
+    "title": "Workflows",
+    "hint": "Statuses and transitions that issues move through.",
+    "spaceHint": "Each issue type follows one workflow.",
+    "statuses": "Statuses",
+    "statusesHint": "Statuses are shared. Each workflow picks from this list.",
+    "addStatus": "Add status",
+    "editStatus": "Edit status",
+    "group": "Group",
+    "inUse": "In use",
+    "notUsed": "Not used",
+    "create": "Create workflow",
+    "template": "Start from",
+    "empty": "No workflows yet",
+    "version": "Version",
+    "draftChanges": "Draft changes",
+    "publishedState": "Published",
+    "jsonHint": "Edit the definition as JSON. The visual designer comes later.",
+    "definition": "Workflow definition",
+    "saveDraft": "Save draft",
+    "publish": "Publish",
+    "invalidJson": "This is not valid JSON.",
+    "draftSaved": "Draft saved",
+    "published": "Workflow published",
+    "publishedQueued": "Saved. Issues are moving to the new version in the background.",
+    "mappingHint": "Some issues use statuses that no longer exist. Choose where they go.",
+    "changeTitle": "Change workflow",
+    "defaultName": "Default"
   }
 }

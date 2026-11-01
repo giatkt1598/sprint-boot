@@ -143,7 +143,19 @@
     "IssueTitleRequired": "Tiêu đề là bắt buộc.",
     "AttachmentTooLarge": "File vượt quá dung lượng cho phép.",
     "WorkLogInvalidTime": "Thời gian phải lớn hơn 0.",
-    "CommentEmpty": "Hãy nhập nội dung trước."
+    "CommentEmpty": "Hãy nhập nội dung trước.",
+    "InvalidTransition": "Bước chuyển này không còn khả dụng. Hãy tải lại issue.",
+    "TransitionConditionFailed": "Bạn không thể thực hiện bước chuyển này.",
+    "TransitionValidationFailed": "Issue chưa đáp ứng yêu cầu của bước chuyển.",
+    "TransitionCommentRequired": "Cần nhập bình luận.",
+    "TransitionMissingField": "Còn trường bắt buộc chưa nhập.",
+    "InvalidWorkflowDefinition": "Định nghĩa workflow không hợp lệ.",
+    "UnreachableStatus": "Mọi status phải đến được từ status khởi đầu.",
+    "WorkflowNeedsDoneStatus": "Workflow cần ít nhất một status nhóm Done.",
+    "UnknownWorkflowRule": "Workflow dùng quy tắc không xác định.",
+    "StatusMappingRequired": "Hãy chọn status thay thế cho các status đã bỏ.",
+    "WorkflowHasNoDraft": "Không có bản nháp để publish.",
+    "WorkflowNotPublished": "Workflow chưa được publish."
   },
   "auth": {
     "signIn": "Đăng nhập",
@@ -243,11 +255,13 @@
     "remove": "Gỡ",
     "removeTitle": "Gỡ thành viên?",
     "removeBody": "{{name}} sẽ mất quyền truy cập Space này. Issue đang gán cho họ giữ nguyên.",
-    "roleProjectAdmin": "Project Admin",
+    "roleProjectAdmin": "Quản trị Space",
     "roleMember": "Member",
     "roleViewer": "Viewer",
     "pickPerson": "Chọn người dùng",
-    "back": "Quay lại Space"
+    "back": "Quay lại Space",
+    "membersHint": "Role quyết định mỗi người được làm gì trong Space này.",
+    "joined": "Tham gia"
   },
   "issues": {
     "title": "Issue",
@@ -343,10 +357,43 @@
       "startDate": "Ngày bắt đầu",
       "dueDate": "Hạn",
       "workLog": "Ghi thời gian",
-      "attachment": "Đính kèm"
+      "attachment": "Đính kèm",
+      "status": "Trạng thái"
     },
     "addReaction": "Thêm cảm xúc",
     "reactWith": "Thả {{emoji}}",
-    "commentMore": "Thao tác khác với bình luận"
+    "commentMore": "Thao tác khác với bình luận",
+    "moveTo": "Chuyển sang",
+    "moveSummary": "{{key}} chuyển từ {{from}} sang {{to}}.",
+    "commentRequired": "Bình luận (bắt buộc)"
+  },
+  "workflows": {
+    "title": "Workflow",
+    "hint": "Các status và transition mà issue đi qua.",
+    "spaceHint": "Mỗi loại issue đi theo một workflow.",
+    "statuses": "Status",
+    "statusesHint": "Status dùng chung, mỗi workflow chọn từ danh sách này.",
+    "addStatus": "Thêm status",
+    "editStatus": "Sửa status",
+    "group": "Nhóm",
+    "inUse": "Đang dùng",
+    "notUsed": "Chưa dùng",
+    "create": "Tạo workflow",
+    "template": "Bắt đầu từ",
+    "empty": "Chưa có workflow",
+    "version": "Phiên bản",
+    "draftChanges": "Có bản nháp",
+    "publishedState": "Đã publish",
+    "jsonHint": "Sửa định nghĩa dạng JSON. Trình thiết kế trực quan sẽ có sau.",
+    "definition": "Định nghĩa workflow",
+    "saveDraft": "Lưu nháp",
+    "publish": "Publish",
+    "invalidJson": "Nội dung không phải JSON hợp lệ.",
+    "draftSaved": "Đã lưu bản nháp",
+    "published": "Đã publish workflow",
+    "publishedQueued": "Đã lưu. Issue đang chuyển sang phiên bản mới ở nền.",
+    "mappingHint": "Một số issue đang ở status không còn tồn tại. Hãy chọn status thay thế.",
+    "changeTitle": "Đổi workflow",
+    "defaultName": "Mặc định"
   }
 }

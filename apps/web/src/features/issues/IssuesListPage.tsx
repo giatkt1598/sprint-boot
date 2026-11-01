@@ -124,7 +124,7 @@ export function IssuesListPage() {
     assignee: people.map((user) => ({ value: user.id!, label: user.name! })),
     reporter: people.map((user) => ({ value: user.id!, label: user.name! })),
     type: (types.data ?? []).map((type) => ({ value: type.id!, label: t(`issue.type.${type.icon}`) })),
-    status: (statuses.data ?? []).map((status) => ({ value: status.id!, label: t(`issue.status.${statusCategory(status)}`) })),
+    status: (statuses.data ?? []).map((status) => ({ value: status.id!, label: status.name! })),
     priority: (priorities.data ?? []).map((priority) => ({ value: priority.id!, label: priority.name! })),
     epic: (epics.data?.items ?? []).map((epic) => ({ value: epic.id!, label: `${epic.key} ${epic.title}` })),
     label: (labels.data ?? []).map((label) => ({ value: label, label })),
@@ -298,7 +298,7 @@ export function IssuesListPage() {
                 ),
               },
               { key: 'title', header: t('issues.titleField'), render: (issue) => issue.title },
-              { key: 'status', header: t('issues.status'), render: (issue) => <StatusBadge status={statusCategory(issue.status)} /> },
+              { key: 'status', header: t('issues.status'), render: (issue) => <StatusBadge status={statusCategory(issue.status)} label={issue.status?.name} /> },
               { key: 'priority', header: t('issues.priority'), render: (issue) => <PriorityIcon priority={priorityLevel(issue.priority)} /> },
               {
                 key: 'assignee',

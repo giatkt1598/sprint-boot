@@ -5,12 +5,12 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    port: 5173,
+    port: Number(process.env.WEB_PORT ?? 5173),
     // Keep the browser's host so the auth server issues same-origin URLs and cookies.
     proxy: Object.fromEntries(
       ['/api', '/connect', '/.well-known'].map((path) => [
         path,
-        { target: 'http://localhost:5080', headers: { host: 'localhost:5173' } },
+        { target: process.env.API_TARGET ?? 'http://localhost:5080', headers: { host: `localhost:${process.env.WEB_PORT ?? 5173}` } },
       ]),
     ),
   },

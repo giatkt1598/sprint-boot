@@ -1,7 +1,7 @@
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Navigate, Outlet, useOutletContext, useParams } from 'react-router';
@@ -16,6 +16,7 @@ import { SelectField, TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { UserPicker, type PickerUser } from '../../components/UserPicker';
 import { useErrorMessage } from '../../lib/errors';
+import { formatDate } from '../../lib/format';
 import { font, radius, sem, size } from '../../theme/tokens';
 import { SpacePermission, useMembers, useSpace, type Space, type SpaceMember } from './api';
 
@@ -67,6 +68,7 @@ export function SpaceSettingsLayout() {
         <>
           <SettingsMenuItem to="general" label={t('spaces.general')} />
           <SettingsMenuItem to="members" label={t('spaces.members')} />
+          <SettingsMenuItem to="workflows" label={t('workflows.title')} />
         </>
       }
     />
@@ -204,7 +206,7 @@ function AddMemberDialog({ space, onClose }: { space: Space; onClose: () => void
 }
 
 export function SpaceMembersPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const space = useOutletContext<Space>();
   const toMessage = useErrorMessage();
   const toast = useToast();
@@ -239,7 +241,10 @@ export function SpaceMembersPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center">
-        <Typography variant="h1" className="flex-1">{t('spaces.members')}</Typography>
+        <div className="flex-1">
+          <Typography variant="h1">{t('spaces.members')}</Typography>
+          <Typography variant="body2" color="textSecondary">{t('spaces.membersHint')}</Typography>
+        </div>
         {canManage && <Button onClick={() => setAdding(true)}>{t('spaces.addMember')}</Button>}
       </div>
       {members.isPending && <LoadingState />}
@@ -277,14 +282,15 @@ export function SpaceMembersPage() {
                   t(ROLE_LABELS[member.role ?? ''] ?? 'spaces.roleMember')
                 ),
             },
+            { key: 'joined', header: t('spaces.joined'), render: (member) => formatDate(member.joinedAt, i18n.language) },
             {
               key: 'actions',
               header: '',
               render: (member) =>
                 canManage && (
-                  <IconButton size="small" aria-label={`${t('spaces.remove')} ${member.user?.name}`} onClick={() => setRemoving(member)}>
-                    <Trash2 size={16} strokeWidth={1.5} aria-hidden />
-                  </IconButton>
+                  <Button kind="ghost" aria-label={`${t('spaces.remove')} ${member.user?.name}`} sx={{ color: sem('feedback-danger-text') }} onClick={() => setRemoving(member)}>
+                    {t('spaces.remove')}
+                  </Button>
                 ),
             },
           ]}

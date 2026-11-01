@@ -16,6 +16,7 @@
     <PackageVersion Include="Volo.Abp.Ddd.Application.Contracts" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.Ddd.Domain" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.DistributedLocking" Version="$(AbpVersion)" />
+    <PackageVersion Include="Volo.Abp.DistributedLocking.Abstractions" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.EntityFrameworkCore" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.EntityFrameworkCore.PostgreSql" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.EventBus.RabbitMQ" Version="$(AbpVersion)" />

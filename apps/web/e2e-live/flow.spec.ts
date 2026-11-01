@@ -144,6 +144,15 @@ test('sign in, run a space and an issue end to end', async ({ page }) => {
   await expect(page.getByRole('cell', { name: 'Build đăng nhập screen' })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Child work' })).toHaveCount(0);
 
+  // Move through the workflow from the status menu.
+  await page.goto(`/issues/${key}-1`);
+  await page.getByRole('button', { name: 'Status: To Do' }).click();
+  await expectAccessible(page);
+  await page.getByRole('menuitem', { name: /^In Progress/ }).click();
+  await expect(page.getByRole('button', { name: 'Status: In Progress' })).toBeVisible();
+  await page.getByRole('tab', { name: 'History' }).click();
+  await expect(page.getByText('To Do → In Progress')).toBeVisible();
+
   // Soft delete with subtask, then restore.
   await page.goto(`/issues/${key}-1`);
   await page.getByRole('button', { name: 'More actions' }).click();
@@ -169,6 +178,17 @@ test('sign in, run a space and an issue end to end', async ({ page }) => {
   await page.getByRole('link', { name: /^Manage / }).first().click();
   await expect(page.getByRole('heading', { name: 'Sign-in methods' })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Email and password' })).toBeVisible();
+  await expectAccessible(page);
+
+  // Workflow administration.
+  await page.goto('/admin/workflows');
+  await expect(page.getByRole('cell', { name: 'Default', exact: true })).toBeVisible();
+  await expectAccessible(page);
+  await page.goto('/admin/statuses');
+  await expect(page.getByRole('cell', { name: 'In Progress', exact: true }).first()).toBeVisible();
+  await expectAccessible(page);
+  await page.goto(`/spaces/${key}/settings/workflows`);
+  await expect(page.getByRole('cell', { name: 'Subtask', exact: true })).toBeVisible();
   await expectAccessible(page);
 
   // Create space from the switcher.
@@ -241,6 +261,84 @@ test('member flow: created by admin, forgets password, resets by email, signs ou
   // The reset link works only once.
   await page.goto(link!);
   await expect(page.getByRole('heading', { name: 'Reset link invalid' })).toBeVisible();
+});
+
+test('a transition that needs input opens a dialog and stays blocked until filled', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  const token = await page.evaluate(() => {
+    const key = Object.keys(sessionStorage).find((item) => item.startsWith('oidc.user:'))!;
+    return JSON.parse(sessionStorage.getItem(key)!).access_token as string;
+  });
+  const headers = { Authorization: `Bearer ${token}` };
+  const post = async (path: string, data: unknown) => {
+    const response = await page.request.post(path, { headers, data });
+    expect(response.ok(), await response.text()).toBe(true);
+    return response.json();
+  };
+
+  const key = `T${suffix()}`;
+  const space = await post('/api/v1/project', { name: `Flow ${key}`, key, type: 0 });
+  const types = await (await page.request.get(`/api/v1/issue/types/${space.id}`, { headers })).json();
+  const task = types.find((type: { name: string }) => type.name === 'Task');
+  const statuses = await (await page.request.get('/api/v1/status', { headers })).json();
+  const id = (name: string) => statuses.find((status: { name: string }) => status.name === name).id;
+  const workflow = await post('/api/v1/workflow', {
+    name: `Review ${key}`,
+    definition: {
+      initialStatusId: id('To Do'),
+      statusIds: [id('To Do'), id('Done')],
+      transitions: [
+        {
+          name: 'Close',
+          fromStatusId: null,
+          toStatusId: id('Done'),
+          rules: [
+            { kind: 1, key: 'comment-required' },
+            { kind: 1, key: 'required-field', config: { fields: ['dueDate'] } },
+          ],
+        },
+      ],
+    },
+  });
+  await post(`/api/v1/workflow/${workflow.id}/publish`, {});
+  await post('/api/v1/project-workflow/set', { projectId: space.id, issueTypeId: task.id, workflowId: workflow.id });
+  await post('/api/v1/issue', { projectId: space.id, typeId: task.id, title: 'Needs input' });
+
+  await page.goto(`/issues/${key}-1`);
+  await page.getByRole('button', { name: 'Status: To Do' }).click();
+  await page.getByRole('menuitem', { name: /^Close/ }).click();
+  const dialog = page.getByRole('dialog');
+  const confirm = dialog.getByRole('button', { name: 'Close', exact: true });
+  await expect(dialog).toContainText(`${key}-1 moves from To Do to Done.`);
+  await expect(confirm).toBeDisabled();
+  await expectAccessible(page);
+
+  await dialog.getByRole('button', { name: 'Due date' }).click();
+  await page.getByRole('button', { name: /^20 / }).click();
+  await expect(confirm).toBeDisabled();
+  await dialog.getByLabel('Comment (required)').fill('Shipped');
+  await confirm.click();
+
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('article').getByText('Shipped')).toBeVisible();
+  await expect(page.getByText('Done', { exact: true }).first()).toBeVisible();
+});
+
+test('an expired access token renews silently', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  const expired = await page.evaluate(() => {
+    const key = Object.keys(sessionStorage).find((item) => item.startsWith('oidc.user:'))!;
+    const user = JSON.parse(sessionStorage.getItem(key)!);
+    const before = user.access_token;
+    user.expires_at = 1;
+    sessionStorage.setItem(key, JSON.stringify(user));
+    return { key, before };
+  });
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Spaces' })).toBeVisible();
+  await expect
+    .poll(() => page.evaluate((key) => JSON.parse(sessionStorage.getItem(key)!).access_token, expired.key))
+    .not.toBe(expired.before);
 });
 
 test('Vietnamese UI has no accessibility regressions', async ({ page }) => {

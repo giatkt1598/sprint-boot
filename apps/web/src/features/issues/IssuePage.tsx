@@ -24,6 +24,7 @@ import { formatDateTime, formatSize } from '../../lib/format';
 import { font, radius, sem } from '../../theme/tokens';
 import { useMembers, useSpace } from '../spaces/api';
 import { IssueActivityPanel } from './IssueActivityPanel';
+import { TransitionControl } from './TransitionControl';
 import { CreateIssueDialog } from './CreateIssueDialog';
 import { RichTextEditor, RichTextView } from './RichTextEditor';
 import { priorityLevel, statusCategory, uploadAttachment, useEpics, usePriorities, type Issue } from './api';
@@ -251,7 +252,7 @@ function IssueView({ issue }: { issue: Issue }) {
                   <IssueTypeIcon type={child.typeIcon as IconType} />
                   <Link component={RouterLink} to={`/issues/${child.key}`} color="inherit" variant="body2">{child.key}</Link>
                   <span className="min-w-0 flex-1 truncate">{child.title}</span>
-                  <StatusBadge status={statusCategory(child.status)} />
+                  <StatusBadge status={statusCategory(child.status)} label={child.status?.name} />
                 </div>
               ))}
             </section>
@@ -280,7 +281,9 @@ function IssueView({ issue }: { issue: Issue }) {
           style={{ width: 320, border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}
         >
           <Typography variant="h3" component="h2" className="pb-1">{t('issues.details')}</Typography>
-          <DetailRow label={t('issues.status')}><StatusBadge status={statusCategory(issue.status)} /></DetailRow>
+          <DetailRow label={t('issues.status')}>
+            <TransitionControl issue={issue} people={people} onConflict={() => setConflict(true)} />
+          </DetailRow>
           <DetailRow label={t('issues.assignee')}>
             {canEdit ? (
               <UserPicker

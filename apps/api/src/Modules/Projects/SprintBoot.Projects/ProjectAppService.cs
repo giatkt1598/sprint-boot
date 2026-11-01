@@ -93,7 +93,7 @@ public class ProjectAppService(
         var users = await userDirectory.GetByIdsAsync(list.Select(member => member.UserId));
         return [.. list
             .Where(member => users.ContainsKey(member.UserId))
-            .Select(member => new ProjectMemberDto { User = users[member.UserId], Role = member.Role })
+            .Select(member => new ProjectMemberDto { User = users[member.UserId], Role = member.Role, JoinedAt = member.CreationTime })
             .OrderBy(member => member.User.Name)];
     }
 
@@ -113,8 +113,8 @@ public class ProjectAppService(
             throw new EntityNotFoundException(typeof(ProjectMember), input.UserId);
         }
 
-        await members.InsertAsync(new ProjectMember(GuidGenerator.Create(), id, input.UserId, input.Role));
-        return new ProjectMemberDto { User = user, Role = input.Role };
+        var member = await members.InsertAsync(new ProjectMember(GuidGenerator.Create(), id, input.UserId, input.Role), autoSave: true);
+        return new ProjectMemberDto { User = user, Role = input.Role, JoinedAt = member.CreationTime };
     }
 
     public async Task<ProjectMemberDto> UpdateMemberAsync(Guid id, Guid userId, UpdateMemberInput input)
@@ -131,7 +131,7 @@ public class ProjectAppService(
         member.Role = input.Role;
         await members.UpdateAsync(member);
         var users = await userDirectory.GetByIdsAsync([userId]);
-        return new ProjectMemberDto { User = users[userId], Role = member.Role };
+        return new ProjectMemberDto { User = users[userId], Role = member.Role, JoinedAt = member.CreationTime };
     }
 
     public async Task RemoveMemberAsync(Guid id, Guid userId)

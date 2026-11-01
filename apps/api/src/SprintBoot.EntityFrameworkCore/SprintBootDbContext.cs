@@ -47,6 +47,14 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
     public DbSet<ProjectRolePermission> ProjectRolePermissions { get; set; } = null!;
 
     public DbSet<Status> Statuses { get; set; } = null!;
+    public DbSet<Workflow> Workflows { get; set; } = null!;
+    public DbSet<WorkflowVersion> WorkflowVersions { get; set; } = null!;
+    public DbSet<WorkflowStep> WorkflowSteps { get; set; } = null!;
+    public DbSet<Transition> Transitions { get; set; } = null!;
+    public DbSet<TransitionRule> TransitionRules { get; set; } = null!;
+    public DbSet<ProjectWorkflowMapping> ProjectWorkflowMappings { get; set; } = null!;
+    public DbSet<WorkflowMigration> WorkflowMigrations { get; set; } = null!;
+    public DbSet<WebhookDelivery> WebhookDeliveries { get; set; } = null!;
 
     public DbSet<IssueType> IssueTypes { get; set; } = null!;
     public DbSet<Priority> Priorities { get; set; } = null!;

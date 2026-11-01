@@ -1,12 +1,15 @@
-using Volo.Abp.Domain.Entities;
+using Volo.Abp.Domain.Entities.Auditing;
+using Volo.Abp.MultiTenancy;
 
 namespace SprintBoot.Workflows;
 
-public class Status : AggregateRoot<Guid>
+public class Status : AuditedAggregateRoot<Guid>, IMultiTenant
 {
-    public string Name { get; private set; } = null!;
+    public Guid? TenantId { get; private set; }
 
-    public StatusCategory Category { get; private set; }
+    public string Name { get; set; } = null!;
+
+    public StatusCategory Category { get; set; }
 
     public int Order { get; private set; }
 

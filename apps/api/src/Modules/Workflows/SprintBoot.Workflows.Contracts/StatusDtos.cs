@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace SprintBoot.Workflows;
 
 public enum StatusCategory
@@ -16,10 +18,25 @@ public class StatusDto
     public required StatusCategory Category { get; set; }
 }
 
+public class StatusAdminDto : StatusDto
+{
+    public required int WorkflowCount { get; set; }
+
+    public required int IssueCount { get; set; }
+
+    public required DateTime UpdatedAt { get; set; }
+}
+
+public class SaveStatusInput
+{
+    [Required]
+    [StringLength(64, MinimumLength = 1)]
+    public required string Name { get; set; }
+
+    public StatusCategory Category { get; set; }
+}
+
 public interface IStatusLookup
 {
-    /// <summary>The status every new issue starts in until workflows exist.</summary>
-    Task<StatusDto> GetInitialAsync();
-
     Task<List<StatusDto>> GetListAsync();
 }

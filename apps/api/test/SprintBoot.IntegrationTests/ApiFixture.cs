@@ -21,6 +21,7 @@ namespace SprintBoot.IntegrationTests;
 /// <summary>Runs the real host against real PostgreSQL, Redis and RabbitMQ containers.</summary>
 public sealed class ApiFixture : IAsyncLifetime
 {
+    public const int MigrationSyncLimit = 3;
     public const string AdminEmail = "admin@test.local";
     public const string AdminPassword = "Admin123!test";
 
@@ -50,6 +51,10 @@ public sealed class ApiFixture : IAsyncLifetime
         Environment.SetEnvironmentVariable("ConnectionStrings__Default", _postgres.GetConnectionString());
         Environment.SetEnvironmentVariable("Redis__Configuration", _redis.GetConnectionString());
         Environment.SetEnvironmentVariable("Auth__RequireHttps", "false");
+        Environment.SetEnvironmentVariable("Workflows__Migration__SyncLimit", MigrationSyncLimit.ToString());
+        Environment.SetEnvironmentVariable("Workflows__Migration__PollMilliseconds", "300");
+        Environment.SetEnvironmentVariable("Workflows__Webhooks__PollMilliseconds", "300");
+        Environment.SetEnvironmentVariable("Workflows__Webhooks__BackoffSeconds", "1");
         Environment.SetEnvironmentVariable("Issues__Attachments__MaxFileSizeMb", "1");
         Environment.SetEnvironmentVariable("Storage__Local__Path", Path.Combine(Path.GetTempPath(), $"sb-test-{Guid.NewGuid():N}"));
         Environment.SetEnvironmentVariable("RabbitMQ__Connections__Default__HostName", "localhost");
@@ -107,6 +112,17 @@ public sealed class ApiFixture : IAsyncLifetime
         return await users.GeneratePasswordResetTokenAsync(await users.GetByIdAsync(userId));
     }
 
+    public async Task<Guid> FindTransitionIdAsync(Guid projectId, Guid typeId, string name)
+    {
+        using var scope = Factory.Services.CreateScope();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>();
+        using var uow = unitOfWork.Begin(requiresNew: true);
+        var runtime = scope.ServiceProvider.GetRequiredService<SprintBoot.Workflows.IWorkflowRuntime>();
+        var state = await runtime.GetInitialStateAsync(projectId, typeId);
+        var transitions = scope.ServiceProvider.GetRequiredService<Volo.Abp.Domain.Repositories.IRepository<SprintBoot.Workflows.Transition, Guid>>();
+        return (await transitions.GetListAsync(item => item.VersionId == state.VersionId)).Single(item => item.Name == name).Id;
+    }
+
     public async ValueTask DisposeAsync()
     {
         await Factory.DisposeAsync();
@@ -115,7 +131,7 @@ public sealed class ApiFixture : IAsyncLifetime
         await _postgres.DisposeAsync();
     }
 
-    private static int GetFreePort()
+    public static int GetFreePort()
     {
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();

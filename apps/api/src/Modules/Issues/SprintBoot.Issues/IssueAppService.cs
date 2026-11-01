@@ -18,6 +18,7 @@ using Volo.Abp.Uow;
 namespace SprintBoot.Issues;
 
 [Authorize]
+[Volo.Abp.DependencyInjection.ExposeServices(typeof(IIssueAppService), typeof(IssueAppService))]
 public partial class IssueAppService(
     IRepository<Issue, Guid> issues,
     IRepository<IssueType, Guid> types,
@@ -27,7 +28,7 @@ public partial class IssueAppService(
     IRepository<IssueActivity, Guid> activities,
     IProjectAccess projectAccess,
     IIssueFieldPolicy fieldPolicy,
-    IStatusLookup statusLookup,
+    IWorkflowRuntime workflowRuntime,
     IUserDirectory userDirectory,
     ICurrentActor currentActor,
     IClock clock,
@@ -70,11 +71,11 @@ public partial class IssueAppService(
         EnsureDates(input.StartDate, input.DueDate);
 
         var priorityId = input.PriorityId ?? await GetDefaultPriorityIdAsync();
-        var status = await statusLookup.GetInitialAsync();
+        var initial = await workflowRuntime.GetInitialStateAsync(input.ProjectId, type.Id);
         var number = await projectAccess.NextIssueNumberAsync(input.ProjectId);
 
         var actor = currentActor.Actor;
-        var issue = new Issue(GuidGenerator.Create(), input.ProjectId, number, type.Id, input.Title.Trim(), status.Id, priorityId)
+        var issue = new Issue(GuidGenerator.Create(), input.ProjectId, number, type.Id, input.Title.Trim(), initial.StatusId, initial.VersionId, priorityId)
         {
             AssigneeId = input.AssigneeId,
             AssigneeType = input.AssigneeId.HasValue ? ActorType.User : null,
@@ -407,6 +408,18 @@ public partial class IssueAppService(
         if (start.HasValue && due.HasValue && due < start)
         {
             throw new BusinessException(IssueErrors.DueBeforeStart);
+        }
+    }
+
+    /// <summary>Same path as the update API: one activity row per real change.</summary>
+    public async Task SetFieldForWorkflowAsync(Issue issue, string field, JsonElement value)
+    {
+        var change = await ApplyFieldAsync(issue, field, value);
+        if (change is not null)
+        {
+            await activities.InsertAsync(new IssueActivity(
+                GuidGenerator.Create(), issue.Id, currentActor.Actor, field, change.Value.Old, change.Value.New, clock.Now));
+            await issues.UpdateAsync(issue, autoSave: true);
         }
     }
 

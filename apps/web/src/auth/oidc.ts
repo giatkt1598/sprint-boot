@@ -12,9 +12,26 @@ export const userManager = new UserManager({
   automaticSilentRenew: true,
 });
 
+let renewing: Promise<unknown> | null = null;
+
+/** Returns a valid token, renewing an expired one once however many requests are waiting. */
 export async function getAccessToken() {
   const user = await userManager.getUser();
-  return user && !user.expired ? user.access_token : null;
+  if (!user) {
+    return null;
+  }
+  if (!user.expired) {
+    return user.access_token;
+  }
+  if (!user.refresh_token) {
+    return null;
+  }
+  renewing ??= userManager.signinSilent().finally(() => {
+    renewing = null;
+  });
+  await renewing.catch(() => undefined);
+  const renewed = await userManager.getUser();
+  return renewed && !renewed.expired ? renewed.access_token : null;
 }
 
 export async function signOut() {

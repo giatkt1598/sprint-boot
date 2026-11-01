@@ -24,6 +24,7 @@ export class ApiError extends Error {
     readonly status: number,
     readonly code: string | undefined,
     message: string,
+    readonly data: Record<string, string> = {},
   ) {
     super(message);
   }
@@ -39,8 +40,8 @@ interface ApiResult<T> {
 export async function unwrap<T>(call: Promise<ApiResult<T>>): Promise<T> {
   const { data, error, response } = await call;
   if (!response.ok) {
-    const detail = (error as { error?: { code?: string; message?: string } } | undefined)?.error;
-    throw new ApiError(response.status, detail?.code, detail?.message ?? response.statusText);
+    const detail = (error as { error?: { code?: string; message?: string; data?: Record<string, string> } } | undefined)?.error;
+    throw new ApiError(response.status, detail?.code, detail?.message ?? response.statusText, detail?.data);
   }
   return data as T;
 }

@@ -4,5 +4,5 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: 'e2e-live',
   workers: 1,
-  use: { baseURL: 'http://localhost:5173', locale: 'en', contextOptions: { reducedMotion: 'reduce' }, screenshot: 'only-on-failure' },
+  use: { baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:5173', locale: 'en', contextOptions: { reducedMotion: 'reduce' }, screenshot: 'only-on-failure' },
 });

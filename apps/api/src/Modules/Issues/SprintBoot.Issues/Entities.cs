@@ -96,9 +96,10 @@ public class Issue : FullAuditedAggregateRoot<Guid>, IMultiTenant
     {
     }
 
-    public Issue(Guid id, Guid projectId, int number, Guid typeId, string title, Guid statusId, Guid priorityId)
+    public Issue(Guid id, Guid projectId, int number, Guid typeId, string title, Guid statusId, Guid workflowVersionId, Guid priorityId)
         : base(id)
     {
+        WorkflowVersionId = workflowVersionId;
         ProjectId = projectId;
         Number = number;
         TypeId = typeId;
@@ -106,6 +107,13 @@ public class Issue : FullAuditedAggregateRoot<Guid>, IMultiTenant
         StatusId = statusId;
         PriorityId = priorityId;
     }
+
+    /// <summary>Only the workflow gateway calls this; nothing else writes status.</summary>
+    public void MoveTo(Guid statusId) => StatusId = statusId;
+
+    public void SetWorkflowVersion(Guid versionId) => WorkflowVersionId = versionId;
+
+    public void SetResolution(string? resolution) => Resolution = resolution;
 
     public void SetDescription(string html, string text)
     {

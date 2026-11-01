@@ -64,6 +64,8 @@ public class ProjectMemberDto
     public required UserRefDto User { get; set; }
 
     public required string Role { get; set; }
+
+    public required DateTime JoinedAt { get; set; }
 }
 
 public class AddMemberInput
@@ -139,6 +141,9 @@ public interface IProjectAccess
     Task<Dictionary<Guid, ProjectRef>> GetRefsAsync(IEnumerable<Guid> projectIds);
 
     Task<bool> IsMemberAsync(Guid projectId, Guid userId);
+
+    /// <summary>The caller's role name in the project, null for outsiders.</summary>
+    Task<string?> GetCurrentRoleAsync(Guid projectId);
 
     /// <summary>Takes the next issue number atomically; numbers are never reused.</summary>
     Task<int> NextIssueNumberAsync(Guid projectId);
