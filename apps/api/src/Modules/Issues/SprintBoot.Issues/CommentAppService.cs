@@ -21,7 +21,8 @@ public class CommentAppService(
     IDistributedEventBus eventBus,
     IClock clock,
     WatcherStore watcherStore,
-    RichTextSanitizer sanitizer)
+    RichTextSanitizer sanitizer,
+    RichTextFileStore richTextFiles)
     : ApplicationService, ICommentAppService
 {
     public async Task<List<CommentDto>> GetListAsync(Guid issueId)
@@ -50,6 +51,7 @@ public class CommentAppService(
         var (html, text) = Clean(input.Body);
         var comment = new Comment(GuidGenerator.Create(), issue.Id, input.ParentId, CurrentUser.GetId(), html, text);
         await comments.InsertAsync(comment, autoSave: true);
+        await richTextFiles.SyncAsync(issue.ProjectId, comment.Id, html);
         await watcherStore.EnsureAsync(issue.Id, CurrentUser.GetId());
         await eventBus.PublishAsync(
             new CommentAddedEto
@@ -68,7 +70,7 @@ public class CommentAppService(
     public async Task<CommentDto> UpdateAsync(Guid id, UpdateCommentInput input)
     {
         var comment = await comments.GetAsync(id);
-        await CheckProjectAsync(comment, ProjectPermissions.ViewIssues);
+        var issue = await CheckProjectAsync(comment, ProjectPermissions.ViewIssues);
         if (comment.AuthorId != CurrentUser.GetId())
         {
             throw new AbpAuthorizationException("Only the author can edit a comment");
@@ -77,6 +79,7 @@ public class CommentAppService(
         var (html, text) = Clean(input.Body);
         comment.Edit(html, text, clock.Now);
         await comments.UpdateAsync(comment, autoSave: true);
+        await richTextFiles.SyncAsync(issue.ProjectId, comment.Id, html);
         return (await ToDtosAsync([comment])).Single();
     }
 
@@ -90,6 +93,8 @@ public class CommentAppService(
             throw new AbpAuthorizationException("Missing permission to delete this comment");
         }
 
+        var replies = await comments.GetListAsync(reply => reply.ParentId == id);
+        await richTextFiles.RemoveOwnedByAsync([id, .. replies.Select(reply => reply.Id)]);
         await comments.DeleteAsync(reply => reply.ParentId == id);
         await comments.DeleteAsync(comment);
     }
@@ -117,7 +122,8 @@ public class CommentAppService(
     private (string Html, string Text) Clean(string body)
     {
         var result = sanitizer.Clean(body);
-        return string.IsNullOrEmpty(result.Text) ? throw new BusinessException(IssueErrors.CommentEmpty) : result;
+        var hasMedia = result.Html.Contains("<img", StringComparison.Ordinal) || result.Html.Contains("<video", StringComparison.Ordinal);
+        return string.IsNullOrEmpty(result.Text) && !hasMedia ? throw new BusinessException(IssueErrors.CommentEmpty) : result;
     }
 
     private async Task<Issue> CheckProjectAsync(Comment comment, string permission)
@@ -139,7 +145,7 @@ public class CommentAppService(
             Id = comment.Id,
             ParentId = comment.ParentId,
             Author = users.GetValueOrDefault(comment.AuthorId),
-            Body = comment.Body,
+            Body = richTextFiles.Sign(comment.Body),
             CreatedAt = comment.CreationTime,
             IsEdited = comment.EditedAt.HasValue,
             Reactions = [.. allReactions.Where(reaction => reaction.CommentId == comment.Id)

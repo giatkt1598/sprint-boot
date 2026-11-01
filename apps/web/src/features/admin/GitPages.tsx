@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useOutletContext, useParams } from 'react-router';
 import type { components } from '@sprint-boot/api-client';
 import { apiClient, unwrap } from '../../api';
+import { useCan } from '../../auth/AuthProvider';
 import { Badge, type BadgeTone } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { Dialog, DialogConfirm } from '../../components/Dialog';
@@ -247,6 +248,21 @@ export function GitConnectionsPage() {
     queryKey: ['admin', 'git', 'connections', space.id],
     queryFn: () => unwrap(apiClient.GET('/api/v1/git-connection', { params: { query: { projectId: space.id! } } })),
   });
+  const canAssign = useCan('SprintBoot.Git.Manage');
+  const toast = useToast();
+  const toMessage = useErrorMessage();
+  const refresh = useRefresh();
+  const unassigned = useQuery({
+    queryKey: ['admin', 'git', 'unassigned'],
+    enabled: canAssign,
+    queryFn: () => unwrap(apiClient.GET('/api/v1/git-connection/unassigned')),
+  });
+  const assign = useMutation({
+    mutationFn: (id: string) =>
+      unwrap(apiClient.POST('/api/v1/git-connection/{id}/assign', { params: { path: { id } }, body: { projectId: space.id! } })),
+    onSuccess: () => refresh(),
+    onError: (failure) => toast('error', toMessage(failure)),
+  });
   const failing = connections.data?.filter((item) => item.status === NEEDS_ATTENTION) ?? [];
 
   return (
@@ -258,6 +274,12 @@ export function GitConnectionsPage() {
         </div>
         <Button onClick={() => setAdding(true)}>{t('git.add')}</Button>
       </div>
+      {canAssign && unassigned.data?.map((item) => (
+        <div key={item.id} role="status" className="flex items-center gap-2 p-3" style={{ backgroundColor: sem('feedback-warning-bg'), color: sem('feedback-warning-text'), borderRadius: radius.card }}>
+          <Typography variant="body2" className="flex-1" sx={{ color: 'inherit' }}>{t('git.unassigned', { name: item.name })}</Typography>
+          <Button kind="secondary" disabled={assign.isPending} onClick={() => assign.mutate(item.id!)}>{t('git.moveHere')}</Button>
+        </div>
+      ))}
       {failing.map((item) => <Banner key={item.id}>{t(`git.problem.${item.problem}`, { name: item.name })}</Banner>)}
       {connections.isPending && <LoadingState />}
       {connections.isError && <ErrorState onRetry={() => void connections.refetch()} />}

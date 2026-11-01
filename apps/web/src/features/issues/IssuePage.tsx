@@ -252,7 +252,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
             )}
             {editingDescription ? (
               <>
-                <RichTextEditor label={t('issues.description')} initialValue={issue.description ?? ''} people={people} autoFocus onChange={setDescription} />
+                <RichTextEditor label={t('issues.description')} initialValue={issue.description ?? ''} people={people} projectId={issue.projectId} autoFocus onChange={setDescription} />
                 <div className="flex gap-2">
                   <Button onClick={() => { setEditingDescription(false); update.mutate({ description }); }}>{t('common.save')}</Button>
                   <Button kind="ghost" onClick={() => setEditingDescription(false)}>{t('common.cancel')}</Button>

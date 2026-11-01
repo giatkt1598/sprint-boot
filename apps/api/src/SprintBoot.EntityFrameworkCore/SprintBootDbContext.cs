@@ -83,6 +83,7 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
     public DbSet<Comment> Comments { get; set; } = null!;
     public DbSet<CommentReaction> CommentReactions { get; set; } = null!;
     public DbSet<Attachment> Attachments { get; set; } = null!;
+    public DbSet<RichTextFile> RichTextFiles { get; set; } = null!;
     public DbSet<IssueActivity> IssueActivities { get; set; } = null!;
     public DbSet<WorkLog> WorkLogs { get; set; } = null!;
 

@@ -17,6 +17,7 @@ public class IssueMapper(
     IProjectAccess projectAccess,
     IUserDirectory userDirectory,
     IIssueSprintNames sprintNames,
+    RichTextFileStore richTextFiles,
     IIssueFieldPolicy fieldPolicy) : ITransientDependency
 {
     public static IssueTypeDto ToDto(IssueType type) => new()
@@ -104,7 +105,7 @@ public class IssueMapper(
             ProjectName = project.Name,
             Type = ToDto(type),
             Title = issue.Title,
-            Description = issue.Description,
+            Description = richTextFiles.Sign(issue.Description),
             Status = statusMap[issue.StatusId],
             Priority = ToDto(priority),
             Assignee = issue.AssigneeId is { } assigneeId ? users.GetValueOrDefault(assigneeId) : null,

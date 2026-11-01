@@ -1,7 +1,7 @@
 import { EditorContent, useEditor, type Editor } from '@tiptap/react';
 import hljs from 'highlight.js/lib/common';
 import {
-  AtSign, Code2, Heading1, Heading2, Heading3, ImageIcon, Lightbulb, List, ListChecks, ListOrdered, Minus, Quote, Table, Type,
+  AtSign, Code2, Heading1, Heading2, Heading3, ImageIcon, Lightbulb, List, ListChecks, ListOrdered, Minus, Paperclip, Quote, Table, Type,
   type LucideIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -9,8 +9,11 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import Typography from '@mui/material/Typography';
 import { Dialog, DialogFooter } from '../../components/Dialog';
+import { useToast } from '../../components/ToastHost';
+import { useErrorMessage } from '../../lib/errors';
 import { TextField } from '../../components/TextField';
 import { font, radius, sem, shadow } from '../../theme/tokens';
+import { uploadRichTextFile } from './api';
 import { EditorMenus, EditorToolbar, normalizeUrl } from './RichTextMenus';
 import { createExtensions, type MentionUser, type PopupState, type SlashCommand } from './richTextExtensions';
 
@@ -23,6 +26,8 @@ interface RichTextEditorProps {
   autoFocus?: boolean;
   /** Shows the label above the box, for use among other labelled fields. */
   showLabel?: boolean;
+  /** The space files go to. Without one the editor offers no uploads. */
+  projectId?: string;
   onChange: (html: string) => void;
 }
 
@@ -45,6 +50,7 @@ const SLASH_ICONS: Record<string, LucideIcon> = {
   table: Table,
   image: ImageIcon,
   mention: AtSign,
+  attach: Paperclip,
 };
 
 /** Portaled so a dialog cannot clip it; it never takes focus, so typing keeps filtering. */
@@ -122,18 +128,23 @@ function ImageDialog({ onClose, onInsert }: { onClose: () => void; onInsert: (ur
   );
 }
 
-export function RichTextEditor({ label, initialValue = '', people, autoFocus, showLabel, onChange }: RichTextEditorProps) {
+export function RichTextEditor({ label, initialValue = '', people, autoFocus, showLabel, projectId, onChange }: RichTextEditorProps) {
   const { t } = useTranslation();
   const [mentionPopup, setMentionPopup] = useState<PopupState<MentionUser> | null>(null);
   const [slashPopup, setSlashPopup] = useState<PopupState<SlashCommand> | null>(null);
   const [imageOpen, setImageOpen] = useState(false);
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
+  const [uploading, setUploading] = useState(0);
+  const filePicker = useRef<HTMLInputElement>(null);
+  const toast = useToast();
+  const toMessage = useErrorMessage();
 
   // Parents rebuild `people` on every render. Rebuilding the editor with it wiped the text after each
   // keystroke, so the editor is created once and reads the latest values from here.
-  const latest = useRef({ people, t, onChange });
+  const upload = useRef<(files: File[], at?: number) => void>(() => undefined);
+  const latest = useRef({ people, t, onChange, projectId });
   useLayoutEffect(() => {
-    latest.current = { people, t, onChange };
+    latest.current = { people, t, onChange, projectId };
   });
 
   // A parent form re-renders on each commit, so typing hands over the text only in pauses and on blur.
@@ -166,6 +177,12 @@ export function RichTextEditor({ label, initialValue = '', people, autoFocus, sh
         start(editor, range).run();
         setImageOpen(true);
       }),
+      ...(latest.current.projectId
+        ? [row('attach', 'upload file video image picture', (editor, range) => {
+            start(editor, range).run();
+            filePicker.current?.click();
+          })]
+        : []),
       row('mention', 'person user', (editor, range) => start(editor, range).insertContent('@').run()),
     ];
   }, []);
@@ -186,6 +203,23 @@ export function RichTextEditor({ label, initialValue = '', people, autoFocus, sh
     autofocus: autoFocus ? 'end' : false,
     editorProps: {
       attributes: { 'aria-label': label, role: 'textbox', 'aria-multiline': 'true', class: 'rich-text outline-none' },
+      handlePaste: (_, event) => {
+        const files = Array.from(event.clipboardData?.files ?? []);
+        if (files.length === 0 || !latest.current.projectId) {
+          return false;
+        }
+        upload.current(files);
+        return true;
+      },
+      handleDrop: (view, event) => {
+        const files = Array.from(event.dataTransfer?.files ?? []);
+        if (files.length === 0 || !latest.current.projectId) {
+          return false;
+        }
+        event.preventDefault();
+        upload.current(files, view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos);
+        return true;
+      },
     },
     onUpdate: ({ editor: current }) => {
       clearTimeout(pending.current);
@@ -194,14 +228,48 @@ export function RichTextEditor({ label, initialValue = '', people, autoFocus, sh
     onBlur: ({ editor: current }) => commit(current),
   });
 
+  upload.current = (files, at) => {
+    for (const file of files) {
+      setUploading((count) => count + 1);
+      uploadRichTextFile(latest.current.projectId!, file)
+        .then((stored) => {
+          const chain = at === undefined ? editor.chain().focus() : editor.chain().focus().setTextSelection(at);
+          const url = stored.url ?? '';
+          if (stored.contentType?.startsWith('image/')) {
+            chain.setImage({ src: url, alt: stored.fileName ?? '' }).run();
+          } else if (stored.contentType?.startsWith('video/')) {
+            chain.insertContent({ type: 'video', attrs: { src: url } }).run();
+          } else {
+            chain.insertContent({ type: 'text', text: stored.fileName ?? '', marks: [{ type: 'link', attrs: { href: url } }] }).insertContent(' ').run();
+          }
+        })
+        .catch((failure: unknown) => toast('error', `${file.name}: ${toMessage(failure)}`))
+        .finally(() => setUploading((count) => count - 1));
+    }
+  };
+
   return (
     <div className="flex flex-col gap-1">
     {showLabel && (
       <span aria-hidden style={{ fontSize: font.size.xs, fontWeight: font.weight.medium, color: sem('text-secondary') }}>{label}</span>
     )}
     <div ref={setContainer} className="rich-text-editor">
-      {editor && <EditorToolbar editor={editor} onImage={() => setImageOpen(true)} />}
+      {editor && <EditorToolbar editor={editor} onImage={() => setImageOpen(true)} onAttach={projectId ? () => filePicker.current?.click() : undefined} />}
+      {projectId && (
+        <input
+          ref={filePicker}
+          type="file"
+          multiple
+          hidden
+          aria-label={t('editor.attach')}
+          onChange={(event) => {
+            upload.current(Array.from(event.target.files ?? []));
+            event.target.value = '';
+          }}
+        />
+      )}
       <EditorContent editor={editor} />
+      {uploading > 0 && <Typography role="status" variant="body2" color="textSecondary" className="px-3 pb-2">{t('editor.uploading', { count: uploading })}</Typography>}
       {editor && <EditorMenus editor={editor} container={container} />}
       {slashPopup && (
         <SuggestionPopup

@@ -515,7 +515,10 @@
     "lengthWeeks_one": "{{count}} week",
     "lengthWeeks_other": "{{count}} weeks",
     "lengthDays_one": "{{count}} day",
-    "lengthDays_other": "{{count}} days"
+    "lengthDays_other": "{{count}} days",
+    "countToDo": "To do",
+    "countInProgress": "In progress",
+    "countDone": "Done"
   },
   "notifications": {
     "bellUnread": "Notifications, {{count}} unread",
@@ -729,7 +732,9 @@
     "webhookSecret": "Secret",
     "redirectUri": "Redirect URI",
     "redirectCopied": "Redirect URI copied.",
-    "copyRedirect": "Copy redirect URI"
+    "copyRedirect": "Copy redirect URI",
+    "unassigned": "{{name}} belongs to no space and is not in use.",
+    "moveHere": "Move to this space"
   },
   "development": {
     "title": "Development",
@@ -806,6 +811,9 @@
       "green": "Green",
       "blue": "Blue"
     },
-    "tools": "Editor tools"
+    "tools": "Editor tools",
+    "attach": "Upload file",
+    "uploading_one": "Uploading {{count}} file…",
+    "uploading_other": "Uploading {{count}} files…"
   }
 }

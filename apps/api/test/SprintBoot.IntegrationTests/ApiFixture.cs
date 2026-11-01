@@ -144,6 +144,18 @@ public sealed class ApiFixture : IAsyncLifetime
         await uow.CompleteAsync();
     }
 
+    public async Task DetachGitConnectionAsync(Guid connectionId)
+    {
+        await using var dbContext = new SprintBootDbContext(new DbContextOptionsBuilder<SprintBootDbContext>().UseNpgsql(_postgres.GetConnectionString()).Options);
+        await dbContext.Database.ExecuteSqlInterpolatedAsync($"update git.connections set \"ProjectId\" = null where \"Id\" = {connectionId}");
+    }
+
+    public async Task CleanRichTextFilesAsync(DateTime abandonedBefore)
+    {
+        using var scope = Factory.Services.CreateScope();
+        await SprintBoot.Issues.RichTextFileCleanupWorker.CleanAsync(scope.ServiceProvider, abandonedBefore);
+    }
+
     public async Task ExpireInvitationAsync(Guid id)
     {
         using var scope = Factory.Services.CreateScope();

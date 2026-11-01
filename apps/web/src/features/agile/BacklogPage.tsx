@@ -4,6 +4,7 @@ import ButtonBase from '@mui/material/ButtonBase';
 import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Menu from '@mui/material/Menu';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, ChevronRight, Ellipsis, Pencil, Trash2 } from 'lucide-react';
@@ -21,7 +22,7 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/StateView
 import { useToast } from '../../components/ToastHost';
 import type { PickerUser } from '../../components/UserPicker';
 import { useErrorMessage } from '../../lib/errors';
-import { font, radius, sem, shadow } from '../../theme/tokens';
+import { font, radius, sem, shadow, type SemanticToken } from '../../theme/tokens';
 import { FilterChips, FilterControls, useIssueFilters } from '../issues/IssueFilters';
 import { QuickAssignee, QuickPriority, QuickStatus } from '../issues/QuickFields';
 import { useMembers, useSpace } from '../spaces/api';
@@ -204,7 +205,44 @@ function sprintLength(start: string, end: string, t: (key: string, options: { co
   return days % WEEK_DAYS === 0 ? t('agile.lengthWeeks', { count: days / WEEK_DAYS }) : t('agile.lengthDays', { count: days });
 }
 
-function SprintHeader({ sprint, canManage, shown, futureSprints, projectId }: { sprint: SprintSummary; canManage: boolean; shown: number; futureSprints: SprintSummary[]; projectId: string }) {
+const STATUS_GROUPS: { category: number; label: string; background: SemanticToken; color: SemanticToken }[] = [
+  { category: 0, label: 'agile.countToDo', background: 'status-todo-bg', color: 'status-todo-text' },
+  { category: 1, label: 'agile.countInProgress', background: 'status-progress-bg', color: 'status-progress-text' },
+  { category: 2, label: 'agile.countDone', background: 'status-done-bg', color: 'status-done-text' },
+];
+
+function StatusCounters({ issues }: { issues: Card[] }) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="flex items-center gap-1">
+      {STATUS_GROUPS.map((group) => {
+        const count = issues.filter((issue) => issue.status?.category === group.category).length;
+        return (
+          <Tooltip key={group.category} title={t(group.label)}>
+            <span
+              role="img"
+              aria-label={`${t(group.label)}: ${count}`}
+              className="inline-flex h-6 items-center justify-center px-2"
+              style={{
+                minWidth: 24,
+                fontSize: font.size.xs,
+                fontWeight: font.weight.medium,
+                backgroundColor: sem(group.background),
+                color: sem(group.color),
+                borderRadius: radius.control,
+              }}
+            >
+              {count}
+            </span>
+          </Tooltip>
+        );
+      })}
+    </div>
+  );
+}
+
+function SprintHeader({ sprint, issues, canManage, shown, futureSprints, projectId }: { sprint: SprintSummary; issues: Card[]; canManage: boolean; shown: number; futureSprints: SprintSummary[]; projectId: string }) {
   const { t, i18n } = useTranslation();
   const toMessage = useErrorMessage();
   const toast = useToast();
@@ -232,6 +270,7 @@ function SprintHeader({ sprint, canManage, shown, futureSprints, projectId }: { 
     <div className="flex items-center gap-2 px-2">
       <Typography variant="h3" component="h2">{sprint.name}</Typography>
       <Typography variant="body2" color="textSecondary" className="flex-1">{[range, length, count, points].filter(Boolean).join(' · ')}</Typography>
+      <StatusCounters issues={issues} />
       {canManage && active && <Button kind="ghost" onClick={() => setDialog('complete')}>{t('agile.completeSprint')}</Button>}
       {canManage && !active && <Button kind="ghost" onClick={() => setDialog('start')}>{t('agile.startSprint')}</Button>}
       {canManage && (
@@ -422,7 +461,7 @@ export function BacklogPage() {
             const cards = visible(item.issues);
             return (
               <SectionCard key={item.sprint!.id}>
-                <SprintHeader sprint={item.sprint!} canManage={canManage} shown={cards.length} futureSprints={futureSprints} projectId={projectId} />
+                <SprintHeader sprint={item.sprint!} issues={item.issues ?? []} canManage={canManage} shown={cards.length} futureSprints={futureSprints} projectId={projectId} />
                 <IssueList id={item.sprint!.id!} cards={cards} canDrag={canRank} onOpen={setOpenIssue} actions={actions} empty={t('agile.sprintEmpty')} />
               </SectionCard>
             );

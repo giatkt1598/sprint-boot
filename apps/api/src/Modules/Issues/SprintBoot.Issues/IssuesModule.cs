@@ -23,8 +23,11 @@ namespace SprintBoot.Issues;
     typeof(AbpBackgroundWorkersModule))]
 public class IssuesModule : AbpModule
 {
-    public override Task OnApplicationInitializationAsync(ApplicationInitializationContext context) =>
-        context.AddBackgroundWorkerAsync<RankRebalanceWorker>();
+    public override async Task OnApplicationInitializationAsync(ApplicationInitializationContext context)
+    {
+        await context.AddBackgroundWorkerAsync<RankRebalanceWorker>();
+        await context.AddBackgroundWorkerAsync<RichTextFileCleanupWorker>();
+    }
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {

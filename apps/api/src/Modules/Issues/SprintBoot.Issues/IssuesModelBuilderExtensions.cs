@@ -91,6 +91,16 @@ public static class IssuesModelBuilderExtensions
             b.HasIndex(attachment => attachment.IssueId);
         });
 
+        builder.Entity<RichTextFile>(b =>
+        {
+            b.ToTable("rich_text_files", Schema);
+            b.ConfigureByConvention();
+            b.Property(file => file.FileName).HasMaxLength(255).IsRequired();
+            b.Property(file => file.ContentType).HasMaxLength(128).IsRequired();
+            b.Ignore(file => file.StorageKey);
+            b.HasIndex(file => file.OwnerId);
+        });
+
         builder.Entity<IssueActivity>(b =>
         {
             b.ToTable("issue_activities", Schema);

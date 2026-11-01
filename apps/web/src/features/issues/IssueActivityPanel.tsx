@@ -118,7 +118,7 @@ function useActivity(issueId: string) {
   });
 }
 
-function Composer({ issueId, parentId, people, placeholder, onDone }: { issueId: string; parentId?: string; people: MentionUser[]; placeholder: string; onDone?: () => void }) {
+function Composer({ issueId, projectId, parentId, people, placeholder, onDone }: { issueId: string; projectId?: string; parentId?: string; people: MentionUser[]; placeholder: string; onDone?: () => void }) {
   const { t } = useTranslation();
   const toMessage = useErrorMessage();
   const toast = useToast();
@@ -151,7 +151,7 @@ function Composer({ issueId, parentId, people, placeholder, onDone }: { issueId:
 
   return (
     <div className="flex flex-col gap-2">
-      <RichTextEditor label={placeholder} people={people} autoFocus onChange={setBody} />
+      <RichTextEditor label={placeholder} people={people} projectId={projectId} autoFocus onChange={setBody} />
       <div className="flex gap-2">
         <Button disabled={!body || post.isPending} onClick={() => post.mutate()}>{t('common.save')}</Button>
         <Button kind="ghost" onClick={() => { setOpen(false); onDone?.(); }}>{t('common.cancel')}</Button>
@@ -222,7 +222,7 @@ function CommentItem({ comment, issue, replies, people, canEdit, canManage }: { 
       <div className="pl-8">
         {editing ? (
           <div className="flex flex-col gap-2">
-            <RichTextEditor label={t('common.edit')} initialValue={comment.body ?? ''} people={people} autoFocus onChange={setBody} />
+            <RichTextEditor label={t('common.edit')} initialValue={comment.body ?? ''} people={people} projectId={issue.projectId} autoFocus onChange={setBody} />
             <div className="flex gap-2">
               <Button onClick={() => save.mutate()}>{t('common.save')}</Button>
               <Button kind="ghost" onClick={() => setEditing(false)}>{t('common.cancel')}</Button>
@@ -287,7 +287,7 @@ function CommentItem({ comment, issue, replies, people, canEdit, canManage }: { 
           ))}
           {replies.length > replyCount && <LoadMore onClick={() => setReplyCount(replyCount + LOAD_MORE_STEP)} />}
           {replying && (
-            <Composer issueId={issue.id!} parentId={comment.id} people={people} placeholder={t('issues.reply')} onDone={() => setReplying(false)} />
+            <Composer issueId={issue.id!} projectId={issue.projectId} parentId={comment.id} people={people} placeholder={t('issues.reply')} onDone={() => setReplying(false)} />
           )}
         </div>
       </div>
@@ -469,7 +469,7 @@ export function IssueActivityPanel({ tab, issue, people, canEdit, canManage }: P
 
   return (
     <div className="flex flex-col gap-4">
-      {canEdit && <Composer issueId={issue.id!} people={people} placeholder={t('issues.addComment')} />}
+      {canEdit && <Composer issueId={issue.id!} projectId={issue.projectId} people={people} placeholder={t('issues.addComment')} />}
       {comments.isSuccess && feed.length === 0 && <EmptyState title={t('issues.noComments')} />}
       {feed.slice(0, visible).map((entry) => entry.node)}
       {feed.length > visible && <LoadMore onClick={() => setCommentCount(visible + LOAD_MORE_STEP)} />}

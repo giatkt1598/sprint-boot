@@ -6,7 +6,7 @@ import { BubbleMenu } from '@tiptap/react/menus';
 import { NodeSelection } from '@tiptap/pm/state';
 import {
   AlignCenter, AlignLeft, AlignRight, Bold, Code, Code2, Columns2, GripVertical, Highlighter, ImageIcon, Italic, Link2, List,
-  ListChecks, ListOrdered, Palette, Plus, Quote, RemoveFormatting, Rows2, Strikethrough, Table, Trash2, Underline, type LucideIcon,
+  ListChecks, ListOrdered, Palette, Paperclip, Plus, Quote, RemoveFormatting, Rows2, Strikethrough, Table, Trash2, Underline, type LucideIcon,
 } from 'lucide-react';
 import { useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -122,7 +122,7 @@ function LinkField({ editor, onDone }: { editor: Editor; onDone: () => void }) {
 }
 
 /** The always visible tools, for people who do not start from `/`. */
-function EditorToolbar({ editor, onImage }: { editor: Editor; onImage: () => void }) {
+function EditorToolbar({ editor, onImage, onAttach }: { editor: Editor; onImage: () => void; onAttach?: () => void }) {
   const { t } = useTranslation();
   const [linking, setLinking] = useState(false);
   const chain = () => editor.chain().focus();
@@ -188,6 +188,7 @@ function EditorToolbar({ editor, onImage }: { editor: Editor; onImage: () => voi
       <Divider />
       <Tool label={t('editor.table')} icon={Table} onClick={() => chain().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} />
       <Tool label={t('editor.image')} icon={ImageIcon} onClick={onImage} />
+      {onAttach && <Tool label={t('editor.attach')} icon={Paperclip} onClick={onAttach} />}
       {linking && <div className="flex w-full"><LinkField editor={editor} onDone={() => setLinking(false)} /></div>}
     </div>
   );

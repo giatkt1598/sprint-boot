@@ -193,7 +193,7 @@ export function CreateIssueDialog({ onClose, epic }: CreateIssueDialogProps) {
         validate={validateTitle}
         onCommit={setTitle}
       />
-      <RichTextEditor key={editorKey} label={t('issues.description')} showLabel people={people} onChange={setDescription} />
+      <RichTextEditor key={editorKey} label={t('issues.description')} showLabel people={people} projectId={projectId || undefined} onChange={setDescription} />
       <div className="grid grid-cols-2 gap-4">
         <UserPicker label={t(epic ? 'agile.lead' : 'issues.assignee')} options={people} value={assignee} emptyLabel={t('common.unassigned')} onChange={setAssignee} />
         <SelectField

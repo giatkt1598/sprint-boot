@@ -64,6 +64,25 @@ public interface IAttachmentAppService : IApplicationService
     Task DeleteAsync(Guid id);
 }
 
+public class RichTextFileDto
+{
+    public required Guid Id { get; set; }
+
+    /// <summary>Signed for a while, because img and video tags cannot send a token.</summary>
+    public required string Url { get; set; }
+
+    public required string FileName { get; set; }
+
+    public required string ContentType { get; set; }
+
+    public required long Size { get; set; }
+}
+
+public interface IRichTextFileAppService : IApplicationService
+{
+    Task<RichTextFileDto> UploadAsync(Guid projectId, IRemoteStreamContent file);
+}
+
 public interface IWorkLogAppService : IApplicationService
 {
     Task<WorkLogListDto> GetListAsync(Guid issueId);

@@ -1083,6 +1083,28 @@ test('create issue form, backlog cards and home follow the last space', async ({
   });
   expect(scrollers.mainScrolls).toBe(false);
 
+  // Pasted files go to storage, and leave it when the text drops them.
+  await page.getByLabel('Add a comment').click();
+  const composer = page.getByRole('textbox', { name: 'Add a comment' });
+  await expect(page.locator('[contenteditable="true"]')).toBeFocused();
+  const pixel = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+  await composer.evaluate((node, data) => {
+    const bytes = Uint8Array.from(atob(data), (char) => char.charCodeAt(0));
+    const clipboardData = new DataTransfer();
+    clipboardData.items.add(new File([bytes], 'pasted.png', { type: 'image/png' }));
+    node.dispatchEvent(new ClipboardEvent('paste', { clipboardData, bubbles: true, cancelable: true }));
+  }, pixel);
+  await expect(composer.locator('img')).toBeVisible();
+  await page.getByRole('button', { name: 'Save' }).click();
+  const pasted = page.getByRole('article').locator('img').first();
+  await expect(pasted).toBeVisible();
+  await expect.poll(() => pasted.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
+  const pastedUrl = await pasted.getAttribute('src');
+  await page.getByRole('article').first().getByRole('button', { name: 'More comment actions' }).click();
+  await page.getByRole('menuitem', { name: 'Delete' }).click();
+  await expect(page.getByRole('article').locator('img')).toHaveCount(0);
+  await expect.poll(async () => (await page.request.get(pastedUrl!)).status()).toBe(404);
+
   // Comments read newest first.
   for (const comment of ['Older note', 'Newer note']) {
     await page.getByLabel('Add a comment').click();
@@ -1150,6 +1172,7 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await expect(page.getByRole('dialog').getByLabel('Name')).toHaveValue('Sprint 1');
   await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
   await expect(page.getByText(/3 weeks · 0 issues · 0 of 0 points/)).toBeVisible();
+  await expect(page.getByRole('img', { name: 'In progress: 0' })).toBeVisible();
 
   // A space keeps its own statuses and workflows; global ones are for use only.
   await page.goto(`/spaces/${key}/settings/statuses`);

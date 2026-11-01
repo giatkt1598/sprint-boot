@@ -326,4 +326,21 @@ public class GitIntegrationTests(ApiFixture fixture)
         var outside = (await response.Content.ReadFromJsonAsync<GitConnectionDto>(Token))!;
         (await client.Http.GetFromJsonAsync<List<GitRepositoryDto>>($"/api/v1/git-connection/{outside.Id}/repositories", Token))!.ShouldBeEmpty();
     }
+
+    [Fact]
+    public async Task A_connection_without_a_space_stays_out_of_every_space_until_moved()
+    {
+        var (owner, project, issue) = await IssueAsync();
+        var harness = await ConnectAsync(owner, project, GitProviderType.Gitea);
+        await fixture.DetachGitConnectionAsync(harness.Connection.Id);
+
+        (await owner.Http.GetFromJsonAsync<List<GitConnectionDto>>($"/api/v1/git-connection?projectId={project.Id}", Token))!.ShouldBeEmpty();
+        (await DevelopmentAsync(owner, issue))!.CanCreateBranch.ShouldBeFalse();
+
+        var admin = new AuthClient(fixture);
+        await admin.SignInAsync(ApiFixture.AdminEmail, ApiFixture.AdminPassword, Token);
+        var moved = await admin.Http.PostAsJsonAsync($"/api/v1/git-connection/{harness.Connection.Id}/assign", new { projectId = project.Id }, Token);
+        moved.StatusCode.ShouldBe(HttpStatusCode.OK, await moved.Content.ReadAsStringAsync(Token));
+        (await DevelopmentAsync(owner, issue))!.CanCreateBranch.ShouldBeTrue();
+    }
 }

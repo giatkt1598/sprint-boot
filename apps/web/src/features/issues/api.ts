@@ -39,6 +39,19 @@ export const useLabels = (projectId: string | undefined) =>
     queryFn: () => unwrap(apiClient.GET('/api/v1/issue/labels/{projectId}', { params: { path: { projectId: projectId! } } })),
   });
 
+export const uploadRichTextFile = (projectId: string, file: File) =>
+  unwrap(
+    apiClient.POST('/api/v1/rich-text-file/upload/{projectId}', {
+      params: { path: { projectId } },
+      body: { file } as never,
+      bodySerializer: () => {
+        const form = new FormData();
+        form.append('file', file);
+        return form;
+      },
+    }),
+  );
+
 export const uploadAttachment = (issueId: string, file: File) =>
   unwrap(
     apiClient.POST('/api/v1/attachment/upload/{issueId}', {

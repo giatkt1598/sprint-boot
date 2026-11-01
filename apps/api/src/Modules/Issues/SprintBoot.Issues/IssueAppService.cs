@@ -37,7 +37,8 @@ public partial class IssueAppService(
     IDistributedEventBus eventBus,
     IssueMapper mapper,
     WatcherStore watcherStore,
-    RichTextSanitizer sanitizer)
+    RichTextSanitizer sanitizer,
+    RichTextFileStore richTextFiles)
     : ApplicationService, IIssueAppService
 {
     [GeneratedRegex("^([A-Z][A-Z0-9]{1,9})-([0-9]+)$")]
@@ -93,6 +94,7 @@ public partial class IssueAppService(
 
         await issues.InsertAsync(issue, autoSave: true);
         await SetLabelsAsync(issue, input.Labels ?? []);
+        await richTextFiles.SyncAsync(issue.ProjectId, issue.Id, issue.Description);
         await watcherStore.EnsureAsync(issue.Id, issue.ReporterId, issue.AssigneeId);
         await eventBus.PublishAsync(
             new IssueCreatedEto
@@ -502,6 +504,7 @@ public partial class IssueAppService(
 
             case IssueFieldKeys.Description:
                 var (html, text) = sanitizer.Clean(ReadString(value));
+                await richTextFiles.SyncAsync(issue.ProjectId, issue.Id, html);
                 return Set(issue.Description, html, next => issue.SetDescription(next!, text));
 
             case IssueFieldKeys.Assignee:

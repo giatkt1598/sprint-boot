@@ -17,6 +17,8 @@ public partial class RichTextSanitizer : ISingletonDependency
         _sanitizer.AllowedAttributes.Add("rel");
         _sanitizer.AllowedAttributes.Add("target");
         _sanitizer.AllowedSchemes.Add("mailto");
+        _sanitizer.AllowedTags.Add("video");
+        _sanitizer.AllowedAttributes.Add("controls");
 
         // Only what the editor writes, so stored text cannot reposition or restyle the page around it.
         _sanitizer.AllowedCssProperties.Clear();
@@ -71,7 +73,7 @@ public partial class RichTextSanitizer : ISingletonDependency
 
     public (string Html, string Text) Clean(string? html)
     {
-        var clean = _sanitizer.Sanitize(html ?? string.Empty);
+        var clean = RichTextFileUrls.StripSignatures(_sanitizer.Sanitize(html ?? string.Empty));
         var text = new HtmlParser().ParseDocument(clean).Body?.TextContent ?? string.Empty;
         return (clean, text.Trim());
     }

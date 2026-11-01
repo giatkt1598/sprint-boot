@@ -200,7 +200,9 @@
   border-top: 1px solid var(--sb-border-default);
 }
 
-.rich-text img {
+.rich-text img,
+.rich-text video {
+  display: block;
   max-width: 100%;
   height: auto;
   border-radius: 6px;

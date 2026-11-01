@@ -76,6 +76,15 @@ function moveBlock(editor: Editor, direction: -1 | 1) {
   return true;
 }
 
+const Video = Node.create({
+  name: 'video',
+  group: 'block',
+  atom: true,
+  addAttributes: () => ({ src: { default: null } }),
+  parseHTML: () => [{ tag: 'video[src]' }],
+  renderHTML: ({ HTMLAttributes }) => ['video', mergeAttributes(HTMLAttributes, { controls: 'true' })],
+});
+
 const BlockMover = Extension.create({
   name: 'blockMover',
   addKeyboardShortcuts() {
@@ -190,6 +199,7 @@ export function createExtensions(options: RichTextOptions) {
     Image,
     Typography,
     Callout,
+    Video,
     BlockMover,
     SlashMenu.configure({ commands: options.commands, onChange: options.onSlashPopup }),
     Mention.configure({

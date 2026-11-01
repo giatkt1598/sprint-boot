@@ -57,12 +57,34 @@ public class GitConnectionAppService(
     {
         await projects.CheckAsync(projectId, ProjectPermissions.Manage);
 
-        // Connections from before spaces owned them stay reachable for admins to clean up.
-        var legacy = await AuthorizationService.IsGrantedAsync(SprintBootPermissions.ManageGit);
-        var list = await connections.GetListAsync(item => item.ProjectId == projectId || (legacy && item.ProjectId == null));
+        var list = await connections.GetListAsync(item => item.ProjectId == projectId);
         var ids = list.Select(item => item.Id).ToList();
         var repos = await repositories.GetListAsync(item => ids.Contains(item.ConnectionId));
         return [.. list.OrderBy(item => item.Name).Select(item => ToDto(item, repos))];
+    }
+
+    [Authorize(SprintBootPermissions.ManageGit)]
+    public async Task<List<GitConnectionDto>> GetUnassignedAsync()
+    {
+        var list = await connections.GetListAsync(item => item.ProjectId == null);
+        var ids = list.Select(item => item.Id).ToList();
+        var repos = await repositories.GetListAsync(item => ids.Contains(item.ConnectionId));
+        return [.. list.OrderBy(item => item.Name).Select(item => ToDto(item, repos))];
+    }
+
+    [Authorize(SprintBootPermissions.ManageGit)]
+    public async Task<GitConnectionDto> AssignAsync(Guid id, AssignGitConnectionInput input)
+    {
+        await projects.CheckAsync(input.ProjectId, ProjectPermissions.Manage);
+        var connection = await connections.GetAsync(id);
+        if (connection.ProjectId is not null)
+        {
+            throw new BusinessException(GitErrors.InvalidConnection);
+        }
+
+        connection.AssignTo(input.ProjectId);
+        await connections.UpdateAsync(connection);
+        return await ToDtoAsync(connection);
     }
 
     public Task<GitRedirectUrisDto> GetRedirectUrisAsync() => Task.FromResult(new GitRedirectUrisDto
@@ -420,7 +442,7 @@ public class GitIssueAppService(
 
     private async Task<List<GitRepository>> UsableRepositoriesAsync(Guid projectId)
     {
-        var ids = (await connections.GetListAsync(item => item.ProjectId == projectId || item.ProjectId == null)).Select(item => item.Id).ToList();
+        var ids = (await connections.GetListAsync(item => item.ProjectId == projectId)).Select(item => item.Id).ToList();
         return await repositories.GetListAsync(item => item.IsAccessible && ids.Contains(item.ConnectionId));
     }
 
@@ -428,7 +450,7 @@ public class GitIssueAppService(
     {
         var repository = await repositories.GetAsync(repositoryId);
         var connection = await connections.GetAsync(repository.ConnectionId);
-        return connection.ProjectId is null || connection.ProjectId == projectId
+        return connection.ProjectId == projectId
             ? (repository, connection)
             : throw new BusinessException(GitErrors.InvalidConnection);
     }

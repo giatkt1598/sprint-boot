@@ -455,7 +455,9 @@ public class GitEventProcessor(
     public async Task ApplyAsync(Guid connectionId, GitProviderType provider, GitEvent gitEvent)
     {
         var connection = await connections.GetAsync(connectionId);
-        if (!connection.Covers(gitEvent.Repository.FullName))
+
+        // Without a space there is nobody's issues to link to.
+        if (connection.ProjectId is not { } projectId || !connection.Covers(gitEvent.Repository.FullName))
         {
             return;
         }
@@ -463,9 +465,7 @@ public class GitEventProcessor(
         var repository = await RepositoryAsync(connectionId, gitEvent.Repository);
 
         // A connection serves its own space, so other spaces' keys are just text.
-        List<string> projectKeys = connection.ProjectId is { } projectId
-            ? [(await projects.GetRefAsync(projectId)).Key]
-            : [.. (await projects.GetAllRefsAsync()).Select(item => item.Key)];
+        List<string> projectKeys = [(await projects.GetRefAsync(projectId)).Key];
         switch (gitEvent)
         {
             case GitPushEvent push:

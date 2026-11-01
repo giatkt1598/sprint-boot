@@ -515,7 +515,10 @@
     "lengthWeeks_one": "{{count}} tuần",
     "lengthWeeks_other": "{{count}} tuần",
     "lengthDays_one": "{{count}} ngày",
-    "lengthDays_other": "{{count}} ngày"
+    "lengthDays_other": "{{count}} ngày",
+    "countToDo": "Cần làm",
+    "countInProgress": "Đang làm",
+    "countDone": "Xong"
   },
   "notifications": {
     "bellUnread": "Thông báo, {{count}} chưa đọc",
@@ -729,7 +732,9 @@
     "webhookSecret": "Secret",
     "redirectUri": "Redirect URI",
     "redirectCopied": "Đã sao chép Redirect URI.",
-    "copyRedirect": "Sao chép Redirect URI"
+    "copyRedirect": "Sao chép Redirect URI",
+    "unassigned": "{{name}} chưa thuộc Space nào nên không được dùng.",
+    "moveHere": "Chuyển vào Space này"
   },
   "development": {
     "title": "Phát triển",
@@ -806,6 +811,9 @@
       "green": "Xanh lá",
       "blue": "Xanh dương"
     },
-    "tools": "Công cụ soạn thảo"
+    "tools": "Công cụ soạn thảo",
+    "attach": "Tải tệp lên",
+    "uploading_one": "Đang tải {{count}} tệp…",
+    "uploading_other": "Đang tải {{count}} tệp…"
   }
 }

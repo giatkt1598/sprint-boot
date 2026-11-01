@@ -120,6 +120,11 @@ public class TestGitConnectionInput
     public string? AccessToken { get; set; }
 }
 
+public class AssignGitConnectionInput
+{
+    public Guid ProjectId { get; set; }
+}
+
 public class GitRedirectUrisDto
 {
     public required string OAuth { get; set; }
@@ -166,6 +171,11 @@ public interface IGitConnectionAppService : IApplicationService
     Task<List<GitConnectionDto>> GetListAsync(Guid projectId);
 
     Task<GitRedirectUrisDto> GetRedirectUrisAsync();
+
+    /// <summary>Connections from before they belonged to a space, for an administrator to place.</summary>
+    Task<List<GitConnectionDto>> GetUnassignedAsync();
+
+    Task<GitConnectionDto> AssignAsync(Guid id, AssignGitConnectionInput input);
 
     Task<GitConnectionDto> GetAsync(Guid id);
 

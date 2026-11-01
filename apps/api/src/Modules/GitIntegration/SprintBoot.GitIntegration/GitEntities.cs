@@ -49,6 +49,8 @@ public class GitConnection : AuditedAggregateRoot<Guid>, IMultiTenant
         AuthType = authType;
     }
 
+    public void AssignTo(Guid projectId) => ProjectId = projectId;
+
     public bool Covers(string fullName) =>
         Owner is null || fullName.StartsWith($"{Owner}/", StringComparison.OrdinalIgnoreCase);
 }
