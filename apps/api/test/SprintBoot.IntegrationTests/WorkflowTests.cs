@@ -379,4 +379,53 @@ public class WorkflowTests(ApiFixture fixture)
         (await AvailableAsync(viewer, issue.Id)).ShouldBeEmpty();
         (await ExecuteAsync(viewer, issue, move.Id)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
+
+    [Fact]
+    public async Task A_space_owns_its_workflows_and_can_only_use_global_ones()
+    {
+        var owner = await fixture.CreateUserClientAsync(Token);
+        var project = await CreateProjectAsync(owner);
+        var typeId = await TaskTypeAsync(owner, project.Id);
+        var definition = (Guid[] statuses) => new
+        {
+            initialStatusId = ToDo,
+            statusIds = statuses,
+            transitions = statuses.Skip(1).Select(status => new { name = $"To {status}", fromStatusId = (Guid?)null, toStatusId = status }).ToArray(),
+        };
+
+        var statusResponse = await owner.Http.PostAsJsonAsync("/api/v1/status", new { name = "Space review", category = 1, projectId = project.Id }, Token);
+        statusResponse.StatusCode.ShouldBe(HttpStatusCode.OK, await statusResponse.Content.ReadAsStringAsync(Token));
+        var status = (await statusResponse.Content.ReadFromJsonAsync<StatusDto>(Token))!;
+
+        var created = await owner.Http.PostAsJsonAsync("/api/v1/workflow", new { name = "Own", projectId = project.Id, definition = definition([ToDo, status.Id, Done]) }, Token);
+        created.StatusCode.ShouldBe(HttpStatusCode.OK, await created.Content.ReadAsStringAsync(Token));
+        var own = (await created.Content.ReadFromJsonAsync<WorkflowDetailDto>(Token))!;
+        (await owner.Http.PostAsJsonAsync($"/api/v1/workflow/{own.Id}/publish", new { }, Token)).EnsureSuccessStatusCode();
+        (await owner.Http.PostAsJsonAsync("/api/v1/project-workflow/set", new { projectId = project.Id, issueTypeId = typeId, workflowId = own.Id }, Token)).EnsureSuccessStatusCode();
+
+        var admin = await AdminAsync();
+        var globalList = await admin.Http.GetFromJsonAsync<List<WorkflowSummaryDto>>("/api/v1/workflow", Token);
+        var global = globalList!.First(item => item.ProjectId == null);
+        globalList.ShouldNotContain(item => item.Id == own.Id);
+        (await owner.Http.PostAsJsonAsync($"/api/v1/workflow/{global.Id}/save-draft", definition([ToDo, Done]), Token)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await owner.Http.PostAsJsonAsync("/api/v1/workflow", new { name = "Global", definition = definition([ToDo, Done]) }, Token)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        var listed = await owner.Http.GetFromJsonAsync<List<WorkflowSummaryDto>>($"/api/v1/workflow?projectId={project.Id}", Token);
+        listed!.ShouldContain(item => item.Id == global.Id);
+        listed.ShouldContain(item => item.Id == own.Id);
+
+        // Other spaces see neither the workflow nor the status.
+        var other = await CreateProjectAsync(admin);
+        var otherType = await TaskTypeAsync(admin, other.Id);
+        var refused = await admin.Http.PostAsJsonAsync("/api/v1/project-workflow/set", new { projectId = other.Id, issueTypeId = otherType, workflowId = own.Id }, Token);
+        (await refused.Content.ReadAsStringAsync(Token)).ShouldContain(WorkflowErrors.OutOfScope);
+        var visible = await admin.Http.GetFromJsonAsync<List<StatusDto>>($"/api/v1/status?projectId={other.Id}", Token);
+        visible!.ShouldNotContain(item => item.Id == status.Id);
+
+        // A global workflow cannot depend on one space's status.
+        var leaky = await admin.Http.PostAsJsonAsync("/api/v1/workflow", new { name = "Leaky", definition = definition([ToDo, status.Id, Done]) }, Token);
+        var draft = (await leaky.Content.ReadFromJsonAsync<WorkflowDetailDto>(Token))!;
+        var publish = await admin.Http.PostAsJsonAsync($"/api/v1/workflow/{draft.Id}/publish", new { }, Token);
+        (await publish.Content.ReadAsStringAsync(Token)).ShouldContain(WorkflowErrors.OutOfScope);
+    }
 }

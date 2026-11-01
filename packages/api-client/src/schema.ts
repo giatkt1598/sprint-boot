@@ -9247,7 +9247,9 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    projectId?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -9429,7 +9431,9 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    ProjectId?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -11005,7 +11009,9 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    projectId?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -12068,6 +12074,8 @@ export interface components {
             name: string;
             description?: string | null;
             /** Format: uuid */
+            projectId?: string | null;
+            /** Format: uuid */
             copyFromId?: string | null;
             definition?: components["schemas"]["WorkflowDefinitionDto"];
         };
@@ -12685,6 +12693,8 @@ export interface components {
         SaveStatusInput: {
             name: string;
             category?: components["schemas"]["StatusCategory"];
+            /** Format: uuid */
+            projectId?: string | null;
         };
         SetBoardEntryInput: {
             onBoard: boolean;
@@ -12768,6 +12778,8 @@ export interface components {
             id: string;
             name: string | null;
             category: components["schemas"]["StatusCategory"];
+            /** Format: uuid */
+            projectId: string | null;
             /** Format: int32 */
             workflowCount: number;
             /** Format: int32 */
@@ -12785,6 +12797,8 @@ export interface components {
             id: string;
             name: string | null;
             category: components["schemas"]["StatusCategory"];
+            /** Format: uuid */
+            projectId: string | null;
         };
         SystemPingDto: {
             status: string | null;
@@ -12915,6 +12929,8 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string | null;
+            /** Format: uuid */
+            projectId: string | null;
             description: string | null;
             /** Format: int32 */
             version: number | null;
@@ -12925,6 +12941,8 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string | null;
+            /** Format: uuid */
+            projectId: string | null;
             /** Format: int32 */
             statusCount: number;
             /** Format: int32 */

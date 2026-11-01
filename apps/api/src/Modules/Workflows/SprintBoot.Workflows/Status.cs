@@ -13,13 +13,17 @@ public class Status : AuditedAggregateRoot<Guid>, IMultiTenant
 
     public int Order { get; private set; }
 
+    /// <summary>Null means global.</summary>
+    public Guid? ProjectId { get; private set; }
+
     protected Status()
     {
     }
 
-    public Status(Guid id, string name, StatusCategory category, int order)
+    public Status(Guid id, string name, StatusCategory category, int order, Guid? projectId = null)
         : base(id)
     {
+        ProjectId = projectId;
         Name = name;
         Category = category;
         Order = order;

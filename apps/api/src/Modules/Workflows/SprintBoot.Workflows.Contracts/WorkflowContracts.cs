@@ -58,6 +58,9 @@ public class WorkflowSummaryDto
 
     public required string Name { get; set; }
 
+    /// <summary>Null for global workflows: every space may use them, only administrators change them.</summary>
+    public required Guid? ProjectId { get; set; }
+
     public required int StatusCount { get; set; }
 
     public required int SpaceCount { get; set; }
@@ -74,6 +77,8 @@ public class WorkflowDetailDto
     public required Guid Id { get; set; }
 
     public required string Name { get; set; }
+
+    public required Guid? ProjectId { get; set; }
 
     public required string? Description { get; set; }
 
@@ -92,6 +97,9 @@ public class CreateWorkflowInput
 
     [StringLength(512)]
     public string? Description { get; set; }
+
+    /// <summary>The owning space; blank makes a global workflow.</summary>
+    public Guid? ProjectId { get; set; }
 
     /// <summary>Start the draft as a copy of this workflow.</summary>
     public Guid? CopyFromId { get; set; }
@@ -165,7 +173,8 @@ public class ExecuteTransitionInput
 
 public interface IWorkflowAppService : IApplicationService
 {
-    Task<List<WorkflowSummaryDto>> GetListAsync();
+    /// <summary>Global workflows, plus the space's own when a space is given.</summary>
+    Task<List<WorkflowSummaryDto>> GetListAsync(Guid? projectId);
 
     Task<WorkflowDetailDto> GetAsync(Guid id);
 
@@ -289,4 +298,5 @@ public static class WorkflowErrors
     public const string NoDraft = "SprintBoot:WorkflowHasNoDraft";
     public const string NotPublished = "SprintBoot:WorkflowNotPublished";
     public const string MissingField = "SprintBoot:TransitionMissingField";
+    public const string OutOfScope = "SprintBoot:WorkflowOutOfScope";
 }

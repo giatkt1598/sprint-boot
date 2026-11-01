@@ -24,11 +24,12 @@ export const usePriorities = () =>
     queryFn: () => unwrap(apiClient.GET('/api/v1/issue/priorities')),
   });
 
-export const useStatuses = () =>
+/** Global statuses, plus the space's own when one is given. */
+export const useStatuses = (projectId?: string) =>
   useQuery({
-    queryKey: ['statuses'],
+    queryKey: ['statuses', projectId],
     staleTime: Infinity,
-    queryFn: () => unwrap(apiClient.GET('/api/v1/status')),
+    queryFn: () => unwrap(apiClient.GET('/api/v1/status', { params: { query: { projectId } } })),
   });
 
 export const useLabels = (projectId: string | undefined) =>

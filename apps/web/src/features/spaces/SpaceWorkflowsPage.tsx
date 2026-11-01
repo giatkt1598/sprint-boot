@@ -4,14 +4,13 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOutletContext } from 'react-router';
 import { ApiError, apiClient, unwrap } from '../../api';
-import { useCan } from '../../auth/AuthProvider';
 import { Dialog, DialogFooter } from '../../components/Dialog';
 import { ErrorState, LoadingState } from '../../components/StateViews';
 import { Table } from '../../components/Table';
 import { SelectField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
-import { StatusMappingFields } from '../admin/WorkflowPages';
+import { StatusesPage, StatusMappingFields, WorkflowsPage } from '../admin/WorkflowPages';
 import { useIssueTypes, useStatuses, type IssueType } from '../issues/api';
 import { SpacePermission, type Space } from './api';
 
@@ -28,8 +27,7 @@ export function SpaceWorkflowsPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
   const canManage = space.permissions?.includes(SpacePermission.manage);
-  const canPickWorkflows = useCan('SprintBoot.Workflows.Manage');
-  const statuses = useStatuses();
+  const statuses = useStatuses(space.id);
   const types = useIssueTypes(space.id);
   const [pending, setPending] = useState<PendingChange | null>(null);
   const [mappings, setMappings] = useState<Record<string, string>>({});
@@ -39,9 +37,9 @@ export function SpaceWorkflowsPage() {
     queryFn: () => unwrap(apiClient.GET('/api/v1/project-workflow', { params: { query: { projectId: space.id } } })),
   });
   const workflows = useQuery({
-    queryKey: ['admin', 'workflows'],
-    enabled: canPickWorkflows,
-    queryFn: () => unwrap(apiClient.GET('/api/v1/workflow')),
+    queryKey: ['admin', 'workflows', 'list', space.id],
+    enabled: Boolean(canManage),
+    queryFn: () => unwrap(apiClient.GET('/api/v1/workflow', { params: { query: { projectId: space.id } } })),
   });
   const target = useQuery({
     queryKey: ['admin', 'workflows', pending?.workflowId],
@@ -90,7 +88,7 @@ export function SpaceWorkflowsPage() {
               key: 'workflow',
               header: t('workflows.title'),
               render: (type) =>
-                canManage && canPickWorkflows ? (
+                canManage ? (
                   <SelectField
                     quiet
                     label={`${t('workflows.title')}: ${t(`issue.type.${type.icon}`)}`}
@@ -128,6 +126,12 @@ export function SpaceWorkflowsPage() {
           />
         </Dialog>
       )}
+      {canManage && <WorkflowsPage projectId={space.id} />}
     </div>
   );
+}
+
+export function SpaceStatusesPage() {
+  const space = useOutletContext<Space>();
+  return <StatusesPage projectId={space.id} />;
 }

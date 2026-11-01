@@ -191,7 +191,8 @@
     "GitHubAppNotConfigured": "The GitHub App is not configured on this server.",
     "GitConnectionInvalid": "Enter a valid http or https URL.",
     "GitCredentialsRequired": "Enter the credentials for this connection.",
-    "TransitionLinkedPullRequest": "This issue needs a linked pull request."
+    "TransitionLinkedPullRequest": "This issue needs a linked pull request.",
+    "WorkflowOutOfScope": "That workflow or status belongs to another scope."
   },
   "auth": {
     "signIn": "Sign in",
@@ -442,7 +443,12 @@
     "publishedQueued": "Saved. Issues are moving to the new version in the background.",
     "mappingHint": "Some issues use statuses that no longer exist. Choose where they go.",
     "changeTitle": "Change workflow",
-    "defaultName": "Default"
+    "defaultName": "Default",
+    "scope": "Scope",
+    "scopeGlobal": "Global",
+    "scopeSpace": "Space",
+    "library": "Available workflows",
+    "libraryHint": "This space can use global workflows, and edit the ones it created."
   },
   "agile": {
     "sprint": "Sprint",

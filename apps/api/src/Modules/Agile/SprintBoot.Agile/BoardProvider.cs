@@ -29,7 +29,8 @@ public class BoardProvider(
         var project = await projectAccess.GetRefAsync(projectId);
         var board = await boards.InsertAsync(new Board(guids.Create(), projectId, project.Name, project.Type), autoSave: true);
         var order = 0;
-        foreach (var status in await statusLookup.GetListAsync())
+        // A new space has no statuses of its own, and other spaces' are not for it.
+        foreach (var status in (await statusLookup.GetListAsync()).Where(item => item.ProjectId is null))
         {
             var column = await columns.InsertAsync(new BoardColumn(guids.Create(), board.Id, status.Name, order++, null, null));
             await columnStatuses.InsertAsync(new BoardColumnStatus(guids.Create(), column.Id, status.Id));

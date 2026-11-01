@@ -34,7 +34,7 @@ export function SpaceBoardPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
   const board = useBoard(space.id);
-  const statuses = useStatuses();
+  const statuses = useStatuses(space.id);
   const canManage = space.permissions?.includes(SpacePermission.manage) ?? false;
   const [columns, setColumns] = useState<DraftColumn[] | null>(null);
 

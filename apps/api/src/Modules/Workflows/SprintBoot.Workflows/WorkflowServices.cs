@@ -21,19 +21,38 @@ public class StatusAppService(
     IRepository<Status, Guid> statuses,
     IRepository<WorkflowStep, Guid> steps,
     IRepository<WorkflowVersion, Guid> versions,
-    IWorkflowIssueGateway issues)
+    IWorkflowIssueGateway issues,
+    IProjectAccess projectAccess)
     : ApplicationService, IStatusAppService
 {
-    public async Task<List<StatusDto>> GetListAsync()
+    public async Task<List<StatusDto>> GetListAsync(Guid? projectId)
     {
-        var items = await statuses.GetListAsync();
+        if (projectId is { } id)
+        {
+            await projectAccess.CheckAsync(id, ProjectPermissions.ViewIssues);
+        }
+
+        var items = await statuses.GetListAsync(status => status.ProjectId == null || status.ProjectId == projectId);
         return [.. items.OrderBy(status => status.Order).Select(StatusMapping.ToDto)];
     }
 
-    [Authorize(SprintBootPermissions.ManageWorkflows)]
-    public async Task<List<StatusAdminDto>> GetAdminListAsync()
+    private async Task CheckManageAsync(Guid? projectId)
     {
-        var items = await statuses.GetListAsync();
+        if (projectId is { } id)
+        {
+            await projectAccess.CheckAsync(id, ProjectPermissions.Manage);
+        }
+        else
+        {
+            await AuthorizationService.CheckAsync(SprintBootPermissions.ManageWorkflows);
+        }
+    }
+
+    public async Task<List<StatusAdminDto>> GetAdminListAsync(StatusListInput input)
+    {
+        var projectId = input.ProjectId;
+        await CheckManageAsync(projectId);
+        var items = await statuses.GetListAsync(status => status.ProjectId == null || status.ProjectId == projectId);
         var active = (await versions.GetListAsync(version => version.State == WorkflowVersionState.Published));
         var activeIds = active.Select(version => version.Id).ToList();
         var activeSteps = await steps.GetListAsync(step => activeIds.Contains(step.VersionId));
@@ -44,24 +63,25 @@ public class StatusAppService(
             Id = status.Id,
             Name = status.Name,
             Category = status.Category,
+            ProjectId = status.ProjectId,
             WorkflowCount = activeSteps.Count(step => step.StatusId == status.Id),
             IssueCount = counts.GetValueOrDefault(status.Id),
             UpdatedAt = status.LastModificationTime ?? status.CreationTime,
         })];
     }
 
-    [Authorize(SprintBootPermissions.ManageWorkflows)]
     public async Task<StatusDto> CreateAsync(SaveStatusInput input)
     {
+        await CheckManageAsync(input.ProjectId);
         var order = (await statuses.GetCountAsync()) + 1;
-        var status = await statuses.InsertAsync(new Status(GuidGenerator.Create(), input.Name, input.Category, (int)order));
+        var status = await statuses.InsertAsync(new Status(GuidGenerator.Create(), input.Name, input.Category, (int)order, input.ProjectId));
         return StatusMapping.ToDto(status);
     }
 
-    [Authorize(SprintBootPermissions.ManageWorkflows)]
     public async Task<StatusDto> UpdateAsync(Guid id, SaveStatusInput input)
     {
         var status = await statuses.GetAsync(id);
+        await CheckManageAsync(status.ProjectId);
         status.Name = input.Name;
         status.Category = input.Category;
         await statuses.UpdateAsync(status);
@@ -85,6 +105,7 @@ public static class StatusMapping
         Id = status.Id,
         Name = status.Name,
         Category = status.Category,
+        ProjectId = status.ProjectId,
     };
 }
 
@@ -161,10 +182,16 @@ public class WorkflowStore(
 /// <summary>Rejects definitions that would strand issues or reference unknown things.</summary>
 public class WorkflowDefinitionValidator(IRepository<Status, Guid> statuses, RuleRegistry registry) : ITransientDependency
 {
-    public async Task EnsureValidAsync(WorkflowDefinitionDto definition)
+    public async Task EnsureValidAsync(WorkflowDefinitionDto definition, Guid? projectId)
     {
         var steps = definition.StatusIds.ToHashSet();
         var known = (await statuses.GetListAsync()).ToDictionary(status => status.Id);
+
+        // A global workflow reaches every space, so it cannot lean on one space's status.
+        if (steps.Any(step => known.TryGetValue(step, out var status) && status.ProjectId is not null && status.ProjectId != projectId))
+        {
+            throw new BusinessException(WorkflowErrors.OutOfScope);
+        }
 
         if (!steps.Contains(definition.InitialStatusId) || !steps.All(known.ContainsKey))
         {
@@ -255,7 +282,7 @@ public class IssueMigrator(
     }
 }
 
-[Authorize(SprintBootPermissions.ManageWorkflows)]
+[Authorize]
 public class WorkflowAppService(
     IRepository<Workflow, Guid> workflows,
     IRepository<WorkflowVersion, Guid> versions,
@@ -263,13 +290,29 @@ public class WorkflowAppService(
     IRepository<ProjectWorkflowMapping, Guid> mappings,
     WorkflowStore store,
     WorkflowDefinitionValidator validator,
-    IssueMigrator migrator)
+    IssueMigrator migrator,
+    IProjectAccess projectAccess)
     : ApplicationService, IWorkflowAppService
 {
-    public async Task<List<WorkflowSummaryDto>> GetListAsync()
+    /// <summary>Global workflows are for administrators to change; a space owns its own.</summary>
+    private async Task CheckManageAsync(Guid? projectId)
     {
+        if (projectId is { } id)
+        {
+            await projectAccess.CheckAsync(id, ProjectPermissions.Manage);
+        }
+        else
+        {
+            await AuthorizationService.CheckAsync(SprintBootPermissions.ManageWorkflows);
+        }
+    }
+
+    public async Task<List<WorkflowSummaryDto>> GetListAsync(Guid? projectId)
+    {
+        await CheckManageAsync(projectId);
         var result = new List<WorkflowSummaryDto>();
-        foreach (var workflow in (await workflows.GetListAsync()).OrderBy(item => item.Name))
+        var visible = await workflows.GetListAsync(item => item.ProjectId == null || item.ProjectId == projectId);
+        foreach (var workflow in visible.OrderBy(item => item.Name))
         {
             var published = await store.FindPublishedAsync(workflow.Id);
             var draft = await store.FindDraftAsync(workflow.Id);
@@ -282,6 +325,7 @@ public class WorkflowAppService(
             {
                 Id = workflow.Id,
                 Name = workflow.Name,
+                ProjectId = workflow.ProjectId,
                 StatusCount = statusCount,
                 SpaceCount = spaces,
                 Version = published?.VersionNumber,
@@ -296,12 +340,20 @@ public class WorkflowAppService(
     public async Task<WorkflowDetailDto> GetAsync(Guid id)
     {
         var workflow = await workflows.GetAsync(id);
+
+        // Global ones are readable by anyone choosing a workflow for their space.
+        if (workflow.ProjectId is { } projectId)
+        {
+            await projectAccess.CheckAsync(projectId, ProjectPermissions.Manage);
+        }
+
         var published = await store.FindPublishedAsync(id);
         var draft = await store.FindDraftAsync(id);
         return new WorkflowDetailDto
         {
             Id = workflow.Id,
             Name = workflow.Name,
+            ProjectId = workflow.ProjectId,
             Description = workflow.Description,
             Version = published?.VersionNumber,
             Published = published is null ? null : await store.LoadAsync(published),
@@ -311,9 +363,16 @@ public class WorkflowAppService(
 
     public async Task<WorkflowDetailDto> CreateAsync(CreateWorkflowInput input)
     {
+        await CheckManageAsync(input.ProjectId);
         var definition = input.Definition;
         if (input.CopyFromId is { } sourceId)
         {
+            var template = await workflows.GetAsync(sourceId);
+            if (template.ProjectId is not null && template.ProjectId != input.ProjectId)
+            {
+                throw new BusinessException(WorkflowErrors.OutOfScope);
+            }
+
             var source = await store.FindPublishedAsync(sourceId) ?? throw new BusinessException(WorkflowErrors.NotPublished);
             definition = await store.LoadAsync(source);
         }
@@ -323,7 +382,7 @@ public class WorkflowAppService(
             throw new BusinessException(WorkflowErrors.InvalidDefinition);
         }
 
-        var workflow = await workflows.InsertAsync(new Workflow(GuidGenerator.Create(), input.Name, input.Description), autoSave: true);
+        var workflow = await workflows.InsertAsync(new Workflow(GuidGenerator.Create(), input.Name, input.Description, input.ProjectId), autoSave: true);
         var version = await versions.InsertAsync(
             new WorkflowVersion(GuidGenerator.Create(), workflow.Id, 1, definition.InitialStatusId, definition.LayoutJson), autoSave: true);
         await store.WriteAsync(version, definition);
@@ -333,7 +392,7 @@ public class WorkflowAppService(
 
     public async Task<WorkflowDetailDto> SaveDraftAsync(Guid id, WorkflowDefinitionDto input)
     {
-        _ = await workflows.GetAsync(id);
+        await CheckManageAsync((await workflows.GetAsync(id)).ProjectId);
         var draft = await store.FindDraftAsync(id);
         if (draft is null)
         {
@@ -349,9 +408,11 @@ public class WorkflowAppService(
 
     public async Task<PublishResultDto> PublishAsync(Guid id, PublishWorkflowInput input)
     {
+        var owner = (await workflows.GetAsync(id)).ProjectId;
+        await CheckManageAsync(owner);
         var draft = await store.FindDraftAsync(id) ?? throw new BusinessException(WorkflowErrors.NoDraft);
         var definition = await store.LoadAsync(draft);
-        await validator.EnsureValidAsync(definition);
+        await validator.EnsureValidAsync(definition, owner);
 
         var previous = await versions.GetListAsync(version => version.WorkflowId == id && version.Id != draft.Id);
         var scope = new IssueScope([.. previous.Select(version => version.Id)]);
@@ -400,6 +461,12 @@ public class ProjectWorkflowAppService(
     public async Task<PublishResultDto> SetAsync(SetProjectWorkflowInput input)
     {
         await projectAccess.CheckAsync(input.ProjectId, ProjectPermissions.Manage);
+
+        var chosen = await workflows.GetAsync(input.WorkflowId);
+        if (chosen.ProjectId is not null && chosen.ProjectId != input.ProjectId)
+        {
+            throw new BusinessException(WorkflowErrors.OutOfScope);
+        }
 
         var target = await store.FindPublishedAsync(input.WorkflowId) ?? throw new BusinessException(WorkflowErrors.NotPublished);
         var definition = await store.LoadAsync(target);
@@ -675,12 +742,14 @@ public static class WorkflowsModelBuilderExtensions
         {
             b.ToTable("statuses", Schema);
             b.Property(status => status.Name).HasMaxLength(64).IsRequired();
+            b.HasIndex(status => status.ProjectId);
         });
         builder.Entity<Workflow>(b =>
         {
             b.ToTable("workflows", Schema);
             b.Property(workflow => workflow.Name).HasMaxLength(128).IsRequired();
             b.Property(workflow => workflow.Description).HasMaxLength(512);
+            b.HasIndex(workflow => workflow.ProjectId);
         });
         builder.Entity<WorkflowVersion>(b =>
         {

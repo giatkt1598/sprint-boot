@@ -12105,6 +12105,16 @@
         "tags": [
           "Status"
         ],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -12355,6 +12365,16 @@
       "get": {
         "tags": [
           "Status"
+        ],
+        "parameters": [
+          {
+            "name": "ProjectId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -14427,6 +14447,16 @@
         "tags": [
           "Workflow"
         ],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -16387,6 +16417,11 @@
             "maxLength": 512,
             "minLength": 0,
             "type": "string",
+            "nullable": true
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid",
             "nullable": true
           },
           "copyFromId": {
@@ -18576,6 +18611,11 @@
           },
           "category": {
             "$ref": "#/components/schemas/StatusCategory"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -18849,6 +18889,7 @@
           "id",
           "issueCount",
           "name",
+          "projectId",
           "updatedAt",
           "workflowCount"
         ],
@@ -18864,6 +18905,11 @@
           },
           "category": {
             "$ref": "#/components/schemas/StatusCategory"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
           },
           "workflowCount": {
             "type": "integer",
@@ -18893,7 +18939,8 @@
         "required": [
           "category",
           "id",
-          "name"
+          "name",
+          "projectId"
         ],
         "type": "object",
         "properties": {
@@ -18907,6 +18954,11 @@
           },
           "category": {
             "$ref": "#/components/schemas/StatusCategory"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -19397,6 +19449,7 @@
           "draft",
           "id",
           "name",
+          "projectId",
           "published",
           "version"
         ],
@@ -19408,6 +19461,11 @@
           },
           "name": {
             "type": "string",
+            "nullable": true
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid",
             "nullable": true
           },
           "description": {
@@ -19433,6 +19491,7 @@
           "hasDraft",
           "id",
           "name",
+          "projectId",
           "spaceCount",
           "statusCount",
           "updatedAt",
@@ -19446,6 +19505,11 @@
           },
           "name": {
             "type": "string",
+            "nullable": true
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid",
             "nullable": true
           },
           "statusCount": {

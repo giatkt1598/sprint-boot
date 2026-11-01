@@ -1151,6 +1151,23 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
   await expect(page.getByText(/3 weeks · 0 issues · 0 of 0 points/)).toBeVisible();
 
+  // A space keeps its own statuses and workflows; global ones are for use only.
+  await page.goto(`/spaces/${key}/settings/statuses`);
+  await page.getByRole('button', { name: 'Add status' }).click();
+  await page.getByRole('dialog').getByLabel('Name').fill('Space review');
+  await page.getByRole('dialog').getByRole('button', { name: /Save|Add status/ }).click();
+  await expect(page.getByRole('button', { name: 'Edit Space review' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Edit To Do' })).toHaveCount(0);
+  await expectAccessible(page);
+  await page.goto(`/spaces/${key}/settings/workflows`);
+  await expect(page.getByRole('heading', { name: 'Available workflows' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Edit Default' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Create workflow' }).click();
+  await page.getByRole('dialog').getByLabel('Name').fill('Team flow');
+  await page.getByRole('dialog').getByRole('button', { name: /Create/ }).click();
+  await expect(page.getByRole('button', { name: 'Edit Team flow' })).toBeVisible();
+  await expectAccessible(page);
+
   // Status, priority and assignee change right in the rows.
   const quickEdit = async () => {
     await page.getByRole('button', { name: new RegExp(`^Priority: .* ${key}-1$`) }).click();

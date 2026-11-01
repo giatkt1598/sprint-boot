@@ -64,7 +64,7 @@ export function useIssueFilters(projectId: string | undefined, sprints?: { value
 
   const members = useMembers(projectId);
   const types = useIssueTypes(projectId);
-  const statuses = useStatuses();
+  const statuses = useStatuses(projectId);
   const priorities = usePriorities();
   const labels = useLabels(projectId);
   const epics = useEpics(projectId);

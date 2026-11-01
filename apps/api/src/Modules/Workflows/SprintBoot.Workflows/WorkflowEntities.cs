@@ -12,13 +12,17 @@ public class Workflow : AuditedAggregateRoot<Guid>, IMultiTenant
 
     public string? Description { get; set; }
 
+    /// <summary>Null means global.</summary>
+    public Guid? ProjectId { get; private set; }
+
     protected Workflow()
     {
     }
 
-    public Workflow(Guid id, string name, string? description)
+    public Workflow(Guid id, string name, string? description, Guid? projectId = null)
         : base(id)
     {
+        ProjectId = projectId;
         Name = name;
         Description = description;
     }

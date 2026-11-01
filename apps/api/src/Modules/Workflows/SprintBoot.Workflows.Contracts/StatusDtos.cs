@@ -16,6 +16,9 @@ public class StatusDto
     public required string Name { get; set; }
 
     public required StatusCategory Category { get; set; }
+
+    /// <summary>Null for global statuses, which only administrators change.</summary>
+    public required Guid? ProjectId { get; set; }
 }
 
 public class StatusAdminDto : StatusDto
@@ -27,6 +30,12 @@ public class StatusAdminDto : StatusDto
     public required DateTime UpdatedAt { get; set; }
 }
 
+public class StatusListInput
+{
+    /// <summary>Blank lists the global statuses only.</summary>
+    public Guid? ProjectId { get; set; }
+}
+
 public class SaveStatusInput
 {
     [Required]
@@ -34,6 +43,9 @@ public class SaveStatusInput
     public required string Name { get; set; }
 
     public StatusCategory Category { get; set; }
+
+    /// <summary>The owning space; blank makes a global status. Ignored when updating.</summary>
+    public Guid? ProjectId { get; set; }
 }
 
 public interface IStatusLookup

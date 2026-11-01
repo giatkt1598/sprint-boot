@@ -40,7 +40,12 @@ function PageHeader({ title, hint, children }: { title: string; hint: string; ch
   );
 }
 
-function StatusDialog({ status, onClose }: { status?: StatusRow; onClose: () => void }) {
+function ScopeBadge({ projectId }: { projectId?: string | null }) {
+  const { t } = useTranslation();
+  return <Badge tone={projectId ? 'info' : 'neutral'}>{t(projectId ? 'workflows.scopeSpace' : 'workflows.scopeGlobal')}</Badge>;
+}
+
+function StatusDialog({ status, projectId, onClose }: { status?: StatusRow; projectId?: string; onClose: () => void }) {
   const { t } = useTranslation();
   const toMessage = useErrorMessage();
   const queryClient = useQueryClient();
@@ -49,7 +54,7 @@ function StatusDialog({ status, onClose }: { status?: StatusRow; onClose: () => 
 
   const save = useMutation({
     mutationFn: () => {
-      const body = { name, category: Number(category) as 0 | 1 | 2 };
+      const body = { name, category: Number(category) as 0 | 1 | 2, projectId };
       return unwrap<unknown>(
         status
           ? apiClient.PUT('/api/v1/status/{id}', { params: { path: { id: status.id! } }, body })
@@ -84,13 +89,14 @@ function StatusDialog({ status, onClose }: { status?: StatusRow; onClose: () => 
   );
 }
 
-export function StatusesPage() {
+/** Administration passes no space and sees global statuses; a space also sees, and owns, its own. */
+export function StatusesPage({ projectId }: { projectId?: string }) {
   const { t, i18n } = useTranslation();
   const [editing, setEditing] = useState<StatusRow | 'new' | null>(null);
 
   const statuses = useQuery({
-    queryKey: ['admin', 'statuses'],
-    queryFn: () => unwrap(apiClient.GET('/api/v1/status/admin-list')),
+    queryKey: ['admin', 'statuses', projectId],
+    queryFn: () => unwrap(apiClient.GET('/api/v1/status/admin-list', { params: { query: { ProjectId: projectId } } })),
   });
 
   return (
@@ -107,6 +113,7 @@ export function StatusesPage() {
           rowKey={(status) => status.id!}
           columns={[
             { key: 'name', header: t('account.name'), render: (status) => status.name },
+            { key: 'scope', header: t('workflows.scope'), render: (status) => <ScopeBadge projectId={status.projectId} /> },
             { key: 'group', header: t('workflows.group'), render: (status) => t(GROUPS[status.category ?? 0]!.label) },
             { key: 'workflows', header: t('workflows.title'), render: (status) => status.workflowCount },
             { key: 'issues', header: t('spaces.issues'), render: (status) => status.issueCount },
@@ -119,19 +126,20 @@ export function StatusesPage() {
             {
               key: 'edit',
               header: '',
-              render: (status) => (
-                <Button kind="link" aria-label={`${t('common.edit')} ${status.name}`} onClick={() => setEditing(status)}>{t('common.edit')}</Button>
-              ),
+              render: (status) =>
+                (!projectId || status.projectId) && (
+                  <Button kind="link" aria-label={`${t('common.edit')} ${status.name}`} onClick={() => setEditing(status)}>{t('common.edit')}</Button>
+                ),
             },
           ]}
         />
       )}
-      {editing && <StatusDialog status={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} />}
+      {editing && <StatusDialog status={editing === 'new' ? undefined : editing} projectId={projectId} onClose={() => setEditing(null)} />}
     </div>
   );
 }
 
-function CreateWorkflowDialog({ workflows, onClose }: { workflows: WorkflowRow[]; onClose: () => void }) {
+function CreateWorkflowDialog({ workflows, projectId, onClose }: { workflows: WorkflowRow[]; projectId?: string; onClose: () => void }) {
   const { t } = useTranslation();
   const toMessage = useErrorMessage();
   const queryClient = useQueryClient();
@@ -140,7 +148,7 @@ function CreateWorkflowDialog({ workflows, onClose }: { workflows: WorkflowRow[]
   const [copyFromId, setCopyFromId] = useState(templates[0]?.id ?? '');
 
   const create = useMutation({
-    mutationFn: () => unwrap(apiClient.POST('/api/v1/workflow', { body: { name, copyFromId } })),
+    mutationFn: () => unwrap(apiClient.POST('/api/v1/workflow', { body: { name, copyFromId, projectId } })),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin', 'workflows'] });
       onClose();
@@ -201,12 +209,12 @@ export function StatusMappingFields({
   );
 }
 
-function EditWorkflowDialog({ workflowId, onClose }: { workflowId: string; onClose: () => void }) {
+function EditWorkflowDialog({ workflowId, projectId, onClose }: { workflowId: string; projectId?: string; onClose: () => void }) {
   const { t } = useTranslation();
   const toMessage = useErrorMessage();
   const toast = useToast();
   const queryClient = useQueryClient();
-  const statuses = useStatuses();
+  const statuses = useStatuses(projectId);
   const [text, setText] = useState<string | null>(null);
   const [parseError, setParseError] = useState(false);
   const [orphaned, setOrphaned] = useState<string[]>([]);
@@ -321,20 +329,21 @@ function EditWorkflowDialog({ workflowId, onClose }: { workflowId: string; onClo
   );
 }
 
-export function WorkflowsPage() {
+/** Administration passes no space. A space lists global workflows too, which it can use but not edit. */
+export function WorkflowsPage({ projectId }: { projectId?: string }) {
   const { t, i18n } = useTranslation();
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
 
   const workflows = useQuery({
-    queryKey: ['admin', 'workflows'],
-    queryFn: () => unwrap(apiClient.GET('/api/v1/workflow')),
+    queryKey: ['admin', 'workflows', 'list', projectId],
+    queryFn: () => unwrap(apiClient.GET('/api/v1/workflow', { params: { query: { projectId } } })),
   });
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title={t('workflows.title')} hint={t('workflows.hint')}>
-        <Button kind="secondary" component={RouterLink} to="/admin/statuses">{t('workflows.statuses')}</Button>
+      <PageHeader title={t(projectId ? 'workflows.library' : 'workflows.title')} hint={t(projectId ? 'workflows.libraryHint' : 'workflows.hint')}>
+        {!projectId && <Button kind="secondary" component={RouterLink} to="/admin/statuses">{t('workflows.statuses')}</Button>}
         <Button onClick={() => setCreating(true)}>{t('workflows.create')}</Button>
       </PageHeader>
       {workflows.isPending && <LoadingState />}
@@ -347,6 +356,7 @@ export function WorkflowsPage() {
           rowKey={(workflow) => workflow.id!}
           columns={[
             { key: 'name', header: t('account.name'), render: (workflow) => workflow.name },
+            { key: 'scope', header: t('workflows.scope'), render: (workflow) => <ScopeBadge projectId={workflow.projectId} /> },
             { key: 'statuses', header: t('workflows.statuses'), render: (workflow) => workflow.statusCount },
             { key: 'spaces', header: t('spaces.title'), render: (workflow) => workflow.spaceCount },
             { key: 'version', header: t('workflows.version'), render: (workflow) => (workflow.version ? `v${workflow.version}` : '') },
@@ -364,7 +374,7 @@ export function WorkflowsPage() {
             {
               key: 'edit',
               header: '',
-              render: (workflow) => (
+              render: (workflow) => (!projectId || workflow.projectId) && (
                 <Link component="button" variant="body2" aria-label={`${t('common.edit')} ${workflow.name}`} onClick={() => setEditing(workflow.id!)}>
                   {t('common.edit')}
                 </Link>
@@ -373,8 +383,8 @@ export function WorkflowsPage() {
           ]}
         />
       )}
-      {creating && <CreateWorkflowDialog workflows={workflows.data ?? []} onClose={() => setCreating(false)} />}
-      {editing && <EditWorkflowDialog workflowId={editing} onClose={() => setEditing(null)} />}
+      {creating && <CreateWorkflowDialog workflows={workflows.data ?? []} projectId={projectId} onClose={() => setCreating(false)} />}
+      {editing && <EditWorkflowDialog workflowId={editing} projectId={projectId} onClose={() => setEditing(null)} />}
     </div>
   );
 }

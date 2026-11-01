@@ -191,7 +191,8 @@
     "GitHubAppNotConfigured": "Máy chủ chưa cấu hình GitHub App.",
     "GitConnectionInvalid": "Hãy nhập URL http hoặc https hợp lệ.",
     "GitCredentialsRequired": "Hãy nhập thông tin xác thực cho kết nối này.",
-    "TransitionLinkedPullRequest": "Issue này cần có pull request liên kết."
+    "TransitionLinkedPullRequest": "Issue này cần có pull request liên kết.",
+    "WorkflowOutOfScope": "Workflow hoặc status này thuộc phạm vi khác."
   },
   "auth": {
     "signIn": "Đăng nhập",
@@ -442,7 +443,12 @@
     "publishedQueued": "Đã lưu. Issue đang chuyển sang phiên bản mới ở nền.",
     "mappingHint": "Một số issue đang ở status không còn tồn tại. Hãy chọn status thay thế.",
     "changeTitle": "Đổi workflow",
-    "defaultName": "Mặc định"
+    "defaultName": "Mặc định",
+    "scope": "Phạm vi",
+    "scopeGlobal": "Toàn hệ thống",
+    "scopeSpace": "Space",
+    "library": "Workflow có thể dùng",
+    "libraryHint": "Space dùng được workflow toàn hệ thống và sửa được workflow do Space tạo."
   },
   "agile": {
     "sprint": "Sprint",
