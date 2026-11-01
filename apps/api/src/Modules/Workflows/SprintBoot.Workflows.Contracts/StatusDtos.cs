@@ -36,6 +36,24 @@ public class StatusListInput
     public Guid? ProjectId { get; set; }
 }
 
+public class DeleteStatusInput
+{
+    public Guid? ReplacementId { get; set; }
+}
+
+public class StatusUsageDto
+{
+    /// <summary>Issues and epics alike, deleted ones included so a restore cannot strand them.</summary>
+    public required int IssueCount { get; set; }
+
+    public required int WorkflowCount { get; set; }
+
+    public required bool ReplacementRequired { get; set; }
+}
+
+/// <summary>Raised inside the transaction so other modules drop their references to the status with it.</summary>
+public record StatusRemovedEvent(Guid StatusId, Guid? ReplacementId);
+
 public class SaveStatusInput
 {
     [Required]

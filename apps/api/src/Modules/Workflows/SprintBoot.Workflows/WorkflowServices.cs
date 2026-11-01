@@ -22,7 +22,8 @@ public class StatusAppService(
     IRepository<WorkflowStep, Guid> steps,
     IRepository<WorkflowVersion, Guid> versions,
     IWorkflowIssueGateway issues,
-    IProjectAccess projectAccess)
+    IProjectAccess projectAccess,
+    StatusRemover remover)
     : ApplicationService, IStatusAppService
 {
     public async Task<List<StatusDto>> GetListAsync(Guid? projectId)
@@ -88,20 +89,17 @@ public class StatusAppService(
         return StatusMapping.ToDto(status);
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task<StatusUsageDto> GetUsageAsync(Guid id)
+    {
+        await CheckManageAsync((await statuses.GetAsync(id)).ProjectId);
+        return await remover.GetUsageAsync(id);
+    }
+
+    public async Task DeleteAsync(Guid id, DeleteStatusInput input)
     {
         var status = await statuses.GetAsync(id);
         await CheckManageAsync(status.ProjectId);
-
-        // Archived versions only keep history, so they do not hold a status back.
-        var live = (await versions.GetListAsync(version => version.State != WorkflowVersionState.Archived)).Select(version => version.Id).ToList();
-        var inWorkflow = await steps.AnyAsync(step => step.StatusId == id && live.Contains(step.VersionId));
-        if (inWorkflow || (await issues.CountByStatusAsync()).GetValueOrDefault(id) > 0)
-        {
-            throw new BusinessException(WorkflowErrors.StatusInUse);
-        }
-
-        await statuses.DeleteAsync(status);
+        await remover.RemoveAsync(status, input.ReplacementId);
     }
 }
 
@@ -216,8 +214,7 @@ public class WorkflowDefinitionValidator(IRepository<Status, Guid> statuses, Rul
 
         if (definition.Transitions.Any(transition =>
                 !steps.Contains(transition.ToStatusId)
-                || (transition.FromStatusId is { } from && !steps.Contains(from))
-                || string.IsNullOrWhiteSpace(transition.Name)))
+                || (transition.FromStatusId is { } from && !steps.Contains(from))))
         {
             throw new BusinessException(WorkflowErrors.InvalidDefinition);
         }
@@ -573,7 +570,9 @@ public class TransitionAppService(
             result.Add(new AvailableTransitionDto
             {
                 Id = item.Transition.Id,
-                Name = item.Transition.Name,
+                Name = string.IsNullOrWhiteSpace(item.Transition.Name)
+                    ? $"{(item.Transition.FromStatusId is { } from ? statuses[from].Name : "Any status")} to {statuses[item.Transition.ToStatusId].Name}"
+                    : item.Transition.Name,
                 ToStatus = statuses[item.Transition.ToStatusId],
                 RequiresComment = problems.Any(problem => problem.Code == WorkflowErrors.CommentRequired),
                 MissingFields = [.. problems.Where(problem => problem.Field is not null).Select(problem => problem.Field!)],

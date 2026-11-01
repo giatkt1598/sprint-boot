@@ -357,9 +357,9 @@ test('a transition that needs input opens a dialog and stays blocked until fille
 
   await page.goto(`/issues/${key}-1`);
   await page.getByRole('button', { name: 'Status: To Do' }).click();
-  await page.getByRole('menuitem', { name: /^Close/ }).click();
+  await page.getByRole('menuitem', { name: 'Done' }).click();
   const dialog = page.getByRole('dialog');
-  const confirm = dialog.getByRole('button', { name: 'Close', exact: true });
+  const confirm = dialog.getByRole('button', { name: 'Done', exact: true });
   await expect(dialog).toContainText(`${key}-1 moves from To Do to Done.`);
   await expect(confirm).toBeDisabled();
   await expectAccessible(page);
@@ -1251,6 +1251,12 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await details.getByLabel('Name').fill('Review');
   await details.getByRole('button', { name: 'Add status' }).click();
   await expect(page.getByTestId('status-node-Review')).toBeVisible();
+
+  // It arrives with a transition from Any status; without that, publishing is blocked.
+  await page.getByRole('button', { name: 'Beautify' }).click();
+  await page.locator('.react-flow__pane').click({ position: { x: 5, y: 5 } });
+  await details.getByRole('button', { name: 'Any status to Review' }).click();
+  await details.getByRole('button', { name: 'Delete transition' }).click();
   await expect(page.getByRole('alert').filter({ hasText: 'Review cannot be reached' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Publish' })).toBeDisabled();
   await page.screenshot({ path: 'test-results/designer-broken.png' });
@@ -1299,7 +1305,6 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await page.getByTestId('status-node-Review').click();
   await details.getByLabel('Start status').check();
   await drawTransition('Review', 'In Progress');
-  await details.getByLabel('Name').fill('Begin');
   await details.getByRole('button', { name: 'Add transition' }).click();
   await page.getByTestId('status-node-To Do').click();
   await details.getByRole('button', { name: 'Remove status' }).click();
@@ -1312,6 +1317,25 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await page.getByRole('dialog').getByRole('button', { name: 'Publish' }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.getByText(/Workflow published|Issues are moving/)).toBeVisible();
+
+  // Deleting a status in use asks for the one that replaces it.
+  await page.getByTestId('status-node-Review').click();
+  await details.getByLabel('Name').fill('Reviewing');
+  await details.getByLabel('Name').blur();
+  await expect(page.getByTestId('status-node-Reviewing')).toBeVisible();
+  await details.getByRole('button', { name: 'Delete status' }).click();
+  const removal = page.getByRole('dialog');
+  await expect(removal.getByText(/issues and epics/)).toBeVisible();
+  await expect(removal.getByRole('button', { name: 'Delete' })).toBeDisabled();
+  await expectAccessible(page);
+  await removal.getByLabel('Replace with').click();
+  await page.getByRole('listbox').getByRole('option', { name: 'In Progress' }).click();
+  await removal.getByRole('button', { name: 'Delete' }).click();
+  await expect(removal).toHaveCount(0);
+  await expect(page.getByTestId('status-node-Reviewing')).toHaveCount(0);
+  await expect(page.getByTestId('status-node-In Progress')).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Saved' })).toBeVisible();
+
   await page.getByRole('button', { name: 'Back to workflows' }).click();
   await expect(page.getByRole('heading', { name: 'Available workflows' })).toBeVisible();
 
@@ -1333,9 +1357,9 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await page.getByLabel('Search people').fill('adm');
   await page.getByRole('group', { name: 'Assignee' }).getByRole('button').first().click();
   await expect(page.getByRole('button', { name: `Assignee: Unassigned ${key}-1` })).toHaveCount(0);
-  await page.getByRole('button', { name: new RegExp(`^Status: Review ${key}-1$`) }).click();
+  await page.getByRole('button', { name: new RegExp(`^Status: In Progress ${key}-1$`) }).click();
   await page.getByRole('menuitem').first().click();
-  await expect(page.getByRole('button', { name: new RegExp(`^Status: Review ${key}-1$`) })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: new RegExp(`^Status: In Progress ${key}-1$`) })).toHaveCount(0);
 
   await page.goto(`/spaces/${key}/epics`);
   await page.getByRole('button', { name: 'Create epic' }).click();

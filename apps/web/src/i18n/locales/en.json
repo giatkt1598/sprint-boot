@@ -195,7 +195,8 @@
     "GitCredentialsRequired": "Enter the credentials for this connection.",
     "TransitionLinkedPullRequest": "This issue needs a linked pull request.",
     "WorkflowOutOfScope": "That workflow or status belongs to another scope.",
-    "StatusInUse": "A status still used by a workflow or an issue cannot be deleted."
+    "StatusInUse": "A replacement is needed while issues or a published workflow use this status.",
+    "WorkflowMigrationRunning": "Issues are still moving to a new workflow version. Try again when that finishes."
   },
   "auth": {
     "signIn": "Sign in",
@@ -856,9 +857,6 @@
     "to": "To",
     "deleteTransition": "Delete transition",
     "addTransition": "Add transition",
-    "transitionTo": "To {{name}}",
-    "unnamed": "Every transition needs a name.",
-    "unnamedShort": "Unnamed",
     "unreachable": "{{name}} cannot be reached from the start status, so publishing is off. Add a transition to it, or remove it.",
     "hint": "Drag between two statuses to draw a transition. Select a status or a transition to edit it.",
     "status": "Status",
@@ -866,7 +864,7 @@
     "removeStatus": "Remove status",
     "deleteStatus": "Delete status",
     "deleteStatusTitle": "Delete {{name}}?",
-    "deleteStatusBody": "It leaves this workflow now, and the draft is saved. Statuses still used by a workflow or an issue stay.",
+    "deleteStatusBody": "Only drafts use this status, so it simply leaves them.",
     "existingStatus": "Existing status",
     "pickStatus": "Choose a status",
     "newStatus": "New status",
@@ -944,6 +942,10 @@
       "set-field": "Set {{value}}",
       "assign": "Assign to {{value}}",
       "set-resolution": "Set resolution to {{value}}"
-    }
+    },
+    "deleteStatusUsed": "{{issues}} issues and epics and {{workflows}} published workflows use this status. Choose the status that takes its place everywhere.",
+    "replacementStatus": "Replace with",
+    "beautify": "Beautify",
+    "defaultName": "{{from}} to {{to}}"
   }
 }

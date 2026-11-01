@@ -30,7 +30,8 @@ public class TransitionRuleDto
 
 public class TransitionDefinitionDto
 {
-    [Required]
+    /// <summary>Optional: without one, the transition reads "From to To".</summary>
+    [Required(AllowEmptyStrings = true)]
     public required string Name { get; set; }
 
     /// <summary>Null means Any status.</summary>
@@ -247,6 +248,10 @@ public interface IWorkflowIssueGateway
 
     Task<int> CountPendingAsync(IssueScope scope, Guid toVersionId);
 
+    Task<int> CountWithStatusAsync(Guid statusId);
+
+    Task ReplaceStatusAsync(Guid statusId, Guid replacementId);
+
     /// <summary>Moves up to batchSize issues to the version and returns how many moved.</summary>
     Task<int> MigrateBatchAsync(IssueScope scope, Guid toVersionId, IReadOnlyDictionary<Guid, Guid> statusMappings, int batchSize);
 }
@@ -300,4 +305,5 @@ public static class WorkflowErrors
     public const string MissingField = "SprintBoot:TransitionMissingField";
     public const string OutOfScope = "SprintBoot:WorkflowOutOfScope";
     public const string StatusInUse = "SprintBoot:StatusInUse";
+    public const string MigrationRunning = "SprintBoot:WorkflowMigrationRunning";
 }

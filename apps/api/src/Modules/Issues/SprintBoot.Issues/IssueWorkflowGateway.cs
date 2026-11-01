@@ -120,6 +120,25 @@ public class IssueWorkflowGateway(
         }
     }
 
+    public async Task<int> CountWithStatusAsync(Guid statusId)
+    {
+        using (dataFilter.Disable<ISoftDelete>())
+        {
+            return await issues.CountAsync(issue => issue.StatusId == statusId);
+        }
+    }
+
+    public async Task ReplaceStatusAsync(Guid statusId, Guid replacementId)
+    {
+        // Soft-deleted issues move too, so restoring one can never leave it on a dropped status.
+        using (dataFilter.Disable<ISoftDelete>())
+        {
+            await (await issues.GetQueryableAsync())
+                .Where(issue => issue.StatusId == statusId)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(issue => issue.StatusId, replacementId));
+        }
+    }
+
     public async Task<int> MigrateBatchAsync(
         IssueScope scope, Guid toVersionId, IReadOnlyDictionary<Guid, Guid> statusMappings, int batchSize)
     {

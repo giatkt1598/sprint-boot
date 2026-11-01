@@ -13,6 +13,8 @@ public interface IStatusAppService : IApplicationService
 
     Task<StatusDto> UpdateAsync(Guid id, SaveStatusInput input);
 
-    /// <summary>Refused while a live workflow or an issue still uses it.</summary>
-    Task DeleteAsync(Guid id);
+    Task<StatusUsageDto> GetUsageAsync(Guid id);
+
+    /// <summary>While issues or a published workflow use the status, a replacement takes its place.</summary>
+    Task DeleteAsync(Guid id, DeleteStatusInput input);
 }

@@ -14,7 +14,7 @@ import { ApiError, apiClient, unwrap } from '../../api';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { Toggle } from '../../components/Checkbox';
-import { Dialog, DialogConfirm, DialogFooter } from '../../components/Dialog';
+import { Dialog, DialogFooter } from '../../components/Dialog';
 import { ErrorState, LoadingState } from '../../components/StateViews';
 import { SelectField, TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
@@ -24,7 +24,7 @@ import { radius, sem } from '../../theme/tokens';
 import { useStatuses, type Status } from '../issues/api';
 import { TransitionRules, type DraftRule } from './TransitionRules';
 import { ANY, arrow, edgeTypes, facingSides, nodeTypes, parallelOffset } from './WorkflowCanvas';
-import { unreachableStatuses, type DraftTransition } from './workflowGraph';
+import { arrangeStatuses, replaceStatus, unreachableStatuses, type DraftTransition } from './workflowGraph';
 
 type Definition = components['schemas']['WorkflowDefinitionDto'];
 type Point = { x: number; y: number };
@@ -143,14 +143,14 @@ export function WorkflowDesignerPage() {
   }, [detail.data, draft, setNodes]);
 
   const statusOf = (id: string) => statuses.data?.find((status) => status.id === id);
+  const defaultName = (from: string | null, to: string) =>
+    t('designer.defaultName', { from: from ? (statusOf(from)?.name ?? '') : t('designer.anyStatus'), to: statusOf(to)?.name ?? '' });
 
   const broken = useMemo(() => (draft ? unreachableStatuses(draft) : []), [draft]);
   const hasDone = draft?.statusIds.some((id) => statusOf(id)?.category === 2) ?? false;
-  const unnamed = draft?.transitions.some((transition) => !transition.name.trim()) ?? false;
   const problems = [
     ...broken.map((id) => t('designer.unreachable', { name: statusOf(id)?.name ?? id })),
     ...(draft && statuses.data && !hasDone ? [t('errors.WorkflowNeedsDoneStatus')] : []),
-    ...(unnamed ? [t('designer.unnamed')] : []),
   ];
   const activeTransition = panel?.kind === 'transition' ? draft?.transitions.find((item) => item.uid === panel.uid) : undefined;
 
@@ -205,7 +205,7 @@ export function WorkflowDesignerPage() {
         source,
         target: transition.toStatusId,
         ...facingSides(place(source), place(transition.toStatusId)),
-        label: transition.name,
+        label: transition.name || defaultName(transition.fromStatusId, transition.toStatusId),
         selected: activeTransition?.uid === transition.uid,
         markerEnd: arrow,
         data: {
@@ -215,7 +215,7 @@ export function WorkflowDesignerPage() {
         },
       };
     });
-  }, [draft, nodes, activeTransition]);
+  }, [draft, nodes, activeTransition, statuses.data, t]);
 
   const placeOf = (statusIds: string[]) =>
     Object.fromEntries(statusIds.flatMap((id) => {
@@ -317,7 +317,14 @@ export function WorkflowDesignerPage() {
   };
 
   const addStatus = (id: string) => {
-    setDraft((current) => current && { ...current, statusIds: [...current.statusIds, id], initialStatusId: current.initialStatusId || id });
+    // Reachable from the start, so a new status never blocks publishing.
+    const transition = { uid: nextUid++, name: '', fromStatusId: null, toStatusId: id, rules: [] };
+    setDraft((current) => current && {
+      ...current,
+      statusIds: [...current.statusIds, id],
+      initialStatusId: current.initialStatusId || id,
+      transitions: [...current.transitions, transition],
+    });
     setPanel({ kind: 'status', id });
   };
 
@@ -328,21 +335,43 @@ export function WorkflowDesignerPage() {
     transitions: current.transitions.filter((item) => item.toStatusId !== id && item.fromStatusId !== id),
   });
 
-  const deleteStatus = useMutation({
-    mutationFn: async (status: Status) => {
-      // Saved first, because the server refuses a status a draft still uses.
-      const next = withoutStatus(draft!, status.id!);
-      await writeDraft(next);
-      setDraft(next);
-      await unwrap(apiClient.DELETE('/api/v1/status/{id}', { params: { path: { id: status.id! } } }));
-    },
-    onSuccess: async () => {
-      setPanel(null);
-      await queryClient.invalidateQueries({ queryKey: ['statuses'] });
-    },
-    onError: (failure) => toast('error', toMessage(failure)),
-    onSettled: () => setDeleting(null),
-  });
+  const onStatusDeleted = async (status: Status, replacementId: string | null) => {
+    setDraft((current) => current && replaceStatus(current, status.id!, replacementId));
+    if (replacementId) {
+      // The replacement takes the deleted status's place on the canvas unless it is already there.
+      setNodes((current) =>
+        current.some((node) => node.id === replacementId)
+          ? current
+          : current.map((node) => (node.id === status.id ? { ...node, id: replacementId } : node)),
+      );
+    }
+    setDeleting(null);
+    setPanel(null);
+    await Promise.all([queryClient.invalidateQueries({ queryKey: ['statuses'] }), queryClient.invalidateQueries({ queryKey: ['admin', 'workflows'] })]);
+  };
+
+  const beautify = () => {
+    const order = [...draft!.statusIds].sort((first, second) =>
+      Number(second === draft!.initialStatusId) - Number(first === draft!.initialStatusId)
+      || (statusOf(first)?.category ?? 0) - (statusOf(second)?.category ?? 0));
+    const places = arrangeStatuses(order, draft!.transitions);
+    // Any status nodes sit above their target, so rows leave room for them.
+    const rowGap = draft!.transitions.some((item) => item.fromStatusId === null) ? NODE_GAP_Y * 2 : NODE_GAP_Y;
+    const point = (id: string): Point => {
+      const place = places.get(id);
+      return { x: 80 + (place?.column ?? 0) * NODE_GAP_X, y: 240 + (place?.row ?? 0) * rowGap };
+    };
+    setNodes((current) =>
+      current.map((node) => {
+        if (node.type !== 'any') {
+          return { ...node, position: point(node.id) };
+        }
+        const target = point(node.id.slice(ANY.length + 1));
+        return { ...node, position: { x: target.x, y: target.y - ANY_ABOVE } };
+      }),
+    );
+    setTimeout(() => void flow.current?.fitView({ maxZoom: 1, duration: 200 }), 50);
+  };
 
   const exportJson = () => {
     const link = document.createElement('a');
@@ -402,6 +431,7 @@ export function WorkflowDesignerPage() {
         <Button kind="ghost" onClick={() => importInput.current?.click()}>{t('designer.import')}</Button>
         <input ref={importInput} type="file" accept="application/json" hidden aria-label={t('designer.import')} onChange={(event) => void importJson(event)} />
         <Button kind="ghost" onClick={exportJson}>{t('designer.export')}</Button>
+        <Button kind="ghost" onClick={beautify}>{t('designer.beautify')}</Button>
         <Button kind="secondary" onClick={() => setPanel({ kind: 'new-status' })}>{t('workflows.addStatus')}</Button>
         <Button kind="secondary" disabled={steps.length === 0} onClick={() => openNewTransition(steps[0]?.value ?? null, steps[1]?.value ?? steps[0]?.value ?? '')}>
           {t('designer.addTransition')}
@@ -470,6 +500,7 @@ export function WorkflowDesignerPage() {
               heading={t('designer.transition')}
               value={activeTransition}
               steps={steps}
+              placeholder={defaultName(activeTransition.fromStatusId, activeTransition.toStatusId)}
               onChange={(change) => patchTransition(activeTransition.uid, change)}
             >
               <Button
@@ -489,11 +520,12 @@ export function WorkflowDesignerPage() {
               heading={t('designer.newTransition')}
               value={panel.value}
               steps={steps}
+              placeholder={defaultName(panel.value.fromStatusId, panel.value.toStatusId)}
               onChange={(change) => setPanel({ ...panel, value: { ...panel.value, ...change } })}
             >
               <div className="flex justify-end gap-2">
                 <Button kind="ghost" onClick={() => setPanel(null)}>{t('common.cancel')}</Button>
-                <Button disabled={!panel.value.name.trim()} onClick={() => addTransition(panel.value)}>{t('designer.addTransition')}</Button>
+                <Button onClick={() => addTransition(panel.value)}>{t('designer.addTransition')}</Button>
               </div>
             </TransitionForm>
           )}
@@ -521,7 +553,7 @@ export function WorkflowDesignerPage() {
               <div className="flex flex-col items-start gap-1">
                 {draft.transitions.map((transition) => (
                   <Link key={transition.uid} component="button" variant="body2" sx={{ minHeight: 24 }} onClick={() => setPanel({ kind: 'transition', uid: transition.uid })}>
-                    {transition.name || t('designer.unnamedShort')}
+                    {transition.name || defaultName(transition.fromStatusId, transition.toStatusId)}
                   </Link>
                 ))}
               </div>
@@ -535,14 +567,16 @@ export function WorkflowDesignerPage() {
           )}
         </aside>
       </div>
-      <DialogConfirm
-        open={deleting !== null}
-        title={t('designer.deleteStatusTitle', { name: deleting?.name })}
-        description={t('designer.deleteStatusBody')}
-        confirmLabel={t('common.delete')}
-        onCancel={() => setDeleting(null)}
-        onConfirm={() => deleting && deleteStatus.mutate(deleting)}
-      />
+      {deleting && (
+        <DeleteStatusDialog
+          status={deleting}
+          isStart={draft.initialStatusId === deleting.id}
+          statuses={statuses.data ?? []}
+          beforeDelete={() => (dirty ? writeDraft(draft) : Promise.resolve())}
+          onCancel={() => setDeleting(null)}
+          onDeleted={(replacementId) => void onStatusDeleted(deleting, replacementId)}
+        />
+      )}
       {publishing && (
         <Dialog
           open
@@ -587,8 +621,9 @@ export function WorkflowDesignerPage() {
   );
 }
 
-function TransitionForm({ heading, value, steps, onChange, children }: {
+function TransitionForm({ heading, value, steps, placeholder, onChange, children }: {
   heading: string;
+  placeholder: string;
   value: NewTransition;
   steps: { value: string; label: string }[];
   onChange: (change: Partial<NewTransition>) => void;
@@ -600,7 +635,7 @@ function TransitionForm({ heading, value, steps, onChange, children }: {
   return (
     <>
       <Typography variant="caption" color="textSecondary">{heading}</Typography>
-      <TextField label={t('account.name')} value={value.name} onChange={(event) => onChange({ name: event.target.value })} />
+      <TextField label={t('account.name')} placeholder={placeholder} value={value.name} onChange={(event) => onChange({ name: event.target.value })} />
       <div className="grid grid-cols-2 gap-3">
         <SelectField
           label={t('designer.from')}
@@ -665,8 +700,76 @@ function StatusPanel({ status, editable, isStart, onStart, onRemove, onDelete }:
         <Toggle label="" slotProps={{ input: { 'aria-label': t('designer.startStatus') } }} checked={isStart} disabled={isStart} onChange={onStart} />
       </div>
       <Button kind="danger" sx={{ alignSelf: 'flex-start' }} disabled={isStart} onClick={onRemove}>{t('designer.removeStatus')}</Button>
-      {editable && <Button kind="ghost" sx={{ alignSelf: 'flex-start' }} disabled={isStart} onClick={onDelete}>{t('designer.deleteStatus')}</Button>}
+      {editable && <Button kind="ghost" sx={{ alignSelf: 'flex-start' }} onClick={onDelete}>{t('designer.deleteStatus')}</Button>}
     </>
+  );
+}
+
+function DeleteStatusDialog({ status, isStart, statuses, beforeDelete, onCancel, onDeleted }: {
+  status: Status;
+  isStart: boolean;
+  statuses: Status[];
+  beforeDelete: () => Promise<void>;
+  onCancel: () => void;
+  onDeleted: (replacementId: string | null) => void;
+}) {
+  const { t } = useTranslation();
+  const toMessage = useErrorMessage();
+  const [replacementId, setReplacementId] = useState('');
+
+  const usage = useQuery({
+    queryKey: ['statuses', 'usage', status.id],
+    queryFn: () => unwrap(apiClient.GET('/api/v1/status/{id}/usage', { params: { path: { id: status.id! } } })),
+    gcTime: 0,
+  });
+
+  const remove = useMutation({
+    mutationFn: async () => {
+      await beforeDelete();
+      await unwrap(apiClient.DELETE('/api/v1/status/{id}', { params: { path: { id: status.id! }, query: { ReplacementId: replacementId || undefined } } }));
+    },
+    onSuccess: () => onDeleted(replacementId || null),
+  });
+
+  const needed = isStart || usage.data?.replacementRequired === true;
+  // A global status reaches every space, so only another global one can stand in for it.
+  const options = statuses.filter((item) => item.id !== status.id && (item.projectId ? item.projectId === status.projectId : true));
+
+  return (
+    <Dialog
+      open
+      title={t('designer.deleteStatusTitle', { name: status.name })}
+      onClose={onCancel}
+      footer={
+        <DialogFooter
+          confirmLabel={t('common.delete')}
+          confirmDisabled={!usage.data || (needed && !replacementId) || remove.isPending}
+          onCancel={onCancel}
+          onConfirm={() => remove.mutate()}
+        />
+      }
+    >
+      {usage.isError ? (
+        <Typography role="alert" color="error" variant="body2">{toMessage(usage.error)}</Typography>
+      ) : usage.data ? (
+        <Typography variant="body1" color="textSecondary">
+          {needed
+            ? t('designer.deleteStatusUsed', { issues: usage.data.issueCount, workflows: usage.data.workflowCount })
+            : t('designer.deleteStatusBody')}
+        </Typography>
+      ) : (
+        <LoadingState />
+      )}
+      {needed && (
+        <SelectField
+          label={t('designer.replacementStatus')}
+          value={replacementId}
+          onChange={(event) => setReplacementId(event.target.value)}
+          options={options.map((item) => ({ value: item.id!, label: item.name! }))}
+        />
+      )}
+      {remove.isError && <Typography role="alert" color="error" variant="body2">{toMessage(remove.error)}</Typography>}
+    </Dialog>
   );
 }
 

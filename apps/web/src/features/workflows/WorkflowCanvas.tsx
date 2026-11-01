@@ -116,7 +116,7 @@ function TransitionEdge({ id, sourceX, sourceY, targetX, targetY, label, selecte
   return (
     <>
       <BaseEdge id={id} path={path} markerEnd={markerEnd} style={{ stroke, strokeWidth: selected ? 2 : 1, strokeDasharray: data?.dashed ? '4 4' : undefined }} />
-      <EdgeLabelRenderer>
+      {label && <EdgeLabelRenderer>
         <ButtonBase
           className="nodrag nopan absolute px-2"
           aria-pressed={Boolean(selected)}
@@ -134,7 +134,7 @@ function TransitionEdge({ id, sourceX, sourceY, targetX, targetY, label, selecte
         >
           {label}
         </ButtonBase>
-      </EdgeLabelRenderer>
+      </EdgeLabelRenderer>}
     </>
   );
 }

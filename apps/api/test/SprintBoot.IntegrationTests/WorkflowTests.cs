@@ -430,24 +430,129 @@ public class WorkflowTests(ApiFixture fixture)
     }
 
     [Fact]
-    public async Task A_status_can_be_deleted_only_when_nothing_uses_it()
+    public async Task A_status_only_in_a_draft_is_deleted_without_a_replacement()
     {
         var owner = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(owner);
         var create = await owner.Http.PostAsJsonAsync("/api/v1/status", new { name = "Temporary", category = 1, projectId = project.Id }, Token);
         var status = (await create.Content.ReadFromJsonAsync<StatusDto>(Token))!;
-        var definition = new { initialStatusId = ToDo, statusIds = new[] { ToDo, status.Id, Done }, transitions = Array.Empty<object>() };
+        var definition = new
+        {
+            initialStatusId = ToDo,
+            statusIds = new[] { ToDo, status.Id, Done },
+            transitions = new[] { new { name = "Hold", fromStatusId = (Guid?)ToDo, toStatusId = status.Id, rules = Array.Empty<object>() } },
+        };
         var workflow = (await (await owner.Http.PostAsJsonAsync("/api/v1/workflow", new { name = "Holds it", projectId = project.Id, definition }, Token)).Content.ReadFromJsonAsync<WorkflowDetailDto>(Token))!;
 
-        var refused = await owner.Http.DeleteAsync($"/api/v1/status/{status.Id}", Token);
-        (await refused.Content.ReadAsStringAsync(Token)).ShouldContain(WorkflowErrors.StatusInUse);
-
-        (await owner.Http.PostAsJsonAsync($"/api/v1/workflow/{workflow.Id}/save-draft", new { initialStatusId = ToDo, statusIds = new[] { ToDo, Done }, transitions = Array.Empty<object>() }, Token)).EnsureSuccessStatusCode();
         var outsider = await fixture.CreateUserClientAsync(Token);
         (await outsider.Http.DeleteAsync($"/api/v1/status/{status.Id}", Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
+        var usage = await owner.Http.GetFromJsonAsync<StatusUsageDto>($"/api/v1/status/{status.Id}/usage", Token);
+        usage!.ReplacementRequired.ShouldBeFalse();
         (await owner.Http.DeleteAsync($"/api/v1/status/{status.Id}", Token)).EnsureSuccessStatusCode();
+
         var left = await owner.Http.GetFromJsonAsync<List<StatusDto>>($"/api/v1/status?projectId={project.Id}", Token);
         left!.ShouldNotContain(item => item.Id == status.Id);
+        var draft = (await owner.Http.GetFromJsonAsync<WorkflowDetailDto>($"/api/v1/workflow/{workflow.Id}", Token))!.Draft!;
+        draft.StatusIds.ShouldNotContain(status.Id);
+        draft.Transitions.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Deleting_a_status_in_use_moves_issues_workflows_and_boards_to_the_replacement()
+    {
+        var admin = await AdminAsync();
+        var project = await CreateProjectAsync(admin);
+        var typeId = await TaskTypeAsync(admin, project.Id);
+        var create = await admin.Http.PostAsJsonAsync("/api/v1/status", new { name = "Doomed", category = 1, projectId = project.Id }, Token);
+        var doomed = (await create.Content.ReadFromJsonAsync<StatusDto>(Token))!;
+        var body = new
+        {
+            name = $"Flow {Guid.NewGuid():N}",
+            projectId = project.Id,
+            definition = new
+            {
+                initialStatusId = doomed.Id,
+                statusIds = new[] { doomed.Id, InProgress, Done },
+                transitions = new[]
+                {
+                    new { name = "Begin", fromStatusId = (Guid?)doomed.Id, toStatusId = InProgress, rules = Array.Empty<object>() },
+                    new { name = "Finish", fromStatusId = (Guid?)doomed.Id, toStatusId = Done, rules = Array.Empty<object>() },
+                },
+            },
+        };
+        var workflow = (await (await admin.Http.PostAsJsonAsync("/api/v1/workflow", body, Token)).Content.ReadFromJsonAsync<WorkflowDetailDto>(Token))!;
+        (await admin.Http.PostAsJsonAsync($"/api/v1/workflow/{workflow.Id}/publish", new { }, Token)).EnsureSuccessStatusCode();
+        (await admin.Http.PostAsJsonAsync("/api/v1/project-workflow/set", new { projectId = project.Id, issueTypeId = typeId, workflowId = workflow.Id }, Token)).EnsureSuccessStatusCode();
+        var issue = await CreateIssueAsync(admin, project.Id, typeId);
+        issue.Status.Id.ShouldBe(doomed.Id);
+
+        var view = await admin.Http.GetFromJsonAsync<SprintBoot.Agile.BoardViewDto>($"/api/v1/board/view/{project.Id}", Token);
+        var columns = view!.Columns.Select((column, index) => new
+        {
+            name = column.Name,
+            statusIds = (index == 0 ? column.Statuses.Select(status => status.Id).Append(doomed.Id) : column.Statuses.Select(status => status.Id)).ToArray(),
+        });
+        (await admin.Http.PutAsJsonAsync($"/api/v1/board/columns/{project.Id}", new { columns }, Token)).EnsureSuccessStatusCode();
+
+        var usage = await admin.Http.GetFromJsonAsync<StatusUsageDto>($"/api/v1/status/{doomed.Id}/usage", Token);
+        usage!.IssueCount.ShouldBe(1);
+        usage.WorkflowCount.ShouldBe(1);
+        usage.ReplacementRequired.ShouldBeTrue();
+
+        var refused = await admin.Http.DeleteAsync($"/api/v1/status/{doomed.Id}", Token);
+        (await refused.Content.ReadAsStringAsync(Token)).ShouldContain(WorkflowErrors.StatusInUse);
+        (await admin.Http.DeleteAsync($"/api/v1/status/{doomed.Id}?replacementId={doomed.Id}", Token)).IsSuccessStatusCode.ShouldBeFalse();
+
+        (await admin.Http.DeleteAsync($"/api/v1/status/{doomed.Id}?replacementId={InProgress}", Token)).EnsureSuccessStatusCode();
+
+        (await ReloadAsync(admin, issue.Key))!.Status.Id.ShouldBe(InProgress);
+        var published = (await admin.Http.GetFromJsonAsync<WorkflowDetailDto>($"/api/v1/workflow/{workflow.Id}", Token))!.Published!;
+        published.InitialStatusId.ShouldBe(InProgress);
+        published.StatusIds.ShouldBe([InProgress, Done], ignoreOrder: true);
+        published.Transitions.ShouldHaveSingleItem().Name.ShouldBe("Finish");
+        (await AvailableAsync(admin, issue.Id))!.ShouldContain(transition => transition.Name == "Finish");
+
+        var board = await admin.Http.GetFromJsonAsync<SprintBoot.Agile.BoardViewDto>($"/api/v1/board/view/{project.Id}", Token);
+        board!.Columns.SelectMany(column => column.Statuses).ShouldNotContain(status => status.Id == doomed.Id);
+        board.Columns.SelectMany(column => column.Statuses).Count(status => status.Id == InProgress).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task A_transition_without_a_name_reads_from_and_to()
+    {
+        var (admin, project, typeId, _) = await ProjectWithWorkflowAsync(new[]
+        {
+            new { name = "", fromStatusId = (Guid?)null, toStatusId = Done, rules = Array.Empty<object>() },
+        });
+        var issue = await CreateIssueAsync(admin, project.Id, typeId);
+
+        (await AvailableAsync(admin, issue.Id))!.ShouldContain(transition => transition.Name == "Any status to Done");
+    }
+
+    [Fact]
+    public async Task The_last_done_status_cannot_be_replaced_by_one_that_is_not_done()
+    {
+        var admin = await AdminAsync();
+        var project = await CreateProjectAsync(admin);
+        var create = await admin.Http.PostAsJsonAsync("/api/v1/status", new { name = "Shipped", category = 2, projectId = project.Id }, Token);
+        var shipped = (await create.Content.ReadFromJsonAsync<StatusDto>(Token))!;
+        var body = new
+        {
+            name = $"Flow {Guid.NewGuid():N}",
+            projectId = project.Id,
+            definition = new
+            {
+                initialStatusId = ToDo,
+                statusIds = new[] { ToDo, shipped.Id },
+                transitions = new[] { new { name = "Ship", fromStatusId = (Guid?)ToDo, toStatusId = shipped.Id, rules = Array.Empty<object>() } },
+            },
+        };
+        var workflow = (await (await admin.Http.PostAsJsonAsync("/api/v1/workflow", body, Token)).Content.ReadFromJsonAsync<WorkflowDetailDto>(Token))!;
+        (await admin.Http.PostAsJsonAsync($"/api/v1/workflow/{workflow.Id}/publish", new { }, Token)).EnsureSuccessStatusCode();
+
+        var refused = await admin.Http.DeleteAsync($"/api/v1/status/{shipped.Id}?replacementId={ToDo}", Token);
+        (await refused.Content.ReadAsStringAsync(Token)).ShouldContain(WorkflowErrors.NoDoneStatus);
+        (await admin.Http.DeleteAsync($"/api/v1/status/{shipped.Id}?replacementId={Done}", Token)).EnsureSuccessStatusCode();
     }
 }

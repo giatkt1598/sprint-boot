@@ -95,6 +95,12 @@ public class Transition : Entity<Guid>
         FromStatusId = fromStatusId;
         ToStatusId = toStatusId;
     }
+
+    public void ReplaceStatus(Guid statusId, Guid replacementId)
+    {
+        FromStatusId = FromStatusId == statusId ? replacementId : FromStatusId;
+        ToStatusId = ToStatusId == statusId ? replacementId : ToStatusId;
+    }
 }
 
 public class TransitionRule : Entity<Guid>

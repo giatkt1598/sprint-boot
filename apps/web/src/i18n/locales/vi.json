@@ -195,7 +195,8 @@
     "GitCredentialsRequired": "Hãy nhập thông tin xác thực cho kết nối này.",
     "TransitionLinkedPullRequest": "Issue này cần có pull request liên kết.",
     "WorkflowOutOfScope": "Workflow hoặc status này thuộc phạm vi khác.",
-    "StatusInUse": "Status còn được workflow hoặc issue dùng nên không xóa được."
+    "StatusInUse": "Cần chọn status thay thế khi issue hoặc workflow đã publish còn dùng status này.",
+    "WorkflowMigrationRunning": "Issue vẫn đang chuyển sang phiên bản workflow mới. Hãy thử lại khi xong."
   },
   "auth": {
     "signIn": "Đăng nhập",
@@ -856,9 +857,6 @@
     "to": "Đến",
     "deleteTransition": "Xóa transition",
     "addTransition": "Thêm transition",
-    "transitionTo": "Sang {{name}}",
-    "unnamed": "Mọi transition cần có tên.",
-    "unnamedShort": "Chưa đặt tên",
     "unreachable": "Không thể đi tới {{name}} từ status khởi đầu nên chưa publish được. Hãy thêm transition tới status này hoặc gỡ nó.",
     "hint": "Kéo giữa hai status để vẽ transition. Chọn status hoặc transition để sửa.",
     "status": "Status",
@@ -866,7 +864,7 @@
     "removeStatus": "Gỡ status",
     "deleteStatus": "Xóa status",
     "deleteStatusTitle": "Xóa {{name}}?",
-    "deleteStatusBody": "Status rời workflow này ngay và bản nháp được lưu. Status còn được workflow hoặc issue dùng thì vẫn giữ.",
+    "deleteStatusBody": "Status này chỉ nằm trong bản nháp nên sẽ được gỡ khỏi chúng.",
     "existingStatus": "Status có sẵn",
     "pickStatus": "Chọn status",
     "newStatus": "Status mới",
@@ -944,6 +942,10 @@
       "assign": "Gán cho {{value}}",
       "set-resolution": "Đặt resolution là {{value}}"
     },
-    "publishUsed_one": "Workflow này đang được dùng ở {{count}} Space. Issue chuyển sang phiên bản mới ở chế độ nền."
+    "publishUsed_one": "Workflow này đang được dùng ở {{count}} Space. Issue chuyển sang phiên bản mới ở chế độ nền.",
+    "deleteStatusUsed": "{{issues}} issue và epic cùng {{workflows}} workflow đã publish đang dùng status này. Hãy chọn status thay thế ở mọi nơi.",
+    "replacementStatus": "Thay bằng",
+    "beautify": "Sắp xếp gọn",
+    "defaultName": "{{from}} sang {{to}}"
   }
 }

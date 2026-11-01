@@ -1,7 +1,7 @@
 import ButtonBase from '@mui/material/ButtonBase';
 import Menu from '@mui/material/Menu';
 import Typography from '@mui/material/Typography';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -87,11 +87,11 @@ export function TransitionDialog({ issue, transition, people, onConflict, onClos
   return (
     <Dialog
       open
-      title={transition.name ?? ''}
+      title={transition.toStatus?.name ?? ''}
       onClose={onClose}
       footer={
         <DialogFooter
-          confirmLabel={transition.name ?? ''}
+          confirmLabel={transition.toStatus?.name ?? ''}
           confirmDisabled={problems.length > 0 || !fieldsFilled || Boolean(commentMissing) || execute.isPending}
           onCancel={onClose}
           onConfirm={() =>
@@ -144,16 +144,23 @@ export function TransitionControl({ issue, people, onConflict, lazy }: ControlPr
   const { t } = useTranslation();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [dialog, setDialog] = useState<Available | null>(null);
+  const [moving, setMoving] = useState<Available['toStatus'] | null>(null);
   const execute = useExecute(issue, onConflict, () => undefined);
 
   const available = useQuery({
     queryKey: ['issues', issue.id, 'transitions', issue.status?.id, issue.concurrencyStamp],
     enabled: !lazy || Boolean(anchor),
+    // The key changes with every move; the control must not vanish while the next list loads.
+    placeholderData: keepPreviousData,
     queryFn: () =>
       unwrap(apiClient.GET('/api/v1/transition/available/{issueId}', { params: { path: { issueId: issue.id! } } })),
   });
 
-  const badge = <StatusBadge status={statusCategory(issue.status)} label={issue.status?.name} />;
+  // Shown at once, so the status does not lag behind the click while the issue reloads.
+  const shown = execute.isPending && moving ? moving : issue.status;
+  const badge = <StatusBadge status={statusCategory(shown)} label={shown?.name} />;
+  // People pick a status, so two transitions into one show as one, preferring the one that can run.
+  const targets = [...new Map([...(available.data ?? [])].reverse().sort((first, second) => (second.problems?.length ?? 0) - (first.problems?.length ?? 0)).map((item) => [item.toStatus?.id, item])).values()];
   if (!lazy && !available.data?.length) {
     return badge;
   }
@@ -164,6 +171,7 @@ export function TransitionControl({ issue, people, onConflict, lazy }: ControlPr
     if (needsDialog) {
       setDialog(transition);
     } else {
+      setMoving(transition.toStatus);
       execute.mutate({ transitionId: transition.id! });
     }
   };
@@ -182,12 +190,11 @@ export function TransitionControl({ issue, people, onConflict, lazy }: ControlPr
         <Typography variant="body2" color="textSecondary" component="li" role="presentation" className="px-2 pb-1">
           {t('issues.moveTo')}
         </Typography>
-        {available.data?.length === 0 && (
+        {targets.length === 0 && !available.isPending && (
           <Typography variant="body2" color="textSecondary" component="li" role="presentation" className="px-2">{t('issues.noTransitions')}</Typography>
         )}
-        {available.data?.map((transition) => (
-          <MenuItem key={transition.id} onClick={() => pick(transition)} sx={{ minWidth: 248, justifyContent: 'space-between' }}>
-            {transition.name}
+        {!available.isPlaceholderData && targets.map((transition) => (
+          <MenuItem key={transition.id} onClick={() => pick(transition)} sx={{ minWidth: 160 }}>
             <StatusBadge status={statusCategory(transition.toStatus)} label={transition.toStatus?.name} />
           </MenuItem>
         ))}

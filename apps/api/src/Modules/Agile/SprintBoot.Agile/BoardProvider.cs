@@ -43,6 +43,36 @@ public class ProjectBoardHandler(BoardProvider provider) : ILocalEventHandler<Pr
     public Task HandleEventAsync(ProjectCreatedEvent eventData) => provider.CreateDefaultAsync(eventData.ProjectId);
 }
 
+/// <summary>Columns follow a deleted status onto its replacement, unless the board already shows that one.</summary>
+public class BoardStatusRemovedHandler(
+    IRepository<BoardColumn, Guid> columns,
+    IRepository<BoardColumnStatus, Guid> columnStatuses,
+    IGuidGenerator guids)
+    : ILocalEventHandler<StatusRemovedEvent>, ITransientDependency
+{
+    public async Task HandleEventAsync(StatusRemovedEvent eventData)
+    {
+        var mapped = await columnStatuses.GetListAsync(item => item.StatusId == eventData.StatusId);
+        if (eventData.ReplacementId is { } replacement)
+        {
+            var columnIds = mapped.Select(item => item.ColumnId).ToList();
+            var boards = (await columns.GetListAsync(column => columnIds.Contains(column.Id))).ToDictionary(column => column.Id, column => column.BoardId);
+            var boardIds = boards.Values.Distinct().ToList();
+            var siblings = await columns.GetListAsync(column => boardIds.Contains(column.BoardId));
+            var siblingIds = siblings.Select(column => column.Id).ToList();
+            var taken = await columnStatuses.GetListAsync(item => item.StatusId == replacement && siblingIds.Contains(item.ColumnId));
+            var covered = taken.Select(item => siblings.First(column => column.Id == item.ColumnId).BoardId).ToHashSet();
+
+            foreach (var item in mapped.Where(item => covered.Add(boards[item.ColumnId])))
+            {
+                await columnStatuses.InsertAsync(new BoardColumnStatus(guids.Create(), item.ColumnId, replacement));
+            }
+        }
+
+        await columnStatuses.DeleteManyAsync(mapped, autoSave: true);
+    }
+}
+
 /// <summary>Spaces created before boards existed get their default board.</summary>
 public class AgileDataSeedContributor(BoardProvider provider, IProjectAccess projectAccess)
     : IDataSeedContributor, ITransientDependency
