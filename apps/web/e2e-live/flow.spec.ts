@@ -990,7 +990,7 @@ test('a real Gitea connection links commits, pull requests and CI, and creates b
 });
 
 test('create issue form, backlog cards and home follow the last space', async ({ page, context }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(240_000);
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await signIn(page, ADMIN.email, ADMIN.password);
   const key = `U${suffix()}`;
@@ -1061,12 +1061,16 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await sidebarLabels.pressSequentially('three,');
   const chips = page.locator('aside .MuiChip-root');
   await expect(chips).toHaveCount(5);
+  const labelSaved = page.waitForResponse((response) => response.request().method() === 'PUT' && response.url().includes('/api/v1/issue'));
   await chips.nth(0).locator('.MuiChip-deleteIcon').click();
   await expect(chips).toHaveCount(4);
+  await labelSaved;
   const points = page.getByLabel('Points');
   await points.pressSequentially('3x.5');
   await expect(points).toHaveValue('3.5');
+  const pointsSaved = page.waitForResponse((response) => response.url().includes('/api/v1/issue') && Boolean(response.request().postData()?.includes('3.5')));
   await points.press('Enter');
+  expect((await pointsSaved).ok()).toBe(true);
   await expect(points).toHaveValue('3.5');
   await expect(page.getByText('Someone else changed this')).toHaveCount(0);
   await expect(page.locator('aside').getByRole('combobox', { name: 'Priority' }).locator('svg')).toBeVisible();
@@ -1158,8 +1162,10 @@ test('create issue form, backlog cards and home follow the last space', async ({
   // Reactions: one row, an expandable set, and used ones stand out.
   await page.getByRole('button', { name: 'Add reaction' }).first().click();
   const quick = ['👍', '👎', '❤️', '🌸', '🔥', '😂', '😢', '🚀'];
-  const tops = await Promise.all(quick.map(async (emoji) => (await page.getByRole('button', { name: `React with ${emoji}` }).boundingBox())!.y));
-  expect(new Set(tops).size).toBe(1);
+  // Polled because the popover animates in.
+  await expect
+    .poll(async () => new Set(await Promise.all(quick.map(async (emoji) => (await page.getByRole('button', { name: `React with ${emoji}` }).boundingBox())!.y))).size)
+    .toBe(1);
   await page.getByRole('button', { name: 'More reactions' }).click();
   await expect(page.getByRole('button', { name: 'React with 🐛' })).toBeInViewport();
   const trigger = (await page.locator('button[aria-label="Add reaction"]').first().boundingBox())!;
@@ -1231,12 +1237,83 @@ test('create issue form, backlog cards and home follow the last space', async ({
   // A space keeps its own workflows; global ones are for use only.
   await page.goto(`/spaces/${key}/settings/workflows`);
   await expect(page.getByRole('heading', { name: 'Available workflows' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Edit Default' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Edit Default' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Create workflow' }).click();
   await page.getByRole('dialog').getByLabel('Name').fill('Team flow');
   await page.getByRole('dialog').getByRole('button', { name: /Create/ }).click();
-  await expect(page.getByRole('button', { name: 'Edit Team flow' })).toBeVisible();
+  await page.getByRole('link', { name: 'Edit Team flow' }).click();
+
+  // The designer: a new status starts cut off, which blocks publishing until a transition reaches it.
+  await expect(page.getByTestId('status-node-To Do')).toBeVisible();
   await expectAccessible(page);
+  const details = page.getByRole('complementary', { name: 'Workflow details' });
+  await page.getByRole('button', { name: 'Add status' }).click();
+  await details.getByLabel('Name').fill('Review');
+  await details.getByRole('button', { name: 'Add status' }).click();
+  await expect(page.getByTestId('status-node-Review')).toBeVisible();
+  await expect(page.getByRole('alert').filter({ hasText: 'Review cannot be reached' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Publish' })).toBeDisabled();
+  await page.screenshot({ path: 'test-results/designer-broken.png' });
+
+  // A line drawn between two statuses opens the transition form, already filled in.
+  const drawTransition = async (from: string, to: string) => {
+    const handle = page.getByTestId(`status-node-${from}`).locator('.react-flow__handle-right');
+    await page.getByTestId(`status-node-${from}`).hover();
+    const start = (await handle.boundingBox())!;
+    const end = (await page.getByTestId(`status-node-${to}`).boundingBox())!;
+    await page.mouse.move(start.x + 3, start.y + 3);
+    await page.mouse.down();
+    await page.mouse.move(end.x + 20, end.y + 40, { steps: 8 });
+    await page.mouse.move(end.x + 40, end.y + 22, { steps: 4 });
+    await page.mouse.up();
+  };
+  await drawTransition('To Do', 'Review');
+  await expect(details.getByText('New transition')).toBeVisible();
+  await details.getByLabel('Name').fill('Send to review');
+  await details.getByRole('button', { name: 'Add transition' }).click();
+  await details.getByRole('button', { name: 'Add: Validators' }).click();
+  await page.getByRole('group', { name: 'Validators' }).getByRole('button', { name: 'Comment required' }).click();
+  await details.getByRole('button', { name: 'Add: Conditions' }).click();
+  await page.getByRole('group', { name: 'Conditions' }).getByRole('button', { name: 'Has a role' }).click();
+  await details.getByLabel('Member').check();
+  await expect(details.getByRole('button', { name: 'Role is Member', exact: true })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Saved' })).toBeVisible();
+  await expectAccessible(page);
+  await page.screenshot({ path: 'test-results/designer-transition.png' });
+
+  // Saved as it goes: a reload brings back the draft.
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Send to review' }).first()).toBeVisible();
+  await expect(page.getByText(/^Draft of v/)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Publish' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Publish' }).click();
+  await expect(page.getByText('Workflow published')).toBeVisible();
+
+  // Removing a status that holds issues asks where they go.
+  await page.goto(`/spaces/${key}/settings/workflows`);
+  await page.getByLabel('Workflows: Task').click();
+  await page.getByRole('option', { name: 'Team flow' }).click();
+  await expect(page.getByText('Changes saved')).toBeVisible();
+  await page.getByRole('link', { name: 'Edit Team flow' }).click();
+  await page.getByTestId('status-node-Review').click();
+  await details.getByLabel('Start status').check();
+  await drawTransition('Review', 'In Progress');
+  await details.getByLabel('Name').fill('Begin');
+  await details.getByRole('button', { name: 'Add transition' }).click();
+  await page.getByTestId('status-node-To Do').click();
+  await details.getByRole('button', { name: 'Remove status' }).click();
+  await page.getByRole('button', { name: 'Publish' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Publish' }).click();
+  await expect(page.getByRole('dialog').getByLabel('Removed status')).toHaveValue('To Do');
+  await expectAccessible(page);
+  await page.getByRole('dialog').getByLabel('Move issues to').click();
+  await page.getByRole('listbox').getByRole('option', { name: 'Review' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Publish' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByText(/Workflow published|Issues are moving/)).toBeVisible();
+  await page.getByRole('button', { name: 'Back to workflows' }).click();
+  await expect(page.getByRole('heading', { name: 'Available workflows' })).toBeVisible();
 
   // Status, priority and assignee change right in the rows.
   const quickEdit = async () => {
@@ -1256,9 +1333,9 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await page.getByLabel('Search people').fill('adm');
   await page.getByRole('group', { name: 'Assignee' }).getByRole('button').first().click();
   await expect(page.getByRole('button', { name: `Assignee: Unassigned ${key}-1` })).toHaveCount(0);
-  await page.getByRole('button', { name: new RegExp(`^Status: To Do ${key}-1$`) }).click();
+  await page.getByRole('button', { name: new RegExp(`^Status: Review ${key}-1$`) }).click();
   await page.getByRole('menuitem').first().click();
-  await expect(page.getByRole('button', { name: new RegExp(`^Status: To Do ${key}-1$`) })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: new RegExp(`^Status: Review ${key}-1$`) })).toHaveCount(0);
 
   await page.goto(`/spaces/${key}/epics`);
   await page.getByRole('button', { name: 'Create epic' }).click();

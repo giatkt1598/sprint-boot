@@ -3,24 +3,21 @@ import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link as RouterLink } from 'react-router';
+import { Link as RouterLink, useParams } from 'react-router';
 import type { components } from '@sprint-boot/api-client';
-import { ApiError, apiClient, unwrap } from '../../api';
+import { apiClient, unwrap } from '../../api';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { Dialog, DialogFooter } from '../../components/Dialog';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
 import { Table } from '../../components/Table';
 import { SelectField, TextField } from '../../components/TextField';
-import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { formatDate } from '../../lib/format';
-import { font, radius, sem } from '../../theme/tokens';
-import { useStatuses, type Status } from '../issues/api';
+import type { Status } from '../issues/api';
 
 type StatusRow = components['schemas']['StatusAdminDto'];
 type WorkflowRow = components['schemas']['WorkflowSummaryDto'];
-type Definition = components['schemas']['WorkflowDefinitionDto'];
 
 const GROUPS = [
   { value: 0, label: 'issue.status.todo' },
@@ -142,7 +139,9 @@ function CreateWorkflowDialog({ workflows, projectId, onClose }: { workflows: Wo
   const queryClient = useQueryClient();
   const templates = workflows.filter((workflow) => workflow.version);
   const [name, setName] = useState('');
-  const [copyFromId, setCopyFromId] = useState(templates[0]?.id ?? '');
+  const [picked, setPicked] = useState('');
+  // The list may still be loading when the dialog opens.
+  const copyFromId = picked || (templates[0]?.id ?? '');
 
   const create = useMutation({
     mutationFn: () => unwrap(apiClient.POST('/api/v1/workflow', { body: { name, copyFromId, projectId } })),
@@ -165,7 +164,7 @@ function CreateWorkflowDialog({ workflows, projectId, onClose }: { workflows: Wo
       <SelectField
         label={t('workflows.template')}
         value={copyFromId}
-        onChange={(event) => setCopyFromId(event.target.value)}
+        onChange={(event) => setPicked(event.target.value)}
         options={templates.map((workflow) => ({ value: workflow.id!, label: workflow.name! }))}
       />
       {create.isError && <Typography role="alert" color="error" variant="body2">{toMessage(create.error)}</Typography>}
@@ -206,131 +205,11 @@ export function StatusMappingFields({
   );
 }
 
-function EditWorkflowDialog({ workflowId, projectId, onClose }: { workflowId: string; projectId?: string; onClose: () => void }) {
-  const { t } = useTranslation();
-  const toMessage = useErrorMessage();
-  const toast = useToast();
-  const queryClient = useQueryClient();
-  const statuses = useStatuses(projectId);
-  const [text, setText] = useState<string | null>(null);
-  const [parseError, setParseError] = useState(false);
-  const [orphaned, setOrphaned] = useState<string[]>([]);
-  const [mappings, setMappings] = useState<Record<string, string>>({});
-
-  const detail = useQuery({
-    queryKey: ['admin', 'workflows', workflowId],
-    queryFn: () => unwrap(apiClient.GET('/api/v1/workflow/{id}', { params: { path: { id: workflowId } } })),
-  });
-
-  const current = text ?? JSON.stringify(detail.data?.draft ?? detail.data?.published ?? {}, null, 2);
-
-  const parse = () => {
-    try {
-      const definition = JSON.parse(current) as Definition;
-      setParseError(false);
-      return definition;
-    } catch {
-      setParseError(true);
-      return null;
-    }
-  };
-
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin', 'workflows'] });
-
-  const publish = useMutation({
-    mutationFn: async (definition: Definition) => {
-      await unwrap(apiClient.POST('/api/v1/workflow/{id}/save-draft', { params: { path: { id: workflowId } }, body: definition }));
-      return unwrap(
-        apiClient.POST('/api/v1/workflow/{id}/publish', {
-          params: { path: { id: workflowId } },
-          body: { statusMappings: mappings },
-        }),
-      );
-    },
-    onSuccess: async (result) => {
-      await refresh();
-      toast('success', t(result.migrationQueued ? 'workflows.publishedQueued' : 'workflows.published'));
-      onClose();
-    },
-    onError: async (failure) => {
-      await refresh();
-      if (failure instanceof ApiError && failure.code?.endsWith('StatusMappingRequired')) {
-        setOrphaned((failure.data.statuses ?? '').split(',').filter(Boolean));
-      } else {
-        toast('error', toMessage(failure));
-      }
-    },
-  });
-
-  const saveDraft = useMutation({
-    mutationFn: (definition: Definition) =>
-      unwrap(apiClient.POST('/api/v1/workflow/{id}/save-draft', { params: { path: { id: workflowId } }, body: definition })),
-    onSuccess: async () => {
-      await refresh();
-      toast('success', t('workflows.draftSaved'));
-    },
-    onError: (failure) => toast('error', toMessage(failure)),
-  });
-
-  const run = (action: (definition: Definition) => void) => {
-    const definition = parse();
-    if (definition) {
-      action(definition);
-    }
-  };
-
-  const steps = (() => {
-    try {
-      return (JSON.parse(current) as Definition).statusIds ?? [];
-    } catch {
-      return [];
-    }
-  })();
-
-  return (
-    <Dialog
-      open
-      width={640}
-      title={detail.data?.name ?? t('workflows.title')}
-      onClose={onClose}
-      footer={
-        <div className="flex justify-end gap-2">
-          <Button kind="ghost" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button kind="secondary" disabled={saveDraft.isPending} onClick={() => run((definition) => saveDraft.mutate(definition))}>{t('workflows.saveDraft')}</Button>
-          <Button disabled={publish.isPending} onClick={() => run((definition) => publish.mutate(definition))}>{t('workflows.publish')}</Button>
-        </div>
-      }
-    >
-      <Typography variant="body2" color="textSecondary">{t('workflows.jsonHint')}</Typography>
-      <textarea
-        aria-label={t('workflows.definition')}
-        rows={16}
-        spellCheck={false}
-        value={current}
-        onChange={(event) => setText(event.target.value)}
-        style={{
-          width: '100%',
-          padding: 8,
-          fontFamily: font.mono,
-          fontSize: font.size.xs,
-          lineHeight: font.lineHeight,
-          border: `1px solid ${sem('border-strong')}`,
-          borderRadius: radius.control,
-        }}
-      />
-      {parseError && <Typography role="alert" color="error" variant="body2">{t('workflows.invalidJson')}</Typography>}
-      {orphaned.length > 0 && (
-        <StatusMappingFields orphaned={orphaned} targets={steps} statuses={statuses.data ?? []} mappings={mappings} onChange={setMappings} />
-      )}
-    </Dialog>
-  );
-}
-
 /** Administration passes no space. A space lists global workflows too, which it can use but not edit. */
 export function WorkflowsPage({ projectId }: { projectId?: string }) {
   const { t, i18n } = useTranslation();
   const [creating, setCreating] = useState(false);
-  const [editing, setEditing] = useState<string | null>(null);
+  const { spaceKey } = useParams();
 
   const workflows = useQuery({
     queryKey: ['admin', 'workflows', 'list', projectId],
@@ -372,7 +251,12 @@ export function WorkflowsPage({ projectId }: { projectId?: string }) {
               key: 'edit',
               header: '',
               render: (workflow) => (!projectId || workflow.projectId) && (
-                <Link component="button" variant="body2" aria-label={`${t('common.edit')} ${workflow.name}`} onClick={() => setEditing(workflow.id!)}>
+                <Link
+                  component={RouterLink}
+                  to={`/workflows/${workflow.id}${spaceKey ? `?space=${spaceKey}` : ''}`}
+                  variant="body2"
+                  aria-label={`${t('common.edit')} ${workflow.name}`}
+                >
                   {t('common.edit')}
                 </Link>
               ),
@@ -381,7 +265,6 @@ export function WorkflowsPage({ projectId }: { projectId?: string }) {
         />
       )}
       {creating && <CreateWorkflowDialog workflows={workflows.data ?? []} projectId={projectId} onClose={() => setCreating(false)} />}
-      {editing && <EditWorkflowDialog workflowId={editing} projectId={projectId} onClose={() => setEditing(null)} />}
     </div>
   );
 }

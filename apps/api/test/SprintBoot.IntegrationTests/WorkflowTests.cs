@@ -428,4 +428,26 @@ public class WorkflowTests(ApiFixture fixture)
         var publish = await admin.Http.PostAsJsonAsync($"/api/v1/workflow/{draft.Id}/publish", new { }, Token);
         (await publish.Content.ReadAsStringAsync(Token)).ShouldContain(WorkflowErrors.OutOfScope);
     }
+
+    [Fact]
+    public async Task A_status_can_be_deleted_only_when_nothing_uses_it()
+    {
+        var owner = await fixture.CreateUserClientAsync(Token);
+        var project = await CreateProjectAsync(owner);
+        var create = await owner.Http.PostAsJsonAsync("/api/v1/status", new { name = "Temporary", category = 1, projectId = project.Id }, Token);
+        var status = (await create.Content.ReadFromJsonAsync<StatusDto>(Token))!;
+        var definition = new { initialStatusId = ToDo, statusIds = new[] { ToDo, status.Id, Done }, transitions = Array.Empty<object>() };
+        var workflow = (await (await owner.Http.PostAsJsonAsync("/api/v1/workflow", new { name = "Holds it", projectId = project.Id, definition }, Token)).Content.ReadFromJsonAsync<WorkflowDetailDto>(Token))!;
+
+        var refused = await owner.Http.DeleteAsync($"/api/v1/status/{status.Id}", Token);
+        (await refused.Content.ReadAsStringAsync(Token)).ShouldContain(WorkflowErrors.StatusInUse);
+
+        (await owner.Http.PostAsJsonAsync($"/api/v1/workflow/{workflow.Id}/save-draft", new { initialStatusId = ToDo, statusIds = new[] { ToDo, Done }, transitions = Array.Empty<object>() }, Token)).EnsureSuccessStatusCode();
+        var outsider = await fixture.CreateUserClientAsync(Token);
+        (await outsider.Http.DeleteAsync($"/api/v1/status/{status.Id}", Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        (await owner.Http.DeleteAsync($"/api/v1/status/{status.Id}", Token)).EnsureSuccessStatusCode();
+        var left = await owner.Http.GetFromJsonAsync<List<StatusDto>>($"/api/v1/status?projectId={project.Id}", Token);
+        left!.ShouldNotContain(item => item.Id == status.Id);
+    }
 }

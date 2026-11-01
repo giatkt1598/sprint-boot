@@ -6,6 +6,7 @@ import { ToastHost } from './components/ToastHost';
 import { AccountIndex, AccountLayout, ProfilePage, SecurityPage } from './features/account/AccountPages';
 import { AdminIndex, AdminLayout, DeletedIssuesPage, ManageUserPage, UsersPage } from './features/admin/AdminPages';
 import { GitConnectionsPage, GitRepositoriesPage } from './features/admin/GitPages';
+import { WorkflowDesignerPage } from './features/workflows/WorkflowDesignerPage';
 import { HomePage } from './features/spaces/HomePage';
 import { InvitationsPage } from './features/admin/InvitationPages';
 import { SsoPage, SsoProviderPage } from './features/admin/SsoPages';
@@ -39,6 +40,7 @@ export function App() {
           <Route path="dev/ui" element={<main className="p-8"><DevUiPage /></main>} />
 
           <Route element={<RequireAuth><BareShell /></RequireAuth>}>
+            <Route path="workflows/:workflowId" element={<WorkflowDesignerPage />} />
             <Route path="account" element={<AccountLayout />}>
               <Route index element={<AccountIndex />} />
               <Route path="profile" element={<ProfilePage />} />

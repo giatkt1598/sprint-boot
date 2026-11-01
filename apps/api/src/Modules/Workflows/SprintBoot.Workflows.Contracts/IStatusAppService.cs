@@ -12,4 +12,7 @@ public interface IStatusAppService : IApplicationService
     Task<StatusDto> CreateAsync(SaveStatusInput input);
 
     Task<StatusDto> UpdateAsync(Guid id, SaveStatusInput input);
+
+    /// <summary>Refused while a live workflow or an issue still uses it.</summary>
+    Task DeleteAsync(Guid id);
 }

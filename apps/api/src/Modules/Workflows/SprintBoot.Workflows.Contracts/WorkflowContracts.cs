@@ -299,4 +299,5 @@ public static class WorkflowErrors
     public const string NotPublished = "SprintBoot:WorkflowNotPublished";
     public const string MissingField = "SprintBoot:TransitionMissingField";
     public const string OutOfScope = "SprintBoot:WorkflowOutOfScope";
+    public const string StatusInUse = "SprintBoot:StatusInUse";
 }

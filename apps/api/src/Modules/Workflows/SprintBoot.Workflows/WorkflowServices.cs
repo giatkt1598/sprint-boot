@@ -87,6 +87,22 @@ public class StatusAppService(
         await statuses.UpdateAsync(status);
         return StatusMapping.ToDto(status);
     }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        var status = await statuses.GetAsync(id);
+        await CheckManageAsync(status.ProjectId);
+
+        // Archived versions only keep history, so they do not hold a status back.
+        var live = (await versions.GetListAsync(version => version.State != WorkflowVersionState.Archived)).Select(version => version.Id).ToList();
+        var inWorkflow = await steps.AnyAsync(step => step.StatusId == id && live.Contains(step.VersionId));
+        if (inWorkflow || (await issues.CountByStatusAsync()).GetValueOrDefault(id) > 0)
+        {
+            throw new BusinessException(WorkflowErrors.StatusInUse);
+        }
+
+        await statuses.DeleteAsync(status);
+    }
 }
 
 public class StatusLookup(IRepository<Status, Guid> statuses) : IStatusLookup, ITransientDependency
