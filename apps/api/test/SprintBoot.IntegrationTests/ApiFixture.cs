@@ -3,8 +3,11 @@ using System.Net.Sockets;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using SprintBoot.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
+using Volo.Abp.Data;
+using Volo.Abp.Identity;
 using Testcontainers.RabbitMq;
 using Testcontainers.Redis;
 using Xunit;
@@ -14,6 +17,9 @@ namespace SprintBoot.IntegrationTests;
 /// <summary>Runs the real host against real PostgreSQL, Redis and RabbitMQ containers.</summary>
 public sealed class ApiFixture : IAsyncLifetime
 {
+    public const string AdminEmail = "admin@test.local";
+    public const string AdminPassword = "Admin123!test";
+
     private const string RabbitUser = "test";
     private const string RabbitPassword = "test";
 
@@ -39,6 +45,7 @@ public sealed class ApiFixture : IAsyncLifetime
         // ABP reads configuration while the builder is created, before factory hooks run.
         Environment.SetEnvironmentVariable("ConnectionStrings__Default", _postgres.GetConnectionString());
         Environment.SetEnvironmentVariable("Redis__Configuration", _redis.GetConnectionString());
+        Environment.SetEnvironmentVariable("Auth__RequireHttps", "false");
         Environment.SetEnvironmentVariable("RabbitMQ__Connections__Default__HostName", "localhost");
         Environment.SetEnvironmentVariable("RabbitMQ__Connections__Default__Port", rabbitPort.ToString());
         Environment.SetEnvironmentVariable("RabbitMQ__Connections__Default__UserName", RabbitUser);
@@ -55,6 +62,11 @@ public sealed class ApiFixture : IAsyncLifetime
         Factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder => builder.UseEnvironment("Testing"));
         _ = Factory.Server;
+
+        using var scope = Factory.Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<IDataSeeder>().SeedAsync(new DataSeedContext()
+            .WithProperty(IdentityDataSeedContributor.AdminEmailPropertyName, AdminEmail)
+            .WithProperty(IdentityDataSeedContributor.AdminPasswordPropertyName, AdminPassword));
     }
 
     public async ValueTask DisposeAsync()

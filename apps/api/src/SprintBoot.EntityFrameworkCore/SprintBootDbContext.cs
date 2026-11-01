@@ -7,6 +7,7 @@ using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore.DistributedEvents;
 using Volo.Abp.Identity;
 using Volo.Abp.Identity.EntityFrameworkCore;
+using Volo.Abp.OpenIddict.EntityFrameworkCore;
 using Volo.Abp.PermissionManagement.EntityFrameworkCore;
 using Volo.Abp.SettingManagement.EntityFrameworkCore;
 
@@ -45,6 +46,7 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
         base.OnModelCreating(builder);
 
         builder.ConfigureIdentity();
+        builder.ConfigureOpenIddict();
         builder.ConfigurePermissionManagement();
         builder.ConfigureSettingManagement();
         builder.ConfigureAuditLogging();

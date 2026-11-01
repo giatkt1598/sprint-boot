@@ -19,6 +19,9 @@
     <PackageVersion Include="Volo.Abp.EventBus.RabbitMQ" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.Identity.Domain" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.Identity.EntityFrameworkCore" Version="$(AbpVersion)" />
+    <PackageVersion Include="Volo.Abp.Identity.AspNetCore" Version="$(AbpVersion)" />
+    <PackageVersion Include="Volo.Abp.OpenIddict.AspNetCore" Version="$(AbpVersion)" />
+    <PackageVersion Include="Volo.Abp.OpenIddict.EntityFrameworkCore" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.PermissionManagement.Domain.Identity" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.PermissionManagement.EntityFrameworkCore" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.SettingManagement.EntityFrameworkCore" Version="$(AbpVersion)" />

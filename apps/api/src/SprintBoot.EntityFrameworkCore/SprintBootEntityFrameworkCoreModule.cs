@@ -14,6 +14,7 @@ using Volo.Abp.EntityFrameworkCore.DistributedEvents;
 using Volo.Abp.EntityFrameworkCore.PostgreSql;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.Identity.EntityFrameworkCore;
+using Volo.Abp.OpenIddict.EntityFrameworkCore;
 using Volo.Abp.Modularity;
 using Volo.Abp.PermissionManagement.EntityFrameworkCore;
 using Volo.Abp.SettingManagement.EntityFrameworkCore;
@@ -24,6 +25,7 @@ namespace SprintBoot.EntityFrameworkCore;
 [DependsOn(
     typeof(AbpEntityFrameworkCorePostgreSqlModule),
     typeof(AbpIdentityEntityFrameworkCoreModule),
+    typeof(AbpOpenIddictEntityFrameworkCoreModule),
     typeof(AbpPermissionManagementEntityFrameworkCoreModule),
     typeof(AbpSettingManagementEntityFrameworkCoreModule),
     typeof(AbpAuditLoggingEntityFrameworkCoreModule),

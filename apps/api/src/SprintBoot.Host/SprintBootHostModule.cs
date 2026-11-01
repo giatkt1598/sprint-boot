@@ -3,6 +3,7 @@ using Medallion.Threading.Redis;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.OpenApi;
 using SprintBoot.EntityFrameworkCore;
+using SprintBoot.Identity;
 using SprintBoot.Host.HealthChecks;
 using SprintBoot.Platform;
 using StackExchange.Redis;
@@ -16,6 +17,7 @@ using Volo.Abp.Caching.StackExchangeRedis;
 using Volo.Abp.DistributedLocking;
 using Volo.Abp.EventBus.RabbitMq;
 using Volo.Abp.Modularity;
+using Volo.Abp.OpenIddict;
 using Volo.Abp.Swashbuckle;
 
 namespace SprintBoot.Host;
@@ -86,7 +88,10 @@ public class SprintBootHostModule : AbpModule
         app.UseCorrelationId();
         app.UseRouting();
         app.UseAbpSerilogEnrichers();
+        app.UseAuthentication();
+        app.UseAbpOpenIddictValidation();
         app.UseUnitOfWork();
+        app.UseAuthorization();
 
         if (role != RuntimeRole.Worker)
         {
