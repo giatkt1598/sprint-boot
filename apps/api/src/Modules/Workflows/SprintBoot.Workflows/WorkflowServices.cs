@@ -147,7 +147,7 @@ public class WorkflowStore(
         {
             InitialStatusId = version.InitialStatusId,
             LayoutJson = version.LayoutJson,
-            StatusIds = [.. stepList.Select(step => step.StatusId)],
+            StatusIds = [.. stepList.OrderBy(step => step.Order).Select(step => step.StatusId)],
             Transitions = [.. transitionList.Select(transition => new TransitionDefinitionDto
             {
                 Name = transition.Name,
@@ -172,7 +172,7 @@ public class WorkflowStore(
         version.LayoutJson = definition.LayoutJson;
 
         await steps.InsertManyAsync(definition.StatusIds.Distinct()
-            .Select(statusId => new WorkflowStep(guids.Create(), version.Id, statusId)));
+            .Select((statusId, order) => new WorkflowStep(guids.Create(), version.Id, statusId, order)));
 
         foreach (var item in definition.Transitions)
         {
@@ -419,6 +419,39 @@ public class WorkflowAppService(
         return await GetAsync(id);
     }
 
+    public async Task<List<WorkflowVersionDto>> GetVersionsAsync(Guid id)
+    {
+        await CheckManageAsync((await workflows.GetAsync(id)).ProjectId);
+        var list = await versions.GetListAsync(version => version.WorkflowId == id);
+        var result = new List<WorkflowVersionDto>();
+        foreach (var version in list.OrderByDescending(version => version.VersionNumber))
+        {
+            var definition = await store.LoadAsync(version);
+            result.Add(new WorkflowVersionDto
+            {
+                Id = version.Id,
+                VersionNumber = version.VersionNumber,
+                State = version.State,
+                PublishedAt = version.PublishedAt,
+                StatusCount = definition.StatusIds.Count,
+                TransitionCount = definition.Transitions.Count,
+            });
+        }
+
+        return result;
+    }
+
+    public async Task<WorkflowDetailDto> RestoreAsync(Guid id, RestoreWorkflowInput input)
+    {
+        var version = await versions.GetAsync(input.VersionId);
+        if (version.WorkflowId != id)
+        {
+            throw new EntityNotFoundException(typeof(WorkflowVersion), input.VersionId);
+        }
+
+        return await SaveDraftAsync(id, await store.LoadAsync(version));
+    }
+
     public async Task<PublishResultDto> PublishAsync(Guid id, PublishWorkflowInput input)
     {
         var owner = (await workflows.GetAsync(id)).ProjectId;
@@ -439,6 +472,7 @@ public class WorkflowAppService(
         }
 
         draft.State = WorkflowVersionState.Published;
+        draft.PublishedAt = Clock.Now;
         await versions.UpdateAsync(draft);
 
         var workflow = await workflows.GetAsync(id);
@@ -537,6 +571,7 @@ public record EvaluatedTransition(Transition Transition, List<TransitionRule> Ru
 
 [Authorize]
 public class TransitionAppService(
+    IRepository<WorkflowStep, Guid> steps,
     IRepository<Transition, Guid> transitions,
     IRepository<TransitionRule, Guid> rules,
     IWorkflowIssueGateway issues,
@@ -558,7 +593,8 @@ public class TransitionAppService(
 
         var statuses = await GetStatusesAsync();
         var result = new List<AvailableTransitionDto>();
-        foreach (var item in await GetCandidatesAsync(subject))
+        var candidates = await GetCandidatesAsync(subject);
+        foreach (var item in candidates)
         {
             var context = Context(subject, statuses, item.Transition.ToStatusId, comment: null);
             if (!await ConditionsMetAsync(item, context))
@@ -580,7 +616,10 @@ public class TransitionAppService(
             });
         }
 
-        return result;
+        // A status menu follows the order set in the workflow.
+        var versionIds = candidates.Select(item => item.Transition.VersionId).Distinct().ToList();
+        var order = (await steps.GetListAsync(step => versionIds.Contains(step.VersionId))).ToLookup(step => step.StatusId, step => step.Order);
+        return [.. result.OrderBy(item => order[item.ToStatus.Id].DefaultIfEmpty(int.MaxValue).First())];
     }
 
     public async Task ExecuteAsync(Guid issueId, ExecuteTransitionInput input)

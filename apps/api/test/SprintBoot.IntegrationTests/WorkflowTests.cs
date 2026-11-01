@@ -531,6 +531,47 @@ public class WorkflowTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task Versions_are_listed_keep_their_status_order_and_can_be_restored()
+    {
+        var (admin, project, typeId, workflowId) = await ProjectWithWorkflowAsync(new[]
+        {
+            new { name = "Finish", fromStatusId = (Guid?)ToDo, toStatusId = Done, rules = Array.Empty<object>() },
+        });
+        var reordered = new
+        {
+            initialStatusId = ToDo,
+            statusIds = new[] { Done, InProgress, ToDo },
+            transitions = new[]
+            {
+                new { name = "Go", fromStatusId = (Guid?)null, toStatusId = InProgress, rules = Array.Empty<object>() },
+                new { name = "Close", fromStatusId = (Guid?)null, toStatusId = Done, rules = Array.Empty<object>() },
+            },
+        };
+        (await admin.Http.PostAsJsonAsync($"/api/v1/workflow/{workflowId}/save-draft", reordered, Token)).EnsureSuccessStatusCode();
+        (await admin.Http.PostAsJsonAsync($"/api/v1/workflow/{workflowId}/publish", new { }, Token)).EnsureSuccessStatusCode();
+
+        var detail = await admin.Http.GetFromJsonAsync<WorkflowDetailDto>($"/api/v1/workflow/{workflowId}", Token);
+        detail!.Published!.StatusIds.ShouldBe([Done, InProgress, ToDo]);
+        var issue = await CreateIssueAsync(admin, project.Id, typeId);
+        (await AvailableAsync(admin, issue.Id))!.Select(transition => transition.Name).ShouldBe(["Close", "Go"]);
+
+        var versions = (await admin.Http.GetFromJsonAsync<List<WorkflowVersionDto>>($"/api/v1/workflow/{workflowId}/versions", Token))!;
+        versions.Select(version => version.State).ShouldBe([WorkflowVersionState.Published, WorkflowVersionState.Archived]);
+        versions[0].PublishedAt.ShouldNotBeNull();
+        versions[1].TransitionCount.ShouldBe(1);
+
+        var restored = await admin.Http.PostAsJsonAsync($"/api/v1/workflow/{workflowId}/restore", new { versionId = versions[1].Id }, Token);
+        restored.StatusCode.ShouldBe(HttpStatusCode.OK, await restored.Content.ReadAsStringAsync(Token));
+        var draft = (await restored.Content.ReadFromJsonAsync<WorkflowDetailDto>(Token))!;
+        draft.Draft!.Transitions.ShouldHaveSingleItem().Name.ShouldBe("Finish");
+        draft.Published!.Transitions.Count.ShouldBe(2);
+
+        var (other, _, _, otherWorkflow) = await ProjectWithWorkflowAsync(new[] { new { name = "Finish", fromStatusId = (Guid?)ToDo, toStatusId = Done, rules = Array.Empty<object>() } });
+        var foreign = await other.Http.PostAsJsonAsync($"/api/v1/workflow/{otherWorkflow}/restore", new { versionId = versions[1].Id }, Token);
+        foreign.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
     public async Task The_last_done_status_cannot_be_replaced_by_one_that_is_not_done()
     {
         var admin = await AdminAsync();

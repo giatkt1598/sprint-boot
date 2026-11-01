@@ -1889,6 +1889,9 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
                     b.Property<Guid>("StatusId")
                         .HasColumnType("uuid");
 
@@ -1913,6 +1916,9 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
 
                     b.Property<string>("LayoutJson")
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("State")
                         .HasColumnType("integer");

@@ -53,6 +53,26 @@ public class WorkflowDefinitionDto
     public string? LayoutJson { get; set; }
 }
 
+public class WorkflowVersionDto
+{
+    public required Guid Id { get; set; }
+
+    public required int VersionNumber { get; set; }
+
+    public required WorkflowVersionState State { get; set; }
+
+    public DateTime? PublishedAt { get; set; }
+
+    public required int StatusCount { get; set; }
+
+    public required int TransitionCount { get; set; }
+}
+
+public class RestoreWorkflowInput
+{
+    public required Guid VersionId { get; set; }
+}
+
 public class WorkflowSummaryDto
 {
     public required Guid Id { get; set; }
@@ -184,6 +204,12 @@ public interface IWorkflowAppService : IApplicationService
     Task<WorkflowDetailDto> SaveDraftAsync(Guid id, WorkflowDefinitionDto input);
 
     Task<PublishResultDto> PublishAsync(Guid id, PublishWorkflowInput input);
+
+    /// <summary>Newest first.</summary>
+    Task<List<WorkflowVersionDto>> GetVersionsAsync(Guid id);
+
+    /// <summary>Copies a version into the draft; nothing goes live until it is published.</summary>
+    Task<WorkflowDetailDto> RestoreAsync(Guid id, RestoreWorkflowInput input);
 }
 
 public interface IProjectWorkflowAppService : IApplicationService

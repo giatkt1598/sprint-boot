@@ -106,11 +106,12 @@ public class StatusRemover(
         foreach (var version in await versions.GetListAsync(version => versionIds.Contains(version.Id)))
         {
             var siblings = await steps.GetListAsync(step => step.VersionId == version.Id);
+            var removed = siblings.FirstOrDefault(step => step.StatusId == statusId);
             await steps.DeleteManyAsync(siblings.Where(step => step.StatusId == statusId), autoSave: true);
 
             if (replacementId is { } replacement && siblings.All(step => step.StatusId != replacement))
             {
-                await steps.InsertAsync(new WorkflowStep(Guid.NewGuid(), version.Id, replacement), autoSave: true);
+                await steps.InsertAsync(new WorkflowStep(Guid.NewGuid(), version.Id, replacement, removed?.Order ?? siblings.Count), autoSave: true);
                 version.LayoutJson = version.LayoutJson?.Replace(statusId.ToString(), replacement.ToString());
             }
 

@@ -8,6 +8,7 @@ import type { components } from '@sprint-boot/api-client';
 import { apiClient, unwrap } from '../../api';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
+import { CopyField } from '../../components/CopyField';
 import { Toggle } from '../../components/Checkbox';
 import { Dialog, DialogConfirm, DialogFooter } from '../../components/Dialog';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
@@ -114,6 +115,19 @@ function PolicyCard() {
   );
 }
 
+/** Sign-in goes through this same address, so it is what the provider must call back. */
+function RedirectUrlField({ name }: { name: string }) {
+  const { t } = useTranslation();
+  return (
+    <CopyField
+      label={t('sso.redirectUrl')}
+      value={`${window.location.origin}/connect/signin-${name}`}
+      copyLabel={t('sso.copyRedirect')}
+      copiedMessage={t('sso.redirectCopied')}
+    />
+  );
+}
+
 function AddProviderDialog({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
   const toMessage = useErrorMessage();
@@ -176,6 +190,7 @@ function AddProviderDialog({ onClose }: { onClose: () => void }) {
           <TextField label={t('sso.discoveryUrl')} value={discoveryUrl} onChange={(event) => setDiscoveryUrl(event.target.value)} />
         </>
       )}
+      <RedirectUrlField name={toProviderName(shownName)} />
       <TextField label={t('sso.clientId')} value={clientId} onChange={(event) => setClientId(event.target.value)} />
       <TextField label={t('sso.clientSecret')} type="password" autoComplete="off" placeholder={t('sso.secretPlaceholder')} value={clientSecret} onChange={(event) => setClientSecret(event.target.value)} />
       {add.isError && <Typography role="alert" color="error" variant="body2">{toMessage(add.error)}</Typography>}
@@ -305,6 +320,7 @@ function ProviderForm({ provider }: { provider: Provider }) {
         <Typography variant="h2">{t('sso.connection')}</Typography>
         <TextField label={t('sso.displayName')} value={displayName} onChange={(event) => setDisplayName(event.target.value)} />
         {isOidc && <TextField label={t('sso.discoveryUrl')} value={discoveryUrl} onChange={(event) => setDiscoveryUrl(event.target.value)} />}
+        <RedirectUrlField name={provider.name!} />
         <TextField label={t('sso.clientId')} value={clientId} onChange={(event) => setClientId(event.target.value)} />
         <TextField label={t('sso.clientSecret')} type="password" autoComplete="off" placeholder={provider.hasSecret ? '••••••••••••' : t('sso.secretPlaceholder')} value={clientSecret} onChange={(event) => setClientSecret(event.target.value)} />
         <Typography variant="body2" color="textSecondary">{t('sso.secretHint')}</Typography>

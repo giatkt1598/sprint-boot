@@ -40,6 +40,9 @@ public class WorkflowVersion : Entity<Guid>
 
     public string? LayoutJson { get; set; }
 
+    /// <summary>Empty for drafts, and for versions published before this was recorded.</summary>
+    public DateTime? PublishedAt { get; set; }
+
     protected WorkflowVersion()
     {
     }
@@ -61,15 +64,19 @@ public class WorkflowStep : Entity<Guid>
 
     public Guid StatusId { get; private set; }
 
+    /// <summary>Status menus of this version list statuses in this order.</summary>
+    public int Order { get; private set; }
+
     protected WorkflowStep()
     {
     }
 
-    public WorkflowStep(Guid id, Guid versionId, Guid statusId)
+    public WorkflowStep(Guid id, Guid versionId, Guid statusId, int order)
         : base(id)
     {
         VersionId = versionId;
         StatusId = statusId;
+        Order = order;
     }
 }
 

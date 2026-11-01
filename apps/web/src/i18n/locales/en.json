@@ -676,7 +676,10 @@
     "save": "Save",
     "delete": "Delete provider",
     "deleteTitle": "Delete provider?",
-    "deleteBody": "People can no longer sign in with {{provider}}."
+    "deleteBody": "People can no longer sign in with {{provider}}.",
+    "redirectUrl": "Redirect URL",
+    "copyRedirect": "Copy redirect URL",
+    "redirectCopied": "Redirect URL copied"
   },
   "git": {
     "title": "Git connections",
@@ -946,6 +949,14 @@
     "deleteStatusUsed": "{{issues}} issues and epics and {{workflows}} published workflows use this status. Choose the status that takes its place everywhere.",
     "replacementStatus": "Replace with",
     "beautify": "Beautify",
-    "defaultName": "{{from}} to {{to}}"
+    "defaultName": "{{from}} to {{to}}",
+    "history": "History",
+    "draft": "Draft",
+    "restore": "Restore",
+    "restored": "Version {{version}} is now the draft. Publish it to go live.",
+    "restoreTitle": "Restore version {{version}}?",
+    "restoreBody": "It replaces the current draft. The published version stays live until you publish.",
+    "versionSummary": "{{statuses}} statuses, {{transitions}} transitions",
+    "reorder": "Reorder {{name}}"
   }
 }

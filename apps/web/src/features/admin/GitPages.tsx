@@ -1,10 +1,7 @@
 import Link from '@mui/material/Link';
-import IconButton from '@mui/material/IconButton';
-import InputAdornment from '@mui/material/InputAdornment';
-import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Copy, TriangleAlert } from 'lucide-react';
+import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useOutletContext, useParams } from 'react-router';
@@ -13,6 +10,7 @@ import { apiClient, unwrap } from '../../api';
 import { useCan } from '../../auth/AuthProvider';
 import { Badge, type BadgeTone } from '../../components/Badge';
 import { Button } from '../../components/Button';
+import { CopyField } from '../../components/CopyField';
 import { Dialog, DialogConfirm } from '../../components/Dialog';
 import { SearchInput } from '../../components/SearchInput';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
@@ -61,33 +59,6 @@ const useRefresh = () => {
   const queryClient = useQueryClient();
   return () => queryClient.invalidateQueries({ queryKey: ['admin', 'git'] });
 };
-
-function RedirectUriField({ value }: { value: string }) {
-  const { t } = useTranslation();
-  const toast = useToast();
-
-  const copy = async () => {
-    await navigator.clipboard.writeText(value);
-    toast('success', t('git.redirectCopied'));
-  };
-
-  return (
-    <TextField
-      label={t('git.redirectUri')}
-      readOnly
-      value={value}
-      endAdornment={
-        <InputAdornment position="end">
-          <Tooltip title={t('git.copyRedirect')}>
-            <IconButton size="small" aria-label={t('git.copyRedirect')} onClick={() => void copy()}>
-              <Copy size={16} strokeWidth={1.5} aria-hidden />
-            </IconButton>
-          </Tooltip>
-        </InputAdornment>
-      }
-    />
-  );
-}
 
 function ConnectionDialog({ projectId, connection, onClose }: { projectId: string; connection: Connection | null; onClose: () => void }) {
   const { t } = useTranslation();
@@ -221,7 +192,12 @@ function ConnectionDialog({ projectId, connection, onClose }: { projectId: strin
         </>
       )}
       {redirects && redirectUris.data && (
-        <RedirectUriField value={(isGitHub ? redirectUris.data.gitHubSetup : redirectUris.data.oAuth) ?? ''} />
+        <CopyField
+          label={t('git.redirectUri')}
+          value={(isGitHub ? redirectUris.data.gitHubSetup : redirectUris.data.oAuth) ?? ''}
+          copyLabel={t('git.copyRedirect')}
+          copiedMessage={t('git.redirectCopied')}
+        />
       )}
       <Typography variant="body2" color="textSecondary">
         {t(isGitHub ? 'git.installHint' : authType === OAUTH2 ? 'git.oauthHint' : 'git.tokenHint')}

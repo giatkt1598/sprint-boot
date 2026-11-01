@@ -57,7 +57,7 @@ function CardBody({ card }: { card: Card }) {
 
   return (
     <div className="flex flex-col gap-1 p-2 text-left">
-      <span className="line-clamp-2" style={{ fontSize: font.size.md }}>{card.title}</span>
+      <span className="line-clamp-3" style={{ fontSize: font.size.md }}>{card.title}</span>
       {has('epic') && card.epicTitle && <span className="self-start"><Badge tone="epic">{card.epicTitle}</Badge></span>}
       {has('labels') && (card.labels?.length ?? 0) > 0 && (
         <span className="truncate" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>{card.labels?.join(', ')}</span>

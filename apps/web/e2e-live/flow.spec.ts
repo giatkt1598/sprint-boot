@@ -1336,6 +1336,26 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await expect(page.getByTestId('status-node-In Progress')).toBeVisible();
   await expect(page.getByRole('status').filter({ hasText: 'Saved' })).toBeVisible();
 
+
+  // The sidebar order is the order of the status menu.
+  await page.locator('.react-flow__pane').click({ position: { x: 5, y: 5 } });
+  const handle = (await page.getByTestId('status-row-Done').getByRole('button', { name: 'Reorder Done' }).boundingBox())!;
+  const first = (await details.locator('[data-testid^=status-row-]').first().boundingBox())!;
+  await page.mouse.move(handle.x + 8, handle.y + 8);
+  await page.mouse.down();
+  await page.mouse.move(handle.x + 8, handle.y - 8, { steps: 4 });
+  await page.mouse.move(handle.x + 8, first.y + 2, { steps: 8 });
+  await page.mouse.up();
+  await expect(details.locator('[data-testid^=status-row-]').first()).toHaveAttribute('data-testid', 'status-row-Done');
+
+  // History lists every version, and restoring one only changes the draft.
+  await page.getByRole('button', { name: 'History' }).click();
+  await expectAccessible(page);
+  await page.getByTestId('version-1').getByRole('button', { name: 'Restore' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Restore' }).click();
+  await expect(page.getByText('Version 1 is now the draft.')).toBeVisible();
+  await expect(page.getByText(/^Draft of v/)).toBeVisible();
+
   await page.getByRole('button', { name: 'Back to workflows' }).click();
   await expect(page.getByRole('heading', { name: 'Available workflows' })).toBeVisible();
 

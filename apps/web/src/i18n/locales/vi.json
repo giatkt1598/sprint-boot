@@ -676,7 +676,10 @@
     "save": "Lưu",
     "delete": "Xóa nhà cung cấp",
     "deleteTitle": "Xóa nhà cung cấp?",
-    "deleteBody": "Mọi người sẽ không thể đăng nhập bằng {{provider}} nữa."
+    "deleteBody": "Mọi người sẽ không thể đăng nhập bằng {{provider}} nữa.",
+    "redirectUrl": "Redirect URL",
+    "copyRedirect": "Sao chép redirect URL",
+    "redirectCopied": "Đã sao chép redirect URL"
   },
   "git": {
     "title": "Kết nối Git",
@@ -946,6 +949,14 @@
     "deleteStatusUsed": "{{issues}} issue và epic cùng {{workflows}} workflow đã publish đang dùng status này. Hãy chọn status thay thế ở mọi nơi.",
     "replacementStatus": "Thay bằng",
     "beautify": "Sắp xếp gọn",
-    "defaultName": "{{from}} sang {{to}}"
+    "defaultName": "{{from}} sang {{to}}",
+    "history": "Lịch sử",
+    "draft": "Nháp",
+    "restore": "Khôi phục",
+    "restored": "Phiên bản {{version}} đã thành bản nháp. Hãy publish để áp dụng.",
+    "restoreTitle": "Khôi phục phiên bản {{version}}?",
+    "restoreBody": "Bản nháp hiện tại sẽ bị thay thế. Phiên bản đã publish vẫn chạy cho tới khi cậu publish.",
+    "versionSummary": "{{statuses}} status, {{transitions}} transition",
+    "reorder": "Đổi thứ tự {{name}}"
   }
 }

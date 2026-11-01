@@ -22,6 +22,7 @@ import { useErrorMessage } from '../../lib/errors';
 import { formatRelative } from '../../lib/format';
 import { radius, sem } from '../../theme/tokens';
 import { useStatuses, type Status } from '../issues/api';
+import { StatusOrderList, WorkflowHistory } from './WorkflowSidePanels';
 import { TransitionRules, type DraftRule } from './TransitionRules';
 import { ANY, arrow, edgeTypes, facingSides, nodeTypes, parallelOffset } from './WorkflowCanvas';
 import { arrangeStatuses, replaceStatus, unreachableStatuses, type DraftTransition } from './workflowGraph';
@@ -40,6 +41,7 @@ type Panel =
   | { kind: 'status'; id: string }
   | { kind: 'transition'; uid: number }
   | { kind: 'new-status' }
+  | { kind: 'history' }
   | { kind: 'new-transition'; value: NewTransition }
   | null;
 
@@ -431,6 +433,7 @@ export function WorkflowDesignerPage() {
         <Button kind="ghost" onClick={() => importInput.current?.click()}>{t('designer.import')}</Button>
         <input ref={importInput} type="file" accept="application/json" hidden aria-label={t('designer.import')} onChange={(event) => void importJson(event)} />
         <Button kind="ghost" onClick={exportJson}>{t('designer.export')}</Button>
+        <Button kind="ghost" onClick={() => setPanel({ kind: 'history' })}>{t('designer.history')}</Button>
         <Button kind="ghost" onClick={beautify}>{t('designer.beautify')}</Button>
         <Button kind="secondary" onClick={() => setPanel({ kind: 'new-status' })}>{t('workflows.addStatus')}</Button>
         <Button kind="secondary" disabled={steps.length === 0} onClick={() => openNewTransition(steps[0]?.value ?? null, steps[1]?.value ?? steps[0]?.value ?? '')}>
@@ -543,6 +546,19 @@ export function WorkflowDesignerPage() {
               onDelete={() => setDeleting(selectedStatus)}
             />
           )}
+          {panel?.kind === 'history' && (
+            <WorkflowHistory
+              workflowId={workflowId}
+              onClose={() => setPanel(null)}
+              onRestored={(restored) => {
+                queryClient.setQueryData(['admin', 'workflows', workflowId], restored);
+                setPanel(null);
+                // Empty, so the load above takes the restored draft and its layout.
+                setDraft(null);
+                void queryClient.invalidateQueries({ queryKey: ['admin', 'workflows', workflowId, 'versions'] });
+              }}
+            />
+          )}
           {panel?.kind === 'new-status' && (
             <NewStatusPanel projectId={projectId} spare={spare} onAdd={addStatus} onCancel={() => setPanel(null)} />
           )}
@@ -558,11 +574,11 @@ export function WorkflowDesignerPage() {
                 ))}
               </div>
               <Typography variant="h3" component="h2">{t('workflows.statuses')}</Typography>
-              <div className="flex flex-col items-start gap-1">
-                {steps.map((step) => (
-                  <Link key={step.value} component="button" variant="body2" sx={{ minHeight: 24 }} onClick={() => setPanel({ kind: 'status', id: step.value })}>{step.label}</Link>
-                ))}
-              </div>
+              <StatusOrderList
+                steps={steps}
+                onSelect={(id) => setPanel({ kind: 'status', id })}
+                onChange={(statusIds) => setDraft({ ...draft, statusIds })}
+              />
             </>
           )}
         </aside>
