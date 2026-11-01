@@ -12335,6 +12335,7 @@ export interface components {
             minLimit: number | null;
             /** Format: int32 */
             maxLimit: number | null;
+            isHidden: boolean;
             statuses: components["schemas"]["StatusDto"][] | null;
         };
         /**
@@ -12348,6 +12349,7 @@ export interface components {
             type: components["schemas"]["BoardType"];
             activeSprint: components["schemas"]["SprintSummaryDto"];
             columns: components["schemas"]["BoardColumnDto"][] | null;
+            cardFields: string[] | null;
             cards: components["schemas"]["IssueCardDto"][] | null;
             unmappedStatuses: components["schemas"]["StatusDto"][] | null;
             staleStatuses: components["schemas"]["StatusDto"][] | null;
@@ -13066,6 +13068,7 @@ export interface components {
         };
         SaveBoardInput: {
             columns: components["schemas"]["SaveColumnInput"][] | null;
+            cardFields?: string[] | null;
         };
         SaveColumnInput: {
             name: string;
@@ -13073,6 +13076,7 @@ export interface components {
             minLimit?: number | null;
             /** Format: int32 */
             maxLimit?: number | null;
+            isHidden?: boolean;
             statusIds: string[] | null;
         };
         SaveGitConnectionInput: {

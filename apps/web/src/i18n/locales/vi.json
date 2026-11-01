@@ -520,7 +520,22 @@
     "lengthDays_other": "{{count}} ngày",
     "countToDo": "Cần làm",
     "countInProgress": "Đang làm",
-    "countDone": "Xong"
+    "countDone": "Xong",
+    "configureColumns": "Cấu hình cột",
+    "boardMore": "Thao tác khác của board",
+    "hideColumn": "Ẩn cột",
+    "showColumn": "Hiện cột",
+    "moveColumn": "Di chuyển cột",
+    "cardFields": "Hiển thị trên thẻ",
+    "cardField": {
+      "type": "Loại issue",
+      "key": "Mã issue",
+      "priority": "Độ ưu tiên",
+      "assignee": "Người nhận",
+      "epic": "Epic",
+      "labels": "Nhãn",
+      "points": "Story point"
+    }
   },
   "notifications": {
     "bellUnread": "Thông báo, {{count}} chưa đọc",

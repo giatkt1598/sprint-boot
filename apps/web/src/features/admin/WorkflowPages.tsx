@@ -45,7 +45,7 @@ function ScopeBadge({ projectId }: { projectId?: string | null }) {
   return <Badge tone={projectId ? 'info' : 'neutral'}>{t(projectId ? 'workflows.scopeSpace' : 'workflows.scopeGlobal')}</Badge>;
 }
 
-function StatusDialog({ status, projectId, onClose }: { status?: StatusRow; projectId?: string; onClose: () => void }) {
+function StatusDialog({ status, onClose }: { status?: StatusRow; onClose: () => void }) {
   const { t } = useTranslation();
   const toMessage = useErrorMessage();
   const queryClient = useQueryClient();
@@ -54,7 +54,7 @@ function StatusDialog({ status, projectId, onClose }: { status?: StatusRow; proj
 
   const save = useMutation({
     mutationFn: () => {
-      const body = { name, category: Number(category) as 0 | 1 | 2, projectId };
+      const body = { name, category: Number(category) as 0 | 1 | 2 };
       return unwrap<unknown>(
         status
           ? apiClient.PUT('/api/v1/status/{id}', { params: { path: { id: status.id! } }, body })
@@ -89,14 +89,13 @@ function StatusDialog({ status, projectId, onClose }: { status?: StatusRow; proj
   );
 }
 
-/** Administration passes no space and sees global statuses; a space also sees, and owns, its own. */
-export function StatusesPage({ projectId }: { projectId?: string }) {
+export function StatusesPage() {
   const { t, i18n } = useTranslation();
   const [editing, setEditing] = useState<StatusRow | 'new' | null>(null);
 
   const statuses = useQuery({
-    queryKey: ['admin', 'statuses', projectId],
-    queryFn: () => unwrap(apiClient.GET('/api/v1/status/admin-list', { params: { query: { ProjectId: projectId } } })),
+    queryKey: ['admin', 'statuses'],
+    queryFn: () => unwrap(apiClient.GET('/api/v1/status/admin-list')),
   });
 
   return (
@@ -113,7 +112,6 @@ export function StatusesPage({ projectId }: { projectId?: string }) {
           rowKey={(status) => status.id!}
           columns={[
             { key: 'name', header: t('account.name'), render: (status) => status.name },
-            { key: 'scope', header: t('workflows.scope'), render: (status) => <ScopeBadge projectId={status.projectId} /> },
             { key: 'group', header: t('workflows.group'), render: (status) => t(GROUPS[status.category ?? 0]!.label) },
             { key: 'workflows', header: t('workflows.title'), render: (status) => status.workflowCount },
             { key: 'issues', header: t('spaces.issues'), render: (status) => status.issueCount },
@@ -126,15 +124,14 @@ export function StatusesPage({ projectId }: { projectId?: string }) {
             {
               key: 'edit',
               header: '',
-              render: (status) =>
-                (!projectId || status.projectId) && (
-                  <Button kind="link" aria-label={`${t('common.edit')} ${status.name}`} onClick={() => setEditing(status)}>{t('common.edit')}</Button>
-                ),
+              render: (status) => (
+                <Button kind="link" aria-label={`${t('common.edit')} ${status.name}`} onClick={() => setEditing(status)}>{t('common.edit')}</Button>
+              ),
             },
           ]}
         />
       )}
-      {editing && <StatusDialog status={editing === 'new' ? undefined : editing} projectId={projectId} onClose={() => setEditing(null)} />}
+      {editing && <StatusDialog status={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} />}
     </div>
   );
 }

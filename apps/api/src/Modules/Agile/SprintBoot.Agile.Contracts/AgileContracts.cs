@@ -23,6 +23,8 @@ public class BoardColumnDto
 
     public required int? MaxLimit { get; set; }
 
+    public required bool IsHidden { get; set; }
+
     public required List<StatusDto> Statuses { get; set; }
 }
 
@@ -35,6 +37,9 @@ public class BoardViewDto
     public required SprintSummaryDto? ActiveSprint { get; set; }
 
     public required List<BoardColumnDto> Columns { get; set; }
+
+    /// <summary>What cards show besides the title, in the keys of <see cref="BoardCardFields"/>.</summary>
+    public required List<string> CardFields { get; set; }
 
     public required List<IssueCardDto> Cards { get; set; }
 
@@ -57,12 +62,24 @@ public class SaveColumnInput
     [Range(0, 9999)]
     public int? MaxLimit { get; set; }
 
+    public bool IsHidden { get; set; }
+
     public required List<Guid> StatusIds { get; set; }
 }
 
 public class SaveBoardInput
 {
     public required List<SaveColumnInput> Columns { get; set; }
+
+    /// <summary>Blank keeps the current choice.</summary>
+    public List<string>? CardFields { get; set; }
+}
+
+public static class BoardCardFields
+{
+    public static readonly string[] All = ["type", "key", "priority", "assignee", "epic", "labels", "points"];
+
+    public static readonly string[] Default = ["type", "key", "priority", "assignee"];
 }
 
 public class SprintSummaryDto

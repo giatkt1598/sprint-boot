@@ -352,4 +352,24 @@ public class AgileTests(ApiFixture fixture)
         shifted.StartDate.ShouldBe(second.StartDate.AddDays(5));
         shifted.EndDate.ShouldBe(second.EndDate.AddDays(5));
     }
+
+    [Fact]
+    public async Task Board_columns_can_be_hidden_and_cards_choose_their_fields()
+    {
+        var client = await fixture.CreateUserClientAsync(Token);
+        var project = await CreateProjectAsync(client);
+        var view = await client.Http.GetFromJsonAsync<BoardViewDto>($"/api/v1/board/view/{project.Id}", Token);
+        view!.CardFields.ShouldBe(BoardCardFields.Default);
+        var columns = view.Columns.Select((column, index) => new { name = column.Name, isHidden = index == 0, statusIds = column.Statuses.Select(status => status.Id).ToArray() }).ToArray();
+
+        var saved = await client.Http.PutAsJsonAsync($"/api/v1/board/columns/{project.Id}", new { columns, cardFields = new[] { "epic", "nonsense", "key" } }, Token);
+        saved.StatusCode.ShouldBe(HttpStatusCode.OK, await saved.Content.ReadAsStringAsync(Token));
+        var result = (await saved.Content.ReadFromJsonAsync<BoardViewDto>(Token))!;
+        result.Columns[0].IsHidden.ShouldBeTrue();
+        result.CardFields.ShouldBe(["key", "epic"]);
+
+        // Saving without a field list, as older callers do, leaves it alone.
+        var kept = await client.Http.PutAsJsonAsync($"/api/v1/board/columns/{project.Id}", new { columns }, Token);
+        (await kept.Content.ReadFromJsonAsync<BoardViewDto>(Token))!.CardFields.ShouldBe(["key", "epic"]);
+    }
 }

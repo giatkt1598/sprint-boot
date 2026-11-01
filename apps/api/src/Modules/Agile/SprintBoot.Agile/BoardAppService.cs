@@ -17,6 +17,7 @@ public class BoardAppService(
     IRepository<Sprint, Guid> sprints,
     IRepository<SprintIssue, Guid> sprintIssues,
     BoardProvider boards,
+    IRepository<Board, Guid> boardRepository,
     SprintMapper sprintMapper,
     IIssuePlanningGateway issues,
     IStatusLookup statusLookup,
@@ -64,8 +65,10 @@ public class BoardAppService(
                 Name = column.Name,
                 MinLimit = column.MinLimit,
                 MaxLimit = column.MaxLimit,
+                IsHidden = column.IsHidden,
                 Statuses = [.. links.Where(link => link.ColumnId == column.Id && statuses.ContainsKey(link.StatusId)).Select(link => statuses[link.StatusId])],
             })],
+            CardFields = [.. board.CardFields?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? BoardCardFields.Default],
             Cards = await issues.GetCardsAsync(projectId, issueIds),
             UnmappedStatuses = [.. used.Where(id => !mapped.Contains(id) && statuses.ContainsKey(id)).Select(id => statuses[id])],
             StaleStatuses = [.. mapped.Where(id => !used.Contains(id) && statuses.ContainsKey(id)).Select(id => statuses[id])],
@@ -88,10 +91,17 @@ public class BoardAppService(
         await columnStatuses.DeleteAsync(link => existingIds.Contains(link.ColumnId), autoSave: true);
         await columns.DeleteAsync(column => column.BoardId == board.Id, autoSave: true);
 
+        if (input.CardFields is { } fields)
+        {
+            // Stored in the catalogue's order, whatever order they were ticked in.
+            board.CardFields = string.Join(',', BoardCardFields.All.Where(fields.Contains));
+            await boardRepository.UpdateAsync(board);
+        }
+
         var order = 0;
         foreach (var item in input.Columns)
         {
-            var column = await columns.InsertAsync(new BoardColumn(GuidGenerator.Create(), board.Id, item.Name, order++, item.MinLimit, item.MaxLimit));
+            var column = await columns.InsertAsync(new BoardColumn(GuidGenerator.Create(), board.Id, item.Name, order++, item.MinLimit, item.MaxLimit, item.IsHidden));
             await columnStatuses.InsertManyAsync(item.StatusIds.Select(id => new BoardColumnStatus(GuidGenerator.Create(), column.Id, id)));
         }
 

@@ -16362,6 +16362,7 @@
       "BoardColumnDto": {
         "required": [
           "id",
+          "isHidden",
           "maxLimit",
           "minLimit",
           "name",
@@ -16387,6 +16388,9 @@
             "format": "int32",
             "nullable": true
           },
+          "isHidden": {
+            "type": "boolean"
+          },
           "statuses": {
             "type": "array",
             "items": {
@@ -16408,6 +16412,7 @@
       "BoardViewDto": {
         "required": [
           "activeSprint",
+          "cardFields",
           "cards",
           "columns",
           "id",
@@ -16431,6 +16436,13 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/BoardColumnDto"
+            },
+            "nullable": true
+          },
+          "cardFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
             },
             "nullable": true
           },
@@ -18966,6 +18978,13 @@
               "$ref": "#/components/schemas/SaveColumnInput"
             },
             "nullable": true
+          },
+          "cardFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -18995,6 +19014,9 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "isHidden": {
+            "type": "boolean"
           },
           "statusIds": {
             "type": "array",

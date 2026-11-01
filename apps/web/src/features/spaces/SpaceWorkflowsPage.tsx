@@ -10,7 +10,7 @@ import { Table } from '../../components/Table';
 import { SelectField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
-import { StatusesPage, StatusMappingFields, WorkflowsPage } from '../admin/WorkflowPages';
+import { StatusMappingFields, WorkflowsPage } from '../admin/WorkflowPages';
 import { useIssueTypes, useStatuses, type IssueType } from '../issues/api';
 import { SpacePermission, type Space } from './api';
 
@@ -129,9 +129,4 @@ export function SpaceWorkflowsPage() {
       {canManage && <WorkflowsPage projectId={space.id} />}
     </div>
   );
-}
-
-export function SpaceStatusesPage() {
-  const space = useOutletContext<Space>();
-  return <StatusesPage projectId={space.id} />;
 }

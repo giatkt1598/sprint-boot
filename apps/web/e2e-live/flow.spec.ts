@@ -1228,14 +1228,7 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click();
   await expect(page.getByRole('img', { name: 'In progress: 0' }).first()).toBeVisible();
 
-  // A space keeps its own statuses and workflows; global ones are for use only.
-  await page.goto(`/spaces/${key}/settings/statuses`);
-  await page.getByRole('button', { name: 'Add status' }).click();
-  await page.getByRole('dialog').getByLabel('Name').fill('Space review');
-  await page.getByRole('dialog').getByRole('button', { name: /Save|Add status/ }).click();
-  await expect(page.getByRole('button', { name: 'Edit Space review' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Edit To Do' })).toHaveCount(0);
-  await expectAccessible(page);
+  // A space keeps its own workflows; global ones are for use only.
   await page.goto(`/spaces/${key}/settings/workflows`);
   await expect(page.getByRole('heading', { name: 'Available workflows' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Edit Default' })).toHaveCount(0);
@@ -1304,4 +1297,56 @@ test('create issue form, backlog cards and home follow the last space', async ({
 
   await page.goto('/');
   await page.waitForURL(`**/spaces/${key}/backlog`);
+});
+
+test('configure board columns from the board, five fit on a 1920px screen', async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await signIn(page, ADMIN.email, ADMIN.password);
+  const key = `C${suffix()}`;
+  await page.goto('/admin/spaces');
+  await page.getByRole('button', { name: 'Create space' }).click();
+  await page.getByLabel('Name').fill(`Space ${key}`);
+  await page.getByLabel('Key').fill(key);
+  await page.getByLabel('Type').click();
+  await page.getByRole('option', { name: 'Kanban' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Create space' }).click();
+  await page.waitForURL(`**/spaces/${key}/issues`);
+
+  await page.goto(`/spaces/${key}/board`);
+  await page.getByRole('button', { name: 'More board actions' }).click();
+  await page.getByRole('menuitem', { name: 'Configure Columns' }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('button', { name: 'Add column' }).click();
+  await dialog.getByRole('button', { name: 'Add column' }).click();
+  await expect(dialog.locator('[data-testid^=column-row-]')).toHaveCount(5);
+  await dialog.getByRole('checkbox', { name: 'Story points' }).check();
+  await expectAccessible(page);
+
+  const handle = (await dialog.getByRole('button', { name: 'Move column To Do' }).boundingBox())!;
+  const target = (await dialog.getByTestId('column-row-In Progress').boundingBox())!;
+  await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(handle.x + handle.width / 2, target.y + target.height / 2, { steps: 12 });
+  await page.waitForTimeout(250);
+  await page.mouse.move(handle.x + handle.width / 2, target.y + target.height * 0.75, { steps: 4 });
+  await page.waitForTimeout(250);
+  await page.mouse.up();
+  await expect(dialog.locator('[data-testid^=column-row-]').nth(1)).toHaveAttribute('data-testid', 'column-row-To Do');
+  await dialog.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  const sections = page.locator('[data-testid^=column-]');
+  await expect(sections).toHaveCount(5);
+  await expect(sections.nth(1)).toHaveAttribute('data-testid', 'column-To Do');
+  const row = sections.first().locator('..');
+  expect(await row.evaluate((node) => node.scrollWidth <= node.clientWidth)).toBe(true);
+
+  await page.getByRole('button', { name: 'More board actions' }).click();
+  await page.getByRole('menuitem', { name: 'Configure Columns' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Hide column Done' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByTestId('column-Done')).toHaveCount(0);
+  await expect(sections).toHaveCount(4);
 });

@@ -520,7 +520,22 @@
     "lengthDays_other": "{{count}} days",
     "countToDo": "To do",
     "countInProgress": "In progress",
-    "countDone": "Done"
+    "countDone": "Done",
+    "configureColumns": "Configure Columns",
+    "boardMore": "More board actions",
+    "hideColumn": "Hide column",
+    "showColumn": "Show column",
+    "moveColumn": "Move column",
+    "cardFields": "Shown on cards",
+    "cardField": {
+      "type": "Issue type",
+      "key": "Issue key",
+      "priority": "Priority",
+      "assignee": "Assignee",
+      "epic": "Epic",
+      "labels": "Labels",
+      "points": "Story points"
+    }
   },
   "notifications": {
     "bellUnread": "Notifications, {{count}} unread",

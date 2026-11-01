@@ -30,6 +30,9 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CardFields")
+                        .HasColumnType("text");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -91,6 +94,9 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
 
                     b.Property<Guid>("BoardId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("IsHidden")
+                        .HasColumnType("boolean");
 
                     b.Property<int?>("MaxLimit")
                         .HasColumnType("integer");

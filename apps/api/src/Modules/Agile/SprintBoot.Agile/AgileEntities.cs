@@ -17,6 +17,9 @@ public class Board : AuditedAggregateRoot<Guid>, IMultiTenant
 
     public string? FilterConfig { get; private set; }
 
+    /// <summary>Comma separated keys of <see cref="BoardCardFields"/>. Null means the default set.</summary>
+    public string? CardFields { get; set; }
+
     protected Board()
     {
     }
@@ -42,11 +45,13 @@ public class BoardColumn : Entity<Guid>
 
     public int? MaxLimit { get; private set; }
 
+    public bool IsHidden { get; private set; }
+
     protected BoardColumn()
     {
     }
 
-    public BoardColumn(Guid id, Guid boardId, string name, int order, int? minLimit, int? maxLimit)
+    public BoardColumn(Guid id, Guid boardId, string name, int order, int? minLimit, int? maxLimit, bool isHidden = false)
         : base(id)
     {
         BoardId = boardId;
@@ -54,6 +59,7 @@ public class BoardColumn : Entity<Guid>
         Order = order;
         MinLimit = minLimit;
         MaxLimit = maxLimit;
+        IsHidden = isHidden;
     }
 }
 
