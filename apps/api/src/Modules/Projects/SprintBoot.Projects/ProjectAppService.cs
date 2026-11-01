@@ -5,6 +5,7 @@ using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.EventBus.Local;
 using Volo.Abp.Users;
 
@@ -19,7 +20,8 @@ public class ProjectAppService(
     ProjectAccess access,
     IUserDirectory userDirectory,
     IIssueProjectStats issueStats,
-    ILocalEventBus localEventBus)
+    ILocalEventBus localEventBus,
+    IDistributedEventBus eventBus)
     : ApplicationService, IProjectAppService
 {
     public async Task<List<ProjectDto>> GetListAsync()
@@ -114,6 +116,9 @@ public class ProjectAppService(
         }
 
         var member = await members.InsertAsync(new ProjectMember(GuidGenerator.Create(), id, input.UserId, input.Role), autoSave: true);
+        await eventBus.PublishAsync(
+            new ProjectMemberAddedEto { EventId = GuidGenerator.Create(), ProjectId = id, UserId = input.UserId, ActorId = CurrentUser.GetId() },
+            useOutbox: true);
         return new ProjectMemberDto { User = user, Role = input.Role, JoinedAt = member.CreationTime };
     }
 

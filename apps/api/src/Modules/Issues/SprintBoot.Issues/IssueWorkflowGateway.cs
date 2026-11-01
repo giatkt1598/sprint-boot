@@ -92,7 +92,16 @@ public class IssueWorkflowGateway(
         var comment = new Comment(guids.Create(), issueId, null, currentActor.Actor.Id, html, text);
         await comments.InsertAsync(comment, autoSave: true);
         await eventBus.PublishAsync(
-            new CommentAddedEto { CommentId = comment.Id, IssueId = issueId, ProjectId = issue.ProjectId }, useOutbox: true);
+            new CommentAddedEto
+            {
+                EventId = guids.Create(),
+                CommentId = comment.Id,
+                IssueId = issueId,
+                ProjectId = issue.ProjectId,
+                ActorId = currentActor.Actor.Id,
+                Mentioned = RichTextSanitizer.Mentions(html),
+            },
+            useOutbox: true);
     }
 
     public async Task<Dictionary<Guid, int>> CountByStatusAsync(IssueScope? scope = null)

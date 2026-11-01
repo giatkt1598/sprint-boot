@@ -7,7 +7,9 @@ using Volo.Abp.Application.Services;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.Timing;
+using Volo.Abp.Users;
 
 namespace SprintBoot.Agile;
 
@@ -45,7 +47,8 @@ public class SprintAppService(
     IIssuePlanningGateway issues,
     IProjectAccess projectAccess,
     IClock clock,
-    BoardNotifier notifier)
+    BoardNotifier notifier,
+    IDistributedEventBus eventBus)
     : ApplicationService, ISprintAppService
 {
     private const string SprintField = "sprint";
@@ -171,6 +174,7 @@ public class SprintAppService(
         sprint.EndDate = input.EndDate;
         sprint.State = SprintState.Active;
         await sprints.UpdateAsync(sprint, autoSave: true);
+        await PublishStateAsync(sprint, projectId);
         await notifier.ChangedAsync(projectId);
         return await mapper.ToSummaryAsync(sprint, projectId);
     }
@@ -228,6 +232,7 @@ public class SprintAppService(
         sprint.State = SprintState.Closed;
         sprint.CompletedAt = now;
         await sprints.UpdateAsync(sprint, autoSave: true);
+        await PublishStateAsync(sprint, projectId);
         await notifier.ChangedAsync(projectId);
         return await mapper.ToSummaryAsync(sprint, projectId);
     }
@@ -310,6 +315,17 @@ public class SprintAppService(
             .OrderBy(item => item.State == SprintState.Closed).ThenByDescending(item => item.CreationTime).FirstOrDefault();
         return sprint is null ? null : await mapper.ToSummaryAsync(sprint, projectId);
     }
+
+    private Task PublishStateAsync(Sprint sprint, Guid projectId) => eventBus.PublishAsync(
+        new SprintStateChangedEto
+        {
+            EventId = GuidGenerator.Create(),
+            ProjectId = projectId,
+            ActorId = CurrentUser.GetId(),
+            SprintName = sprint.Name,
+            State = sprint.State,
+        },
+        useOutbox: true);
 
     private async Task<(Sprint Sprint, Guid ProjectId)> LoadForManagingAsync(Guid id)
     {

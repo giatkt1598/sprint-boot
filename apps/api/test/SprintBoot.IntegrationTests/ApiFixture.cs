@@ -113,6 +113,14 @@ public sealed class ApiFixture : IAsyncLifetime
         return await users.GeneratePasswordResetTokenAsync(await users.GetByIdAsync(userId));
     }
 
+    public async Task RunNotificationAsync(SprintBoot.Notifications.NotificationEvent item)
+    {
+        using var scope = Factory.Services.CreateScope();
+        using var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true);
+        await scope.ServiceProvider.GetRequiredService<SprintBoot.Notifications.NotificationProcessor>().ProcessAsync(item);
+        await uow.CompleteAsync();
+    }
+
     public async Task<Dictionary<Guid, string>> GetRanksAsync(Guid projectId)
     {
         using var scope = Factory.Services.CreateScope();

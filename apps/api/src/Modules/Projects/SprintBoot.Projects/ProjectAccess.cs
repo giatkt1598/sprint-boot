@@ -108,6 +108,12 @@ public class ProjectAccess(
         return member?.Role;
     }
 
+    public async Task<Dictionary<Guid, string>> GetMemberRolesAsync(Guid projectId)
+    {
+        var list = await members.GetListAsync(item => item.ProjectId == projectId);
+        return list.ToDictionary(item => item.UserId, item => item.Role);
+    }
+
     public async Task<int> NextIssueNumberAsync(Guid projectId)
     {
         // A single UPDATE takes the row lock until commit, so concurrent creates serialize here.

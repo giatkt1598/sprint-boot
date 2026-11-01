@@ -31,6 +31,15 @@ public interface IIssueAppService : IApplicationService
     Task RestoreAsync(Guid id);
 }
 
+public interface IWatcherAppService : IApplicationService
+{
+    Task<WatchersDto> GetAsync(Guid issueId);
+
+    Task<WatchersDto> WatchAsync(Guid issueId);
+
+    Task<WatchersDto> UnwatchAsync(Guid issueId);
+}
+
 public interface ICommentAppService : IApplicationService
 {
     Task<List<CommentDto>> GetListAsync(Guid issueId);

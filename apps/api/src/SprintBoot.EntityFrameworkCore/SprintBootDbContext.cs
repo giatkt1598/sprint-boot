@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SprintBoot.Agile;
 using SprintBoot.Issues;
+using SprintBoot.Notifications;
 using SprintBoot.Platform;
 using SprintBoot.Projects;
 using SprintBoot.Workflows;
@@ -61,6 +62,7 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
     public DbSet<Priority> Priorities { get; set; } = null!;
     public DbSet<Issue> Issues { get; set; } = null!;
     public DbSet<Label> Labels { get; set; } = null!;
+    public DbSet<IssueWatcher> IssueWatchers { get; set; } = null!;
     public DbSet<IssueLabel> IssueLabels { get; set; } = null!;
     public DbSet<Comment> Comments { get; set; } = null!;
     public DbSet<CommentReaction> CommentReactions { get; set; } = null!;
@@ -74,6 +76,12 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
     public DbSet<BoardEntry> BoardEntries { get; set; } = null!;
     public DbSet<Sprint> Sprints { get; set; } = null!;
     public DbSet<SprintIssue> SprintIssues { get; set; } = null!;
+
+    public DbSet<NotificationScheme> NotificationSchemes { get; set; } = null!;
+    public DbSet<NotificationRule> NotificationRules { get; set; } = null!;
+    public DbSet<ProjectNotificationScheme> ProjectNotificationSchemes { get; set; } = null!;
+    public DbSet<Notification> Notifications { get; set; } = null!;
+    public DbSet<NotificationPreference> NotificationPreferences { get; set; } = null!;
 
     public DbSet<OutgoingEventRecord> OutgoingEvents { get; set; } = null!;
     public DbSet<IncomingEventRecord> IncomingEvents { get; set; } = null!;
@@ -94,5 +102,6 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
         builder.ConfigureWorkflows();
         builder.ConfigureIssues();
         builder.ConfigureAgile();
+        builder.ConfigureNotifications();
     }
 }

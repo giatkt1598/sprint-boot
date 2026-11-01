@@ -20,4 +20,7 @@ public interface IUserDirectoryAppService : IApplicationService
 public interface IUserDirectory
 {
     Task<Dictionary<Guid, UserRefDto>> GetByIdsAsync(IEnumerable<Guid> ids);
+
+    /// <summary>Those of the given users who can still sign in.</summary>
+    Task<HashSet<Guid>> GetActiveIdsAsync(IEnumerable<Guid> ids);
 }

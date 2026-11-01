@@ -58,6 +58,13 @@ public static class IssuesModelBuilderExtensions
             b.HasIndex(link => link.LabelId);
         });
 
+        builder.Entity<IssueWatcher>(b =>
+        {
+            b.ToTable("issue_watchers", Schema);
+            b.ConfigureByConvention();
+            b.HasIndex(watcher => new { watcher.IssueId, watcher.UserId }).IsUnique();
+        });
+
         builder.Entity<Comment>(b =>
         {
             b.ToTable("comments", Schema);

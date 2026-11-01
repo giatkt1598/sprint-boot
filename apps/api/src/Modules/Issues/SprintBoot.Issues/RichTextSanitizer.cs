@@ -15,6 +15,16 @@ public class RichTextSanitizer : ISingletonDependency
         _sanitizer.AllowedAttributes.Add("class");
     }
 
+    /// <summary>User ids of the mentions in already sanitized HTML.</summary>
+    public static Guid[] Mentions(string html)
+    {
+        var document = new HtmlParser().ParseDocument(html);
+        return [.. document.QuerySelectorAll("[data-type='mention']")
+            .Select(node => Guid.TryParse(node.GetAttribute("data-id"), out var id) ? id : Guid.Empty)
+            .Where(id => id != Guid.Empty)
+            .Distinct()];
+    }
+
     public (string Html, string Text) Clean(string? html)
     {
         var clean = _sanitizer.Sanitize(html ?? string.Empty);

@@ -8,6 +8,7 @@ using SprintBoot.Agile;
 using SprintBoot.EntityFrameworkCore;
 using SprintBoot.Identity;
 using SprintBoot.Issues;
+using SprintBoot.Notifications;
 using SprintBoot.Projects;
 using SprintBoot.Workflows;
 using SprintBoot.Host.HealthChecks;
@@ -50,6 +51,7 @@ public class SprintBootHostModule : AbpModule
         typeof(WorkflowsModule).Assembly,
         typeof(IssuesModule).Assembly,
         typeof(AgileModule).Assembly,
+        typeof(NotificationsModule).Assembly,
     ];
 
     public override void ConfigureServices(ServiceConfigurationContext context)
@@ -128,6 +130,7 @@ public class SprintBootHostModule : AbpModule
         app.UseConfiguredEndpoints(endpoints =>
         {
             endpoints.MapHub<BoardHub>(BoardHub.Path);
+            endpoints.MapHub<NotificationHub>(NotificationHub.Path);
             endpoints.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
             endpoints.MapHealthChecks("/health/ready", new HealthCheckOptions
             {

@@ -1,30 +1,40 @@
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Application.Services;
+using Volo.Abp.DependencyInjection;
 using Volo.Abp.Identity;
 using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
 namespace SprintBoot.Identity;
 
 [Authorize]
-[Volo.Abp.DependencyInjection.ExposeServices(typeof(IUserDirectoryAppService), typeof(IUserDirectory))]
-public class UserDirectoryAppService(IIdentityUserRepository users) : ApplicationService, IUserDirectoryAppService, IUserDirectory
+public class UserDirectoryAppService(IIdentityUserRepository users) : ApplicationService, IUserDirectoryAppService
 {
     private const int MaxResults = 20;
 
     public async Task<List<UserRefDto>> GetSearchAsync(string? search)
     {
         var page = await users.GetListAsync(nameof(IdentityUser.Name), MaxResults, 0, search);
-        return [.. page.Select(ToDto)];
+        return [.. page.Select(UserDirectory.ToDto)];
     }
+}
 
-    [Microsoft.AspNetCore.Mvc.NonAction]
+/// <summary>In-process lookups with no calling user required, so background consumers can use them.</summary>
+public class UserDirectory(IIdentityUserRepository users) : IUserDirectory, ITransientDependency
+{
     public async Task<Dictionary<Guid, UserRefDto>> GetByIdsAsync(IEnumerable<Guid> ids)
     {
         var found = await users.GetListByIdsAsync(ids.Distinct().ToArray());
         return found.ToDictionary(user => user.Id, ToDto);
     }
 
-    private static UserRefDto ToDto(IdentityUser user) => new()
+    public async Task<HashSet<Guid>> GetActiveIdsAsync(IEnumerable<Guid> ids)
+    {
+        var found = await users.GetListByIdsAsync(ids.Distinct().ToArray());
+        var now = DateTimeOffset.UtcNow;
+        return [.. found.Where(user => user.IsActive && (user.LockoutEnd is null || user.LockoutEnd <= now)).Select(user => user.Id)];
+    }
+
+    public static UserRefDto ToDto(IdentityUser user) => new()
     {
         Id = user.Id,
         Name = string.IsNullOrWhiteSpace(user.Name) ? user.UserName : user.Name,

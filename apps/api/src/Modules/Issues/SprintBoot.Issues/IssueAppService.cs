@@ -36,6 +36,7 @@ public partial class IssueAppService(
     IDataFilter dataFilter,
     IDistributedEventBus eventBus,
     IssueMapper mapper,
+    WatcherStore watcherStore,
     RichTextSanitizer sanitizer)
     : ApplicationService, IIssueAppService
 {
@@ -92,7 +93,17 @@ public partial class IssueAppService(
 
         await issues.InsertAsync(issue, autoSave: true);
         await SetLabelsAsync(issue, input.Labels ?? []);
-        await eventBus.PublishAsync(new IssueCreatedEto { IssueId = issue.Id, ProjectId = issue.ProjectId }, useOutbox: true);
+        await watcherStore.EnsureAsync(issue.Id, issue.ReporterId, issue.AssigneeId);
+        await eventBus.PublishAsync(
+            new IssueCreatedEto
+            {
+                EventId = GuidGenerator.Create(),
+                IssueId = issue.Id,
+                ProjectId = issue.ProjectId,
+                ActorId = actor.Id,
+                Mentioned = RichTextSanitizer.Mentions(issue.Description),
+            },
+            useOutbox: true);
 
         return await mapper.ToDtoAsync(issue);
     }
@@ -134,8 +145,18 @@ public partial class IssueAppService(
         if (changed.Count > 0)
         {
             await issues.UpdateAsync(issue, autoSave: true);
+            await watcherStore.EnsureAsync(issue.Id, issue.AssigneeId);
             await eventBus.PublishAsync(
-                new IssueUpdatedEto { IssueId = issue.Id, ProjectId = issue.ProjectId, Fields = [.. changed] }, useOutbox: true);
+                new IssueUpdatedEto
+                {
+                    EventId = GuidGenerator.Create(),
+                    IssueId = issue.Id,
+                    ProjectId = issue.ProjectId,
+                    ActorId = currentActor.Actor.Id,
+                    Fields = [.. changed],
+                    Mentioned = changed.Contains(IssueFieldKeys.Description) ? RichTextSanitizer.Mentions(issue.Description) : [],
+                },
+                useOutbox: true);
         }
 
         return await mapper.ToDtoAsync(issue);

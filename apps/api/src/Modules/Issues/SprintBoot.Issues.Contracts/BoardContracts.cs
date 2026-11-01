@@ -36,6 +36,23 @@ public class IssueCardDto
     public required string ConcurrencyStamp { get; set; }
 }
 
+public record IssueFacts(Guid Id, string Key, string Title, Guid? AssigneeId, Guid? ReporterId, IReadOnlyCollection<Guid> Watchers);
+
+/// <summary>What background consumers need to know about an issue. Null when it is gone.</summary>
+public interface IIssueFactsProvider
+{
+    Task<IssueFacts?> FindAsync(Guid issueId);
+}
+
+public class WatchersDto
+{
+    public required int Count { get; set; }
+
+    public required bool WatchedByMe { get; set; }
+
+    public required List<UserRefDto> Users { get; set; }
+}
+
 public class EpicRowDto
 {
     public required Guid Id { get; set; }

@@ -242,9 +242,30 @@ public interface IWorkflowIssueGateway
     Task<int> MigrateBatchAsync(IssueScope scope, Guid toVersionId, IReadOnlyDictionary<Guid, Guid> statusMappings, int batchSize);
 }
 
+/// <summary>Raised by the Send notification post-function; recipients come from the scheme.</summary>
+[EventName("SprintBoot.Workflows.WorkflowNotification")]
+public class WorkflowNotificationEto
+{
+    public Guid EventId { get; set; }
+
+    public Guid IssueId { get; set; }
+
+    public Guid ProjectId { get; set; }
+
+    public Guid ActorId { get; set; }
+
+    public string? Message { get; set; }
+}
+
 [EventName("SprintBoot.Workflows.IssueTransitioned")]
 public class IssueTransitionedEto
 {
+    public Guid EventId { get; set; }
+
+    public Guid ActorId { get; set; }
+
+    public string ToStatusName { get; set; } = string.Empty;
+
     public Guid IssueId { get; set; }
 
     public Guid ProjectId { get; set; }

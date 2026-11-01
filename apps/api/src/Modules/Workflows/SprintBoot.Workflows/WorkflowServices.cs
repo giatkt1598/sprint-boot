@@ -551,6 +551,9 @@ public class TransitionAppService(
         await eventBus.PublishAsync(
             new IssueTransitionedEto
             {
+                EventId = GuidGenerator.Create(),
+                ActorId = currentActor.Actor.Id,
+                ToStatusName = toStatus.Name,
                 IssueId = issueId,
                 ProjectId = subject.ProjectId,
                 FromStatusId = subject.StatusId,

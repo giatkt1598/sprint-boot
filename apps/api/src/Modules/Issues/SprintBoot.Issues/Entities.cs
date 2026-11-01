@@ -124,6 +124,24 @@ public class Issue : FullAuditedAggregateRoot<Guid>, IMultiTenant
     }
 }
 
+public class IssueWatcher : Entity<Guid>
+{
+    public Guid IssueId { get; private set; }
+
+    public Guid UserId { get; private set; }
+
+    protected IssueWatcher()
+    {
+    }
+
+    public IssueWatcher(Guid id, Guid issueId, Guid userId)
+        : base(id)
+    {
+        IssueId = issueId;
+        UserId = userId;
+    }
+}
+
 public class Label : Entity<Guid>
 {
     public Guid ProjectId { get; private set; }

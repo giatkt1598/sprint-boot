@@ -144,6 +144,9 @@ public interface IProjectAccess
 
     Task<bool> IsMemberAsync(Guid projectId, Guid userId);
 
+    /// <summary>Members with their role, for background work that has no calling user.</summary>
+    Task<Dictionary<Guid, string>> GetMemberRolesAsync(Guid projectId);
+
     /// <summary>The caller's role name in the project, null for outsiders.</summary>
     Task<string?> GetCurrentRoleAsync(Guid projectId);
 
@@ -155,6 +158,18 @@ public record ProjectRef(Guid Id, string Key, string Name, BoardType Type);
 
 /// <summary>Raised in-process inside the creating transaction so modules can add defaults.</summary>
 public record ProjectCreatedEvent(Guid ProjectId);
+
+[Volo.Abp.EventBus.EventName("SprintBoot.Projects.MemberAdded")]
+public class ProjectMemberAddedEto
+{
+    public Guid EventId { get; set; }
+
+    public Guid ProjectId { get; set; }
+
+    public Guid UserId { get; set; }
+
+    public Guid ActorId { get; set; }
+}
 
 public static class ProjectErrors
 {

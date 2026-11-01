@@ -20,6 +20,7 @@ public class CommentAppService(
     IUserDirectory userDirectory,
     IDistributedEventBus eventBus,
     IClock clock,
+    WatcherStore watcherStore,
     RichTextSanitizer sanitizer)
     : ApplicationService, ICommentAppService
 {
@@ -49,8 +50,18 @@ public class CommentAppService(
         var (html, text) = Clean(input.Body);
         var comment = new Comment(GuidGenerator.Create(), issue.Id, input.ParentId, CurrentUser.GetId(), html, text);
         await comments.InsertAsync(comment, autoSave: true);
+        await watcherStore.EnsureAsync(issue.Id, CurrentUser.GetId());
         await eventBus.PublishAsync(
-            new CommentAddedEto { CommentId = comment.Id, IssueId = issue.Id, ProjectId = issue.ProjectId }, useOutbox: true);
+            new CommentAddedEto
+            {
+                EventId = GuidGenerator.Create(),
+                CommentId = comment.Id,
+                IssueId = issue.Id,
+                ProjectId = issue.ProjectId,
+                ActorId = CurrentUser.GetId(),
+                Mentioned = RichTextSanitizer.Mentions(html),
+            },
+            useOutbox: true);
         return (await ToDtosAsync([comment])).Single();
     }
 

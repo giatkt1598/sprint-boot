@@ -5,6 +5,7 @@ using SprintBoot.Projects;
 using Volo.Abp;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.Guids;
 using Volo.Abp.Timing;
 
@@ -258,6 +259,26 @@ public class AddCommentPostFunction(IWorkflowIssueGateway issues) : ITransitionP
 
     public Task RunAsync(RuleContext context, JsonElement? config) =>
         issues.AddCommentAsync(context.Subject.IssueId, RuleConfig.String(config, "body") ?? string.Empty);
+}
+
+/// <summary>Publishes through the outbox: delivery cannot fail the transition, and a rollback sends nothing.</summary>
+[ExposeServices(typeof(ITransitionPostFunction))]
+public class NotifyPostFunction(IDistributedEventBus eventBus, IGuidGenerator guids) : ITransitionPostFunction, ITransientDependency
+{
+    public string Key => "notify";
+
+    public RuleKind Kind => RuleKind.PostFunction;
+
+    public Task RunAsync(RuleContext context, JsonElement? config) => eventBus.PublishAsync(
+        new WorkflowNotificationEto
+        {
+            EventId = guids.Create(),
+            IssueId = context.Subject.IssueId,
+            ProjectId = context.Subject.ProjectId,
+            ActorId = context.Actor.Id,
+            Message = RuleConfig.String(config, "message"),
+        },
+        useOutbox: true);
 }
 
 /// <summary>Only records the delivery here; a worker sends it, so failures cannot undo the transition.</summary>

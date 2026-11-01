@@ -209,6 +209,20 @@ public interface ISprintAppService : IApplicationService
     Task<SprintSummaryDto?> GetForIssueAsync(Guid issueId);
 }
 
+[Volo.Abp.EventBus.EventName("SprintBoot.Agile.SprintStateChanged")]
+public class SprintStateChangedEto
+{
+    public Guid EventId { get; set; }
+
+    public Guid ProjectId { get; set; }
+
+    public Guid ActorId { get; set; }
+
+    public string SprintName { get; set; } = string.Empty;
+
+    public SprintState State { get; set; }
+}
+
 public static class AgileErrors
 {
     public const string ActiveSprintExists = "SprintBoot:ActiveSprintExists";
