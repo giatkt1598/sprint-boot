@@ -26,6 +26,7 @@ interface RichTextEditorProps {
   onChange: (html: string) => void;
 }
 
+const COMMIT_DELAY_MILLISECONDS = 200;
 const POPUP_WIDTH = 280;
 const POPUP_MAX_HEIGHT = 300;
 
@@ -130,10 +131,19 @@ export function RichTextEditor({ label, initialValue = '', people, autoFocus, sh
 
   // Parents rebuild `people` on every render. Rebuilding the editor with it wiped the text after each
   // keystroke, so the editor is created once and reads the latest values from here.
-  const latest = useRef({ people, t });
+  const latest = useRef({ people, t, onChange });
   useLayoutEffect(() => {
-    latest.current = { people, t };
+    latest.current = { people, t, onChange };
   });
+
+  // A parent form re-renders on each commit, so typing hands over the text only in pauses and on blur.
+  // A pause is still needed: Save buttons enable from this value while the focus is in the editor.
+  const pending = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const commit = useCallback((current: Editor) => {
+    clearTimeout(pending.current);
+    latest.current.onChange(current.isEmpty ? '' : current.getHTML());
+  }, []);
+  useEffect(() => () => clearTimeout(pending.current), []);
 
   const slashCommands = useCallback((): SlashCommand[] => {
     const tr = latest.current.t;
@@ -177,7 +187,11 @@ export function RichTextEditor({ label, initialValue = '', people, autoFocus, sh
     editorProps: {
       attributes: { 'aria-label': label, role: 'textbox', 'aria-multiline': 'true', class: 'rich-text outline-none' },
     },
-    onUpdate: ({ editor: current }) => onChange(current.isEmpty ? '' : current.getHTML()),
+    onUpdate: ({ editor: current }) => {
+      clearTimeout(pending.current);
+      pending.current = setTimeout(() => commit(current), COMMIT_DELAY_MILLISECONDS);
+    },
+    onBlur: ({ editor: current }) => commit(current),
   });
 
   return (

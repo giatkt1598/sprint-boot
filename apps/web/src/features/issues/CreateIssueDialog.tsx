@@ -12,7 +12,7 @@ import { DatePicker } from '../../components/DatePicker';
 import { IssueTypeIcon, PriorityIcon, type IssueType as IconType } from '../../components/IssueIcons';
 import { TagInput } from '../../components/TagInput';
 import { Dialog, DialogFooter } from '../../components/Dialog';
-import { SelectField, TextField } from '../../components/TextField';
+import { BufferedTextField, SelectField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { UserPicker, type PickerUser } from '../../components/UserPicker';
 import { useErrorMessage } from '../../lib/errors';
@@ -46,7 +46,7 @@ export function CreateIssueDialog({ onClose, parent, epic }: CreateIssueDialogPr
   const [projectId, setProjectId] = useState('');
   const [typeId, setTypeId] = useState('');
   const [title, setTitle] = useState('');
-  const [titleTouched, setTitleTouched] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [description, setDescription] = useState('');
   const [editorKey, setEditorKey] = useState(0);
   const [priorityId, setPriorityId] = useState('');
@@ -78,7 +78,7 @@ export function CreateIssueDialog({ onClose, parent, epic }: CreateIssueDialogPr
   const [sprintId, setSprintId] = useState('');
   const canHaveEpic = !parent && allowedTypes.find((type) => type.id === typeId)?.hierarchy === 1;
   const people = (members.data ?? []).map((member) => member.user!);
-  const titleError = titleTouched && !title.trim() ? t('errors.IssueTitleRequired') : undefined;
+  const validateTitle = (text: string) => (text.trim() ? undefined : t('errors.IssueTitleRequired'));
   const dateError = startDate && dueDate && dueDate < startDate ? t('errors.DueDateBeforeStartDate') : undefined;
 
   useEffect(() => {
@@ -128,7 +128,7 @@ export function CreateIssueDialog({ onClose, parent, epic }: CreateIssueDialogPr
       toast('info', t('issues.created', { key: issue.key }));
       if (another) {
         setTitle('');
-        setTitleTouched(false);
+        setSubmitted(false);
         setDescription('');
         setFiles([]);
         setEditorKey((value) => value + 1);
@@ -142,7 +142,7 @@ export function CreateIssueDialog({ onClose, parent, epic }: CreateIssueDialogPr
   });
 
   const submit = () => {
-    setTitleTouched(true);
+    setSubmitted(true);
     if (title.trim() && !dateError) {
       create.mutate();
     }
@@ -191,18 +191,15 @@ export function CreateIssueDialog({ onClose, parent, epic }: CreateIssueDialogPr
           }))}
         />
       </div>
-      <TextField
+      {/* Empty only counts as a mistake once something was typed, or on submit. */}
+      <BufferedTextField
+        key={editorKey}
         label={t('issues.titleField')}
         inputRef={titleInput}
         value={title}
-        error={titleError}
-        onChange={(event) => {
-          // Empty only counts as a mistake once something was typed, or on submit.
-          if (event.target.value) {
-            setTitleTouched(true);
-          }
-          setTitle(event.target.value);
-        }}
+        error={submitted ? validateTitle(title) : undefined}
+        validate={validateTitle}
+        onCommit={setTitle}
       />
       <RichTextEditor key={editorKey} label={t('issues.description')} showLabel people={people} onChange={setDescription} />
       <div className="grid grid-cols-2 gap-4">
@@ -218,7 +215,7 @@ export function CreateIssueDialog({ onClose, parent, epic }: CreateIssueDialogPr
           }))}
         />
         <UserPicker label={t('issues.reporter')} options={people} value={reporter} onChange={setReporter} />
-        <TextField label={t('issues.points')} type="number" value={points} onChange={(event) => setPoints(event.target.value)} />
+        <BufferedTextField label={t('issues.points')} type="number" value={points} onCommit={setPoints} />
         {canHaveEpic && (
           <SelectField
             label={t('issues.epic')}

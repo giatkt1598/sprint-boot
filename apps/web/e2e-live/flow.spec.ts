@@ -939,6 +939,7 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await title.fill('');
   await expect(dialog.getByText('Title is required')).toBeVisible();
   await title.fill('Card row');
+  await dialog.getByRole('textbox', { name: 'Description' }).pressSequentially('Select this sentence with the mouse');
 
   await expect(dialog.getByText('Description', { exact: true })).toBeVisible();
   await expect(dialog.getByRole('toolbar', { name: 'Editor tools' })).toBeVisible();
@@ -966,6 +967,23 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await dialog.getByRole('button', { name: 'Create', exact: true }).click();
   await page.waitForURL(`**/issues/${key}-1`);
   await expect(page.getByLabel('Labels')).toHaveValue('alpha, beta');
+
+  // Dragging selects text; only a plain click starts editing.
+  const drag = async (text: string) => {
+    const box = (await page.getByText(text, { exact: true }).boundingBox())!;
+    await page.mouse.move(box.x + 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 60, box.y + box.height / 2, { steps: 5 });
+    await page.mouse.up();
+  };
+  await drag('Card row');
+  await expect(page.getByRole('heading', { name: 'Card row' })).toBeVisible();
+  await drag('Select this sentence with the mouse');
+  await expect(page.getByRole('textbox', { name: 'Description' })).toHaveCount(0);
+  await page.mouse.click(5, 5);
+  await page.getByText('Select this sentence with the mouse', { exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'Description' })).toBeVisible();
+  await page.getByRole('button', { name: 'Cancel' }).click();
 
   await page.goto(`/spaces/${key}/backlog`);
   await expectAccessible(page);

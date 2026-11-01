@@ -22,6 +22,7 @@ import { SelectField, TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { UserPicker } from '../../components/UserPicker';
 import { useErrorMessage } from '../../lib/errors';
+import { hasSelectedText } from '../../lib/selection';
 import { formatDateTime, formatSize } from '../../lib/format';
 import { font, radius, sem } from '../../theme/tokens';
 import { useMembers, useSpace } from '../spaces/api';
@@ -49,6 +50,36 @@ const useIssue = (key: string | undefined) =>
     queryFn: () => unwrap(apiClient.GET('/api/v1/issue/by-key', { params: { query: { key } } })),
     retry: (count, failure) => !(failure instanceof ApiError && failure.status < 500) && count < 2,
   });
+
+/** Owns the text while typing, so keystrokes do not re-render the whole issue. */
+function TitleEditor({ label, initial, onSave, onCancel }: { label: string; initial: string; onSave: (title: string) => void; onCancel: () => void }) {
+  const [title, setTitle] = useState(initial);
+  const closed = useRef(false);
+  const close = (action: () => void) => {
+    if (!closed.current) {
+      closed.current = true;
+      action();
+    }
+  };
+
+  return (
+    <TextField
+      label={label}
+      autoFocus
+      value={title}
+      onChange={(event) => setTitle(event.target.value)}
+      onBlur={() => close(() => onSave(title))}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') {
+          close(() => onSave(title));
+        }
+        if (event.key === 'Escape') {
+          close(onCancel);
+        }
+      }}
+    />
+  );
+}
 
 export function IssuePage() {
   const { issueKey } = useParams();
@@ -88,7 +119,6 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
 
   const [conflict, setConflict] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
-  const [title, setTitle] = useState(issue.title ?? '');
   const [editingDescription, setEditingDescription] = useState(false);
   const [description, setDescription] = useState(issue.description ?? '');
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
@@ -131,12 +161,10 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
     onSettled: () => setConfirmingDelete(false),
   });
 
-  const saveTitle = () => {
+  const saveTitle = (title: string) => {
     setEditingTitle(false);
     if (title.trim() && title !== issue.title) {
       update.mutate({ title });
-    } else {
-      setTitle(issue.title ?? '');
     }
   };
 
@@ -184,27 +212,12 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
       <div className="flex items-center gap-2">
         <div className="min-w-0 flex-1">
           {editingTitle ? (
-            <TextField
-              label={t('issues.titleField')}
-              autoFocus
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              onBlur={saveTitle}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  saveTitle();
-                }
-                if (event.key === 'Escape') {
-                  setTitle(issue.title ?? '');
-                  setEditingTitle(false);
-                }
-              }}
-            />
+            <TitleEditor label={t('issues.titleField')} initial={issue.title ?? ''} onSave={saveTitle} onCancel={() => setEditingTitle(false)} />
           ) : (
             <Typography
               variant="h1"
               tabIndex={canEdit ? 0 : undefined}
-              onClick={() => canEdit && setEditingTitle(true)}
+              onClick={() => canEdit && !hasSelectedText() && setEditingTitle(true)}
               onKeyDown={(event) => event.key === 'Enter' && canEdit && setEditingTitle(true)}
             >
               {issue.title}
@@ -238,7 +251,13 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
               <div
                 role={canEdit ? 'button' : undefined}
                 tabIndex={canEdit ? 0 : undefined}
-                onClick={() => canEdit && setEditingDescription(true)}
+                onClick={(event) => {
+                  // A link opens, and a drag that selected text stays a selection; only a plain click edits.
+                  const onLink = (event.target as HTMLElement).closest('a');
+                  if (canEdit && !onLink && !hasSelectedText()) {
+                    setEditingDescription(true);
+                  }
+                }}
                 onKeyDown={(event) => event.key === 'Enter' && canEdit && setEditingDescription(true)}
               >
                 <RichTextView html={issue.description} />

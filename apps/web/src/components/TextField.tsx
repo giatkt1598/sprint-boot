@@ -2,7 +2,7 @@ import FormHelperText from '@mui/material/FormHelperText';
 import MenuItem from '@mui/material/MenuItem';
 import OutlinedInput, { type OutlinedInputProps } from '@mui/material/OutlinedInput';
 import Select, { type SelectProps } from '@mui/material/Select';
-import { useId, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { font, sem } from '../theme/tokens';
 
 interface FieldFrameProps {
@@ -68,6 +68,39 @@ export function TextField({ label, error, quiet, id, sx, ...props }: TextFieldPr
         {...props}
       />
     </FieldFrame>
+  );
+}
+
+export interface BufferedTextFieldProps extends Omit<TextFieldProps, 'value' | 'onChange'> {
+  value: string;
+  /** Called on blur, so keystrokes re-render this field and not the whole form. */
+  onCommit: (value: string) => void;
+  /** Checks the text as it is typed, once there has been typing. */
+  validate?: (draft: string) => string | undefined;
+}
+
+/**
+ * For large forms. Holds its own text and takes the initial value once:
+ * give it a new key to reset it.
+ */
+export function BufferedTextField({ value, onCommit, validate, error, onBlur, ...props }: BufferedTextFieldProps) {
+  const [draft, setDraft] = useState(value);
+  const [typed, setTyped] = useState(false);
+
+  return (
+    <TextField
+      {...props}
+      value={draft}
+      error={error ?? (typed ? validate?.(draft) : undefined)}
+      onChange={(event) => {
+        setDraft(event.target.value);
+        setTyped(true);
+      }}
+      onBlur={(event) => {
+        onCommit(draft);
+        onBlur?.(event);
+      }}
+    />
   );
 }
 
