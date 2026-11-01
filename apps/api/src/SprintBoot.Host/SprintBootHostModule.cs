@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.OpenApi;
 using SprintBoot.EntityFrameworkCore;
 using SprintBoot.Identity;
+using SprintBoot.Issues;
+using SprintBoot.Projects;
+using SprintBoot.Workflows;
 using SprintBoot.Host.HealthChecks;
 using SprintBoot.Platform;
 using StackExchange.Redis;
@@ -40,6 +43,9 @@ public class SprintBootHostModule : AbpModule
     [
         typeof(PlatformModule).Assembly,
         typeof(IdentityModule).Assembly,
+        typeof(ProjectsModule).Assembly,
+        typeof(WorkflowsModule).Assembly,
+        typeof(IssuesModule).Assembly,
     ];
 
     public override void ConfigureServices(ServiceConfigurationContext context)
@@ -77,7 +83,7 @@ public class SprintBootHostModule : AbpModule
             options.SwaggerDoc("v1", new OpenApiInfo { Title = "Sprint Boot API", Version = "v1" });
             options.DocInclusionPredicate((_, description) =>
                 description.RelativePath?.StartsWith(ApiRoutes.Prefix, StringComparison.Ordinal) == true);
-            options.CustomSchemaIds(type => type.Name);
+            options.CustomSchemaIds(SchemaId);
         });
     }
 
@@ -109,6 +115,10 @@ public class SprintBootHostModule : AbpModule
             });
         });
     }
+
+    private static string SchemaId(Type type) => type.IsGenericType
+        ? $"{type.Name[..type.Name.IndexOf('`')]}Of{string.Concat(type.GetGenericArguments().Select(SchemaId))}"
+        : type.Name;
 
     private static void ValidateStorage(IConfiguration configuration)
     {

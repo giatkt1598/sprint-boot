@@ -50,6 +50,8 @@ public sealed class ApiFixture : IAsyncLifetime
         Environment.SetEnvironmentVariable("ConnectionStrings__Default", _postgres.GetConnectionString());
         Environment.SetEnvironmentVariable("Redis__Configuration", _redis.GetConnectionString());
         Environment.SetEnvironmentVariable("Auth__RequireHttps", "false");
+        Environment.SetEnvironmentVariable("Issues__Attachments__MaxFileSizeMb", "1");
+        Environment.SetEnvironmentVariable("Storage__Local__Path", Path.Combine(Path.GetTempPath(), $"sb-test-{Guid.NewGuid():N}"));
         Environment.SetEnvironmentVariable("RabbitMQ__Connections__Default__HostName", "localhost");
         Environment.SetEnvironmentVariable("RabbitMQ__Connections__Default__Port", rabbitPort.ToString());
         Environment.SetEnvironmentVariable("RabbitMQ__Connections__Default__UserName", RabbitUser);

@@ -87,6 +87,9 @@ public class IdentityModule : AbpModule
             Configure<OpenIddictServerAspNetCoreOptions>(options => options.DisableTransportSecurityRequirement = true);
         }
 
+        // APIs authenticate by bearer token, so only the anonymous cookie endpoints validate CSRF, explicitly.
+        Configure<AbpAntiForgeryOptions>(options => options.AutoValidate = false);
+
         Configure<IdentityOptions>(options =>
         {
             options.Lockout.AllowedForNewUsers = true;

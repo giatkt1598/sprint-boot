@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using SprintBoot.Issues;
 using SprintBoot.Platform;
+using SprintBoot.Projects;
+using SprintBoot.Workflows;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
@@ -38,6 +41,24 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
 
     public DbSet<SystemPingReceipt> SystemPingReceipts { get; set; } = null!;
 
+    public DbSet<Project> Projects { get; set; } = null!;
+    public DbSet<ProjectMember> ProjectMembers { get; set; } = null!;
+    public DbSet<ProjectRole> ProjectRoles { get; set; } = null!;
+    public DbSet<ProjectRolePermission> ProjectRolePermissions { get; set; } = null!;
+
+    public DbSet<Status> Statuses { get; set; } = null!;
+
+    public DbSet<IssueType> IssueTypes { get; set; } = null!;
+    public DbSet<Priority> Priorities { get; set; } = null!;
+    public DbSet<Issue> Issues { get; set; } = null!;
+    public DbSet<Label> Labels { get; set; } = null!;
+    public DbSet<IssueLabel> IssueLabels { get; set; } = null!;
+    public DbSet<Comment> Comments { get; set; } = null!;
+    public DbSet<CommentReaction> CommentReactions { get; set; } = null!;
+    public DbSet<Attachment> Attachments { get; set; } = null!;
+    public DbSet<IssueActivity> IssueActivities { get; set; } = null!;
+    public DbSet<WorkLog> WorkLogs { get; set; } = null!;
+
     public DbSet<OutgoingEventRecord> OutgoingEvents { get; set; } = null!;
     public DbSet<IncomingEventRecord> IncomingEvents { get; set; } = null!;
 
@@ -53,5 +74,8 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
         builder.ConfigureEventOutbox();
         builder.ConfigureEventInbox();
         builder.ConfigurePlatform();
+        builder.ConfigureProjects();
+        builder.ConfigureWorkflows();
+        builder.ConfigureIssues();
     }
 }

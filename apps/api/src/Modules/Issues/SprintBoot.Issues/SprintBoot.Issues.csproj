@@ -7,4 +7,17 @@
     <PackageReference Include="Volo.Abp.Ddd.Domain" />
     <PackageReference Include="Volo.Abp.EntityFrameworkCore" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Identity\SprintBoot.Identity.Contracts\SprintBoot.Identity.Contracts.csproj" />
+    <ProjectReference Include="..\..\Projects\SprintBoot.Projects.Contracts\SprintBoot.Projects.Contracts.csproj" />
+    <ProjectReference Include="..\..\Workflows\SprintBoot.Workflows.Contracts\SprintBoot.Workflows.Contracts.csproj" />
+    <ProjectReference Include="..\..\Platform\SprintBoot.Platform.Contracts\SprintBoot.Platform.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="HtmlSanitizer" />
+    <PackageReference Include="Volo.Abp.BlobStoring.Aws" />
+    <PackageReference Include="Volo.Abp.BlobStoring.FileSystem" />
+    <PackageReference Include="Volo.Abp.EntityFrameworkCore.PostgreSql" />
+  </ItemGroup>
 </Project>

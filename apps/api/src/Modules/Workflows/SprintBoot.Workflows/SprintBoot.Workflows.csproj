@@ -7,4 +7,7 @@
     <PackageReference Include="Volo.Abp.Ddd.Domain" />
     <PackageReference Include="Volo.Abp.EntityFrameworkCore" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Identity\SprintBoot.Identity.Contracts\SprintBoot.Identity.Contracts.csproj" />
+  </ItemGroup>
 </Project>
