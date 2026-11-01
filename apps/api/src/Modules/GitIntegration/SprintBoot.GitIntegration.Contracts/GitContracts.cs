@@ -209,6 +209,8 @@ public class GitCommitRowDto
 {
     public required string Sha { get; set; }
 
+    public required string RepositoryName { get; set; }
+
     public required string Message { get; set; }
 
     public required string? AuthorName { get; set; }
@@ -221,6 +223,8 @@ public class GitCommitRowDto
 public class GitPullRequestRowDto
 {
     public required int Number { get; set; }
+
+    public required string RepositoryName { get; set; }
 
     public required string Title { get; set; }
 

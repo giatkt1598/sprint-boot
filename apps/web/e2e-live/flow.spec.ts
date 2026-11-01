@@ -952,6 +952,7 @@ test('a real Gitea connection links commits, pull requests and CI, and creates b
   await page.getByRole('button', { name: '1 commit', exact: true }).click({ timeout: 15_000 });
   await expect(page.getByRole('dialog').getByRole('tab', { name: 'Commit' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('dialog').getByText(`${key}-1 real commit`)).toBeVisible();
+  await expect(page.getByRole('dialog').getByText(`sbadmin/${repoName} · sbadmin`).first()).toBeVisible();
   await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click();
 
   // With every webhook gone, opening the issue still finds new work.
@@ -973,6 +974,7 @@ test('a real Gitea connection links commits, pull requests and CI, and creates b
   await expect(pullRow).toContainText('Open', { timeout: 15_000 });
   await pullRow.click();
   await expect(page.getByRole('link', { name: `#1 ${key}-1 ready` })).toBeVisible();
+  await expect(page.getByRole('dialog').getByText(`sbadmin/${repoName}`)).toBeVisible();
   await expectAccessible(page);
   await page.getByRole('dialog').getByRole('tab', { name: 'Build' }).click();
   await expect(page.getByRole('dialog').getByText('Nothing here yet.')).toBeVisible();
@@ -1036,6 +1038,7 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await expect(dialog.locator('.MuiChip-root')).toHaveCount(2);
 
   await dialog.getByRole('button', { name: 'Start date:' }).click();
+  await expect(page.locator('[aria-current="date"]')).toHaveCSS('border-radius', '50%');
   await page.getByRole('group', { name: 'Start date' }).getByRole('button', { name: /^15 / }).click();
   await dialog.getByRole('button', { name: 'Clear date: Start date' }).click();
   await expect(dialog.getByRole('button', { name: 'Clear date: Start date' })).toHaveCount(0);
@@ -1209,7 +1212,21 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await expect(page.getByRole('dialog').getByLabel('Name')).toHaveValue('Sprint 1');
   await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
   await expect(page.getByText(/3 weeks · 0 issues · 0 of 0 points/)).toBeVisible();
-  await expect(page.getByRole('img', { name: 'In progress: 0' })).toBeVisible();
+
+  // The next one continues from it, even without a reload.
+  await page.getByRole('button', { name: 'Create sprint' }).click();
+  await expect(page.getByRole('dialog').getByLabel('Name')).toHaveValue('Sprint 2');
+  await page.getByRole('dialog').getByRole('button', { name: 'Clear date: Start date' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Clear date: End date' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByRole('heading', { name: 'Sprint 2' })).toBeVisible();
+
+  // Starting one planned without dates offers them.
+  await page.getByRole('button', { name: 'Start sprint' }).last().click();
+  await expect(page.getByRole('dialog').getByRole('button', { name: 'Clear date: Start date' })).toBeVisible();
+  await expect(page.getByRole('dialog').getByRole('button', { name: 'Clear date: End date' })).toBeVisible();
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click();
+  await expect(page.getByRole('img', { name: 'In progress: 0' }).first()).toBeVisible();
 
   // A space keeps its own statuses and workflows; global ones are for use only.
   await page.goto(`/spaces/${key}/settings/statuses`);

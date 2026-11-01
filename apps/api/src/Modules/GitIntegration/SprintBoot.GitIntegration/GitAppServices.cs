@@ -332,7 +332,10 @@ public class GitIssueAppService(
         var commitRows = await commits.GetListAsync(item => ids.Contains(item.Id));
         var pullRows = await pullRequests.GetListAsync(item => ids.Contains(item.Id));
 
-        var repositoryIds = branchRows.Select(item => item.RepositoryId).ToList();
+        var repositoryIds = branchRows.Select(item => item.RepositoryId)
+            .Concat(commitRows.Select(item => item.RepositoryId))
+            .Concat(pullRows.Select(item => item.RepositoryId))
+            .Distinct().ToList();
         var repos = (await repositories.GetListAsync(item => repositoryIds.Contains(item.Id))).ToDictionary(item => item.Id);
         var connectionIds = repos.Values.Select(item => item.ConnectionId).ToList();
         var owners = (await connections.GetListAsync(item => connectionIds.Contains(item.Id))).ToDictionary(item => item.Id);
@@ -352,6 +355,7 @@ public class GitIssueAppService(
             Commits = [.. commitRows.OrderByDescending(item => item.CommittedAt).Select(item => new GitCommitRowDto
             {
                 Sha = item.Sha,
+                RepositoryName = repos[item.RepositoryId].FullName,
                 Message = item.Message,
                 AuthorName = item.AuthorName,
                 CommittedAt = item.CommittedAt,
@@ -360,6 +364,7 @@ public class GitIssueAppService(
             PullRequests = [.. pullRows.OrderByDescending(item => item.Number).Select(item => new GitPullRequestRowDto
             {
                 Number = item.Number,
+                RepositoryName = repos[item.RepositoryId].FullName,
                 Title = item.Title,
                 State = item.State,
                 Url = item.Url,

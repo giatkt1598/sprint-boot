@@ -33,20 +33,27 @@ export function SprintDialog({ mode, projectId, sprint, onClose }: SprintFormPro
   const [goal, setGoal] = useState(sprint?.goal ?? '');
   const [startDate, setStartDate] = useState(sprint?.startDate ?? '');
   const [endDate, setEndDate] = useState(sprint?.endDate ?? '');
+  // Starting a sprint planned without dates needs them just as much as creating one.
+  const needsDates = mode === 'create' || (mode === 'start' && !sprint?.startDate && !sprint?.endDate);
   const defaults = useQuery({
     queryKey: ['sprints', projectId, 'new-defaults'],
-    enabled: mode === 'create',
+    enabled: needsDates,
+    // Always asked afresh: the previous answer predates the sprint just created.
     gcTime: 0,
+    staleTime: 0,
+    refetchOnMount: 'always',
     queryFn: () => unwrap(apiClient.GET('/api/v1/sprint/new-defaults/{projectId}', { params: { path: { projectId } } })),
   });
 
   useEffect(() => {
     if (defaults.data) {
-      setName(defaults.data.name ?? '');
+      if (mode === 'create') {
+        setName(defaults.data.name ?? '');
+      }
       setStartDate(defaults.data.startDate ?? '');
       setEndDate(defaults.data.endDate ?? '');
     }
-  }, [defaults.data]);
+  }, [defaults.data, mode]);
 
   const pickStart = (next: string) => {
     setStartDate(next);
@@ -72,6 +79,7 @@ export function SprintDialog({ mode, projectId, sprint, onClose }: SprintFormPro
       );
     },
     onSuccess: async () => {
+      queryClient.removeQueries({ queryKey: ['sprints', projectId, 'new-defaults'] });
       await queryClient.invalidateQueries({ queryKey: ['issues'] });
       onClose();
     },

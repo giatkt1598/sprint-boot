@@ -55,6 +55,9 @@ export function DatePicker({ label, value, onChange, quiet, disabled }: DatePick
     setView({ year: next.getFullYear(), month: next.getMonth() });
   };
 
+  const now = new Date();
+  const today = toIso(now.getFullYear(), now.getMonth(), now.getDate());
+
   const pick = (next: string) => {
     onChange(next);
     setAnchor(null);
@@ -118,16 +121,19 @@ export function DatePicker({ label, value, onChange, quiet, disabled }: DatePick
               }
               const iso = toIso(view.year, view.month, day);
               const selected = iso === value;
+              const isToday = iso === today;
               return (
                 <ButtonBase
                   key={iso}
                   aria-label={`${day} ${title}`}
                   aria-pressed={selected}
+                  aria-current={isToday ? 'date' : undefined}
                   onClick={() => pick(iso)}
                   sx={{
                     height: 32,
                     fontSize: font.size.xs,
-                    borderRadius: `${radius.control}px`,
+                    borderRadius: isToday ? '50%' : `${radius.control}px`,
+                    ...(isToday && { width: 32, justifySelf: 'center', border: `1px solid ${sem('accent-default')}` }),
                     backgroundColor: selected ? sem('accent-default') : 'transparent',
                     color: sem(selected ? 'text-on-accent' : 'text-primary'),
                     '&:hover': { backgroundColor: sem(selected ? 'accent-hover' : 'bg-hover') },

@@ -12595,6 +12595,7 @@ export interface components {
         GitCiState: 0 | 1 | 2 | 3;
         GitCommitRowDto: {
             sha: string | null;
+            repositoryName: string | null;
             message: string | null;
             authorName: string | null;
             /** Format: date-time */
@@ -12635,6 +12636,7 @@ export interface components {
         GitPullRequestRowDto: {
             /** Format: int32 */
             number: number;
+            repositoryName: string | null;
             title: string | null;
             state: components["schemas"]["GitPullRequestState"];
             url: string | null;

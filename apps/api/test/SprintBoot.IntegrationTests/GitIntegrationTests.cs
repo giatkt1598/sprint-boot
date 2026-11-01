@@ -390,6 +390,8 @@ public class GitIntegrationTests(ApiFixture fixture)
         var found = await WaitAsync(client, issue, item => item.Builds.Count > 0);
         found.Branches.ShouldHaveSingleItem();
         found.Commits.Single().Sha.ShouldBe(sha);
+        found.Commits.Single().RepositoryName.ShouldBe("acme/web");
+        found.PullRequests.ShouldAllBe(pull => pull.RepositoryName == "acme/web");
         found.PullRequests.Single(pull => pull.Number == 10).State.ShouldBe(GitPullRequestState.Merged);
         found.Builds.Single().State.ShouldBe(GitCiState.Success);
 

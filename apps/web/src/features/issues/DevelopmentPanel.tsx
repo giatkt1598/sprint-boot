@@ -205,12 +205,13 @@ function DevelopmentDialog({ data, tab, onTab, onClose }: { data: Development; t
           <DetailRow key={commit.sha}>
             <MuiLink href={commit.url ?? undefined} {...external}>{commit.sha?.slice(0, SHORT_SHA)}</MuiLink>
             <Typography component="span" variant="body2"> {commit.message?.split('\n')[0]}</Typography>
-            {secondary(`${commit.authorName ?? ''} · ${formatDateTime(commit.committedAt, i18n.language)}`)}
+            {secondary([commit.repositoryName, commit.authorName, formatDateTime(commit.committedAt, i18n.language)].filter(Boolean).join(' · '))}
           </DetailRow>
         )) : empty)}
         {tab === 'pullRequests' && (data.pullRequests?.length ? data.pullRequests.map((pull) => (
           <DetailRow key={pull.url} badge={<PullBadge state={pull.state ?? 0} />}>
             <MuiLink href={pull.url ?? undefined} {...external}>#{pull.number} {pull.title}</MuiLink>
+            {secondary(pull.repositoryName)}
           </DetailRow>
         )) : empty)}
         {tab === 'builds' && (data.builds?.length ? data.builds.map((build, index) => (

@@ -17354,12 +17354,17 @@
           "authorName",
           "committedAt",
           "message",
+          "repositoryName",
           "sha",
           "url"
         ],
         "type": "object",
         "properties": {
           "sha": {
+            "type": "string",
+            "nullable": true
+          },
+          "repositoryName": {
             "type": "string",
             "nullable": true
           },
@@ -17466,6 +17471,7 @@
       "GitPullRequestRowDto": {
         "required": [
           "number",
+          "repositoryName",
           "state",
           "title",
           "url"
@@ -17475,6 +17481,10 @@
           "number": {
             "type": "integer",
             "format": "int32"
+          },
+          "repositoryName": {
+            "type": "string",
+            "nullable": true
           },
           "title": {
             "type": "string",
