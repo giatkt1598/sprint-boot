@@ -57,5 +57,8 @@ public class SprintBootEntityFrameworkCoreModule : AbpModule
             options.Outboxes.Configure(config => config.UseDbContext<SprintBootDbContext>());
             options.Inboxes.Configure(config => config.UseDbContext<SprintBootDbContext>());
         });
+
+        // One failing event must not stall every event behind it.
+        Configure<AbpEventBusBoxesOptions>(options => options.InboxProcessorFailurePolicy = InboxProcessorFailurePolicy.RetryLater);
     }
 }

@@ -38,8 +38,9 @@ export function AdminLayout() {
   const canManageUsers = useCan('SprintBoot.Users.Manage');
   const canRestore = useCan('SprintBoot.Issues.Restore');
   const canManageWorkflows = useCan('SprintBoot.Workflows.Manage');
+  const canManageSchemes = useCan('SprintBoot.NotificationSchemes.Manage');
 
-  if (!canManageUsers && !canRestore && !canManageWorkflows) {
+  if (!canManageUsers && !canRestore && !canManageWorkflows && !canManageSchemes) {
     return <main className="p-8"><Typography role="alert">{t('errors.forbidden')}</Typography></main>;
   }
 
@@ -51,6 +52,7 @@ export function AdminLayout() {
         <>
           {canManageUsers && <SettingsMenuItem to="users" label={t('admin.users')} />}
           {canManageWorkflows && <SettingsMenuItem to="workflows" label={t('workflows.title')} />}
+          {canManageSchemes && <SettingsMenuItem to="notification-schemes" label={t('topBar.notifications')} />}
           {canRestore && <SettingsMenuItem to="deleted-issues" label={t('admin.deletedIssues')} />}
         </>
       }

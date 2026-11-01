@@ -553,6 +553,69 @@ test('a board with 500 issues stays usable', async ({ page }) => {
   expect(filtered).toBeLessThan(1_500);
 });
 
+test('the bell updates live and notifications open the issue', async ({ browser, page }) => {
+  test.setTimeout(60_000);
+  await signIn(page, ADMIN.email, ADMIN.password);
+  const token = await page.evaluate(() => {
+    const key = Object.keys(sessionStorage).find((item) => item.startsWith('oidc.user:'))!;
+    return JSON.parse(sessionStorage.getItem(key)!).access_token as string;
+  });
+  const headers = { Authorization: `Bearer ${token}` };
+  const post = async (path: string, data: unknown) => {
+    const response = await page.request.post(path, { headers, data });
+    expect(response.ok(), await response.text()).toBe(true);
+    const body = await response.text();
+    return body ? JSON.parse(body) : null;
+  };
+  const key = `N${suffix()}`;
+  const email = `bell-${suffix().toLowerCase()}@test.local`;
+  const user = await post('/api/v1/user-admin', { name: 'Bell Person', email, password: 'Member123!dev', systemRole: 'member' });
+  const space = await post('/api/v1/project', { name: `Bell ${key}`, key, type: 0 });
+  await post(`/api/v1/project/${space.id}/member`, { userId: user.id, role: 'Member' });
+  const types = await (await page.request.get(`/api/v1/issue/types/${space.id}`, { headers })).json();
+  const task = types.find((type: { name: string }) => type.name === 'Task');
+  const issue = await post('/api/v1/issue', { projectId: space.id, typeId: task.id, title: 'Ring the bell' });
+
+  const context = await browser.newContext({ baseURL: test.info().project.use.baseURL, locale: 'en', reducedMotion: 'reduce' });
+  const other = await context.newPage();
+  await signIn(other, email, 'Member123!dev');
+  await expect(other.getByRole('button', { name: /^Notifications/ })).toBeVisible();
+  await other.waitForTimeout(1500);
+  const before = await other.getByRole('button', { name: /^Notifications/ }).getAttribute('aria-label');
+
+  const fresh = await (await page.request.get(`/api/v1/issue/by-key?key=${key}-1`, { headers })).json();
+  const update = await page.request.put(`/api/v1/issue/${issue.id}`, { headers, data: { concurrencyStamp: fresh.concurrencyStamp, fields: { assignee: user.id } } });
+  expect(update.ok()).toBe(true);
+
+  await expect(other.getByRole('button', { name: /^Notifications/ })).not.toHaveAttribute('aria-label', before ?? '', { timeout: 20_000 });
+  await other.getByRole('button', { name: /unread/ }).click();
+  await expectAccessible(other);
+  await other.getByRole('button', { name: new RegExp(`assigned ${key}-1 to you`) }).click();
+  await other.waitForURL(`**/issues/${key}-1`);
+
+  await other.goto('/notifications');
+  await expect(other.getByRole('heading', { name: 'Notifications' })).toBeVisible();
+  await expectAccessible(other);
+  await other.goto('/account/notifications');
+  await expect(other.getByLabel('Issue assigned')).toBeChecked();
+  await expectAccessible(other);
+  await context.close();
+
+  await page.goto(`/issues/${key}-1`);
+  await page.getByRole('button', { name: /watchers/ }).click();
+  await expect(page.getByRole('button', { name: 'Stop watching' })).toBeVisible();
+  await page.keyboard.press('Escape');
+
+  await page.goto('/admin/notification-schemes');
+  await expectAccessible(page);
+  await page.getByRole('link', { name: 'Default' }).click();
+  await expect(page.getByRole('cell', { name: 'Issue assigned', exact: true })).toBeVisible();
+  await expectAccessible(page);
+  await page.getByRole('button', { name: 'Edit Issue assigned' }).click();
+  await expect(page.getByRole('checkbox', { name: 'Assignee' })).toBeChecked();
+  await expectAccessible(page);
+});
+
 test('an expired access token renews silently', async ({ page }) => {
   await signIn(page, ADMIN.email, ADMIN.password);
   const expired = await page.evaluate(() => {

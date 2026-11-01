@@ -3,7 +3,7 @@ import Link from '@mui/material/Link';
 import Menu from '@mui/material/Menu';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Ellipsis, Link2, Plus, Trash2, Upload } from 'lucide-react';
+import { Ellipsis, Eye, Link2, Plus, Trash2, Upload } from 'lucide-react';
 import { useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router';
@@ -14,6 +14,7 @@ import { Button } from '../../components/Button';
 import { DialogConfirm } from '../../components/Dialog';
 import { IssueTypeIcon, PriorityIcon, type IssueType as IconType } from '../../components/IssueIcons';
 import { MenuItem } from '../../components/Menu';
+import { Popover } from '../../components/Popover';
 import { ErrorState, LoadingState } from '../../components/StateViews';
 import { Tabs } from '../../components/Tabs';
 import { SelectField, TextField } from '../../components/TextField';
@@ -209,6 +210,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
             </Typography>
           )}
         </div>
+        <WatchControl issueId={issue.id!} />
         <IconButton size="small" aria-label={t('issues.more')} onClick={(event) => setMenuAnchor(event.currentTarget)}>
           <Ellipsis size={16} strokeWidth={1.5} aria-hidden />
         </IconButton>
@@ -444,6 +446,45 @@ function SprintField({ issue, canEdit, onError }: { issue: Issue; canEdit: boole
       onChange={(event) => move.mutate(event.target.value)}
       options={[{ value: '', label: t('common.none') }, ...options]}
     />
+  );
+}
+
+function WatchControl({ issueId }: { issueId: string }) {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const key = ['issues', issueId, 'watchers'];
+
+  const watchers = useQuery({
+    queryKey: key,
+    queryFn: () => unwrap(apiClient.GET('/api/v1/watcher', { params: { query: { issueId } } })),
+  });
+
+  const toggle = useMutation({
+    mutationFn: () =>
+      unwrap(apiClient.POST(watchers.data?.watchedByMe ? '/api/v1/watcher/unwatch/{issueId}' : '/api/v1/watcher/watch/{issueId}', { params: { path: { issueId } } })),
+    onSuccess: (next) => queryClient.setQueryData(key, next),
+  });
+
+  return (
+    <>
+      <Button
+        kind="ghost"
+        aria-label={t('issues.watchers', { count: watchers.data?.count ?? 0 })}
+        startIcon={<Eye size={16} strokeWidth={1.5} aria-hidden />}
+        onClick={(event) => setAnchor(event.currentTarget)}
+      >
+        {watchers.data?.count ?? ''}
+      </Button>
+      <Popover width={264} open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}>
+        <div className="flex flex-col gap-2">
+          <Button kind="secondary" onClick={() => toggle.mutate()}>
+            {t(watchers.data?.watchedByMe ? 'issues.stopWatching' : 'issues.startWatching')}
+          </Button>
+          {(watchers.data?.users ?? []).map((user) => <Person key={user.id} name={user.name} />)}
+        </div>
+      </Popover>
+    </>
   );
 }
 

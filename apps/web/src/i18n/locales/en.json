@@ -164,7 +164,10 @@
     "CompletionTargetRequired": "Choose where unfinished issues go.",
     "StatusInTwoColumns": "A status can only be on one column.",
     "KanbanHasNoSprints": "Kanban spaces have no sprints.",
-    "IssueNotPlannable": "This issue cannot be planned here."
+    "IssueNotPlannable": "This issue cannot be planned here.",
+    "UnknownNotificationEvent": "Unknown notification event.",
+    "DefaultSchemeLocked": "The default scheme cannot be deleted.",
+    "NotificationSchemeInUse": "This scheme is still used by a space."
   },
   "auth": {
     "signIn": "Sign in",
@@ -375,7 +378,10 @@
     "commentMore": "More comment actions",
     "moveTo": "Move to",
     "moveSummary": "{{key}} moves from {{from}} to {{to}}.",
-    "commentRequired": "Comment (required)"
+    "commentRequired": "Comment (required)",
+    "watchers": "{{count}} watchers",
+    "startWatching": "Watch this issue",
+    "stopWatching": "Stop watching"
   },
   "workflows": {
     "title": "Workflows",
@@ -468,5 +474,55 @@
     "addStatus": "Add status",
     "addStatusTo": "Add a status to {{name}}",
     "removeStatus": "Remove {{name}} from this column"
+  },
+  "notifications": {
+    "bellUnread": "Notifications, {{count}} unread",
+    "markAll": "Mark all as read",
+    "seeAll": "See all notifications",
+    "empty": "You are all caught up.",
+    "unreadOnly": "Unread only",
+    "preferencesHint": "Choose what you are notified about in the app.",
+    "schemes": "Notification schemes",
+    "schemesHint": "Each space uses one scheme. A scheme decides who hears about what.",
+    "createScheme": "Create scheme",
+    "default": "Default",
+    "rules": "Rules",
+    "recipients": "Recipients",
+    "spaceRole": "Space role",
+    "event_column": "Event",
+    "schemeField": "Notification scheme",
+    "deleteTitle": "Delete this scheme?",
+    "deleteBody": "{{name}} will be removed. Rules cannot be recovered.",
+    "alwaysMentioned": "Mentioned person (always on)",
+    "alwaysAdded": "Added person",
+    "recipient": {
+      "assignee": "Assignee",
+      "reporter": "Reporter",
+      "watcher": "Watchers"
+    },
+    "type": {
+      "issue_created": "Issue created",
+      "issue_assigned": "Issue assigned",
+      "issue_updated": "Important field changed",
+      "comment_added": "New comment",
+      "mentioned": "Mentioned",
+      "issue_transitioned": "Status changed",
+      "workflow_notification": "Workflow notification",
+      "sprint_started": "Sprint started",
+      "sprint_completed": "Sprint completed",
+      "project_member_added": "Added to a space"
+    },
+    "event": {
+      "issue_created": "{{actor}} created {{key}}",
+      "issue_assigned": "{{actor}} assigned {{key}} to you",
+      "issue_updated": "{{actor}} updated {{key}}",
+      "comment_added": "{{actor}} commented on {{key}}",
+      "mentioned": "{{actor}} mentioned you in {{key}}",
+      "issue_transitioned": "{{actor}} moved {{key}} to {{status}}",
+      "workflow_notification": "{{actor}} moved {{key}}: {{status}}",
+      "sprint_started": "{{name}} started",
+      "sprint_completed": "{{name}} completed",
+      "project_member_added": "{{actor}} added you to a space"
+    }
   }
 }

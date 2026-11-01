@@ -12,6 +12,7 @@ import { Button } from '../components/Button';
 import { MenuItem } from '../components/Menu';
 import { CreateIssueDialog } from '../features/issues/CreateIssueDialog';
 import { QuickSearch } from '../features/issues/QuickSearch';
+import { NotificationBell } from '../features/notifications/NotificationBell';
 import { font, sem, size } from '../theme/tokens';
 
 export function TopBar() {
@@ -47,8 +48,10 @@ export function TopBar() {
       <div className="flex-1" />
       <QuickSearch />
       <Button onClick={() => setCreating(true)}>{t('topBar.create')}</Button>
-      <IconButton aria-label={t('topBar.account')} size="small" sx={{ padding: 0.5 }} onClick={(event) => setMenuAnchor(event.currentTarget)}>
+      <NotificationBell />
+      <IconButton size="small" sx={{ padding: 0.5 }} onClick={(event) => setMenuAnchor(event.currentTarget)}>
         <Avatar name={user.name ?? ''} />
+        <span className="sr-only">{t('topBar.account')}</span>
       </IconButton>
       <Menu open={Boolean(menuAnchor)} anchorEl={menuAnchor} onClose={() => setMenuAnchor(null)}>
         <MenuItem icon={User} onClick={() => open('/account/profile')}>{t('topBar.profile')}</MenuItem>

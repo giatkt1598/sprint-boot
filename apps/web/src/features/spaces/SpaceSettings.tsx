@@ -18,6 +18,7 @@ import { UserPicker, type PickerUser } from '../../components/UserPicker';
 import { useErrorMessage } from '../../lib/errors';
 import { formatDate } from '../../lib/format';
 import { font, radius, sem, size } from '../../theme/tokens';
+import { SpaceSchemeField } from '../notifications/NotificationPages';
 import { SpacePermission, useMembers, useSpace, type Space, type SpaceMember } from './api';
 
 const ROLE_LABELS: Record<string, string> = {
@@ -144,6 +145,7 @@ export function SpaceGeneralPage() {
       <TextField label={t('spaces.name')} value={name} disabled={!canManage} onChange={(event) => setName(event.target.value)} />
       <TextField label={t('spaces.key')} value={space.key ?? ''} disabled />
       <TextField label={t('spaces.branchTemplate')} value={template} disabled={!canManage} onChange={(event) => setTemplate(event.target.value)} />
+      <SpaceSchemeField projectId={space.id!} disabled={!canManage} />
       {canManage && (
         <div>
           <Button type="submit" disabled={!name.trim() || save.isPending}>{t('common.save')}</Button>

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Volo.Abp.DependencyInjection;
+using System.Security.Principal;
 using Volo.Abp.Security.Claims;
 
 namespace SprintBoot.Notifications;
@@ -15,7 +16,7 @@ public class NotificationHub : Hub
 
     public override async Task OnConnectedAsync()
     {
-        var userId = Context.User?.FindFirst(AbpClaimTypes.UserId)?.Value;
+        var userId = Context.User?.FindUserId()?.ToString();
         if (Guid.TryParse(userId, out var id))
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, Group(id));

@@ -5,6 +5,7 @@ using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Guids;
 using Volo.Abp.Timing;
+using Volo.Abp.Uow;
 
 namespace SprintBoot.Notifications;
 
@@ -28,6 +29,7 @@ public class NotificationProcessor(
     IProjectAccess projectAccess,
     IUserDirectory userDirectory,
     NotificationPusher pusher,
+    IUnitOfWorkManager unitOfWorkManager,
     IClock clock,
     IGuidGenerator guids) : ITransientDependency
 {
@@ -87,7 +89,15 @@ public class NotificationProcessor(
                 facts?.Key, facts?.Title ?? item.Title, actor?.Name, item.Detail, now), autoSave: true);
         }
 
-        await pusher.PushAsync(pushed);
+        // After commit, or clients would refetch before the rows are visible.
+        if (unitOfWorkManager.Current is { } unitOfWork)
+        {
+            unitOfWork.OnCompleted(() => pusher.PushAsync(pushed));
+        }
+        else
+        {
+            await pusher.PushAsync(pushed);
+        }
     }
 
     private async Task<bool> TryMergeAsync(NotificationEvent item, Guid userId, DateTime now)

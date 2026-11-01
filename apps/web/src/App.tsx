@@ -10,6 +10,7 @@ import { BacklogPage } from './features/agile/BacklogPage';
 import { BoardPage } from './features/agile/BoardPage';
 import { EpicsPage } from './features/agile/EpicsPage';
 import { IssuePage } from './features/issues/IssuePage';
+import { EditSchemePage, NotificationPreferencesPage, NotificationSchemesPage, NotificationsPage } from './features/notifications/NotificationPages';
 import { IssuesListPage } from './features/issues/IssuesListPage';
 import { SpaceGeneralPage, SpaceMembersPage, SpaceSettingsIndex, SpaceSettingsLayout } from './features/spaces/SpaceSettings';
 import { SpaceBoardPage } from './features/spaces/SpaceBoardPage';
@@ -37,12 +38,15 @@ export function App() {
               <Route index element={<AccountIndex />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="security" element={<SecurityPage />} />
+              <Route path="notifications" element={<NotificationPreferencesPage />} />
             </Route>
             <Route path="admin" element={<AdminLayout />}>
               <Route index element={<AdminIndex />} />
               <Route path="users" element={<UsersPage />} />
               <Route path="users/:userId" element={<ManageUserPage />} />
               <Route path="workflows" element={<WorkflowsPage />} />
+              <Route path="notification-schemes" element={<NotificationSchemesPage />} />
+              <Route path="notification-schemes/:schemeId" element={<EditSchemePage />} />
               <Route path="statuses" element={<StatusesPage />} />
               <Route path="deleted-issues" element={<DeletedIssuesPage />} />
             </Route>
@@ -64,6 +68,7 @@ export function App() {
             <Route path="spaces/:spaceKey/issues" element={<IssuesListPage />} />
             <Route path="issues/:issueKey" element={<IssuePage />} />
             <Route path="search" element={<IssuesListPage />} />
+            <Route path="notifications" element={<NotificationsPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

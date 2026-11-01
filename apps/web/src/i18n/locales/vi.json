@@ -164,7 +164,10 @@
     "CompletionTargetRequired": "Hãy chọn nơi đến cho issue chưa xong.",
     "StatusInTwoColumns": "Mỗi status chỉ thuộc một cột.",
     "KanbanHasNoSprints": "Space Kanban không có sprint.",
-    "IssueNotPlannable": "Không thể lập kế hoạch cho issue này."
+    "IssueNotPlannable": "Không thể lập kế hoạch cho issue này.",
+    "UnknownNotificationEvent": "Sự kiện thông báo không hợp lệ.",
+    "DefaultSchemeLocked": "Không xóa được scheme mặc định.",
+    "NotificationSchemeInUse": "Scheme này vẫn đang được Space sử dụng."
   },
   "auth": {
     "signIn": "Đăng nhập",
@@ -375,7 +378,10 @@
     "commentMore": "Thao tác khác với bình luận",
     "moveTo": "Chuyển sang",
     "moveSummary": "{{key}} chuyển từ {{from}} sang {{to}}.",
-    "commentRequired": "Bình luận (bắt buộc)"
+    "commentRequired": "Bình luận (bắt buộc)",
+    "watchers": "{{count}} người theo dõi",
+    "startWatching": "Theo dõi issue này",
+    "stopWatching": "Bỏ theo dõi"
   },
   "workflows": {
     "title": "Workflow",
@@ -468,5 +474,55 @@
     "addStatus": "Thêm status",
     "addStatusTo": "Thêm status vào {{name}}",
     "removeStatus": "Bỏ {{name}} khỏi cột này"
+  },
+  "notifications": {
+    "bellUnread": "Thông báo, {{count}} chưa đọc",
+    "markAll": "Đánh dấu đã đọc tất cả",
+    "seeAll": "Xem tất cả thông báo",
+    "empty": "Bạn đã xem hết thông báo.",
+    "unreadOnly": "Chỉ chưa đọc",
+    "preferencesHint": "Chọn những gì bạn muốn được thông báo trong ứng dụng.",
+    "schemes": "Notification scheme",
+    "schemesHint": "Mỗi Space dùng một scheme. Scheme quyết định ai nhận tin về việc gì.",
+    "createScheme": "Tạo scheme",
+    "default": "Mặc định",
+    "rules": "Quy tắc",
+    "recipients": "Người nhận",
+    "spaceRole": "Role trong Space",
+    "event_column": "Sự kiện",
+    "schemeField": "Notification scheme",
+    "deleteTitle": "Xóa scheme này?",
+    "deleteBody": "{{name}} sẽ bị xóa. Không khôi phục được các quy tắc.",
+    "alwaysMentioned": "Người được mention (luôn bật)",
+    "alwaysAdded": "Người được thêm",
+    "recipient": {
+      "assignee": "Người xử lý",
+      "reporter": "Người báo cáo",
+      "watcher": "Người theo dõi"
+    },
+    "type": {
+      "issue_created": "Issue được tạo",
+      "issue_assigned": "Issue được gán",
+      "issue_updated": "Field quan trọng thay đổi",
+      "comment_added": "Bình luận mới",
+      "mentioned": "Được mention",
+      "issue_transitioned": "Đổi status",
+      "workflow_notification": "Thông báo từ workflow",
+      "sprint_started": "Sprint bắt đầu",
+      "sprint_completed": "Sprint hoàn thành",
+      "project_member_added": "Được thêm vào Space"
+    },
+    "event": {
+      "issue_created": "{{actor}} đã tạo {{key}}",
+      "issue_assigned": "{{actor}} đã gán {{key}} cho bạn",
+      "issue_updated": "{{actor}} đã cập nhật {{key}}",
+      "comment_added": "{{actor}} đã bình luận ở {{key}}",
+      "mentioned": "{{actor}} đã nhắc đến bạn ở {{key}}",
+      "issue_transitioned": "{{actor}} đã chuyển {{key}} sang {{status}}",
+      "workflow_notification": "{{actor}} đã chuyển {{key}}: {{status}}",
+      "sprint_started": "{{name}} đã bắt đầu",
+      "sprint_completed": "{{name}} đã hoàn thành",
+      "project_member_added": "{{actor}} đã thêm bạn vào một Space"
+    }
   }
 }
