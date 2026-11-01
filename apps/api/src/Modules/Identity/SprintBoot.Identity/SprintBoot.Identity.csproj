@@ -9,7 +9,11 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Volo.Abp.Identity.AspNetCore" />
     <PackageReference Include="Volo.Abp.Identity.Domain" />
+    <PackageReference Include="Volo.Abp.MailKit" />
     <PackageReference Include="Volo.Abp.OpenIddict.AspNetCore" />
     <PackageReference Include="Volo.Abp.PermissionManagement.Domain.Identity" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Emails\*.json" />
   </ItemGroup>
 </Project>

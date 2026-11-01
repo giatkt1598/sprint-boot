@@ -21,6 +21,8 @@ public sealed class AuthClient(ApiFixture fixture)
         HandleCookies = true,
     });
 
+    public Guid UserId { get; init; }
+
     public string? AccessToken { get; private set; }
 
     public string? RefreshToken { get; private set; }
@@ -88,12 +90,19 @@ public sealed class AuthClient(ApiFixture fixture)
         ["refresh_token"] = RefreshToken!,
     }, token);
 
-    public async Task<HttpResponseMessage> PostTokenAsync(Dictionary<string, string> form, CancellationToken token) =>
-        await Http.PostAsync("/connect/token", new FormUrlEncodedContent(form), token);
+    public async Task<HttpResponseMessage> PostFormAsync(string path, Dictionary<string, string> form, CancellationToken token) =>
+        await Http.PostAsync(path, new FormUrlEncodedContent(form), token);
+
+    public async Task<HttpResponseMessage> PostJsonAsync(string path, object body, string csrf, CancellationToken token)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, path) { Content = JsonContent.Create(body) };
+        request.Headers.Add("RequestVerificationToken", csrf);
+        return await Http.SendAsync(request, token);
+    }
 
     private async Task ExchangeAsync(Dictionary<string, string> form, CancellationToken token)
     {
-        var response = await PostTokenAsync(form, token);
+        var response = await PostFormAsync("/connect/token", form, token);
         var body = await response.Content.ReadAsStringAsync(token);
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
         using var json = JsonDocument.Parse(body);

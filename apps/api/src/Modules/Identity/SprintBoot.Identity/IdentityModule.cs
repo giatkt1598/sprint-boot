@@ -11,6 +11,7 @@ using Volo.Abp.Domain;
 using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.Identity;
 using Volo.Abp.Identity.AspNetCore;
+using Volo.Abp.MailKit;
 using Volo.Abp.Modularity;
 using Volo.Abp.OpenIddict;
 using Volo.Abp.PermissionManagement.Identity;
@@ -25,6 +26,7 @@ namespace SprintBoot.Identity;
     typeof(AbpIdentityDomainModule),
     typeof(AbpIdentityAspNetCoreModule),
     typeof(AbpOpenIddictAspNetCoreModule),
+    typeof(AbpMailKitModule),
     typeof(AbpPermissionManagementDomainIdentityModule))]
 public class IdentityModule : AbpModule
 {
@@ -44,6 +46,7 @@ public class IdentityModule : AbpModule
         PreConfigure<OpenIddictServerBuilder>(builder =>
         {
             builder.RegisterScopes(SpaClientDataSeedContributor.ApiScope);
+            builder.SetRevocationEndpointUris("connect/revocation");
             builder.SetAccessTokenLifetime(TimeSpan.FromMinutes(15));
             builder.SetRefreshTokenLifetime(TimeSpan.FromDays(14));
         });

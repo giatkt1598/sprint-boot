@@ -65,4 +65,68 @@ public class AuthTests(ApiFixture fixture)
         unknown.StatusCode.ShouldBe(wrong.StatusCode);
         (await unknown.Content.ReadAsStringAsync(Token)).ShouldBe(await wrong.Content.ReadAsStringAsync(Token));
     }
+
+    [Fact]
+    public async Task Logout_revocation_kills_the_refresh_token()
+    {
+        var client = new AuthClient(fixture);
+        await client.SignInAsync(ApiFixture.AdminEmail, ApiFixture.AdminPassword, Token);
+
+        var revoke = await client.PostFormAsync("/connect/revocation", new Dictionary<string, string>
+        {
+            ["client_id"] = "sprint-boot-web",
+            ["token"] = client.RefreshToken!,
+            ["token_type_hint"] = "refresh_token",
+        }, Token);
+        revoke.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var refresh = await client.PostFormAsync("/connect/token", new Dictionary<string, string>
+        {
+            ["grant_type"] = "refresh_token",
+            ["client_id"] = "sprint-boot-web",
+            ["refresh_token"] = client.RefreshToken!,
+        }, Token);
+        refresh.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Member_calling_an_admin_api_gets_403()
+    {
+        var member = await fixture.CreateUserClientAsync(Token);
+
+        var response = await member.Http.GetAsync("/api/v1/user-admin?maxResultCount=10", Token);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task Forgotten_password_flow_resets_with_a_single_use_token()
+    {
+        var (user, password) = await fixture.CreateUserAsync(Token);
+        var client = new AuthClient(fixture);
+        var token = await fixture.GenerateResetTokenAsync(user.Id);
+        var csrf = await client.GetCsrfTokenAsync(Token);
+
+        var first = await client.PostJsonAsync("/api/v1/auth/reset-password", new { userId = user.Id, token, newPassword = password + "x" }, csrf, Token);
+        first.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        var second = await client.PostJsonAsync("/api/v1/auth/reset-password", new { userId = user.Id, token, newPassword = password + "y" }, csrf, Token);
+        (await second.Content.ReadAsStringAsync(Token)).ShouldContain(AuthErrors.ResetLinkInvalid);
+    }
+
+    [Fact]
+    public async Task Five_wrong_passwords_lock_the_account()
+    {
+        var (user, password) = await fixture.CreateUserAsync(Token);
+        var client = new AuthClient(fixture);
+        var csrf = await client.GetCsrfTokenAsync(Token);
+
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            await client.PostLoginAsync(user.Email, "wrong", csrf, Token);
+        }
+
+        var response = await client.PostLoginAsync(user.Email, password, csrf, Token);
+        (await response.Content.ReadAsStringAsync(Token)).ShouldContain(AuthErrors.LockedOut);
+    }
 }

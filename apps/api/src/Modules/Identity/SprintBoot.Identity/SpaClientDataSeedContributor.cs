@@ -28,7 +28,7 @@ public class SpaClientDataSeedContributor(
             });
         }
 
-        var baseUrl = (configuration["Auth:SpaBaseUrl"] ?? "http://localhost:5173").TrimEnd('/');
+        var baseUrl = SpaUrls.GetBaseUrl(configuration);
         var descriptor = new OpenIddictApplicationDescriptor
         {
             ClientId = ClientId,

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using System.Net;
 using System.Net.Sockets;
 using Microsoft.AspNetCore.Hosting;
@@ -8,9 +9,12 @@ using SprintBoot.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
 using Volo.Abp.Data;
 using Volo.Abp.Identity;
+using Volo.Abp.Uow;
 using Testcontainers.RabbitMq;
 using Testcontainers.Redis;
 using Xunit;
+
+using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
 namespace SprintBoot.IntegrationTests;
 
@@ -69,6 +73,38 @@ public sealed class ApiFixture : IAsyncLifetime
             .WithProperty(IdentityDataSeedContributor.AdminPasswordPropertyName, AdminPassword));
     }
 
+    public async Task<(CreateUserResult User, string Password)> CreateUserAsync(CancellationToken token)
+    {
+        const string password = "Member123!test";
+        var email = $"user-{Guid.NewGuid():N}@test.local";
+        using var scope = Factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<IdentityUserManager>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>();
+        using var uow = unitOfWork.Begin(requiresNew: true);
+        var user = new IdentityUser(Guid.NewGuid(), email, email) { Name = email };
+        (await users.CreateAsync(user, password)).CheckErrors();
+        (await users.AddToRoleAsync(user, "member")).CheckErrors();
+        await uow.CompleteAsync(token);
+        return (new CreateUserResult(user.Id, email), password);
+    }
+
+    public async Task<AuthClient> CreateUserClientAsync(CancellationToken token)
+    {
+        var (user, password) = await CreateUserAsync(token);
+        var client = new AuthClient(this) { UserId = user.Id };
+        await client.SignInAsync(user.Email, password, token);
+        return client;
+    }
+
+    public async Task<string> GenerateResetTokenAsync(Guid userId)
+    {
+        using var scope = Factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<IdentityUserManager>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>();
+        using var uow = unitOfWork.Begin(requiresNew: true);
+        return await users.GeneratePasswordResetTokenAsync(await users.GetByIdAsync(userId));
+    }
+
     public async ValueTask DisposeAsync()
     {
         await Factory.DisposeAsync();
@@ -84,6 +120,8 @@ public sealed class ApiFixture : IAsyncLifetime
         return ((IPEndPoint)listener.LocalEndpoint).Port;
     }
 }
+
+public record CreateUserResult(Guid Id, string Email);
 
 [CollectionDefinition(Name)]
 public class ApiCollection : ICollectionFixture<ApiFixture>

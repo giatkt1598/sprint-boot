@@ -39,6 +39,7 @@ public class SprintBootHostModule : AbpModule
     private static readonly System.Reflection.Assembly[] ApiAssemblies =
     [
         typeof(PlatformModule).Assembly,
+        typeof(IdentityModule).Assembly,
     ];
 
     public override void ConfigureServices(ServiceConfigurationContext context)
