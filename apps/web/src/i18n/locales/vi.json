@@ -49,7 +49,10 @@
     "unassigned": "Chưa gán",
     "previous": "Trước",
     "next": "Sau",
-    "showing": "{{from}}–{{to}} trên {{total}}"
+    "showing": "{{from}}–{{to}} trên {{total}}",
+    "previousMonth": "Tháng trước",
+    "nextMonth": "Tháng sau",
+    "clearDate": "Xóa ngày"
   },
   "issue": {
     "status": {
@@ -201,7 +204,19 @@
     "subtasks": "Subtask",
     "restore": "Khôi phục",
     "restored": "Đã khôi phục issue",
-    "noDeleted": "Không có issue đã xóa"
+    "noDeleted": "Không có issue đã xóa",
+    "addToSpace": "Thêm vào Space",
+    "noSpaces": "Chưa thuộc Space nào",
+    "added": "Ngày thêm",
+    "signInMethods": "Phương thức đăng nhập",
+    "method": "Phương thức",
+    "methodPassword": "Email và mật khẩu",
+    "methodOn": "Bật",
+    "methodOff": "Tắt",
+    "methodAccount": "Tài khoản",
+    "methodLinked": "Ngày liên kết",
+    "methodUsed": "Dùng gần nhất",
+    "lastActive": "Hoạt động gần nhất {{date}}"
   },
   "spaces": {
     "title": "Space",
@@ -329,6 +344,9 @@
       "dueDate": "Hạn",
       "workLog": "Ghi thời gian",
       "attachment": "Đính kèm"
-    }
+    },
+    "addReaction": "Thêm cảm xúc",
+    "reactWith": "Thả {{emoji}}",
+    "commentMore": "Thao tác khác với bình luận"
   }
 }

@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Shouldly;
 using SprintBoot.Identity;
+using SprintBoot.Projects;
 using Xunit;
 
 namespace SprintBoot.IntegrationTests;
@@ -128,5 +129,29 @@ public class AuthTests(ApiFixture fixture)
 
         var response = await client.PostLoginAsync(user.Email, password, csrf, Token);
         (await response.Content.ReadAsStringAsync(Token)).ShouldContain(AuthErrors.LockedOut);
+    }
+
+    [Fact]
+    public async Task Admin_sees_spaces_and_sign_in_methods_of_a_user_but_a_member_cannot()
+    {
+        var member = await fixture.CreateUserClientAsync(Token);
+        var created = await member.Http.PostAsJsonAsync(
+            "/api/v1/project", new { name = "Mine", key = $"M{Random.Shared.Next(100000, 999999)}", type = 0 }, Token);
+        created.EnsureSuccessStatusCode();
+        var admin = new AuthClient(fixture);
+        await admin.SignInAsync(ApiFixture.AdminEmail, ApiFixture.AdminPassword, Token);
+
+        var spaces = await admin.Http.GetFromJsonAsync<List<UserSpaceDto>>(
+            $"/api/v1/project-admin/user-spaces/{member.UserId}", Token);
+        spaces!.Single().Role.ShouldBe(ProjectRoleNames.Admin);
+
+        var methods = await admin.Http.GetFromJsonAsync<List<SignInMethodDto>>(
+            $"/api/v1/user-admin/{member.UserId}/sign-in-methods", Token);
+        methods!.Single().Method.ShouldBe(UserAdminAppService.PasswordMethod);
+
+        (await member.Http.GetAsync($"/api/v1/project-admin/user-spaces/{member.UserId}", Token))
+            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await member.Http.GetAsync($"/api/v1/user-admin/{member.UserId}/sign-in-methods", Token))
+            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 }

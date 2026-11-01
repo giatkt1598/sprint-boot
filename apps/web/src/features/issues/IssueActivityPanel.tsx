@@ -2,14 +2,19 @@ import IconButton from '@mui/material/IconButton';
 import InputBase from '@mui/material/InputBase';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Pencil, Reply, ThumbsUp, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { Ellipsis, Link2, Pencil, Reply, SmilePlus, ThumbsUp, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import type { components } from '@sprint-boot/api-client';
 import { useTranslation } from 'react-i18next';
+import Menu from '@mui/material/Menu';
+import { useSearchParams } from 'react-router';
 import { apiClient, unwrap } from '../../api';
 import { useCurrentUser } from '../../auth/AuthProvider';
 import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
+import { DatePicker } from '../../components/DatePicker';
+import { MenuItem } from '../../components/Menu';
+import { Popover } from '../../components/Popover';
 import { Dialog, DialogFooter } from '../../components/Dialog';
 import { EmptyState, LoadingState } from '../../components/StateViews';
 import { TextField } from '../../components/TextField';
@@ -21,6 +26,7 @@ import { RichTextEditor, RichTextView, type MentionUser } from './RichTextEditor
 import type { Activity, Comment, Issue } from './api';
 
 const LIKE = '👍';
+const EMOJIS = ['😄', '🎉', '❤️', '🚀', '👀', '😕'];
 
 interface PanelProps {
   tab: string;
@@ -94,6 +100,8 @@ function CommentItem({ comment, issue, replies, people, canEdit, canManage }: { 
   const [replying, setReplying] = useState(false);
   const [editing, setEditing] = useState(false);
   const [body, setBody] = useState(comment.body ?? '');
+  const [emojiAnchor, setEmojiAnchor] = useState<HTMLElement | null>(null);
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const isMine = comment.author?.id === me.id;
   const like = comment.reactions?.find((reaction) => reaction.emoji === LIKE);
 
@@ -101,7 +109,7 @@ function CommentItem({ comment, issue, replies, people, canEdit, canManage }: { 
   const onError = (failure: unknown) => toast('error', toMessage(failure));
 
   const react = useMutation({
-    mutationFn: () => unwrap(apiClient.POST('/api/v1/comment/{id}/toggle-reaction', { params: { path: { id: comment.id! } }, body: { emoji: LIKE } })),
+    mutationFn: (emoji: string) => unwrap(apiClient.POST('/api/v1/comment/{id}/toggle-reaction', { params: { path: { id: comment.id! } }, body: { emoji } })),
     onSuccess: refresh,
     onError,
   });
@@ -119,8 +127,16 @@ function CommentItem({ comment, issue, replies, people, canEdit, canManage }: { 
     onError,
   });
 
+  const copyLink = async () => {
+    setMenuAnchor(null);
+    const url = new URL(window.location.href);
+    url.search = `?comment=${comment.id}`;
+    await navigator.clipboard.writeText(url.toString());
+    toast('success', t('issues.linkCopied'));
+  };
+
   return (
-    <article className="flex flex-col gap-1">
+    <article id={`comment-${comment.id}`} className="flex flex-col gap-1">
       <div className="flex items-center gap-2">
         <Avatar name={comment.author?.name ?? ''} />
         <span style={{ fontWeight: font.weight.medium }}>{comment.author?.name}</span>
@@ -142,30 +158,63 @@ function CommentItem({ comment, issue, replies, people, canEdit, canManage }: { 
         )}
         <div className="flex items-center gap-1">
           {canEdit && (
+            <IconButton size="small" aria-label={t('issues.addReaction')} onClick={(event) => setEmojiAnchor(event.currentTarget)}>
+              <SmilePlus size={16} strokeWidth={1.5} aria-hidden />
+            </IconButton>
+          )}
+          <Popover width={200} open={Boolean(emojiAnchor)} anchorEl={emojiAnchor} onClose={() => setEmojiAnchor(null)}>
+            <div className="flex flex-wrap gap-1">
+              {EMOJIS.map((emoji) => (
+                <IconButton
+                  key={emoji}
+                  size="small"
+                  aria-label={t('issues.reactWith', { emoji })}
+                  onClick={() => { react.mutate(emoji); setEmojiAnchor(null); }}
+                >
+                  {emoji}
+                </IconButton>
+              ))}
+            </div>
+          </Popover>
+          {canEdit && (
             <Button
               kind="ghost"
               aria-label={t('issues.like')}
               aria-pressed={like?.reactedByMe ?? false}
               startIcon={<ThumbsUp size={16} strokeWidth={1.5} aria-hidden />}
-              onClick={() => react.mutate()}
+              onClick={() => react.mutate(LIKE)}
             >
               {like?.count ?? ''}
             </Button>
           )}
           {!canEdit && (like?.count ?? 0) > 0 && <span style={{ fontSize: font.size.xs }}>{LIKE} {like?.count}</span>}
+          {(comment.reactions ?? []).filter((reaction) => reaction.emoji !== LIKE).map((reaction) => (
+            <Button
+              key={reaction.emoji}
+              kind="ghost"
+              disabled={!canEdit}
+              aria-label={t('issues.reactWith', { emoji: reaction.emoji })}
+              aria-pressed={reaction.reactedByMe ?? false}
+              onClick={() => react.mutate(reaction.emoji!)}
+            >
+              {reaction.emoji} {reaction.count}
+            </Button>
+          ))}
           {canEdit && !comment.parentId && (
             <Button kind="ghost" startIcon={<Reply size={16} strokeWidth={1.5} aria-hidden />} onClick={() => setReplying(true)}>{t('issues.reply')}</Button>
           )}
           {isMine && (
-            <IconButton size="small" aria-label={t('common.edit')} onClick={() => setEditing(true)}>
-              <Pencil size={16} strokeWidth={1.5} aria-hidden />
-            </IconButton>
+            <Button kind="ghost" startIcon={<Pencil size={16} strokeWidth={1.5} aria-hidden />} onClick={() => setEditing(true)}>{t('common.edit')}</Button>
           )}
-          {(isMine || canManage) && (
-            <IconButton size="small" aria-label={t('common.delete')} onClick={() => remove.mutate()}>
-              <Trash2 size={16} strokeWidth={1.5} aria-hidden />
-            </IconButton>
-          )}
+          <IconButton size="small" aria-label={t('issues.commentMore')} onClick={(event) => setMenuAnchor(event.currentTarget)}>
+            <Ellipsis size={16} strokeWidth={1.5} aria-hidden />
+          </IconButton>
+          <Menu open={Boolean(menuAnchor)} anchorEl={menuAnchor} onClose={() => setMenuAnchor(null)}>
+            <MenuItem icon={Link2} onClick={() => void copyLink()}>{t('issues.copyLink')}</MenuItem>
+            {(isMine || canManage) && (
+              <MenuItem icon={Trash2} danger onClick={() => { setMenuAnchor(null); remove.mutate(); }}>{t('common.delete')}</MenuItem>
+            )}
+          </Menu>
         </div>
         <div className="flex flex-col gap-3 pt-2">
           {replies.map((reply) => (
@@ -247,7 +296,7 @@ function WorkLogDialog({ issueId, log: existing, onClose }: { issueId: string; l
       }
     >
       <TextField label={t('issues.timeSpent')} autoFocus placeholder={t('issues.timeHint')} value={time} error={touched && invalid ? t('issues.timeInvalid') : undefined} onChange={(event) => setTime(event.target.value)} />
-      <TextField label={t('issues.workDate')} type="date" value={workDate} onChange={(event) => setWorkDate(event.target.value)} />
+      <DatePicker label={t('issues.workDate')} value={workDate} onChange={setWorkDate} />
       <TextField label={t('issues.note')} value={note} onChange={(event) => setNote(event.target.value)} />
       {log.isError && <Typography role="alert" color="error" variant="body2">{toMessage(log.error)}</Typography>}
     </Dialog>
@@ -311,6 +360,14 @@ export function IssueActivityPanel({ tab, issue, people, canEdit, canManage }: P
   const { t } = useTranslation();
   const comments = useComments(issue.id!);
   const activity = useActivity(issue.id!);
+  const [params] = useSearchParams();
+  const linkedComment = params.get('comment');
+
+  useEffect(() => {
+    if (linkedComment && comments.isSuccess) {
+      document.getElementById(`comment-${linkedComment}`)?.scrollIntoView({ block: 'center' });
+    }
+  }, [linkedComment, comments.isSuccess]);
 
   if (tab === 'worklog') {
     return <WorkLogPanel issue={issue} canEdit={canEdit} canManage={canManage} />;

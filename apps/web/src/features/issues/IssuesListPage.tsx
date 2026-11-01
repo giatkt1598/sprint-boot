@@ -18,16 +18,16 @@ import { Popover } from '../../components/Popover';
 import { SearchInput } from '../../components/SearchInput';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
 import { Table } from '../../components/Table';
-import { TextField } from '../../components/TextField';
 import { formatDate } from '../../lib/format';
 import { font, radius, sem } from '../../theme/tokens';
 import { useMembers, useSpace } from '../spaces/api';
-import { priorityLevel, statusCategory, useIssueTypes, useLabels, usePriorities, useStatuses, type IssueSummary } from './api';
+import { priorityLevel, statusCategory, useEpics, useIssueTypes, useLabels, usePriorities, useStatuses, type IssueSummary } from './api';
+import { DatePicker } from '../../components/DatePicker';
 
 const PAGE_SIZE = 25;
 const MAX_AVATARS = 5;
 
-type ValueFilter = 'assignee' | 'reporter' | 'type' | 'status' | 'priority' | 'label';
+type ValueFilter = 'assignee' | 'reporter' | 'type' | 'status' | 'priority' | 'epic' | 'label';
 type DateFilter = 'created' | 'updated';
 type DatePreset = 'any' | 'today' | 'last7' | 'last30' | 'custom';
 
@@ -38,7 +38,7 @@ interface DateRange {
 }
 
 const ANY_TIME: DateRange = { preset: 'any', from: '', to: '' };
-const NO_VALUES: Record<ValueFilter, string[]> = { assignee: [], reporter: [], type: [], status: [], priority: [], label: [] };
+const NO_VALUES: Record<ValueFilter, string[]> = { assignee: [], reporter: [], type: [], status: [], priority: [], epic: [], label: [] };
 
 function rangeToQuery({ preset, from, to }: DateRange) {
   if (preset === 'any') {
@@ -75,6 +75,7 @@ export function IssuesListPage() {
   const statuses = useStatuses();
   const priorities = usePriorities();
   const labels = useLabels(projectId);
+  const epics = useEpics(projectId);
   const people = (members.data ?? []).map((member) => member.user!);
 
   const createdRange = rangeToQuery(created);
@@ -95,6 +96,7 @@ export function IssuesListPage() {
               TypeIds: values.type,
               StatusIds: values.status,
               PriorityIds: values.priority,
+              ParentIds: values.epic,
               Labels: values.label,
               CreatedFrom: createdRange.from,
               CreatedTo: createdRange.to,
@@ -124,6 +126,7 @@ export function IssuesListPage() {
     type: (types.data ?? []).map((type) => ({ value: type.id!, label: t(`issue.type.${type.icon}`) })),
     status: (statuses.data ?? []).map((status) => ({ value: status.id!, label: t(`issue.status.${statusCategory(status)}`) })),
     priority: (priorities.data ?? []).map((priority) => ({ value: priority.id!, label: priority.name! })),
+    epic: (epics.data?.items ?? []).map((epic) => ({ value: epic.id!, label: `${epic.key} ${epic.title}` })),
     label: (labels.data ?? []).map((label) => ({ value: label, label })),
   };
 
@@ -133,6 +136,7 @@ export function IssuesListPage() {
     type: t('issues.issueType'),
     status: t('issues.status'),
     priority: t('issues.priority'),
+    epic: t('issues.epic'),
     label: t('issues.labels'),
     created: t('issues.createdAt'),
     updated: t('issues.updatedAt'),
@@ -248,8 +252,8 @@ export function IssuesListPage() {
                 ))}
                 {dateRange.preset === 'custom' && (
                   <div className="grid grid-cols-2 gap-2">
-                    <TextField label={t('issues.from')} type="date" value={dateRange.from} onChange={(event) => setDateRange({ ...dateRange, from: event.target.value })} />
-                    <TextField label={t('issues.to')} type="date" value={dateRange.to} onChange={(event) => setDateRange({ ...dateRange, to: event.target.value })} />
+                    <DatePicker label={t('issues.from')} value={dateRange.from} onChange={(from) => setDateRange({ ...dateRange, from })} />
+                    <DatePicker label={t('issues.to')} value={dateRange.to} onChange={(to) => setDateRange({ ...dateRange, to })} />
                   </div>
                 )}
               </>

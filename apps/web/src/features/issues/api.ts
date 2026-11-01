@@ -38,6 +38,19 @@ export const useLabels = (projectId: string | undefined) =>
     queryFn: () => unwrap(apiClient.GET('/api/v1/issue/labels/{projectId}', { params: { path: { projectId: projectId! } } })),
   });
 
+export const uploadAttachment = (issueId: string, file: File) =>
+  unwrap(
+    apiClient.POST('/api/v1/attachment/upload/{issueId}', {
+      params: { path: { issueId } },
+      body: { file } as never,
+      bodySerializer: () => {
+        const form = new FormData();
+        form.append('file', file);
+        return form;
+      },
+    }),
+  );
+
 /** Epics of a project, for the parent pickers. */
 export const useEpics = (projectId: string | undefined) => {
   const types = useIssueTypes(projectId);

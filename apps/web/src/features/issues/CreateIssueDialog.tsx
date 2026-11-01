@@ -1,10 +1,14 @@
 import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import { apiClient, unwrap } from '../../api';
+import IconButton from '@mui/material/IconButton';
+import { Paperclip, X } from 'lucide-react';
+import { Button } from '../../components/Button';
 import { Checkbox } from '../../components/Checkbox';
+import { DatePicker } from '../../components/DatePicker';
 import { Dialog, DialogFooter } from '../../components/Dialog';
 import { SelectField, TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
@@ -12,7 +16,7 @@ import { UserPicker, type PickerUser } from '../../components/UserPicker';
 import { useErrorMessage } from '../../lib/errors';
 import { useMembers, useSpaces } from '../spaces/api';
 import { useCurrentUser } from '../../auth/AuthProvider';
-import { useEpics, usePriorities, useIssueTypes, type IssueType } from './api';
+import { uploadAttachment, useEpics, usePriorities, useIssueTypes, type IssueType } from './api';
 import { RichTextEditor } from './RichTextEditor';
 
 const allowedTypesOf = (types: IssueType[] | undefined, parent: unknown) =>
@@ -50,6 +54,13 @@ export function CreateIssueDialog({ onClose, parent }: CreateIssueDialogProps) {
   const [startDate, setStartDate] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [another, setAnother] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  const addFiles = (event: ChangeEvent<HTMLInputElement>) => {
+    setFiles((current) => [...current, ...Array.from(event.target.files ?? [])]);
+    event.target.value = '';
+  };
 
   const members = useMembers(projectId || undefined);
   const types = useIssueTypes(projectId || undefined);
@@ -95,12 +106,17 @@ export function CreateIssueDialog({ onClose, parent }: CreateIssueDialogProps) {
         }),
       ),
     onSuccess: async (issue) => {
+      // The issue exists at this point, so a failed file must not lose it or block the rest.
+      for (const file of files) {
+        await uploadAttachment(issue.id!, file).catch((failure: unknown) => toast('error', `${file.name}: ${toMessage(failure)}`));
+      }
       await queryClient.invalidateQueries({ queryKey: ['issues'] });
       toast('info', t('issues.created', { key: issue.key }));
       if (another) {
         setTitle('');
         setTitleTouched(false);
         setDescription('');
+        setFiles([]);
         setEditorKey((value) => value + 1);
       } else {
         onClose();
@@ -173,8 +189,27 @@ export function CreateIssueDialog({ onClose, parent }: CreateIssueDialogProps) {
           />
         )}
         <TextField label={t('issues.labels')} value={labels} onChange={(event) => setLabels(event.target.value)} />
-        <TextField label={t('issues.startDate')} type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
-        <TextField label={t('issues.dueDate')} type="date" value={dueDate} error={dateError} onChange={(event) => setDueDate(event.target.value)} />
+        <DatePicker label={t('issues.startDate')} value={startDate} onChange={setStartDate} />
+        <DatePicker label={t('issues.dueDate')} value={dueDate} onChange={setDueDate} />
+      </div>
+      {dateError && <Typography role="alert" color="error" variant="body2">{dateError}</Typography>}
+      <div className="flex flex-col items-start gap-1">
+        <input ref={fileInput} type="file" multiple hidden aria-label={t('issues.attachments')} onChange={addFiles} />
+        <Button kind="link" startIcon={<Paperclip size={16} strokeWidth={1.5} aria-hidden />} onClick={() => fileInput.current?.click()}>
+          {t('issues.attachments')}
+        </Button>
+        {files.map((file, index) => (
+          <div key={`${file.name}-${index}`} className="flex items-center gap-1">
+            <Typography variant="body2">{file.name}</Typography>
+            <IconButton
+              size="small"
+              aria-label={`${t('common.delete')} ${file.name}`}
+              onClick={() => setFiles((current) => current.filter((_, position) => position !== index))}
+            >
+              <X size={16} strokeWidth={1.5} aria-hidden />
+            </IconButton>
+          </div>
+        ))}
       </div>
       {create.isError && <Typography role="alert" color="error" variant="body2">{toMessage(create.error)}</Typography>}
     </Dialog>

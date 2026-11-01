@@ -9,6 +9,8 @@ public interface IUserAdminAppService : IApplicationService
 
     Task<UserSummaryDto> GetAsync(Guid id);
 
+    Task<List<SignInMethodDto>> GetSignInMethodsAsync(Guid id);
+
     Task<UserSummaryDto> CreateAsync(CreateUserInput input);
 
     Task<UserSummaryDto> LockAsync(Guid id);

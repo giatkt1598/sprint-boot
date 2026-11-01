@@ -49,7 +49,10 @@
     "unassigned": "Unassigned",
     "previous": "Previous",
     "next": "Next",
-    "showing": "{{from}}–{{to}} of {{total}}"
+    "showing": "{{from}}–{{to}} of {{total}}",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "clearDate": "Clear date"
   },
   "issue": {
     "status": {
@@ -201,7 +204,19 @@
     "subtasks": "Subtasks",
     "restore": "Restore",
     "restored": "Issue restored",
-    "noDeleted": "No deleted issues"
+    "noDeleted": "No deleted issues",
+    "addToSpace": "Add to space",
+    "noSpaces": "Not in any space",
+    "added": "Added",
+    "signInMethods": "Sign-in methods",
+    "method": "Method",
+    "methodPassword": "Email and password",
+    "methodOn": "On",
+    "methodOff": "Off",
+    "methodAccount": "Account",
+    "methodLinked": "Linked",
+    "methodUsed": "Last used",
+    "lastActive": "Last active {{date}}"
   },
   "spaces": {
     "title": "Spaces",
@@ -329,6 +344,9 @@
       "dueDate": "Due date",
       "workLog": "Work log",
       "attachment": "Attachment"
-    }
+    },
+    "addReaction": "Add reaction",
+    "reactWith": "React with {{emoji}}",
+    "commentMore": "More comment actions"
   }
 }

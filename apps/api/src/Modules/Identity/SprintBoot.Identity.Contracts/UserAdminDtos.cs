@@ -21,6 +21,21 @@ public class UserSummaryDto
     public required bool IsLocked { get; set; }
 
     public required DateTime CreationTime { get; set; }
+
+    public required DateTime? LastSignInAt { get; set; }
+}
+
+public class SignInMethodDto
+{
+    public required string Method { get; set; }
+
+    public required bool IsEnabled { get; set; }
+
+    public required string Account { get; set; }
+
+    public required DateTime? LinkedAt { get; set; }
+
+    public required DateTime? LastUsedAt { get; set; }
 }
 
 public class CreateUserInput

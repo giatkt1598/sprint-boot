@@ -81,6 +81,25 @@ public class UpdateMemberInput
     public required string Role { get; set; }
 }
 
+public class UserSpaceDto
+{
+    public required Guid ProjectId { get; set; }
+
+    public required string Key { get; set; }
+
+    public required string Name { get; set; }
+
+    public required string Role { get; set; }
+
+    public required DateTime AddedAt { get; set; }
+}
+
+/// <summary>System administration view of a user's memberships.</summary>
+public interface IProjectAdminAppService : IApplicationService
+{
+    Task<List<UserSpaceDto>> GetUserSpacesAsync(Guid userId);
+}
+
 public interface IProjectAppService : IApplicationService
 {
     Task<List<ProjectDto>> GetListAsync();

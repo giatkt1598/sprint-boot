@@ -18,7 +18,7 @@ import { useSpaces, type Space } from './api';
 
 const KEY_PATTERN = /^[A-Z][A-Z0-9]{1,9}$/;
 
-function CreateSpaceDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function CreateSpaceDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useTranslation();
   const toMessage = useErrorMessage();
   const navigate = useNavigate();

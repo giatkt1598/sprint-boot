@@ -71,6 +71,22 @@ test('sign in, run a space and an issue end to end', async ({ page }) => {
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.locator('article .mention')).toBeVisible();
 
+  // Emoji reaction and comment link.
+  await page.getByRole('button', { name: 'Add reaction' }).first().click();
+  await page.getByRole('button', { name: 'React with 🚀' }).click();
+  await expect(page.getByRole('button', { name: 'React with 🚀' })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'More comment actions' }).first().click();
+  await expect(page.getByRole('menuitem', { name: 'Copy link' })).toBeVisible();
+  await page.keyboard.press('Escape');
+
+  // Due date through the calendar.
+  await page.getByRole('button', { name: 'Due date' }).click();
+  await expectAccessible(page);
+  await page.getByRole('button', { name: /^15 / }).click();
+  await page.getByRole('tab', { name: 'History' }).click();
+  await expect(page.getByText('changed Due date')).toBeVisible();
+  await page.getByRole('tab', { name: 'Comments' }).click();
+
   // Attachment.
   await page.getByLabel('Upload').setInputFiles({ name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('hello') });
   await expect(page.getByRole('button', { name: 'Delete notes.txt' })).toBeVisible();
@@ -107,6 +123,27 @@ test('sign in, run a space and an issue end to end', async ({ page }) => {
   await expect(page.getByRole('cell', { name: 'Child work' })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Build đăng nhập screen' })).toHaveCount(0);
 
+  // Create an epic with a file, link an issue to it, filter by epic.
+  await page.getByRole('button', { name: 'Create', exact: true }).click();
+  await page.getByRole('dialog').getByLabel('Title').fill('Launch epic');
+  await page.getByRole('dialog').getByRole('combobox', { name: 'Issue type' }).click();
+  await page.getByRole('option', { name: 'Epic' }).click();
+  await page.getByLabel('Attachments').setInputFiles({ name: 'plan.txt', mimeType: 'text/plain', buffer: Buffer.from('plan') });
+  await page.getByRole('dialog').getByRole('button', { name: 'Create', exact: true }).click();
+  await page.waitForURL(`**/issues/${key}-3`);
+  await expect(page.getByRole('button', { name: 'Delete plan.txt' })).toBeVisible();
+  await page.goto(`/issues/${key}-1`);
+  await page.getByRole('combobox', { name: 'Epic' }).click();
+  await page.getByRole('option', { name: `${key}-3 Launch epic` }).click();
+  await expect(page.getByRole('link', { name: `${key}-3` }).first()).toBeVisible();
+  await page.goto(`/spaces/${key}/issues`);
+  await page.getByRole('button', { name: 'Filter' }).click();
+  await page.getByRole('button', { name: 'Epic' }).click();
+  await page.getByRole('checkbox', { name: `${key}-3 Launch epic` }).click();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('cell', { name: 'Build đăng nhập screen' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'Child work' })).toHaveCount(0);
+
   // Soft delete with subtask, then restore.
   await page.goto(`/issues/${key}-1`);
   await page.getByRole('button', { name: 'More actions' }).click();
@@ -128,6 +165,19 @@ test('sign in, run a space and an issue end to end', async ({ page }) => {
   await page.goto('/admin/users');
   await expect(page.getByRole('cell', { name: ADMIN.email })).toBeVisible();
   await expectAccessible(page);
+  // Manage a user: spaces and sign-in methods.
+  await page.getByRole('link', { name: /^Manage / }).first().click();
+  await expect(page.getByRole('heading', { name: 'Sign-in methods' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'Email and password' })).toBeVisible();
+  await expectAccessible(page);
+
+  // Create space from the switcher.
+  await page.goto(`/spaces/${key}/issues`);
+  await page.getByRole('button', { name: /Switch space/ }).click();
+  await page.getByRole('menuitem', { name: 'Create space' }).click();
+  await expect(page.getByRole('dialog').getByLabel('Key')).toBeVisible();
+  await page.keyboard.press('Escape');
+
   await page.goto('/account/profile');
   await expectAccessible(page);
   await page.goto('/account/security');

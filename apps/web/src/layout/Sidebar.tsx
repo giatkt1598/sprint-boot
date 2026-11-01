@@ -7,6 +7,7 @@ import { MenuItem } from '../components/Menu';
 import { SidebarItem } from '../components/SidebarItem';
 import { SpaceSwitcher } from '../components/SpaceSwitcher';
 import { useSpace, useSpaces } from '../features/spaces/api';
+import { CreateSpaceDialog } from '../features/spaces/SpacesPage';
 import { sem, size } from '../theme/tokens';
 
 const RECENT_SPACES = 5;
@@ -19,6 +20,7 @@ export function Sidebar() {
   const space = useSpace(spaceKey);
   const spaces = useSpaces();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const [creating, setCreating] = useState(false);
 
   const open = (path: string) => {
     setAnchor(null);
@@ -45,7 +47,9 @@ export function Sidebar() {
           <MenuItem key={item.id} onClick={() => open(`/spaces/${item.key}/issues`)}>{item.name}</MenuItem>
         ))}
         <MenuItem onClick={() => open('/spaces')}>{t('nav.allSpaces')}</MenuItem>
+        <MenuItem onClick={() => { setAnchor(null); setCreating(true); }}>{t('spaces.create')}</MenuItem>
       </Menu>
+      {creating && <CreateSpaceDialog open onClose={() => setCreating(false)} />}
       {spaceKey && (
         <nav aria-label={t('nav.label')} className="flex flex-col gap-1">
           <SidebarItem to={`/spaces/${spaceKey}/issues`} label={t('nav.issues')} icon={SquareCheck} />

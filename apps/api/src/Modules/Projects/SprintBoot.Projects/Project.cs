@@ -34,7 +34,7 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
     }
 }
 
-public class ProjectMember : Entity<Guid>
+public class ProjectMember : CreationAuditedEntity<Guid>
 {
     public Guid ProjectId { get; private set; }
 

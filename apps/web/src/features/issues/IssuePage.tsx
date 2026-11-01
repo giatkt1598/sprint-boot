@@ -26,7 +26,8 @@ import { useMembers, useSpace } from '../spaces/api';
 import { IssueActivityPanel } from './IssueActivityPanel';
 import { CreateIssueDialog } from './CreateIssueDialog';
 import { RichTextEditor, RichTextView } from './RichTextEditor';
-import { priorityLevel, statusCategory, useEpics, usePriorities, type Issue } from './api';
+import { priorityLevel, statusCategory, uploadAttachment, useEpics, usePriorities, type Issue } from './api';
+import { DatePicker } from '../../components/DatePicker';
 
 function DetailRow({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -355,10 +356,10 @@ function IssueView({ issue }: { issue: Issue }) {
             />
           </DetailRow>
           <DetailRow label={t('issues.startDate')}>
-            <EditableText label={t('issues.startDate')} type="date" value={issue.startDate ?? ''} disabled={!canEdit} onSave={(text) => update.mutate({ startDate: text || null })} />
+            <DatePicker quiet label={t('issues.startDate')} value={issue.startDate ?? ''} disabled={!canEdit} onChange={(text) => update.mutate({ startDate: text || null })} />
           </DetailRow>
           <DetailRow label={t('issues.dueDate')}>
-            <EditableText label={t('issues.dueDate')} type="date" value={issue.dueDate ?? ''} disabled={!canEdit} onSave={(text) => update.mutate({ dueDate: text || null })} />
+            <DatePicker quiet label={t('issues.dueDate')} value={issue.dueDate ?? ''} disabled={!canEdit} onChange={(text) => update.mutate({ dueDate: text || null })} />
           </DetailRow>
           {fieldError && <Typography role="alert" variant="body2" color="error">{fieldError}</Typography>}
           <DetailRow label={t('issues.createdAt')}>{formatDateTime(issue.createdAt, i18n.language)}</DetailRow>
@@ -435,18 +436,7 @@ function Attachments({ issue, canEdit }: { issue: Issue; canEdit: boolean }) {
   });
 
   const upload = useMutation({
-    mutationFn: (file: File) =>
-      unwrap(
-        apiClient.POST('/api/v1/attachment/upload/{issueId}', {
-          params: { path: { issueId: issue.id! } },
-          body: { file } as never,
-          bodySerializer: () => {
-            const form = new FormData();
-            form.append('file', file);
-            return form;
-          },
-        }),
-      ),
+    mutationFn: (file: File) => uploadAttachment(issue.id!, file),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['issues', issue.id, 'attachments'] }),
     onError: (failure) => toast('error', toMessage(failure)),
     onSettled: () => setUploading(null),

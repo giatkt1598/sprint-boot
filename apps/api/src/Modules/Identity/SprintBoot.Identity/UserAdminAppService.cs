@@ -14,6 +14,9 @@ namespace SprintBoot.Identity;
 public class UserAdminAppService(IdentityUserManager userManager, IIdentityUserRepository users)
     : ApplicationService, IUserAdminAppService
 {
+    /// <summary>Stable value the UI translates; external logins show their provider name.</summary>
+    public const string PasswordMethod = "password";
+
     private static readonly DateTimeOffset LockedForever = DateTimeOffset.MaxValue;
 
     public async Task<PagedResultDto<UserSummaryDto>> GetListAsync(UserListInput input)
@@ -32,6 +35,38 @@ public class UserAdminAppService(IdentityUserManager userManager, IIdentityUserR
     }
 
     public async Task<UserSummaryDto> GetAsync(Guid id) => await ToDtoAsync(await userManager.GetByIdAsync(id));
+
+    public async Task<List<SignInMethodDto>> GetSignInMethodsAsync(Guid id)
+    {
+        var user = await userManager.GetByIdAsync(id);
+        var methods = new List<SignInMethodDto>();
+
+        if (await userManager.HasPasswordAsync(user))
+        {
+            methods.Add(new SignInMethodDto
+            {
+                Method = PasswordMethod,
+                IsEnabled = true,
+                Account = user.Email,
+                LinkedAt = user.CreationTime,
+                LastUsedAt = user.LastSignInTime?.UtcDateTime,
+            });
+        }
+
+        foreach (var login in await userManager.GetLoginsAsync(user))
+        {
+            methods.Add(new SignInMethodDto
+            {
+                Method = login.ProviderDisplayName ?? login.LoginProvider,
+                IsEnabled = true,
+                Account = user.Email,
+                LinkedAt = null,
+                LastUsedAt = null,
+            });
+        }
+
+        return methods;
+    }
 
     public async Task<UserSummaryDto> CreateAsync(CreateUserInput input)
     {
@@ -91,6 +126,7 @@ public class UserAdminAppService(IdentityUserManager userManager, IIdentityUserR
             SystemRole = roles.Contains(SystemRoles.Admin) ? SystemRoles.Admin : SystemRoles.Member,
             IsLocked = await userManager.IsLockedOutAsync(user),
             CreationTime = user.CreationTime,
+            LastSignInAt = user.LastSignInTime?.UtcDateTime,
         };
     }
 }
