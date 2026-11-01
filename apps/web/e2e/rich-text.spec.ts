@@ -34,7 +34,7 @@ const slash = async (page: Page, query: string, option: string) => {
 test('the slash menu filters, works by keyboard and turns the line into a block', async ({ page }) => {
   await start(page);
   await page.keyboard.type('/head');
-  await expect(page.getByRole('option')).toHaveCount(3);
+  await expect(page.getByRole('listbox').getByRole('option')).toHaveCount(3);
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await page.keyboard.type('Plan');
@@ -143,5 +143,15 @@ test('the open slash menu has no WCAG violations', async ({ page }) => {
   await start(page);
   await page.keyboard.type('/');
   await expect(page.getByRole('listbox')).toBeVisible();
+  await expectAccessible(page);
+});
+
+test('the toolbar stays visible and formats text', async ({ page }) => {
+  await start(page);
+  const tools = page.getByRole('toolbar', { name: 'Editor tools' });
+  await expect(tools).toBeVisible();
+  await tools.getByRole('button', { name: 'Bulleted list' }).click();
+  await page.keyboard.type('item');
+  await expect(html(page)).toContainText('<ul>');
   await expectAccessible(page);
 });

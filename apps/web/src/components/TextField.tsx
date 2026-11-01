@@ -74,6 +74,8 @@ export function TextField({ label, error, quiet, id, sx, ...props }: TextFieldPr
 export interface SelectOption {
   value: string;
   label: string;
+  /** Decorative: the label already says what it means. */
+  icon?: ReactNode;
 }
 
 export interface SelectFieldProps extends Omit<SelectProps<string>, 'error' | 'label' | 'variant'> {
@@ -99,7 +101,12 @@ export function SelectField({ label, options, error, quiet, id, ...props }: Sele
       >
         {options.map((option) => (
           <MenuItem key={option.value} value={option.value}>
-            {option.label}
+            {option.icon ? (
+              <span className="flex items-center gap-2">
+                <span aria-hidden className="flex">{option.icon}</span>
+                {option.label}
+              </span>
+            ) : option.label}
           </MenuItem>
         ))}
       </Select>

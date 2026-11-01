@@ -1,13 +1,15 @@
 import { DndContext, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import Box from '@mui/material/Box';
 import ButtonBase from '@mui/material/ButtonBase';
 import IconButton from '@mui/material/IconButton';
+import Link from '@mui/material/Link';
 import Menu from '@mui/material/Menu';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, ChevronRight, Ellipsis, Pencil, Trash2 } from 'lucide-react';
-import { memo, useMemo, useState } from 'react';
+import { memo, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router';
+import { Link as RouterLink, useParams } from 'react-router';
 import { apiClient, unwrap } from '../../api';
 import { Avatar } from '../../components/Avatar';
 import { Badge, StatusBadge } from '../../components/Badge';
@@ -19,7 +21,7 @@ import { SearchInput } from '../../components/SearchInput';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
-import { font, radius, sem } from '../../theme/tokens';
+import { font, radius, sem, shadow } from '../../theme/tokens';
 import { FilterChips, FilterControls, useIssueFilters } from '../issues/IssueFilters';
 import { priorityLevel, statusCategory } from '../issues/api';
 import { useSpace } from '../spaces/api';
@@ -54,7 +56,14 @@ function RowBody({ card, onOpen, actions }: IssueRowProps) {
   return (
     <div className="flex h-9 items-center gap-3 px-2">
       <IssueTypeIcon type={card.type?.icon as IconType} />
-      <span style={{ width: 96, flexShrink: 0, fontSize: font.size.xs, color: sem('text-secondary') }}>{card.key}</span>
+      <Link
+        component={RouterLink}
+        to={`/issues/${card.key}`}
+        draggable={false}
+        sx={{ width: 96, flexShrink: 0, fontSize: font.size.xs, color: sem('text-accent') }}
+      >
+        {card.key}
+      </Link>
       <ButtonBase onClick={() => onOpen(card.key!)} className="min-w-0 flex-1 truncate" sx={{ justifyContent: 'flex-start', fontSize: font.size.md, textAlign: 'left' }}>
         <span className="truncate">{card.title}</span>
       </ButtonBase>
@@ -84,28 +93,45 @@ function RowBody({ card, onOpen, actions }: IssueRowProps) {
 
 export const IssueRow = memo(RowBody);
 
+/** Neighbouring rows share a line; the list draws the one above the first row. */
+const rowStyles = {
+  backgroundColor: sem('bg-surface'),
+  borderBottom: `1px solid ${sem('border-default')}`,
+  '&:hover': { backgroundColor: sem('bg-hover') },
+};
+
+function SectionCard({ children }: { children: ReactNode }) {
+  return (
+    <section
+      className="flex flex-col gap-2 p-3"
+      style={{ backgroundColor: sem('bg-surface'), borderRadius: radius.card, boxShadow: shadow.card }}
+    >
+      {children}
+    </section>
+  );
+}
+
 function DraggableRow({ card, onOpen, actions, canDrag }: IssueRowProps & { canDrag: boolean }) {
   const { listeners, setNodeRef: dragRef, transform, isDragging } = useDraggable({ id: card.id!, disabled: !canDrag });
   const { setNodeRef: dropRef, isOver } = useDroppable({ id: `row:${card.id}` });
 
   return (
-    <div
-      ref={(node) => {
+    <Box
+      ref={(node: HTMLDivElement | null) => {
         dragRef(node);
         dropRef(node);
       }}
       data-testid={`row-${card.key}`}
       {...listeners}
+      sx={[rowStyles, { boxShadow: isOver ? `inset 0 2px 0 ${sem('border-focus')}` : undefined }]}
       style={{
         opacity: isDragging ? 0.5 : 1,
         transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
-        borderTop: `2px solid ${isOver ? sem('border-focus') : 'transparent'}`,
-        backgroundColor: sem('bg-surface'),
         cursor: canDrag ? 'grab' : undefined,
       }}
     >
       <IssueRow card={card} onOpen={onOpen} actions={actions} />
-    </div>
+    </Box>
   );
 }
 
@@ -125,7 +151,7 @@ function IssueList({ id, cards, canDrag, onOpen, actions, empty }: ListProps) {
     <div
       ref={setNodeRef}
       data-testid={`list-${id}`}
-      style={{ minHeight: 40, borderRadius: radius.control, backgroundColor: isOver ? sem('bg-selected') : undefined }}
+      style={{ minHeight: 40, borderTop: `1px solid ${sem('border-default')}`, backgroundColor: isOver ? sem('bg-selected') : undefined }}
     >
       {cards.map((card) => (
         <DraggableRow key={card.id} card={card} canDrag={canDrag} onOpen={onOpen} actions={actions} />
@@ -348,13 +374,13 @@ export function BacklogPage() {
           {(backlog.data.sprints ?? []).map((item) => {
             const cards = visible(item.issues);
             return (
-              <section key={item.sprint!.id} className="flex flex-col gap-1">
+              <SectionCard key={item.sprint!.id}>
                 <SprintHeader sprint={item.sprint!} canManage={canManage} shown={cards.length} futureSprints={futureSprints} projectId={projectId} />
                 <IssueList id={item.sprint!.id!} cards={cards} canDrag={canRank} onOpen={setOpenIssue} actions={actions} empty={t('agile.sprintEmpty')} />
-              </section>
+              </SectionCard>
             );
           })}
-          <section className="flex flex-col gap-1">
+          <SectionCard>
             <div className="flex items-center gap-2 px-2">
               <Typography variant="h3" component="h2">{t('agile.backlog')}</Typography>
               <Typography variant="body2" color="textSecondary">
@@ -364,17 +390,17 @@ export function BacklogPage() {
             {scrum ? (
               <IssueList id={BACKLOG_LIST} cards={backlogCards} canDrag={canRank} onOpen={setOpenIssue} actions={actions} empty={t('agile.backlogEmpty')} />
             ) : (
-              <div>
+              <div style={{ borderTop: `1px solid ${sem('border-default')}` }}>
                 {backlogCards.map((card) => (
-                  <div key={card.id} className="flex items-center">
+                  <Box key={card.id} className="flex items-center" sx={rowStyles}>
                     <div className="min-w-0 flex-1"><IssueRow card={card} onOpen={setOpenIssue} /></div>
                     {canRank && <Button kind="link" aria-label={t('agile.moveToBoardFor', { key: card.key })} onClick={() => pull.mutate(card)}>{t('agile.moveToBoard')}</Button>}
-                  </div>
+                  </Box>
                 ))}
                 {backlogCards.length === 0 && <EmptyState title={t('agile.backlogEmpty')} />}
               </div>
             )}
-          </section>
+          </SectionCard>
         </DndContext>
       )}
 

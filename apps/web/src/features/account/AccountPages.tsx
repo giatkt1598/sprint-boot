@@ -16,7 +16,7 @@ export function AccountLayout() {
   return (
     <SettingsFrame
       title={t('account.title')}
-      backTo="/spaces"
+      backTo="/"
       menu={
         <>
           <SettingsMenuItem to="profile" label={t('account.profile')} />

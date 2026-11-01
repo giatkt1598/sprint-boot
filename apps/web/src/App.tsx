@@ -6,6 +6,7 @@ import { ToastHost } from './components/ToastHost';
 import { AccountIndex, AccountLayout, ProfilePage, SecurityPage } from './features/account/AccountPages';
 import { AdminIndex, AdminLayout, DeletedIssuesPage, ManageUserPage, UsersPage } from './features/admin/AdminPages';
 import { GitConnectionsPage, GitRepositoriesPage } from './features/admin/GitPages';
+import { HomePage } from './features/spaces/HomePage';
 import { InvitationsPage } from './features/admin/InvitationPages';
 import { SsoPage, SsoProviderPage } from './features/admin/SsoPages';
 import { StatusesPage, WorkflowsPage } from './features/admin/WorkflowPages';
@@ -46,6 +47,7 @@ export function App() {
             </Route>
             <Route path="admin" element={<AdminLayout />}>
               <Route index element={<AdminIndex />} />
+              <Route path="spaces" element={<SpacesPage />} />
               <Route path="users" element={<UsersPage />} />
               <Route path="users/:userId" element={<ManageUserPage />} />
               <Route path="invitations" element={<InvitationsPage />} />
@@ -69,8 +71,8 @@ export function App() {
           </Route>
 
           <Route element={<RequireAuth><AppShell /></RequireAuth>}>
-            <Route index element={<Navigate to="spaces" replace />} />
-            <Route path="spaces" element={<SpacesPage />} />
+            <Route index element={<HomePage />} />
+            <Route path="spaces" element={<Navigate to="/" replace />} />
             <Route path="spaces/:spaceKey/backlog" element={<BacklogPage />} />
             <Route path="spaces/:spaceKey/board" element={<BoardPage />} />
             <Route path="spaces/:spaceKey/epics" element={<EpicsPage />} />

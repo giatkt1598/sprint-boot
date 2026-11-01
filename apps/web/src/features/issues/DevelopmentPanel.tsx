@@ -154,7 +154,7 @@ export function DevelopmentPanel({ issueId, label, canEdit }: { issueId: string;
   const external = { target: '_blank', rel: 'noreferrer', variant: 'body2' } as const;
 
   return (
-    <section className="flex flex-col gap-1 p-3" style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}>
+    <section className="flex shrink-0 flex-col gap-1 p-3" style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}>
       <div className="flex items-center justify-between pb-1">
         <Typography variant="h3" component="h2">{t('development.title')}</Typography>
         {canCreate && <Link component="button" variant="body2" onClick={() => setCreating(true)}>{t('development.createBranch')}</Link>}

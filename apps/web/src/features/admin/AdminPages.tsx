@@ -50,9 +50,10 @@ export function AdminLayout() {
   return (
     <SettingsFrame
       title={t('admin.title')}
-      backTo="/spaces"
+      backTo="/"
       menu={
         <>
+          {canManageUsers && <SettingsMenuItem to="spaces" label={t('spaces.title')} />}
           {canManageUsers && <SettingsMenuItem to="users" label={t('admin.users')} />}
           {canManageInvitations && <SettingsMenuItem to="invitations" label={t('invitations.title')} />}
           {canManageSso && <SettingsMenuItem to="sso" label={t('sso.title')} />}

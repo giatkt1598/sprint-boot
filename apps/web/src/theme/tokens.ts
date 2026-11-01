@@ -88,6 +88,7 @@ export const font = {
 } as const;
 
 export const shadow = {
+  card: 'rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em',
   popover: '0 4px 16px rgba(17, 24, 39, 0.12)',
   dialog: '0 8px 24px rgba(17, 24, 39, 0.16)',
 } as const;

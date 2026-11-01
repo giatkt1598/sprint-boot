@@ -9,6 +9,8 @@ import { Paperclip, X } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { Checkbox } from '../../components/Checkbox';
 import { DatePicker } from '../../components/DatePicker';
+import { IssueTypeIcon, PriorityIcon, type IssueType as IconType } from '../../components/IssueIcons';
+import { TagInput } from '../../components/TagInput';
 import { Dialog, DialogFooter } from '../../components/Dialog';
 import { SelectField, TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
@@ -17,7 +19,7 @@ import { useErrorMessage } from '../../lib/errors';
 import { useMembers, useSpaces } from '../spaces/api';
 import { useBacklog } from '../agile/api';
 import { useCurrentUser } from '../../auth/AuthProvider';
-import { uploadAttachment, useEpics, usePriorities, useIssueTypes, type IssueType } from './api';
+import { priorityLevel, uploadAttachment, useEpics, useLabels, usePriorities, useIssueTypes, type IssueType } from './api';
 import { RichTextEditor } from './RichTextEditor';
 
 const allowedTypesOf = (types: IssueType[] | undefined, parent: unknown) =>
@@ -53,12 +55,13 @@ export function CreateIssueDialog({ onClose, parent, epic }: CreateIssueDialogPr
   const [reporter, setReporter] = useState<PickerUser | null>({ id: me.id, name: me.name });
   const [epicId, setEpicId] = useState('');
   const [points, setPoints] = useState('');
-  const [labels, setLabels] = useState('');
+  const [labels, setLabels] = useState<string[]>([]);
   const [startDate, setStartDate] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [another, setAnother] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const fileInput = useRef<HTMLInputElement>(null);
+  const titleInput = useRef<HTMLInputElement>(null);
 
   const addFiles = (event: ChangeEvent<HTMLInputElement>) => {
     setFiles((current) => [...current, ...Array.from(event.target.files ?? [])]);
@@ -70,6 +73,7 @@ export function CreateIssueDialog({ onClose, parent, epic }: CreateIssueDialogPr
   const priorities = usePriorities();
   const epics = useEpics(projectId || undefined);
   const backlog = useBacklog(projectId || undefined);
+  const knownLabels = useLabels(projectId || undefined);
   const allowedTypes = allowedTypesOf(types.data, parent).filter((type) => !epic || type.hierarchy === 2);
   const [sprintId, setSprintId] = useState('');
   const canHaveEpic = !parent && allowedTypes.find((type) => type.id === typeId)?.hierarchy === 1;
@@ -104,7 +108,7 @@ export function CreateIssueDialog({ onClose, parent, epic }: CreateIssueDialogPr
             reporterId: reporter?.id ?? null,
             parentId: parent?.id ?? (canHaveEpic && epicId ? epicId : null),
             storyPoints: points ? Number(points) : null,
-            labels: labels.split(',').map((item) => item.trim()).filter(Boolean),
+            labels,
             startDate: startDate || null,
             dueDate: dueDate || null,
           },
@@ -150,6 +154,12 @@ export function CreateIssueDialog({ onClose, parent, epic }: CreateIssueDialogPr
       width={640}
       title={t(parent ? 'issues.addSubtask' : epic ? 'agile.createEpic' : 'issues.create')}
       onClose={onClose}
+      onOpened={() => {
+        // Someone quick may already be typing in another field.
+        if (!document.activeElement?.matches('input, [contenteditable]')) {
+          titleInput.current?.focus();
+        }
+      }}
       footer={
         <div className="flex items-center justify-between">
           <Checkbox label={t('issues.createAnother')} checked={another} onChange={(event) => setAnother(event.target.checked)} />
@@ -174,18 +184,38 @@ export function CreateIssueDialog({ onClose, parent, epic }: CreateIssueDialogPr
           label={t('issues.issueType')}
           value={typeId}
           onChange={(event) => setTypeId(event.target.value)}
-          options={allowedTypes.map((type) => ({ value: type.id!, label: t(`issue.type.${type.icon}`) }))}
+          options={allowedTypes.map((type) => ({
+            value: type.id!,
+            label: t(`issue.type.${type.icon}`),
+            icon: <IssueTypeIcon type={type.icon as IconType} />,
+          }))}
         />
       </div>
-      <TextField label={t('issues.titleField')} autoFocus value={title} error={titleError} onBlur={() => setTitleTouched(true)} onChange={(event) => setTitle(event.target.value)} />
-      <RichTextEditor key={editorKey} label={t('issues.description')} people={people} onChange={setDescription} />
+      <TextField
+        label={t('issues.titleField')}
+        inputRef={titleInput}
+        value={title}
+        error={titleError}
+        onChange={(event) => {
+          // Empty only counts as a mistake once something was typed, or on submit.
+          if (event.target.value) {
+            setTitleTouched(true);
+          }
+          setTitle(event.target.value);
+        }}
+      />
+      <RichTextEditor key={editorKey} label={t('issues.description')} showLabel people={people} onChange={setDescription} />
       <div className="grid grid-cols-2 gap-4">
         <UserPicker label={t(epic ? 'agile.lead' : 'issues.assignee')} options={people} value={assignee} onChange={setAssignee} />
         <SelectField
           label={t('issues.priority')}
           value={priorityId || (priorities.data?.find((priority) => priority.name === 'Medium')?.id ?? '')}
           onChange={(event) => setPriorityId(event.target.value)}
-          options={(priorities.data ?? []).map((priority) => ({ value: priority.id!, label: priority.name! }))}
+          options={(priorities.data ?? []).map((priority) => ({
+            value: priority.id!,
+            label: priority.name!,
+            icon: <PriorityIcon priority={priorityLevel(priority)} />,
+          }))}
         />
         <UserPicker label={t('issues.reporter')} options={people} value={reporter} onChange={setReporter} />
         <TextField label={t('issues.points')} type="number" value={points} onChange={(event) => setPoints(event.target.value)} />
@@ -207,7 +237,7 @@ export function CreateIssueDialog({ onClose, parent, epic }: CreateIssueDialogPr
             options={[{ value: '', label: t('common.none') }, ...(backlog.data.sprints ?? []).map((item) => ({ value: item.sprint!.id!, label: item.sprint!.name! }))]}
           />
         )}
-        <TextField label={t('issues.labels')} value={labels} onChange={(event) => setLabels(event.target.value)} />
+        <TagInput label={t('issues.labels')} value={labels} options={knownLabels.data ?? []} onChange={setLabels} />
         <DatePicker label={t('issues.startDate')} value={startDate} onChange={setStartDate} />
         <DatePicker label={t('issues.dueDate')} value={dueDate} onChange={setDueDate} />
       </div>

@@ -11,12 +11,14 @@ const expectAccessible = async (page: Page) => {
   expect(results.violations.map((violation) => `${page.url()} ${violation.id}: ${violation.nodes[0]?.html}`)).toEqual([]);
 };
 
+const waitForHome = (page: Page) => page.waitForURL((url) => !/\/(login|auth\/callback|connect|realms|accept-invitation)/.test(url.pathname));
+
 const signIn = async (page: Page, email: string, password: string) => {
   await page.goto('/');
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password').fill(password);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await page.waitForURL('**/spaces');
+  await waitForHome(page);
 };
 
 const suffix = () => Math.random().toString(36).slice(2, 7).toUpperCase();
@@ -29,6 +31,7 @@ test('sign in, run a space and an issue end to end', async ({ page }) => {
   await expectAccessible(page);
 
   const key = `E${suffix()}`;
+  await page.goto('/admin/spaces');
   await page.getByRole('button', { name: 'Create space' }).click();
   await page.getByLabel('Name').fill(`Space ${key}`);
   await page.getByLabel('Key').fill(key);
@@ -82,7 +85,7 @@ test('sign in, run a space and an issue end to end', async ({ page }) => {
   // Mention suggestions.
   await page.getByLabel('Add a comment').click();
   await page.getByRole('textbox', { name: 'Add a comment' }).pressSequentially('@adm');
-  await expect(page.getByRole('option').first()).toBeVisible();
+  await expect(page.getByRole('listbox').getByRole('option').first()).toBeVisible();
   await page.keyboard.press('Enter');
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.locator('article .mention')).toBeVisible();
@@ -643,7 +646,7 @@ test('an expired access token renews silently', async ({ page }) => {
     return { key, before };
   });
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Spaces' })).toBeVisible();
+  await page.waitForURL('**/spaces/**');
   await expect
     .poll(() => page.evaluate((key) => JSON.parse(sessionStorage.getItem(key)!).access_token, expired.key))
     .not.toBe(expired.before);
@@ -657,7 +660,7 @@ test('Vietnamese UI has no accessibility regressions', async ({ page }) => {
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.getByRole('heading', { name: 'Hồ sơ' })).toBeVisible();
   await expectAccessible(page);
-  await page.goto('/spaces');
+  await page.goto('/admin/spaces');
   await expect(page.getByRole('heading', { name: 'Space' })).toBeVisible();
   await expectAccessible(page);
   await page.goto('/account/profile');
@@ -745,7 +748,7 @@ test('an admin adds an OIDC provider and SSO works without a restart', async ({ 
   await expectAccessible(invitee);
   await invitee.getByRole('link', { name: 'Continue with Company SSO' }).click();
   await signInAtKeycloak(invitee, 'invitee');
-  await invitee.waitForURL('**/spaces');
+  await waitForHome(invitee);
 
   await invitee.goto(link);
   await expect(invitee.getByRole('heading', { name: 'This invitation is no longer valid' })).toBeVisible();
@@ -771,6 +774,7 @@ test('a space admin invites by email, the person accepts with a password and joi
   const email = `joiner-${suffix().toLowerCase()}@test.local`;
   await signIn(page, ADMIN.email, ADMIN.password);
   const key = `I${suffix()}`;
+  await page.goto('/admin/spaces');
   await page.getByRole('button', { name: 'Create space' }).click();
   await page.getByLabel('Name').fill(`Space ${key}`);
   await page.getByLabel('Key').fill(key);
@@ -796,7 +800,7 @@ test('a space admin invites by email, the person accepts with a password and joi
   await joiner.getByLabel('Full name').fill('Joiner Person');
   await joiner.getByLabel('Password').fill('Joiner123!x');
   await joiner.getByRole('button', { name: 'Create account' }).click();
-  await joiner.waitForURL('**/spaces');
+  await waitForHome(joiner);
   await expect(joiner.getByText(`Space ${key}`).first()).toBeVisible();
   await joiner.context().close();
 
@@ -839,6 +843,7 @@ test('a real Gitea connection links commits, pull requests and CI, and creates b
 
   await signIn(page, ADMIN.email, ADMIN.password);
   const key = `G${suffix()}`;
+  await page.goto('/admin/spaces');
   await page.getByRole('button', { name: 'Create space' }).click();
   await page.getByLabel('Name').fill(`Space ${key}`);
   await page.getByLabel('Key').fill(key);
@@ -909,4 +914,72 @@ test('a real Gitea connection links commits, pull requests and CI, and creates b
   await gitea('POST', `/repos/${owner}/statuses/${commit.commit.sha}`, { state: 'success', context: 'ci/build', target_url: 'http://ci.local/1' });
   await expect(page.getByText('Passed')).toBeVisible({ timeout: 15_000 });
   await expectAccessible(page);
+});
+
+test('create issue form, backlog cards and home follow the last space', async ({ page }) => {
+  test.setTimeout(90_000);
+  await signIn(page, ADMIN.email, ADMIN.password);
+  const key = `U${suffix()}`;
+  await page.goto('/admin/spaces');
+  await page.getByRole('button', { name: 'Create space' }).click();
+  await page.getByLabel('Name').fill(`Space ${key}`);
+  await page.getByLabel('Key').fill(key);
+  await page.getByRole('dialog').getByRole('button', { name: 'Create space' }).click();
+  await page.waitForURL(`**/spaces/${key}/issues`);
+
+  await page.getByRole('button', { name: 'Create', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  const title = dialog.getByLabel('Title');
+  await expect(title).toBeFocused();
+  await dialog.getByLabel('Reporter').click();
+  await expect(page.getByRole('listbox').getByRole('option').first().locator('.MuiAvatar-root')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog.getByText('Title is required')).toHaveCount(0);
+  await title.fill('Temporary');
+  await title.fill('');
+  await expect(dialog.getByText('Title is required')).toBeVisible();
+  await title.fill('Card row');
+
+  await expect(dialog.getByText('Description', { exact: true })).toBeVisible();
+  await expect(dialog.getByRole('toolbar', { name: 'Editor tools' })).toBeVisible();
+  await dialog.getByLabel('Issue type').click();
+  await expect(page.getByRole('option', { name: 'Bug' }).locator('svg')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await dialog.getByLabel('Priority').click();
+  await expect(page.getByRole('option', { name: 'High', exact: true }).locator('svg')).toBeVisible();
+  await page.keyboard.press('Escape');
+
+  const labels = dialog.getByLabel('Labels');
+  await labels.pressSequentially('alpha,');
+  await labels.pressSequentially('beta');
+  await labels.press('Enter');
+  await labels.pressSequentially('gamma,');
+  await expect(dialog.locator('.MuiChip-root')).toHaveCount(3);
+  await dialog.locator('.MuiChip-root').nth(2).locator('.MuiChip-deleteIcon').click();
+  await expect(dialog.locator('.MuiChip-root')).toHaveCount(2);
+
+  await dialog.getByRole('button', { name: 'Start date:' }).click();
+  await page.getByRole('group', { name: 'Start date' }).getByRole('button', { name: /^15 / }).click();
+  await dialog.getByRole('button', { name: 'Clear date: Start date' }).click();
+  await expect(dialog.getByRole('button', { name: 'Clear date: Start date' })).toHaveCount(0);
+  await expectAccessible(page);
+  await dialog.getByRole('button', { name: 'Create', exact: true }).click();
+  await page.waitForURL(`**/issues/${key}-1`);
+  await expect(page.getByLabel('Labels')).toHaveValue('alpha, beta');
+
+  await page.goto(`/spaces/${key}/backlog`);
+  await expectAccessible(page);
+  await page.getByRole('link', { name: `${key}-1` }).click();
+  await page.waitForURL(`**/issues/${key}-1`);
+  await expect(page.getByRole('heading', { name: 'Card row' })).toBeVisible();
+
+  // Content and sidebar scroll apart, so the page itself stays put.
+  const scrollers = await page.evaluate(() => {
+    const main = document.querySelector('main')!;
+    return { main: getComputedStyle(main).overflowY, mainScrolls: main.scrollHeight > main.clientHeight + 1 };
+  });
+  expect(scrollers.mainScrolls).toBe(false);
+
+  await page.goto('/');
+  await page.waitForURL(`**/spaces/${key}/backlog`);
 });

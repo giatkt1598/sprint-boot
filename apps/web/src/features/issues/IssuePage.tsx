@@ -147,7 +147,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className={compact ? 'flex flex-col gap-4' : 'flex h-full min-h-0 flex-col gap-4'}>
       {conflict && (
         <div
           role="alert"
@@ -162,7 +162,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
       )}
 
       <nav aria-label="breadcrumb" className="flex items-center gap-1" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>
-        <Link component={RouterLink} to="/spaces" color="inherit">{t('spaces.title')}</Link>
+        <Link component={RouterLink} to="/" color="inherit">{t('spaces.title')}</Link>
         <span aria-hidden>/</span>
         <Link component={RouterLink} to={`/spaces/${issue.projectKey}/issues`} color="inherit">{issue.projectName}</Link>
         <span aria-hidden>/</span>
@@ -221,8 +221,9 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
         </Menu>
       </div>
 
-      <div className={compact ? 'flex flex-col gap-6' : 'flex items-start gap-8'}>
-        <div className="flex min-w-0 flex-1 flex-col gap-6">
+      {/* On the full page the content and the sidebar scroll on their own; the panel has one scroll. */}
+      <div className={compact ? 'flex flex-col gap-6' : 'flex min-h-0 flex-1 gap-8'}>
+        <div className={compact ? 'flex min-w-0 flex-1 flex-col gap-6' : 'flex min-w-0 flex-1 flex-col gap-6 overflow-y-auto pr-2'}>
           <section className="flex flex-col gap-2">
             <Typography variant="h3" component="h2">{t('issues.description')}</Typography>
             {editingDescription ? (
@@ -287,9 +288,9 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
           </section>
         </div>
 
-        <div className="flex shrink-0 flex-col gap-4" style={{ width: compact ? '100%' : 320 }}>
+        <div className={compact ? 'flex shrink-0 flex-col gap-4' : 'flex shrink-0 flex-col gap-4 overflow-y-auto'} style={{ width: compact ? '100%' : 320 }}>
         <aside
-          className="flex flex-col gap-1 p-3"
+          className="flex shrink-0 flex-col gap-1 p-3"
           style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}
         >
           <Typography variant="h3" component="h2" className="pb-1">{t('issues.details')}</Typography>

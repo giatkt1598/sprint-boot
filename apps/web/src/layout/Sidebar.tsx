@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Menu from '@mui/material/Menu';
 import { List, Settings, SquareCheck, SquareKanban, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
+import { useCan, useCurrentUser } from '../auth/AuthProvider';
 import { MenuItem } from '../components/Menu';
 import { SidebarItem } from '../components/SidebarItem';
 import { SpaceSwitcher } from '../components/SpaceSwitcher';
 import { useSpace, useSpaces } from '../features/spaces/api';
+import { rememberSpace } from '../features/spaces/HomePage';
 import { CreateSpaceDialog } from '../features/spaces/SpacesPage';
 import { sem, size } from '../theme/tokens';
 
@@ -21,6 +23,15 @@ export function Sidebar() {
   const spaces = useSpaces();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [creating, setCreating] = useState(false);
+  const me = useCurrentUser();
+  const canManageSpaces = useCan('SprintBoot.Users.Manage');
+  const openedKey = space.data?.key;
+
+  useEffect(() => {
+    if (openedKey) {
+      rememberSpace(me.id, openedKey);
+    }
+  }, [me.id, openedKey]);
 
   const open = (path: string) => {
     setAnchor(null);
@@ -43,10 +54,11 @@ export function Sidebar() {
         onClick={(event) => setAnchor(event.currentTarget)}
       />
       <Menu open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}>
-        {(spaces.data ?? []).slice(0, RECENT_SPACES).map((item) => (
+        {/* Managing spaces is an admin screen, so everyone else needs the full list here. */}
+        {(canManageSpaces ? (spaces.data ?? []).slice(0, RECENT_SPACES) : (spaces.data ?? [])).map((item) => (
           <MenuItem key={item.id} onClick={() => open(`/spaces/${item.key}/issues`)}>{item.name}</MenuItem>
         ))}
-        <MenuItem onClick={() => open('/spaces')}>{t('nav.allSpaces')}</MenuItem>
+        {canManageSpaces && <MenuItem onClick={() => open('/admin/spaces')}>{t('nav.allSpaces')}</MenuItem>}
         <MenuItem onClick={() => { setAnchor(null); setCreating(true); }}>{t('spaces.create')}</MenuItem>
       </Menu>
       {creating && <CreateSpaceDialog open onClose={() => setCreating(false)} />}

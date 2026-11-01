@@ -10,8 +10,8 @@ import { useTranslation } from 'react-i18next';
 import Typography from '@mui/material/Typography';
 import { Dialog, DialogFooter } from '../../components/Dialog';
 import { TextField } from '../../components/TextField';
-import { radius, sem, shadow } from '../../theme/tokens';
-import { EditorMenus, normalizeUrl } from './RichTextMenus';
+import { font, radius, sem, shadow } from '../../theme/tokens';
+import { EditorMenus, EditorToolbar, normalizeUrl } from './RichTextMenus';
 import { createExtensions, type MentionUser, type PopupState, type SlashCommand } from './richTextExtensions';
 
 export type { MentionUser } from './richTextExtensions';
@@ -21,6 +21,8 @@ interface RichTextEditorProps {
   initialValue?: string;
   people: MentionUser[];
   autoFocus?: boolean;
+  /** Shows the label above the box, for use among other labelled fields. */
+  showLabel?: boolean;
   onChange: (html: string) => void;
 }
 
@@ -119,7 +121,7 @@ function ImageDialog({ onClose, onInsert }: { onClose: () => void; onInsert: (ur
   );
 }
 
-export function RichTextEditor({ label, initialValue = '', people, autoFocus, onChange }: RichTextEditorProps) {
+export function RichTextEditor({ label, initialValue = '', people, autoFocus, showLabel, onChange }: RichTextEditorProps) {
   const { t } = useTranslation();
   const [mentionPopup, setMentionPopup] = useState<PopupState<MentionUser> | null>(null);
   const [slashPopup, setSlashPopup] = useState<PopupState<SlashCommand> | null>(null);
@@ -179,7 +181,12 @@ export function RichTextEditor({ label, initialValue = '', people, autoFocus, on
   });
 
   return (
+    <div className="flex flex-col gap-1">
+    {showLabel && (
+      <span aria-hidden style={{ fontSize: font.size.xs, fontWeight: font.weight.medium, color: sem('text-secondary') }}>{label}</span>
+    )}
     <div ref={setContainer} className="rich-text-editor">
+      {editor && <EditorToolbar editor={editor} onImage={() => setImageOpen(true)} />}
       <EditorContent editor={editor} />
       {editor && <EditorMenus editor={editor} container={container} />}
       {slashPopup && (
@@ -210,6 +217,7 @@ export function RichTextEditor({ label, initialValue = '', people, autoFocus, on
           }}
         />
       )}
+    </div>
     </div>
   );
 }

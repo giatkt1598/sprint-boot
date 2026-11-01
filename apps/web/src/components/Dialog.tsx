@@ -7,19 +7,21 @@ import { Button, type ButtonKind } from './Button';
 export type DialogWidth = 480 | 520 | 560 | 640;
 
 export interface DialogProps extends Omit<MuiDialogProps, 'title' | 'maxWidth'> {
+  /** Runs once the opening transition ends; autoFocus alone does not survive it. */
+  onOpened?: () => void;
   title: string;
   width?: DialogWidth;
   footer?: ReactNode;
 }
 
-export function Dialog({ title, width = 480, footer, children, ...props }: DialogProps) {
+export function Dialog({ title, width = 480, footer, onOpened, children, ...props }: DialogProps) {
   const titleId = useId();
 
   return (
     <MuiDialog
       aria-labelledby={titleId}
       maxWidth={false}
-      slotProps={{ paper: { sx: { width, maxWidth: 'calc(100% - 32px)' } } }}
+      slotProps={{ paper: { sx: { width, maxWidth: 'calc(100% - 32px)' } }, transition: { onEntered: onOpened } }}
       {...props}
     >
       <div className="flex flex-col gap-4 p-6">

@@ -781,6 +781,7 @@
       "amber": "Amber",
       "green": "Green",
       "blue": "Blue"
-    }
+    },
+    "tools": "Editor tools"
   }
 }

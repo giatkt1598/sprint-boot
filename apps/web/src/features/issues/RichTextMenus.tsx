@@ -5,8 +5,8 @@ import { useEditorState } from '@tiptap/react';
 import { BubbleMenu } from '@tiptap/react/menus';
 import { NodeSelection } from '@tiptap/pm/state';
 import {
-  AlignCenter, AlignLeft, AlignRight, Bold, Code, Columns2, GripVertical, Highlighter, Italic, Link2, Palette, Plus,
-  RemoveFormatting, Rows2, Strikethrough, Trash2, Underline, type LucideIcon,
+  AlignCenter, AlignLeft, AlignRight, Bold, Code, Code2, Columns2, GripVertical, Highlighter, ImageIcon, Italic, Link2, List,
+  ListChecks, ListOrdered, Palette, Plus, Quote, RemoveFormatting, Rows2, Strikethrough, Table, Trash2, Underline, type LucideIcon,
 } from 'lucide-react';
 import { useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -118,6 +118,78 @@ function LinkField({ editor, onDone }: { editor: Editor; onDone: () => void }) {
       className="min-w-0 flex-1 p-1 outline-none"
       style={{ width: 280, fontSize: font.size.md, color: sem('text-primary'), backgroundColor: 'transparent' }}
     />
+  );
+}
+
+/** The always visible tools, for people who do not start from `/`. */
+function EditorToolbar({ editor, onImage }: { editor: Editor; onImage: () => void }) {
+  const { t } = useTranslation();
+  const [linking, setLinking] = useState(false);
+  const chain = () => editor.chain().focus();
+  const state = useEditorState({
+    editor,
+    selector: ({ editor: current }) => ({
+      block: current.isActive('heading', { level: 1 }) ? 'h1'
+        : current.isActive('heading', { level: 2 }) ? 'h2'
+          : current.isActive('heading', { level: 3 }) ? 'h3' : 'p',
+      bold: current.isActive('bold'),
+      italic: current.isActive('italic'),
+      underline: current.isActive('underline'),
+      strike: current.isActive('strike'),
+      code: current.isActive('code'),
+      link: current.isActive('link'),
+      bullets: current.isActive('bulletList'),
+      numbers: current.isActive('orderedList'),
+      tasks: current.isActive('taskList'),
+      quote: current.isActive('blockquote'),
+      codeBlock: current.isActive('codeBlock'),
+    }),
+  });
+  const setBlock = (value: string) => {
+    if (value === 'p') {
+      chain().setParagraph().run();
+    } else {
+      chain().setHeading({ level: Number(value[1]) as 1 | 2 | 3 }).run();
+    }
+  };
+
+  return (
+    <div
+      role="toolbar"
+      aria-label={t('editor.tools')}
+      className="flex flex-wrap items-center gap-1 p-1"
+      style={{ borderBottom: `1px solid ${sem('border-default')}` }}
+    >
+      <select
+        aria-label={t('editor.turnInto')}
+        value={state.block}
+        onChange={(event) => setBlock(event.target.value)}
+        className="cursor-pointer bg-transparent p-1"
+        style={{ fontSize: font.size.md, color: sem('text-primary') }}
+      >
+        <option value="p">{t('editor.text')}</option>
+        <option value="h1">{t('editor.heading1')}</option>
+        <option value="h2">{t('editor.heading2')}</option>
+        <option value="h3">{t('editor.heading3')}</option>
+      </select>
+      <Divider />
+      <Tool label={t('editor.bold')} icon={Bold} active={state.bold} onClick={() => chain().toggleBold().run()} />
+      <Tool label={t('editor.italic')} icon={Italic} active={state.italic} onClick={() => chain().toggleItalic().run()} />
+      <Tool label={t('editor.underline')} icon={Underline} active={state.underline} onClick={() => chain().toggleUnderline().run()} />
+      <Tool label={t('editor.strike')} icon={Strikethrough} active={state.strike} onClick={() => chain().toggleStrike().run()} />
+      <Tool label={t('editor.code')} icon={Code} active={state.code} onClick={() => chain().toggleCode().run()} />
+      <Tool label={t('editor.link')} icon={Link2} active={state.link} onClick={() => setLinking(!linking)} />
+      <Divider />
+      <Tool label={t('editor.bullets')} icon={List} active={state.bullets} onClick={() => chain().toggleBulletList().run()} />
+      <Tool label={t('editor.numbers')} icon={ListOrdered} active={state.numbers} onClick={() => chain().toggleOrderedList().run()} />
+      <Tool label={t('editor.tasks')} icon={ListChecks} active={state.tasks} onClick={() => chain().toggleTaskList().run()} />
+      <Tool label={t('editor.quote')} icon={Quote} active={state.quote} onClick={() => chain().toggleBlockquote().run()} />
+      <Tool label={t('editor.codeBlock')} icon={Code2} active={state.codeBlock} onClick={() => chain().toggleCodeBlock().run()} />
+      <Divider />
+      <Tool label={t('editor.table')} icon={Table} onClick={() => chain().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} />
+      <Tool label={t('editor.image')} icon={ImageIcon} onClick={onImage} />
+      {linking && <div className="flex w-full"><LinkField editor={editor} onDone={() => setLinking(false)} /></div>}
+    </div>
   );
 }
 
@@ -297,6 +369,8 @@ function BlockHandle({ editor }: { editor: Editor }) {
     </DragHandle>
   );
 }
+
+export { EditorToolbar };
 
 export function EditorMenus({ editor, container }: { editor: Editor; container: HTMLElement | null }): ReactNode {
   return (

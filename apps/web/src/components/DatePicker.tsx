@@ -1,6 +1,6 @@
 import ButtonBase from '@mui/material/ButtonBase';
 import IconButton from '@mui/material/IconButton';
-import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useMemo, useState, type MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { font, radius, sem } from '../theme/tokens';
@@ -67,11 +67,12 @@ export function DatePicker({ label, value, onChange, quiet, disabled }: DatePick
           {label}
         </span>
       )}
+      <div className="relative">
       <ButtonBase
         aria-haspopup="dialog"
         disabled={disabled}
         onClick={open}
-        className="flex h-9 w-full items-center gap-2 px-2"
+        className="flex h-9 w-full items-center gap-2 pl-2 pr-8"
         sx={{
           justifyContent: 'flex-start',
           borderRadius: `${radius.control}px`,
@@ -85,6 +86,17 @@ export function DatePicker({ label, value, onChange, quiet, disabled }: DatePick
         <span className="sr-only">{label}:</span>
         {shown}
       </ButtonBase>
+      {value && !disabled && (
+        <IconButton
+          size="small"
+          aria-label={`${t('common.clearDate')}: ${label}`}
+          onClick={() => onChange('')}
+          sx={{ position: 'absolute', right: 4, top: 4 }}
+        >
+          <X size={16} strokeWidth={1.5} aria-hidden />
+        </IconButton>
+      )}
+      </div>
       <Popover width={264} open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}>
         <div role="group" aria-label={label} className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
@@ -126,14 +138,6 @@ export function DatePicker({ label, value, onChange, quiet, disabled }: DatePick
               );
             })}
           </div>
-          {value && (
-            <ButtonBase
-              onClick={() => pick('')}
-              sx={{ alignSelf: 'flex-start', padding: 1, fontSize: font.size.xs, color: sem('text-accent') }}
-            >
-              {t('common.clearDate')}
-            </ButtonBase>
-          )}
         </div>
       </Popover>
     </div>
