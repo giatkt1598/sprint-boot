@@ -15,7 +15,26 @@ using Volo.Abp.Timing;
 
 namespace SprintBoot.GitIntegration;
 
-[Authorize(SprintBootPermissions.ManageGit)]
+public static class GitUrls
+{
+    /// <summary>Splits "https://git.example.com/acme" into the server and the organization.</summary>
+    public static (string BaseUrl, string? Owner) Split(string? url)
+    {
+        var text = url?.Trim().TrimEnd('/');
+        if (!Uri.TryCreate(text, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https"))
+        {
+            throw new BusinessException(GitErrors.InvalidConnection);
+        }
+
+        var segments = uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var server = uri.GetLeftPart(UriPartial.Authority);
+        return segments.Length == 0
+            ? (server, null)
+            : ($"{server}/{string.Join('/', segments[..^1])}".TrimEnd('/'), segments[^1]);
+    }
+}
+
+[Authorize]
 public class GitConnectionAppService(
     IRepository<GitConnection, Guid> connections,
     IRepository<GitRepository, Guid> repositories,
@@ -27,26 +46,54 @@ public class GitConnectionAppService(
     GitAccessProvider access,
     GitSyncService sync,
     GitAuthState authState,
+    IProjectAccess projects,
     IStringEncryptionService encryption,
     IConfiguration configuration)
     : ApplicationService, IGitConnectionAppService
 {
     private const string GitHubHost = "github.com";
 
-    public async Task<List<GitConnectionDto>> GetListAsync()
+    public async Task<List<GitConnectionDto>> GetListAsync(Guid projectId)
     {
-        var list = await connections.GetListAsync();
-        var repos = await repositories.GetListAsync();
+        await projects.CheckAsync(projectId, ProjectPermissions.Manage);
+
+        // Connections from before spaces owned them stay reachable for admins to clean up.
+        var legacy = await AuthorizationService.IsGrantedAsync(SprintBootPermissions.ManageGit);
+        var list = await connections.GetListAsync(item => item.ProjectId == projectId || (legacy && item.ProjectId == null));
+        var ids = list.Select(item => item.Id).ToList();
+        var repos = await repositories.GetListAsync(item => ids.Contains(item.ConnectionId));
         return [.. list.OrderBy(item => item.Name).Select(item => ToDto(item, repos))];
     }
 
-    public async Task<GitConnectionDto> GetAsync(Guid id) => await ToDtoAsync(await connections.GetAsync(id));
+    public Task<GitRedirectUrisDto> GetRedirectUrisAsync() => Task.FromResult(new GitRedirectUrisDto
+    {
+        OAuth = authState.OAuthRedirectUri,
+        GitHubSetup = authState.GitHubSetupUri,
+    });
+
+    public async Task<GitConnectionDto> GetAsync(Guid id) => await ToDtoAsync(await LoadAsync(id));
+
+    private async Task<GitConnection> LoadAsync(Guid id)
+    {
+        var connection = await connections.GetAsync(id);
+        if (connection.ProjectId is { } projectId)
+        {
+            await projects.CheckAsync(projectId, ProjectPermissions.Manage);
+        }
+        else
+        {
+            await AuthorizationService.CheckAsync(SprintBootPermissions.ManageGit);
+        }
+
+        return connection;
+    }
 
     public async Task<GitConnectionDto> CreateAsync(SaveGitConnectionInput input)
     {
-        var baseUrl = input.ProviderType == GitProviderType.GitHub ? GitHubHost : NormalizeUrl(input.BaseUrl);
+        await projects.CheckAsync(input.ProjectId, ProjectPermissions.Manage);
+        var (baseUrl, owner) = input.ProviderType == GitProviderType.GitHub ? (GitHubHost, null) : GitUrls.Split(input.BaseUrl);
         var authType = input.ProviderType == GitProviderType.GitHub ? GitAuthType.GitHubApp : input.AuthType;
-        var connection = new GitConnection(GuidGenerator.Create(), input.Name, input.ProviderType, baseUrl, authType);
+        var connection = new GitConnection(GuidGenerator.Create(), input.ProjectId, input.Name, input.ProviderType, baseUrl, owner, authType);
         ApplyCredentials(connection, input);
         await connections.InsertAsync(connection, autoSave: true);
         if (authType == GitAuthType.AccessToken)
@@ -59,7 +106,7 @@ public class GitConnectionAppService(
 
     public async Task<GitConnectionDto> UpdateAsync(Guid id, SaveGitConnectionInput input)
     {
-        var connection = await connections.GetAsync(id);
+        var connection = await LoadAsync(id);
         connection.Name = input.Name;
         if (connection.ProviderType == GitProviderType.Gitea)
         {
@@ -78,6 +125,7 @@ public class GitConnectionAppService(
 
     public async Task DeleteAsync(Guid id)
     {
+        await LoadAsync(id);
         var ids = (await repositories.GetListAsync(item => item.ConnectionId == id)).Select(item => item.Id).ToList();
         var branchIds = (await branches.GetListAsync(item => ids.Contains(item.RepositoryId))).Select(item => item.Id).ToList();
         var commitIds = (await commits.GetListAsync(item => ids.Contains(item.RepositoryId))).Select(item => item.Id).ToList();
@@ -102,7 +150,7 @@ public class GitConnectionAppService(
             GitProviderType type;
             if (input.ConnectionId is { } id)
             {
-                var connection = await connections.GetAsync(id);
+                var connection = await LoadAsync(id);
                 type = connection.ProviderType;
                 credential = string.IsNullOrEmpty(input.AccessToken)
                     ? await access.GetAsync(connection)
@@ -111,7 +159,7 @@ public class GitConnectionAppService(
             else
             {
                 type = GitProviderType.Gitea;
-                credential = new GitAccess(NormalizeUrl(input.BaseUrl), input.AccessToken ?? string.Empty);
+                credential = new GitAccess(GitUrls.Split(input.BaseUrl).BaseUrl, input.AccessToken ?? string.Empty);
             }
 
             await access.Provider(type).CheckAccessAsync(credential);
@@ -125,7 +173,7 @@ public class GitConnectionAppService(
 
     public async Task<GitAuthorizeUrlDto> GetAuthorizeUrlAsync(Guid id)
     {
-        var connection = await connections.GetAsync(id);
+        var connection = await LoadAsync(id);
         var state = authState.Issue(connection.Id);
         if (connection.ProviderType == GitProviderType.GitHub)
         {
@@ -145,7 +193,7 @@ public class GitConnectionAppService(
 
     public async Task<List<GitRepositoryDto>> GetRepositoriesAsync(Guid id, string? search)
     {
-        await connections.GetAsync(id);
+        await LoadAsync(id);
         var list = await repositories.GetListAsync(item => item.ConnectionId == id);
         return
         [
@@ -167,7 +215,7 @@ public class GitConnectionAppService(
 
     public async Task<GitConnectionDto> SyncAsync(Guid id)
     {
-        var connection = await connections.GetAsync(id);
+        var connection = await LoadAsync(id);
         await sync.SyncAsync(connection);
         return await ToDtoAsync(connection);
     }
@@ -175,6 +223,7 @@ public class GitConnectionAppService(
     public async Task<GitWebhookSetupDto> GetWebhookSetupAsync(Guid repositoryId)
     {
         var repository = await repositories.GetAsync(repositoryId);
+        await LoadAsync(repository.ConnectionId);
         if (repository.EncryptedWebhookSecret is null)
         {
             repository.EncryptedWebhookSecret = encryption.Encrypt(Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N"));
@@ -207,14 +256,6 @@ public class GitConnectionAppService(
         access.Write(connection, credentials);
     }
 
-    private static string NormalizeUrl(string? url)
-    {
-        var text = url?.Trim().TrimEnd('/');
-        return Uri.TryCreate(text, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https"
-            ? text!
-            : throw new BusinessException(GitErrors.InvalidConnection);
-    }
-
     private async Task<GitConnectionDto> ToDtoAsync(GitConnection connection) =>
         ToDto(connection, await repositories.GetListAsync(item => item.ConnectionId == connection.Id));
 
@@ -226,7 +267,7 @@ public class GitConnectionAppService(
             Id = connection.Id,
             Name = connection.Name,
             ProviderType = connection.ProviderType,
-            BaseUrl = connection.BaseUrl,
+            BaseUrl = connection.Owner is null ? connection.BaseUrl : $"{connection.BaseUrl}/{connection.Owner}",
             AuthType = connection.AuthType,
             Status = connection.Status,
             Problem = connection.Problem,
@@ -275,7 +316,7 @@ public class GitIssueAppService(
 
         return new DevelopmentDto
         {
-            CanCreateBranch = await repositories.AnyAsync(item => item.IsAccessible),
+            CanCreateBranch = await UsableRepositoriesAsync(await issues.GetProjectIdAsync(issueId)) is { Count: > 0 },
             Branches = [.. branchRows.OrderBy(item => item.Name).Select(item => new GitBranchRowDto
             {
                 Name = item.Name,
@@ -308,7 +349,7 @@ public class GitIssueAppService(
         var issue = await facts.FindAsync(issueId) ?? throw new BusinessException(GitErrors.InvalidConnection);
 
         var used = await UsedRepositoriesAsync(projectId);
-        var repos = await repositories.GetListAsync(item => item.IsAccessible);
+        var repos = await UsableRepositoriesAsync(projectId);
         var owners = (await connections.GetListAsync()).ToDictionary(item => item.Id);
 
         return new BranchOptionsDto
@@ -329,8 +370,9 @@ public class GitIssueAppService(
 
     public async Task<List<string>> GetBranchesAsync(Guid issueId, Guid repositoryId)
     {
-        await projects.CheckAsync(await issues.GetProjectIdAsync(issueId), ProjectPermissions.EditIssues);
-        var (repository, connection) = await TargetAsync(repositoryId);
+        var projectId = await issues.GetProjectIdAsync(issueId);
+        await projects.CheckAsync(projectId, ProjectPermissions.EditIssues);
+        var (repository, connection) = await TargetAsync(repositoryId, projectId);
         return await CallAsync(async () =>
             (await access.Provider(connection.ProviderType).ListBranchesAsync(await access.GetAsync(connection), repository.FullName)).ToList());
     }
@@ -339,7 +381,7 @@ public class GitIssueAppService(
     {
         var projectId = await issues.GetProjectIdAsync(issueId);
         await projects.CheckAsync(projectId, ProjectPermissions.EditIssues);
-        var (repository, connection) = await TargetAsync(input.RepositoryId);
+        var (repository, connection) = await TargetAsync(input.RepositoryId, projectId);
 
         await CallAsync(async () =>
         {
@@ -376,10 +418,19 @@ public class GitIssueAppService(
         ];
     }
 
-    private async Task<(GitRepository Repository, GitConnection Connection)> TargetAsync(Guid repositoryId)
+    private async Task<List<GitRepository>> UsableRepositoriesAsync(Guid projectId)
+    {
+        var ids = (await connections.GetListAsync(item => item.ProjectId == projectId || item.ProjectId == null)).Select(item => item.Id).ToList();
+        return await repositories.GetListAsync(item => item.IsAccessible && ids.Contains(item.ConnectionId));
+    }
+
+    private async Task<(GitRepository Repository, GitConnection Connection)> TargetAsync(Guid repositoryId, Guid projectId)
     {
         var repository = await repositories.GetAsync(repositoryId);
-        return (repository, await connections.GetAsync(repository.ConnectionId));
+        var connection = await connections.GetAsync(repository.ConnectionId);
+        return connection.ProjectId is null || connection.ProjectId == projectId
+            ? (repository, connection)
+            : throw new BusinessException(GitErrors.InvalidConnection);
     }
 
     private static async Task<T> CallAsync<T>(Func<Task<T>> call)
@@ -418,6 +469,8 @@ public class GitAuthState(IDataProtectionProvider protection, GitSyncService syn
 
     public string OAuthRedirectUri => $"{sync.PublicUrl}/api/v1/git/oauth/callback";
 
+    public string GitHubSetupUri => $"{sync.PublicUrl}/api/v1/git/github/setup";
+
     public string Issue(Guid connectionId) => Protector.Protect(connectionId.ToString(), Lifetime);
 
     public Guid? Read(string? state)
@@ -443,6 +496,7 @@ public class GitCallbackController(
     GitAccessProvider access,
     GitSyncService sync,
     IRepository<GitConnection, Guid> connections,
+    IProjectAccess projects,
     IConfiguration configuration) : ControllerBase
 {
     private async Task<string> ReadBodyAsync()
@@ -486,9 +540,11 @@ public class GitCallbackController(
                 connection.Problem = GitConnectionProblem.TokenRevoked;
                 await connections.UpdateAsync(connection);
             }
+
+            return await BackToSettingsAsync(connection);
         }
 
-        return BackToAdmin();
+        return BackToSettings(null);
     }
 
     [HttpGet("github/setup")]
@@ -499,11 +555,15 @@ public class GitCallbackController(
             var connection = await connections.GetAsync(id);
             connection.InstallationId = installationId;
             await sync.SyncAsync(connection);
+            return await BackToSettingsAsync(connection);
         }
 
-        return BackToAdmin();
+        return BackToSettings(null);
     }
 
-    private RedirectResult BackToAdmin() =>
-        Redirect($"{(configuration["Auth:SpaBaseUrl"] ?? string.Empty).TrimEnd('/')}/admin/git-connections");
+    private async Task<RedirectResult> BackToSettingsAsync(GitConnection connection) =>
+        BackToSettings(connection.ProjectId is { } projectId ? (await projects.GetRefAsync(projectId)).Key : null);
+
+    private RedirectResult BackToSettings(string? spaceKey) =>
+        Redirect($"{(configuration["Auth:SpaBaseUrl"] ?? string.Empty).TrimEnd('/')}/{(spaceKey is null ? string.Empty : $"spaces/{spaceKey}/settings/git")}");
 }

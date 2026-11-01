@@ -25,9 +25,18 @@ public class GitRulesTests
     [Theory]
     [InlineData(null, "SB-123", "Sửa lỗi đăng nhập!", "feature/SB-123-sua-loi-dang-nhap")]
     [InlineData("bug/{key}", "SB-1", "Anything", "bug/SB-1")]
+    [InlineData("feature/{issue_key}", "SB-1", "Anything", "feature/SB-1")]
     public void Branch_names_follow_the_template(string? template, string key, string title, string expected)
     {
         IssueKeyScanner.BranchName(template, key, title).ShouldBe(expected);
+    }
+
+    [Theory]
+    [InlineData("https://git.example.com", "https://git.example.com", null)]
+    [InlineData("https://git.example.com/acme/", "https://git.example.com", "acme")]
+    public void Addresses_split_into_server_and_organization(string url, string server, string? owner)
+    {
+        GitUrls.Split(url).ShouldBe((server, owner));
     }
 
     [Fact]

@@ -720,7 +720,10 @@
     "webhookTitle": "Webhook for {{name}}",
     "webhookHint": "Add a webhook in the provider with this URL and secret, for push, branch, pull request and status events.",
     "webhookUrl": "Payload URL",
-    "webhookSecret": "Secret"
+    "webhookSecret": "Secret",
+    "redirectUri": "Redirect URI",
+    "redirectCopied": "Redirect URI copied.",
+    "copyRedirect": "Copy redirect URI"
   },
   "development": {
     "title": "Development",

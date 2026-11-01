@@ -68,6 +68,7 @@ public class GitConnectionDto
 
     public required GitProviderType ProviderType { get; set; }
 
+    /// <summary>The server address, with the organization when the connection is limited to one.</summary>
     public required string BaseUrl { get; set; }
 
     public required GitAuthType AuthType { get; set; }
@@ -85,6 +86,9 @@ public class GitConnectionDto
 
 public class SaveGitConnectionInput
 {
+    /// <summary>The space the connection belongs to. Ignored when updating.</summary>
+    public Guid ProjectId { get; set; }
+
     [Required]
     [StringLength(128, MinimumLength = 1)]
     public required string Name { get; set; }
@@ -114,6 +118,13 @@ public class TestGitConnectionInput
     public string? BaseUrl { get; set; }
 
     public string? AccessToken { get; set; }
+}
+
+public class GitRedirectUrisDto
+{
+    public required string OAuth { get; set; }
+
+    public required string GitHubSetup { get; set; }
 }
 
 public class GitTestResultDto
@@ -152,7 +163,9 @@ public class GitWebhookSetupDto
 
 public interface IGitConnectionAppService : IApplicationService
 {
-    Task<List<GitConnectionDto>> GetListAsync();
+    Task<List<GitConnectionDto>> GetListAsync(Guid projectId);
+
+    Task<GitRedirectUrisDto> GetRedirectUrisAsync();
 
     Task<GitConnectionDto> GetAsync(Guid id);
 

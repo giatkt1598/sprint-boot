@@ -14,7 +14,13 @@ public class GitConnection : AuditedAggregateRoot<Guid>, IMultiTenant
 
     public GitProviderType ProviderType { get; private set; }
 
+    /// <summary>Null only on connections made before they belonged to a space.</summary>
+    public Guid? ProjectId { get; private set; }
+
     public string BaseUrl { get; private set; } = null!;
+
+    /// <summary>When set, only this organization or user is ever touched.</summary>
+    public string? Owner { get; private set; }
 
     public GitAuthType AuthType { get; set; }
 
@@ -32,14 +38,19 @@ public class GitConnection : AuditedAggregateRoot<Guid>, IMultiTenant
     {
     }
 
-    public GitConnection(Guid id, string name, GitProviderType providerType, string baseUrl, GitAuthType authType)
+    public GitConnection(Guid id, Guid projectId, string name, GitProviderType providerType, string baseUrl, string? owner, GitAuthType authType)
         : base(id)
     {
+        ProjectId = projectId;
         Name = name;
         ProviderType = providerType;
         BaseUrl = baseUrl;
+        Owner = owner;
         AuthType = authType;
     }
+
+    public bool Covers(string fullName) =>
+        Owner is null || fullName.StartsWith($"{Owner}/", StringComparison.OrdinalIgnoreCase);
 }
 
 public class GitRepository : Entity<Guid>
@@ -248,6 +259,8 @@ public static class GitModelBuilderExtensions
             b.ConfigureByConvention();
             b.Property(item => item.Name).HasMaxLength(128).IsRequired();
             b.Property(item => item.BaseUrl).HasMaxLength(256).IsRequired();
+            b.Property(item => item.Owner).HasMaxLength(128);
+            b.HasIndex(item => item.ProjectId);
         });
         builder.Entity<GitRepository>(b =>
         {

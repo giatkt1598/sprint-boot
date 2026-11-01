@@ -53,8 +53,6 @@ export function App() {
               <Route path="invitations" element={<InvitationsPage />} />
               <Route path="sso" element={<SsoPage />} />
               <Route path="sso/:providerId" element={<SsoProviderPage />} />
-              <Route path="git-connections" element={<GitConnectionsPage />} />
-              <Route path="git-connections/:connectionId" element={<GitRepositoriesPage />} />
               <Route path="workflows" element={<WorkflowsPage />} />
               <Route path="notification-schemes" element={<NotificationSchemesPage />} />
               <Route path="notification-schemes/:schemeId" element={<EditSchemePage />} />
@@ -67,6 +65,8 @@ export function App() {
               <Route path="members" element={<SpaceMembersPage />} />
               <Route path="board" element={<SpaceBoardPage />} />
               <Route path="workflows" element={<SpaceWorkflowsPage />} />
+              <Route path="git" element={<GitConnectionsPage />} />
+              <Route path="git/:connectionId" element={<GitRepositoriesPage />} />
             </Route>
           </Route>
 

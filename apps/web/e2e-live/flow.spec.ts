@@ -846,8 +846,9 @@ const giteaAvailable = async () => {
   }
 };
 
-test('a real Gitea connection links commits, pull requests and CI, and creates branches', async ({ page }) => {
+test('a real Gitea connection links commits, pull requests and CI, and creates branches', async ({ page, context }) => {
   test.setTimeout(120_000);
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   test.skip(!(await giteaAvailable()), 'Start Gitea with the git compose profile and create the sbadmin user');
 
   const repoName = `repo-${suffix().toLowerCase()}`;
@@ -882,14 +883,24 @@ test('a real Gitea connection links commits, pull requests and CI, and creates b
   await page.waitForURL(`**/issues/${key}-1`);
   const issueUrl = page.url();
 
-  await page.goto('/admin/git-connections');
+  await page.goto(`/spaces/${key}/settings/general`);
+  await expect(page.getByLabel('Branch name template')).toHaveAttribute('placeholder', 'feature/{issue_key}');
+  await page.goto(`/spaces/${key}/settings/git`);
   await expect(page.getByText('No Git connections yet')).toBeVisible();
   await expectAccessible(page);
   await page.getByRole('button', { name: 'Add connection' }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByRole('radio', { name: /Gitea/ }).click();
   await dialog.getByLabel('Name').fill('Local Gitea');
-  await dialog.getByLabel('Base URL').fill(GITEA);
+  await dialog.getByLabel('Base URL').fill(`${GITEA}/sbadmin`);
+  await dialog.getByLabel('Authentication').click();
+  await page.getByRole('option', { name: 'OAuth2' }).click();
+  await expect(dialog.getByRole('textbox', { name: 'Redirect URI' })).toHaveValue(/\/api\/v1\/git\/oauth\/callback$/);
+  await dialog.getByRole('button', { name: 'Copy redirect URI' }).click();
+  await expect(page.getByText('Redirect URI copied.')).toBeVisible();
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toMatch(/oauth\/callback$/);
+  await dialog.getByLabel('Authentication').click();
+  await page.getByRole('option', { name: 'Access token' }).click();
   await dialog.getByLabel('Access token').fill('wrong-token');
   await dialog.getByRole('button', { name: 'Test connection' }).click();
   await expect(page.getByText('Could not connect with these details.')).toBeVisible();
@@ -902,6 +913,8 @@ test('a real Gitea connection links commits, pull requests and CI, and creates b
   await expectAccessible(page);
 
   await page.getByRole('link', { name: /Repositories Local Gitea/ }).click();
+  await expect(page.getByRole('cell', { name: repoName })).toBeVisible();
+  await expect(page.getByRole('cell', { name: /^acme\// })).toHaveCount(0);
   await page.getByLabel('Search repositories').fill(repoName);
   const row = page.getByRole('row', { name: new RegExp(repoName) });
   await expect(row.getByText('Active')).toBeVisible();

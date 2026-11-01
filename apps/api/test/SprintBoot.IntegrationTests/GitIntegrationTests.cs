@@ -24,20 +24,17 @@ public class GitIntegrationTests(ApiFixture fixture)
 
     private static HttpClient Anonymous(ApiFixture fixture) => fixture.Factory.CreateClient();
 
-    private async Task<AuthClient> AdminAsync()
-    {
-        var admin = new AuthClient(fixture);
-        await admin.SignInAsync(ApiFixture.AdminEmail, ApiFixture.AdminPassword, Token);
-        return admin;
-    }
+    private Task<Harness> ConnectAsync(AuthClient admin, ProjectDto project, GitProviderType provider, string baseUrl = FakeGitServer.GiteaUrl) =>
+        ConnectAsync(admin, project.Id, provider, baseUrl);
 
-    private async Task<Harness> ConnectAsync(AuthClient admin, GitProviderType provider)
+    private async Task<Harness> ConnectAsync(AuthClient admin, Guid projectId, GitProviderType provider, string baseUrl)
     {
         var response = await admin.Http.PostAsJsonAsync("/api/v1/git-connection", new
         {
+            projectId,
             name = $"conn-{Guid.NewGuid():N}",
             providerType = provider,
-            baseUrl = FakeGitServer.GiteaUrl,
+            baseUrl,
             authType = provider == GitProviderType.Gitea ? GitAuthType.AccessToken : GitAuthType.GitHubApp,
             accessToken = FakeGitServer.ValidToken,
         }, Token);
@@ -138,13 +135,13 @@ public class GitIntegrationTests(ApiFixture fixture)
     [InlineData(GitProviderType.Gitea)]
     public async Task Connecting_syncs_repositories_and_never_returns_the_token(GitProviderType provider)
     {
-        var admin = await AdminAsync();
+        var (admin, project, _) = await IssueAsync();
 
-        var harness = await ConnectAsync(admin, provider);
+        var harness = await ConnectAsync(admin, project, provider);
 
         harness.Connection.Status.ShouldBe(GitConnectionStatus.Connected);
         harness.Repository.FullName.ShouldBe("acme/web");
-        var body = await admin.Http.GetStringAsync("/api/v1/git-connection", Token);
+        var body = await admin.Http.GetStringAsync($"/api/v1/git-connection?projectId={project.Id}", Token);
         body.ShouldNotContain(FakeGitServer.ValidToken);
     }
 
@@ -153,9 +150,8 @@ public class GitIntegrationTests(ApiFixture fixture)
     [InlineData(GitProviderType.Gitea)]
     public async Task A_wrong_signature_is_refused_and_writes_nothing(GitProviderType provider)
     {
-        var admin = await AdminAsync();
-        var harness = await ConnectAsync(admin, provider);
-        var (client, _, issue) = await IssueAsync();
+        var (client, project, issue) = await IssueAsync();
+        var harness = await ConnectAsync(client, project, provider);
 
         var response = await SendAsync(harness, "push", Push("main", Guid.NewGuid().ToString("N"), $"{issue.Key} tampered"), badSignature: true);
 
@@ -169,9 +165,8 @@ public class GitIntegrationTests(ApiFixture fixture)
     [InlineData(GitProviderType.Gitea)]
     public async Task A_commit_links_once_even_when_the_delivery_repeats(GitProviderType provider)
     {
-        var admin = await AdminAsync();
-        var harness = await ConnectAsync(admin, provider);
-        var (client, _, issue) = await IssueAsync();
+        var (client, project, issue) = await IssueAsync();
+        var harness = await ConnectAsync(client, project, provider);
         var sha = Guid.NewGuid().ToString("N");
         var delivery = Guid.NewGuid().ToString();
 
@@ -189,9 +184,8 @@ public class GitIntegrationTests(ApiFixture fixture)
     [InlineData(GitProviderType.Gitea)]
     public async Task A_key_without_an_issue_links_nothing(GitProviderType provider)
     {
-        var admin = await AdminAsync();
-        var harness = await ConnectAsync(admin, provider);
         var (client, project, issue) = await IssueAsync();
+        var harness = await ConnectAsync(client, project, provider);
         var marker = Guid.NewGuid().ToString("N");
 
         (await SendAsync(harness, "push", Push("main", Guid.NewGuid().ToString("N"), $"{project.Key}-99999 nothing {marker}"))).EnsureSuccessStatusCode();
@@ -206,9 +200,8 @@ public class GitIntegrationTests(ApiFixture fixture)
     [InlineData(GitProviderType.Gitea)]
     public async Task Pull_requests_and_ci_status_update_the_issue(GitProviderType provider)
     {
-        var admin = await AdminAsync();
-        var harness = await ConnectAsync(admin, provider);
-        var (client, _, issue) = await IssueAsync();
+        var (client, project, issue) = await IssueAsync();
+        var harness = await ConnectAsync(client, project, provider);
         var sha = Guid.NewGuid().ToString("N");
         var number = Random.Shared.Next(1, 100000);
         object Pull(string state, bool merged) => new
@@ -239,9 +232,8 @@ public class GitIntegrationTests(ApiFixture fixture)
     [InlineData(GitProviderType.Gitea)]
     public async Task Creating_a_branch_links_it_and_a_taken_name_is_reported(GitProviderType provider)
     {
-        var admin = await AdminAsync();
-        var harness = await ConnectAsync(admin, provider);
-        var (client, _, issue) = await IssueAsync();
+        var (client, project, issue) = await IssueAsync();
+        var harness = await ConnectAsync(client, project, provider);
 
         var options = await client.Http.GetFromJsonAsync<BranchOptionsDto>($"/api/v1/git-issue/branch-options/{issue.Id}", Token);
         options!.SuggestedName.ShouldBe($"feature/{issue.Key}-dang-nhap");
@@ -258,9 +250,8 @@ public class GitIntegrationTests(ApiFixture fixture)
     [Fact]
     public async Task Only_people_who_can_edit_the_issue_create_branches()
     {
-        var admin = await AdminAsync();
-        var harness = await ConnectAsync(admin, GitProviderType.Gitea);
-        var (_, _, issue) = await IssueAsync();
+        var (client, project, issue) = await IssueAsync();
+        var harness = await ConnectAsync(client, project, GitProviderType.Gitea);
         var outsider = await fixture.CreateUserClientAsync(Token);
 
         var response = await outsider.Http.PostAsJsonAsync($"/api/v1/git-issue/branch/{issue.Id}", CreateBranchBody(harness.Repository, "x"), Token);
@@ -271,11 +262,10 @@ public class GitIntegrationTests(ApiFixture fixture)
     [Fact]
     public async Task Revoked_token_flags_the_connection_and_a_provider_outage_leaves_the_issue_page_working()
     {
-        var admin = await AdminAsync();
-        var harness = await ConnectAsync(admin, GitProviderType.Gitea);
-        var (client, _, issue) = await IssueAsync();
+        var (client, project, issue) = await IssueAsync();
+        var harness = await ConnectAsync(client, project, GitProviderType.Gitea);
 
-        var update = await admin.Http.PutAsJsonAsync($"/api/v1/git-connection/{harness.Connection.Id}", new
+        var update = await client.Http.PutAsJsonAsync($"/api/v1/git-connection/{harness.Connection.Id}", new
         {
             name = harness.Connection.Name,
             authType = GitAuthType.AccessToken,
@@ -299,10 +289,41 @@ public class GitIntegrationTests(ApiFixture fixture)
     }
 
     [Fact]
-    public async Task Members_cannot_read_connections()
+    public async Task Connections_belong_to_a_space()
     {
-        var member = await fixture.CreateUserClientAsync(Token);
+        var (owner, project, _) = await IssueAsync();
+        var harness = await ConnectAsync(owner, project, GitProviderType.Gitea);
+        var outsider = await fixture.CreateUserClientAsync(Token);
 
-        (await member.Http.GetAsync("/api/v1/git-connection", Token)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await outsider.Http.GetAsync($"/api/v1/git-connection?projectId={project.Id}", Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await outsider.Http.GetAsync($"/api/v1/git-connection/{harness.Connection.Id}", Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        var (other, _, otherIssue) = await IssueAsync();
+        (await SendAsync(harness, "push", Push("main", Guid.NewGuid().ToString("N"), $"{otherIssue.Key} from another space"))).EnsureSuccessStatusCode();
+        await Task.Delay(1500, Token);
+        (await DevelopmentAsync(other, otherIssue))!.Commits.ShouldBeEmpty();
+        (await DevelopmentAsync(other, otherIssue))!.CanCreateBranch.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task An_organization_address_limits_the_connection_to_that_organization()
+    {
+        var (client, project, _) = await IssueAsync();
+
+        var inside = await ConnectAsync(client, project, GitProviderType.Gitea, $"{FakeGitServer.GiteaUrl}/acme");
+        inside.Connection.BaseUrl.ShouldBe($"{FakeGitServer.GiteaUrl}/acme");
+        inside.Repository.FullName.ShouldBe("acme/web");
+
+        var response = await client.Http.PostAsJsonAsync("/api/v1/git-connection", new
+        {
+            projectId = project.Id,
+            name = "Elsewhere",
+            providerType = GitProviderType.Gitea,
+            baseUrl = $"{FakeGitServer.GiteaUrl}/acm",
+            authType = GitAuthType.AccessToken,
+            accessToken = FakeGitServer.ValidToken,
+        }, Token);
+        var outside = (await response.Content.ReadFromJsonAsync<GitConnectionDto>(Token))!;
+        (await client.Http.GetFromJsonAsync<List<GitRepositoryDto>>($"/api/v1/git-connection/{outside.Id}/repositories", Token))!.ShouldBeEmpty();
     }
 }

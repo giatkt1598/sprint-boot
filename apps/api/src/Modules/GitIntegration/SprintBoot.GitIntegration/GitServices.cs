@@ -62,6 +62,7 @@ public static partial class IssueKeyScanner
     public static string BranchName(string? template, string key, string title)
     {
         var name = (string.IsNullOrWhiteSpace(template) ? "feature/{key}-{slug}" : template)
+            .Replace("{issue_key}", key, StringComparison.Ordinal)
             .Replace("{key}", key, StringComparison.Ordinal)
             .Replace("{slug}", Slug(title), StringComparison.Ordinal);
         return name.TrimEnd('-', '/');
@@ -222,7 +223,7 @@ public class GitSyncService(
         try
         {
             var credential = await access.GetAsync(connection);
-            var remote = await provider.ListRepositoriesAsync(credential);
+            var remote = (await provider.ListRepositoriesAsync(credential)).Where(info => connection.Covers(info.FullName)).ToList();
             var stored = await repositories.GetListAsync(item => item.ConnectionId == connection.Id);
             foreach (var info in remote)
             {
@@ -439,6 +440,7 @@ public class GitWebhookHandler(
 
 /// <summary>Provider-neutral: every test of this class holds for both GitHub and Gitea.</summary>
 public class GitEventProcessor(
+    IRepository<GitConnection, Guid> connections,
     IRepository<GitRepository, Guid> repositories,
     IRepository<GitBranch, Guid> branches,
     IRepository<GitCommit, Guid> commits,
@@ -452,8 +454,18 @@ public class GitEventProcessor(
 {
     public async Task ApplyAsync(Guid connectionId, GitProviderType provider, GitEvent gitEvent)
     {
+        var connection = await connections.GetAsync(connectionId);
+        if (!connection.Covers(gitEvent.Repository.FullName))
+        {
+            return;
+        }
+
         var repository = await RepositoryAsync(connectionId, gitEvent.Repository);
-        var projectKeys = (await projects.GetAllRefsAsync()).Select(item => item.Key).ToList();
+
+        // A connection serves its own space, so other spaces' keys are just text.
+        List<string> projectKeys = connection.ProjectId is { } projectId
+            ? [(await projects.GetRefAsync(projectId)).Key]
+            : [.. (await projects.GetAllRefsAsync()).Select(item => item.Key)];
         switch (gitEvent)
         {
             case GitPushEvent push:

@@ -400,8 +400,15 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
+                    b.Property<string>("Owner")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
                     b.Property<int>("Problem")
                         .HasColumnType("integer");
+
+                    b.Property<Guid?>("ProjectId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("ProviderType")
                         .HasColumnType("integer");
@@ -414,6 +421,8 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                         .HasColumnName("TenantId");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
 
                     b.ToTable("connections", "git");
                 });

@@ -720,7 +720,10 @@
     "webhookTitle": "Webhook của {{name}}",
     "webhookHint": "Thêm webhook trên provider với URL và secret này, cho các sự kiện push, branch, pull request và status.",
     "webhookUrl": "Payload URL",
-    "webhookSecret": "Secret"
+    "webhookSecret": "Secret",
+    "redirectUri": "Redirect URI",
+    "redirectCopied": "Đã sao chép Redirect URI.",
+    "copyRedirect": "Sao chép Redirect URI"
   },
   "development": {
     "title": "Phát triển",

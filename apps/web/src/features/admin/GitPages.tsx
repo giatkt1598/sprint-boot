@@ -1,10 +1,13 @@
 import Link from '@mui/material/Link';
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { TriangleAlert } from 'lucide-react';
+import { Copy, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link as RouterLink, useParams } from 'react-router';
+import { Link as RouterLink, useOutletContext, useParams } from 'react-router';
 import type { components } from '@sprint-boot/api-client';
 import { apiClient, unwrap } from '../../api';
 import { Badge, type BadgeTone } from '../../components/Badge';
@@ -18,6 +21,7 @@ import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { formatDate } from '../../lib/format';
 import { radius, sem } from '../../theme/tokens';
+import type { Space } from '../spaces/api';
 
 type Connection = components['schemas']['GitConnectionDto'];
 type Repository = components['schemas']['GitRepositoryDto'];
@@ -57,7 +61,34 @@ const useRefresh = () => {
   return () => queryClient.invalidateQueries({ queryKey: ['admin', 'git'] });
 };
 
-function ConnectionDialog({ connection, onClose }: { connection: Connection | null; onClose: () => void }) {
+function RedirectUriField({ value }: { value: string }) {
+  const { t } = useTranslation();
+  const toast = useToast();
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(value);
+    toast('success', t('git.redirectCopied'));
+  };
+
+  return (
+    <TextField
+      label={t('git.redirectUri')}
+      readOnly
+      value={value}
+      endAdornment={
+        <InputAdornment position="end">
+          <Tooltip title={t('git.copyRedirect')}>
+            <IconButton size="small" aria-label={t('git.copyRedirect')} onClick={() => void copy()}>
+              <Copy size={16} strokeWidth={1.5} aria-hidden />
+            </IconButton>
+          </Tooltip>
+        </InputAdornment>
+      }
+    />
+  );
+}
+
+function ConnectionDialog({ projectId, connection, onClose }: { projectId: string; connection: Connection | null; onClose: () => void }) {
   const { t } = useTranslation();
   const toast = useToast();
   const toMessage = useErrorMessage();
@@ -74,7 +105,12 @@ function ConnectionDialog({ connection, onClose }: { connection: Connection | nu
   const isGitHub = provider === GITHUB;
   const redirects = isGitHub || authType === OAUTH2;
 
-  const body = (): SaveConnection => ({ name, providerType: provider, baseUrl, authType, accessToken, clientId, clientSecret });
+  const body = (): SaveConnection => ({ projectId, name, providerType: provider, baseUrl, authType, accessToken, clientId, clientSecret });
+  const redirectUris = useQuery({
+    queryKey: ['admin', 'git', 'redirect-uris'],
+    enabled: redirects,
+    queryFn: () => unwrap(apiClient.GET('/api/v1/git-connection/redirect-uris')),
+  });
 
   const save = useMutation({
     mutationFn: async () => {
@@ -183,6 +219,9 @@ function ConnectionDialog({ connection, onClose }: { connection: Connection | nu
           )}
         </>
       )}
+      {redirects && redirectUris.data && (
+        <RedirectUriField value={(isGitHub ? redirectUris.data.gitHubSetup : redirectUris.data.oAuth) ?? ''} />
+      )}
       <Typography variant="body2" color="textSecondary">
         {t(isGitHub ? 'git.installHint' : authType === OAUTH2 ? 'git.oauthHint' : 'git.tokenHint')}
       </Typography>
@@ -201,9 +240,13 @@ function ConnectionDialog({ connection, onClose }: { connection: Connection | nu
 
 export function GitConnectionsPage() {
   const { t, i18n } = useTranslation();
+  const space = useOutletContext<Space>();
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Connection | null>(null);
-  const connections = useQuery({ queryKey: ['admin', 'git', 'connections'], queryFn: () => unwrap(apiClient.GET('/api/v1/git-connection')) });
+  const connections = useQuery({
+    queryKey: ['admin', 'git', 'connections', space.id],
+    queryFn: () => unwrap(apiClient.GET('/api/v1/git-connection', { params: { query: { projectId: space.id! } } })),
+  });
   const failing = connections.data?.filter((item) => item.status === NEEDS_ATTENTION) ?? [];
 
   return (
@@ -254,8 +297,8 @@ export function GitConnectionsPage() {
           ]}
         />
       )}
-      {adding && <ConnectionDialog connection={null} onClose={() => setAdding(false)} />}
-      {editing && <ConnectionDialog connection={editing} onClose={() => setEditing(null)} />}
+      {adding && <ConnectionDialog projectId={space.id!} connection={null} onClose={() => setAdding(false)} />}
+      {editing && <ConnectionDialog projectId={space.id!} connection={editing} onClose={() => setEditing(null)} />}
     </div>
   );
 }
