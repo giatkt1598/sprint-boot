@@ -6,8 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useParams } from 'react-router';
 import type { components } from '@sprint-boot/api-client';
 import { apiClient, unwrap } from '../../api';
-import { Avatar } from '../../components/Avatar';
-import { StatusBadge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { IssueTypeIcon } from '../../components/IssueIcons';
 import { SearchInput } from '../../components/SearchInput';
@@ -15,11 +13,13 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/StateView
 import { Table } from '../../components/Table';
 import { formatDate } from '../../lib/format';
 import { CreateIssueDialog } from '../issues/CreateIssueDialog';
-import { statusCategory } from '../issues/api';
-import { useSpace } from '../spaces/api';
+import { QuickAssignee, QuickPriority, QuickStatus } from '../issues/QuickFields';
+import { useMembers, useSpace } from '../spaces/api';
 import { EpicProgress } from './EpicProgress';
 
 type EpicRow = components['schemas']['EpicRowDto'];
+
+const toQuick = (epic: EpicRow) => ({ ...epic, assignee: epic.lead });
 
 export function EpicsPage() {
   const { t, i18n } = useTranslation();
@@ -28,7 +28,9 @@ export function EpicsPage() {
   const projectId = space.data?.id;
   const [filter, setFilter] = useState('');
   const [creating, setCreating] = useState(false);
-  const canEdit = space.data?.permissions?.includes('Issue.Edit');
+  const canEdit = space.data?.permissions?.includes('Issue.Edit') ?? false;
+  const members = useMembers(projectId);
+  const people = (members.data ?? []).map((member) => member.user!);
 
   const epics = useQuery({
     queryKey: ['issues', 'epics-page', projectId],
@@ -63,9 +65,10 @@ export function EpicsPage() {
             },
             { key: 'title', header: t('issues.titleField'), render: (epic) => <Link component={RouterLink} to={`/issues/${epic.key}`} color="inherit">{epic.title}</Link> },
             { key: 'progress', header: t('agile.progressColumn'), render: (epic) => <EpicProgress total={epic.total ?? 0} done={epic.done ?? 0} inProgress={epic.inProgress ?? 0} /> },
-            { key: 'status', header: t('issues.status'), render: (epic) => <StatusBadge status={statusCategory(epic.status)} label={epic.status?.name} /> },
+            { key: 'status', header: t('issues.status'), render: (epic) => <QuickStatus issue={toQuick(epic)} canEdit={canEdit} people={people} /> },
+            { key: 'priority', header: t('issues.priority'), render: (epic) => <QuickPriority issue={toQuick(epic)} canEdit={canEdit} /> },
             { key: 'due', header: t('issues.dueDate'), render: (epic) => formatDate(epic.dueDate, i18n.language) },
-            { key: 'lead', header: t('agile.lead'), render: (epic) => epic.lead && <Avatar name={epic.lead.name ?? ''} /> },
+            { key: 'lead', header: t('agile.lead'), render: (epic) => <QuickAssignee issue={toQuick(epic)} canEdit={canEdit} people={people} showName /> },
           ]}
         />
       )}

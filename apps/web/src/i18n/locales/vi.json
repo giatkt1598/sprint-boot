@@ -402,7 +402,11 @@
     "commentRequired": "Bình luận (bắt buộc)",
     "watchers": "{{count}} người theo dõi",
     "startWatching": "Theo dõi issue này",
-    "stopWatching": "Bỏ theo dõi"
+    "stopWatching": "Bỏ theo dõi",
+    "subtaskName": "Tên subtask",
+    "subtaskPlaceholder": "Cần làm gì?",
+    "noTransitions": "Không có bước chuyển nào",
+    "assignToMe": "Giao cho tôi"
   },
   "workflows": {
     "title": "Workflow",

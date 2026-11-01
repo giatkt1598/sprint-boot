@@ -11,8 +11,8 @@ import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'r
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router';
 import { ApiError, apiClient, unwrap } from '../../api';
-import { Avatar } from '../../components/Avatar';
-import { StatusBadge } from '../../components/Badge';
+import { useCurrentUser } from '../../auth/AuthProvider';
+import { Avatar, UnassignedAvatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
 import { DialogConfirm } from '../../components/Dialog';
 import { IssueTypeIcon, PriorityIcon, type IssueType as IconType } from '../../components/IssueIcons';
@@ -30,18 +30,21 @@ import { formatDateTime, formatSize } from '../../lib/format';
 import { font, radius, sem } from '../../theme/tokens';
 import { useMembers, useSpace } from '../spaces/api';
 import { IssueActivityPanel } from './IssueActivityPanel';
+import { QuickAssignee, QuickStatus, QuickTitle, TitleEditor } from './QuickFields';
 import { TransitionControl } from './TransitionControl';
 import { EpicProgress } from '../agile/EpicProgress';
 import { backlogKey, useBacklog } from '../agile/api';
-import { CreateIssueDialog } from './CreateIssueDialog';
 import { RichTextEditor, RichTextView } from './RichTextEditor';
-import { priorityLevel, statusCategory, uploadAttachment, useEpics, useLabels, usePriorities, type Issue } from './api';
+import { priorityLevel, uploadAttachment, useEpics, useIssueTypes, useLabels, usePriorities, type Issue } from './api';
 import { DatePicker } from '../../components/DatePicker';
+
+const DETAIL_LABEL_WIDTH = 88;
+const DETAIL_GAP = 12;
 
 function DetailRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex min-h-9 items-center gap-3">
-      <span style={{ width: 88, flexShrink: 0, fontSize: font.size.xs, color: sem('text-tertiary') }}>{label}</span>
+      <span style={{ width: DETAIL_LABEL_WIDTH, flexShrink: 0, fontSize: font.size.xs, color: sem('text-tertiary') }}>{label}</span>
       <div className="min-w-0 flex-1">{children}</div>
     </div>
   );
@@ -53,37 +56,6 @@ const useIssue = (key: string | undefined) =>
     queryFn: () => unwrap(apiClient.GET('/api/v1/issue/by-key', { params: { query: { key } } })),
     retry: (count, failure) => !(failure instanceof ApiError && failure.status < 500) && count < 2,
   });
-
-/** Owns the text while typing, so keystrokes do not re-render the whole issue. */
-function TitleEditor({ label, initial, onSave, onCancel }: { label: string; initial: string; onSave: (title: string) => void; onCancel: () => void }) {
-  const [title, setTitle] = useState(initial);
-  const closed = useRef(false);
-  const close = (action: () => void) => {
-    if (!closed.current) {
-      closed.current = true;
-      action();
-    }
-  };
-
-  return (
-    <TextField
-      quiet
-      label={label}
-      autoFocus
-      value={title}
-      onChange={(event) => setTitle(event.target.value)}
-      onBlur={() => close(() => onSave(title))}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter') {
-          close(() => onSave(title));
-        }
-        if (event.key === 'Escape') {
-          close(onCancel);
-        }
-      }}
-    />
-  );
-}
 
 export function IssuePage() {
   const { issueKey } = useParams();
@@ -119,6 +91,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
   const priorities = usePriorities();
   const epics = useEpics(issue.projectId);
   const canEdit = space.data?.permissions?.includes('Issue.Edit') ?? false;
+  const me = useCurrentUser();
   const people = (members.data ?? []).map((member) => member.user!);
 
   const [conflict, setConflict] = useState(false);
@@ -292,8 +265,8 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
           </section>
 
           {issue.type?.hierarchy !== 0 && (
-            <section className="flex flex-col gap-2">
-              <div className="flex items-center">
+            <section className="flex flex-col">
+              <div className="flex items-center pb-2">
                 <Typography variant="h2" component="h2" className="flex-1">{t(issue.type?.hierarchy === 2 ? 'agile.childIssues' : 'issues.subtasks')}</Typography>
                 {canEdit && issue.type?.hierarchy === 1 && (
                   <Button kind="link" startIcon={<Plus size={16} strokeWidth={1.5} aria-hidden />} onClick={() => setAddingSubtask(true)}>
@@ -302,14 +275,21 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
                 )}
               </div>
               {issue.type?.hierarchy === 2 && <EpicProgress total={issue.children?.length ?? 0} done={countIn(issue, 2)} inProgress={countIn(issue, 1)} />}
+              {(issue.children?.length ?? 0) > 0 && <div style={{ borderTop: `1px solid ${sem('border-default')}` }} />}
               {(issue.children ?? []).map((child) => (
-                <div key={child.id} className="flex h-9 items-center gap-3 px-2">
+                <Box
+                  key={child.id}
+                  className="flex h-9 items-center gap-3 px-2"
+                  sx={{ borderBottom: `1px solid ${sem('border-default')}`, '&:hover': { backgroundColor: sem('bg-hover') } }}
+                >
                   <IssueTypeIcon type={child.typeIcon as IconType} />
                   <Link component={RouterLink} to={`/issues/${child.key}`} color="inherit" variant="body2">{child.key}</Link>
-                  <span className="min-w-0 flex-1 truncate">{child.title}</span>
-                  <StatusBadge status={statusCategory(child.status)} label={child.status?.name} />
-                </div>
+                  <QuickTitle issue={child} canEdit={canEdit} />
+                  <span className="pr-3"><QuickAssignee issue={child} canEdit={canEdit} people={people} showName /></span>
+                  <span className="pr-12"><QuickStatus issue={child} canEdit={canEdit} people={people} /></span>
+                </Box>
               ))}
+              {addingSubtask && <SubtaskRow issue={issue} onClose={() => setAddingSubtask(false)} />}
             </section>
           )}
 
@@ -347,12 +327,18 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
                 label={t('issues.assignee')}
                 options={people}
                 value={issue.assignee ?? null}
+                emptyLabel={t('common.unassigned')}
                 onChange={(user) => update.mutate({ assignee: user?.id ?? null })}
               />
             ) : (
               <Person name={issue.assignee?.name} />
             )}
           </DetailRow>
+          {canEdit && !issue.assignee && (
+            <div style={{ paddingLeft: DETAIL_LABEL_WIDTH + DETAIL_GAP }}>
+              <Button kind="link" onClick={() => update.mutate({ assignee: me.id })}>{t('issues.assignToMe')}</Button>
+            </div>
+          )}
           <DetailRow label={t('issues.reporter')}>
             {canEdit ? (
               <UserPicker
@@ -442,12 +428,6 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
         onCancel={() => setConfirmingDelete(false)}
         onConfirm={() => remove.mutate()}
       />
-      {addingSubtask && (
-        <CreateIssueDialog
-          parent={{ id: issue.id!, projectKey: issue.projectKey! }}
-          onClose={() => setAddingSubtask(false)}
-        />
-      )}
     </div>
   );
 }
@@ -539,10 +519,66 @@ function WatchControl({ issueId }: { issueId: string }) {
 
 function Person({ name }: { name?: string | null }) {
   const { t } = useTranslation();
-  return name ? (
-    <span className="flex items-center gap-2"><Avatar name={name} />{name}</span>
-  ) : (
-    <span style={{ color: sem('text-tertiary') }}>{t('common.unassigned')}</span>
+  return (
+    <span className="flex items-center gap-2">
+      {name ? <Avatar name={name} /> : <UnassignedAvatar />}
+      {name ?? t('common.unassigned')}
+    </span>
+  );
+}
+
+/** Stays open after each subtask, so several can be typed in a row. */
+function SubtaskRow({ issue, onClose }: { issue: Issue; onClose: () => void }) {
+  const { t } = useTranslation();
+  const toMessage = useErrorMessage();
+  const queryClient = useQueryClient();
+  const types = useIssueTypes(issue.projectId);
+  const typeId = types.data?.find((type) => type.hierarchy === 0)?.id;
+  const [title, setTitle] = useState('');
+  const input = useRef<HTMLInputElement>(null);
+
+  const create = useMutation({
+    mutationFn: () =>
+      unwrap(apiClient.POST('/api/v1/issue', { body: { projectId: issue.projectId!, typeId: typeId!, title: title.trim(), parentId: issue.id } })),
+    onSuccess: async () => {
+      setTitle('');
+      input.current?.focus();
+      await queryClient.invalidateQueries({ queryKey: ['issues', issue.key] });
+    },
+  });
+  const ready = Boolean(title.trim() && typeId) && !create.isPending;
+
+  return (
+    <div className="flex flex-col gap-2 px-2">
+      <div className="flex items-center gap-3">
+        <IssueTypeIcon type="subtask" />
+        <div className="min-w-0 flex-1">
+          <TextField
+            quiet
+            label={t('issues.subtaskName')}
+            autoFocus
+            inputRef={input}
+            placeholder={t('issues.subtaskPlaceholder')}
+            value={title}
+            sx={{ width: '100%' }}
+            onChange={(event) => setTitle(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && ready) {
+                create.mutate();
+              }
+              if (event.key === 'Escape') {
+                onClose();
+              }
+            }}
+          />
+        </div>
+      </div>
+      {create.isError && <Typography role="alert" color="error" variant="body2">{toMessage(create.error)}</Typography>}
+      <div className="flex justify-end gap-2">
+        <Button kind="ghost" onClick={onClose}>{t('common.cancel')}</Button>
+        <Button disabled={!ready} onClick={() => create.mutate()}>{t('issues.createAction')}</Button>
+      </div>
+    </div>
   );
 }
 
@@ -551,10 +587,9 @@ const POINTS_PATTERN = /^\d*\.?\d*$/;
 function PointsField({ value, disabled, onSave }: { value: string; disabled: boolean; onSave: (value: string, onSettled: () => void) => void }) {
   const { t } = useTranslation();
   const [draft, setDraft] = useState<string | null>(null);
-  const pill = { backgroundColor: sem('bg-subtle'), borderRadius: `${radius.control}px` };
 
   if (disabled) {
-    return value ? <Box component="span" sx={{ ...pill, paddingInline: 1 }}>{value}</Box> : <span>{t('common.none')}</span>;
+    return <span>{value || t('common.none')}</span>;
   }
 
   const commit = () => {
@@ -572,7 +607,6 @@ function PointsField({ value, disabled, onSave }: { value: string; disabled: boo
       label={t('issues.points')}
       inputMode="decimal"
       value={draft ?? value}
-      sx={{ ...pill, width: 72 }}
       onChange={(event) => POINTS_PATTERN.test(event.target.value) && setDraft(event.target.value)}
       onBlur={commit}
       onKeyDown={(event) => {

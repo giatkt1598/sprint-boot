@@ -19,21 +19,17 @@ import { useErrorMessage } from '../../lib/errors';
 import { useMembers, useSpaces } from '../spaces/api';
 import { useBacklog } from '../agile/api';
 import { useCurrentUser } from '../../auth/AuthProvider';
-import { priorityLevel, uploadAttachment, useEpics, useLabels, usePriorities, useIssueTypes, type IssueType } from './api';
+import { priorityLevel, uploadAttachment, useEpics, useLabels, usePriorities, useIssueTypes } from './api';
 import { RichTextEditor } from './RichTextEditor';
 
-const allowedTypesOf = (types: IssueType[] | undefined, parent: unknown) =>
-  (types ?? []).filter((type) => (parent ? type.hierarchy === 0 : type.hierarchy !== 0));
 
 interface CreateIssueDialogProps {
   onClose: () => void;
-  /** Set when adding a subtask from an issue page. */
-  parent?: { id: string; projectKey: string };
   /** Opens as Create epic: the type is fixed and Assignee reads as Lead. */
   epic?: boolean;
 }
 
-export function CreateIssueDialog({ onClose, parent, epic }: CreateIssueDialogProps) {
+export function CreateIssueDialog({ onClose, epic }: CreateIssueDialogProps) {
   const { t } = useTranslation();
   const toMessage = useErrorMessage();
   const toast = useToast();
@@ -74,19 +70,18 @@ export function CreateIssueDialog({ onClose, parent, epic }: CreateIssueDialogPr
   const epics = useEpics(projectId || undefined);
   const backlog = useBacklog(projectId || undefined);
   const knownLabels = useLabels(projectId || undefined);
-  const allowedTypes = allowedTypesOf(types.data, parent).filter((type) => !epic || type.hierarchy === 2);
+  const allowedTypes = (types.data ?? []).filter((type) => type.hierarchy !== 0 && (!epic || type.hierarchy === 2));
   const [sprintId, setSprintId] = useState('');
-  const canHaveEpic = !parent && allowedTypes.find((type) => type.id === typeId)?.hierarchy === 1;
+  const canHaveEpic = allowedTypes.find((type) => type.id === typeId)?.hierarchy === 1;
   const people = (members.data ?? []).map((member) => member.user!);
   const validateTitle = (text: string) => (text.trim() ? undefined : t('errors.IssueTitleRequired'));
   const dateError = startDate && dueDate && dueDate < startDate ? t('errors.DueDateBeforeStartDate') : undefined;
 
   useEffect(() => {
     if (!projectId && writable.length > 0) {
-      const preferred = parent?.projectKey ?? spaceKey;
-      setProjectId((writable.find((space) => space.key === preferred) ?? writable[0]!).id!);
+      setProjectId((writable.find((space) => space.key === spaceKey) ?? writable[0]!).id!);
     }
-  }, [projectId, writable, parent, spaceKey]);
+  }, [projectId, writable, spaceKey]);
 
   useEffect(() => {
     if (allowedTypes.length > 0 && !allowedTypes.some((type) => type.id === typeId)) {
@@ -106,7 +101,7 @@ export function CreateIssueDialog({ onClose, parent, epic }: CreateIssueDialogPr
             priorityId: priorityId || null,
             assigneeId: assignee?.id ?? null,
             reporterId: reporter?.id ?? null,
-            parentId: parent?.id ?? (canHaveEpic && epicId ? epicId : null),
+            parentId: canHaveEpic && epicId ? epicId : null,
             storyPoints: points ? Number(points) : null,
             labels,
             startDate: startDate || null,
@@ -134,9 +129,7 @@ export function CreateIssueDialog({ onClose, parent, epic }: CreateIssueDialogPr
         setEditorKey((value) => value + 1);
       } else {
         onClose();
-        if (!parent) {
-          await navigate(`/issues/${issue.key}`);
-        }
+        await navigate(`/issues/${issue.key}`);
       }
     },
   });
@@ -152,7 +145,7 @@ export function CreateIssueDialog({ onClose, parent, epic }: CreateIssueDialogPr
     <Dialog
       open
       width={640}
-      title={t(parent ? 'issues.addSubtask' : epic ? 'agile.createEpic' : 'issues.create')}
+      title={t(epic ? 'agile.createEpic' : 'issues.create')}
       onClose={onClose}
       onOpened={() => {
         // Someone quick may already be typing in another field.
@@ -176,7 +169,6 @@ export function CreateIssueDialog({ onClose, parent, epic }: CreateIssueDialogPr
         <SelectField
           label={t('issues.space')}
           value={projectId}
-          disabled={Boolean(parent)}
           onChange={(event) => setProjectId(event.target.value)}
           options={writable.map((space) => ({ value: space.id!, label: space.name! }))}
         />
@@ -203,7 +195,7 @@ export function CreateIssueDialog({ onClose, parent, epic }: CreateIssueDialogPr
       />
       <RichTextEditor key={editorKey} label={t('issues.description')} showLabel people={people} onChange={setDescription} />
       <div className="grid grid-cols-2 gap-4">
-        <UserPicker label={t(epic ? 'agile.lead' : 'issues.assignee')} options={people} value={assignee} onChange={setAssignee} />
+        <UserPicker label={t(epic ? 'agile.lead' : 'issues.assignee')} options={people} value={assignee} emptyLabel={t('common.unassigned')} onChange={setAssignee} />
         <SelectField
           label={t('issues.priority')}
           value={priorityId || (priorities.data?.find((priority) => priority.name === 'Medium')?.id ?? '')}

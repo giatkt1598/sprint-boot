@@ -44,6 +44,10 @@ public class IssueRefDto
     public required string TypeIcon { get; set; }
 
     public required StatusDto Status { get; set; }
+
+    public required UserRefDto? Assignee { get; set; }
+
+    public required string ConcurrencyStamp { get; set; }
 }
 
 public class IssueDto
@@ -118,6 +122,8 @@ public class IssueSummaryDto
     public required DateTime CreatedAt { get; set; }
 
     public required DateTime UpdatedAt { get; set; }
+
+    public required string ConcurrencyStamp { get; set; }
 }
 
 public class CreateIssueInput

@@ -28,6 +28,8 @@ interface ControlProps {
   issue: TransitionIssue;
   people: PickerUser[];
   onConflict: () => void;
+  /** For rows in a list: loads the transitions on open, and names the issue for screen readers. */
+  lazy?: boolean;
 }
 
 function useExecute(issue: TransitionIssue, onConflict: () => void, onDone: () => void) {
@@ -138,7 +140,7 @@ export function TransitionDialog({ issue, transition, people, onConflict, onClos
   );
 }
 
-export function TransitionControl({ issue, people, onConflict }: ControlProps) {
+export function TransitionControl({ issue, people, onConflict, lazy }: ControlProps) {
   const { t } = useTranslation();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [dialog, setDialog] = useState<Available | null>(null);
@@ -146,12 +148,13 @@ export function TransitionControl({ issue, people, onConflict }: ControlProps) {
 
   const available = useQuery({
     queryKey: ['issues', issue.id, 'transitions', issue.status?.id, issue.concurrencyStamp],
+    enabled: !lazy || Boolean(anchor),
     queryFn: () =>
       unwrap(apiClient.GET('/api/v1/transition/available/{issueId}', { params: { path: { issueId: issue.id! } } })),
   });
 
   const badge = <StatusBadge status={statusCategory(issue.status)} label={issue.status?.name} />;
-  if (!available.data?.length) {
+  if (!lazy && !available.data?.length) {
     return badge;
   }
 
@@ -168,7 +171,7 @@ export function TransitionControl({ issue, people, onConflict }: ControlProps) {
   return (
     <>
       <ButtonBase
-        aria-label={`${t('issues.status')}: ${issue.status?.name}`}
+        aria-label={`${t('issues.status')}: ${issue.status?.name}${lazy ? ` ${issue.key}` : ''}`}
         aria-haspopup="menu"
         onClick={(event) => setAnchor(event.currentTarget)}
         sx={{ borderRadius: `${radius.control}px` }}
@@ -179,7 +182,10 @@ export function TransitionControl({ issue, people, onConflict }: ControlProps) {
         <Typography variant="body2" color="textSecondary" component="li" role="presentation" className="px-2 pb-1">
           {t('issues.moveTo')}
         </Typography>
-        {available.data.map((transition) => (
+        {available.data?.length === 0 && (
+          <Typography variant="body2" color="textSecondary" component="li" role="presentation" className="px-2">{t('issues.noTransitions')}</Typography>
+        )}
+        {available.data?.map((transition) => (
           <MenuItem key={transition.id} onClick={() => pick(transition)} sx={{ minWidth: 248, justifyContent: 'space-between' }}>
             {transition.name}
             <StatusBadge status={statusCategory(transition.toStatus)} label={transition.toStatus?.name} />

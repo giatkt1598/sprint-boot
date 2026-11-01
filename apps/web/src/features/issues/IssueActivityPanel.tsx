@@ -392,8 +392,8 @@ export function IssueActivityPanel({ tab, issue, people, canEdit, canManage }: P
       ? [
           ...topLevel.map((comment) => ({ at: comment.createdAt ?? '', node: renderComment(comment) })),
           ...(activity.data ?? []).map((item) => ({ at: item.createdAt ?? '', node: <ActivityLine key={item.id} item={item} /> })),
-        ].sort((a, b) => a.at.localeCompare(b.at))
-      : topLevel.map((comment) => ({ at: '', node: renderComment(comment) }));
+        ].sort((a, b) => b.at.localeCompare(a.at))
+      : topLevel.toReversed().map((comment) => ({ at: '', node: renderComment(comment) }));
 
   return (
     <div className="flex flex-col gap-4">

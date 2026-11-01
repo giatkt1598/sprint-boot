@@ -1,4 +1,6 @@
 import MuiAvatar from '@mui/material/Avatar';
+import { User } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { font, sem } from '../theme/tokens';
 
 const initials = (name: string) => {
@@ -7,22 +9,37 @@ const initials = (name: string) => {
   return letters.map((word) => word?.[0]?.toUpperCase() ?? '').join('');
 };
 
-export function Avatar({ name, src }: { name: string; src?: string }) {
+const avatarStyles = {
+  width: 24,
+  height: 24,
+  fontSize: font.size.xs,
+  fontWeight: font.weight.medium,
+  backgroundColor: sem('status-todo-bg'),
+  color: sem('status-todo-text'),
+};
+
+/** `decorative` draws the initials in CSS, for controls whose accessible name is the person's full name. */
+export function Avatar({ name, src, decorative }: { name: string; src?: string; decorative?: boolean }) {
   return (
     <MuiAvatar
       src={src}
       alt={name}
       title={name}
-      sx={{
-        width: 24,
-        height: 24,
-        fontSize: font.size.xs,
-        fontWeight: font.weight.medium,
-        backgroundColor: sem('status-todo-bg'),
-        color: sem('status-todo-text'),
-      }}
+      sx={[avatarStyles, { '& [data-initials]::before': { content: 'attr(data-initials)' } }]}
     >
-      {initials(name)}
+      {decorative ? <span data-initials={initials(name)} /> : initials(name)}
+    </MuiAvatar>
+  );
+}
+
+/** Stands in for the person on anything nobody is assigned to. */
+export function UnassignedAvatar() {
+  const { t } = useTranslation();
+  const label = t('common.unassigned');
+
+  return (
+    <MuiAvatar role="img" aria-label={label} title={label} sx={avatarStyles}>
+      <User size={16} strokeWidth={1.5} aria-hidden />
     </MuiAvatar>
   );
 }

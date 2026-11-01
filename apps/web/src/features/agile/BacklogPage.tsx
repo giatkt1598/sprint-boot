@@ -7,29 +7,32 @@ import Menu from '@mui/material/Menu';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, ChevronRight, Ellipsis, Pencil, Trash2 } from 'lucide-react';
-import { memo, useMemo, useState, type ReactNode } from 'react';
+import { createContext, memo, use, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useParams } from 'react-router';
 import { apiClient, unwrap } from '../../api';
-import { Avatar } from '../../components/Avatar';
-import { Badge, StatusBadge } from '../../components/Badge';
+import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { DialogConfirm } from '../../components/Dialog';
-import { IssueTypeIcon, PriorityIcon, type IssueType as IconType } from '../../components/IssueIcons';
+import { IssueTypeIcon, type IssueType as IconType } from '../../components/IssueIcons';
 import { MenuItem } from '../../components/Menu';
 import { SearchInput } from '../../components/SearchInput';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
 import { useToast } from '../../components/ToastHost';
+import type { PickerUser } from '../../components/UserPicker';
 import { useErrorMessage } from '../../lib/errors';
 import { font, radius, sem, shadow } from '../../theme/tokens';
 import { FilterChips, FilterControls, useIssueFilters } from '../issues/IssueFilters';
-import { priorityLevel, statusCategory } from '../issues/api';
-import { useSpace } from '../spaces/api';
+import { QuickAssignee, QuickPriority, QuickStatus } from '../issues/QuickFields';
+import { useMembers, useSpace } from '../spaces/api';
 import { IssuePanel } from './IssuePanel';
 import { ClosedSprintDialog, CompleteSprintDialog, SprintDialog } from './SprintDialogs';
 import { backlogKey, useBacklog, useBoardLive, type Backlog, type Card, type SprintSummary } from './api';
 
 const BACKLOG_LIST = 'backlog';
+
+/** Closed sprints reuse the row outside the provider, where nothing may change. */
+const RowEditing = createContext<{ canEdit: boolean; people: PickerUser[] }>({ canEdit: false, people: [] });
 
 interface RowActions {
   onMove: (card: Card, listId: string) => void;
@@ -47,6 +50,7 @@ interface IssueRowProps {
 function RowBody({ card, onOpen, actions }: IssueRowProps) {
   const { t } = useTranslation();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const { canEdit, people } = use(RowEditing);
 
   const run = (action: () => void) => {
     setAnchor(null);
@@ -68,9 +72,9 @@ function RowBody({ card, onOpen, actions }: IssueRowProps) {
         <span className="truncate">{card.title}</span>
       </ButtonBase>
       {card.epicTitle && <Badge tone="neutral">{card.epicTitle}</Badge>}
-      <StatusBadge status={statusCategory(card.status)} label={card.status?.name} />
-      <PriorityIcon priority={priorityLevel(card.priority)} />
-      {card.assignee ? <Avatar name={card.assignee.name ?? ''} /> : <span style={{ width: 24 }} />}
+      <QuickStatus issue={card} canEdit={canEdit} people={people} />
+      <QuickPriority issue={card} canEdit={canEdit} />
+      <QuickAssignee issue={card} canEdit={canEdit} people={people} />
       {actions && (
         <>
           <IconButton size="small" aria-label={t('agile.rowActions', { key: card.key })} onClick={(event) => setAnchor(event.currentTarget)}>
@@ -248,6 +252,12 @@ export function BacklogPage() {
   const canRank = space.data?.permissions?.includes('Backlog.Rank') ?? false;
   const canManage = space.data?.permissions?.includes('Sprint.Manage') ?? false;
   const scrum = backlog.data?.type === 0;
+  const members = useMembers(projectId);
+  const canEdit = space.data?.permissions?.includes('Issue.Edit') ?? false;
+  const rowEditing = useMemo(
+    () => ({ canEdit, people: (members.data ?? []).map((member) => member.user!) }),
+    [canEdit, members.data],
+  );
 
   const sprintOptions = useMemo(
     () => (backlog.data?.sprints ?? []).map((item) => ({ value: item.sprint!.id!, label: item.sprint!.name! })),
@@ -370,6 +380,7 @@ export function BacklogPage() {
       {backlog.isPending && <LoadingState />}
       {backlog.isError && <ErrorState onRetry={() => void backlog.refetch()} />}
       {backlog.data && projectId && (
+        <RowEditing value={rowEditing}>
         <DndContext sensors={sensors} onDragEnd={onDragEnd}>
           {(backlog.data.sprints ?? []).map((item) => {
             const cards = visible(item.issues);
@@ -402,6 +413,7 @@ export function BacklogPage() {
             )}
           </SectionCard>
         </DndContext>
+        </RowEditing>
       )}
 
       {(backlog.data?.closedSprints?.length ?? 0) > 0 && (

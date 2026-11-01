@@ -11908,9 +11908,11 @@ export interface components {
             key: string | null;
             title: string | null;
             status: components["schemas"]["StatusDto"];
+            priority: components["schemas"]["PriorityDto"];
             /** Format: date */
             dueDate: string | null;
             lead: components["schemas"]["UserRefDto"];
+            concurrencyStamp: string | null;
             /** Format: int32 */
             total: number;
             /** Format: int32 */
@@ -12227,6 +12229,8 @@ export interface components {
             title: string | null;
             typeIcon: string | null;
             status: components["schemas"]["StatusDto"];
+            assignee: components["schemas"]["UserRefDto"];
+            concurrencyStamp: string | null;
         };
         IssueSearchResultDto: {
             items?: components["schemas"]["IssueSummaryDto"][] | null;
@@ -12250,6 +12254,7 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+            concurrencyStamp: string | null;
         };
         IssueTypeDto: {
             /** Format: uuid */

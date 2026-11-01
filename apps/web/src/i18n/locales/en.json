@@ -402,7 +402,11 @@
     "commentRequired": "Comment (required)",
     "watchers": "{{count}} watchers",
     "startWatching": "Watch this issue",
-    "stopWatching": "Stop watching"
+    "stopWatching": "Stop watching",
+    "subtaskName": "Subtask name",
+    "subtaskPlaceholder": "What needs to be done?",
+    "noTransitions": "No moves available",
+    "assignToMe": "Assign to me"
   },
   "workflows": {
     "title": "Workflows",

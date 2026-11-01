@@ -19,7 +19,7 @@ import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useParams } from 'react-router';
 import { ApiError, apiClient, unwrap } from '../../api';
-import { Avatar } from '../../components/Avatar';
+import { Avatar, UnassignedAvatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
 import { IssueTypeIcon, PriorityIcon, type IssueType as IconType } from '../../components/IssueIcons';
 import { SearchInput } from '../../components/SearchInput';
@@ -45,7 +45,7 @@ function CardBody({ card }: { card: Card }) {
         <IssueTypeIcon type={card.type?.icon as IconType} />
         <span className="flex-1" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>{card.key}</span>
         <PriorityIcon priority={priorityLevel(card.priority)} />
-        {card.assignee && <Avatar name={card.assignee.name ?? ''} />}
+        {card.assignee ? <Avatar name={card.assignee.name ?? ''} /> : <UnassignedAvatar />}
       </span>
     </div>
   );

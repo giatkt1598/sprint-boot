@@ -6,16 +6,16 @@ import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useParams, useSearchParams } from 'react-router';
 import { apiClient, unwrap } from '../../api';
 import { Avatar } from '../../components/Avatar';
-import { StatusBadge } from '../../components/Badge';
-import { IssueTypeIcon, PriorityIcon, type IssueType as IconType } from '../../components/IssueIcons';
+import { IssueTypeIcon, type IssueType as IconType } from '../../components/IssueIcons';
 import { Pagination } from '../../components/Pagination';
 import { SearchInput } from '../../components/SearchInput';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
 import { Table } from '../../components/Table';
 import { formatDate } from '../../lib/format';
-import { useSpace } from '../spaces/api';
+import { useMembers, useSpace } from '../spaces/api';
 import { FilterChips, FilterControls, useIssueFilters } from './IssueFilters';
-import { priorityLevel, statusCategory, type IssueSummary } from './api';
+import { QuickAssignee, QuickPriority, QuickStatus } from './QuickFields';
+import type { IssueSummary } from './api';
 
 const PAGE_SIZE = 25;
 
@@ -26,6 +26,10 @@ export function IssuesListPage() {
   const space = useSpace(spaceKey);
   const projectId = space.data?.id;
   const filters = useIssueFilters(projectId);
+  const members = useMembers(projectId);
+  const people = (members.data ?? []).map((member) => member.user!);
+  // Search across spaces has no single space to check, so its rows stay read-only.
+  const canEdit = space.data?.permissions?.includes('Issue.Edit') ?? false;
   const { values, createdRange, updatedRange } = filters;
 
   const [text, setText] = useState(params.get('text') ?? '');
@@ -100,12 +104,12 @@ export function IssuesListPage() {
                 header: t('issues.titleField'),
                 render: (issue) => <Link component={RouterLink} to={`/issues/${issue.key}`} color="inherit">{issue.title}</Link>,
               },
-              { key: 'status', header: t('issues.status'), render: (issue) => <StatusBadge status={statusCategory(issue.status)} label={issue.status?.name} /> },
-              { key: 'priority', header: t('issues.priority'), render: (issue) => <PriorityIcon priority={priorityLevel(issue.priority)} /> },
+              { key: 'status', header: t('issues.status'), render: (issue) => <QuickStatus issue={issue} canEdit={canEdit} people={people} /> },
+              { key: 'priority', header: t('issues.priority'), render: (issue) => <QuickPriority issue={issue} canEdit={canEdit} /> },
               {
                 key: 'assignee',
                 header: t('issues.assignee'),
-                render: (issue) => issue.assignee && <span className="flex items-center gap-2"><Avatar name={issue.assignee.name ?? ''} />{issue.assignee.name}</span>,
+                render: (issue) => <QuickAssignee issue={issue} canEdit={canEdit} people={people} showName />,
               },
               {
                 key: 'reporter',

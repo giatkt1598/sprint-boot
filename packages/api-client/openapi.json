@@ -16271,12 +16271,14 @@
       },
       "EpicRowDto": {
         "required": [
+          "concurrencyStamp",
           "done",
           "dueDate",
           "id",
           "inProgress",
           "key",
           "lead",
+          "priority",
           "status",
           "title",
           "total"
@@ -16298,6 +16300,9 @@
           "status": {
             "$ref": "#/components/schemas/StatusDto"
           },
+          "priority": {
+            "$ref": "#/components/schemas/PriorityDto"
+          },
           "dueDate": {
             "type": "string",
             "format": "date",
@@ -16305,6 +16310,10 @@
           },
           "lead": {
             "$ref": "#/components/schemas/UserRefDto"
+          },
+          "concurrencyStamp": {
+            "type": "string",
+            "nullable": true
           },
           "total": {
             "type": "integer",
@@ -17324,6 +17333,8 @@
       },
       "IssueRefDto": {
         "required": [
+          "assignee",
+          "concurrencyStamp",
           "id",
           "key",
           "status",
@@ -17350,6 +17361,13 @@
           },
           "status": {
             "$ref": "#/components/schemas/StatusDto"
+          },
+          "assignee": {
+            "$ref": "#/components/schemas/UserRefDto"
+          },
+          "concurrencyStamp": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -17378,6 +17396,7 @@
       "IssueSummaryDto": {
         "required": [
           "assignee",
+          "concurrencyStamp",
           "createdAt",
           "id",
           "key",
@@ -17434,6 +17453,10 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "concurrencyStamp": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false

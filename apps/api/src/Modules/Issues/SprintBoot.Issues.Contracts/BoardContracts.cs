@@ -78,9 +78,13 @@ public class EpicRowDto
 
     public required StatusDto Status { get; set; }
 
+    public required PriorityDto Priority { get; set; }
+
     public required DateOnly? DueDate { get; set; }
 
     public required UserRefDto? Lead { get; set; }
+
+    public required string ConcurrencyStamp { get; set; }
 
     public required int Total { get; set; }
 

@@ -3,7 +3,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import MuiTextField from '@mui/material/TextField';
 import { useId } from 'react';
 import { font, sem } from '../theme/tokens';
-import { Avatar } from './Avatar';
+import { Avatar, UnassignedAvatar } from './Avatar';
 
 export interface PickerUser {
   id?: string;
@@ -18,9 +18,11 @@ export interface UserPickerProps {
   value: PickerUser | null;
   onChange: (user: PickerUser | null) => void;
   onInputChange?: (text: string) => void;
+  /** Shown like a value, with the default avatar, when nobody is picked. */
+  emptyLabel?: string;
 }
 
-export function UserPicker({ label, hideLabel, options, value, onChange, onInputChange }: UserPickerProps) {
+export function UserPicker({ label, hideLabel, options, value, onChange, onInputChange, emptyLabel }: UserPickerProps) {
   const id = useId();
 
   return (
@@ -50,13 +52,19 @@ export function UserPicker({ label, hideLabel, options, value, onChange, onInput
         renderInput={(params) => (
           <MuiTextField
             {...params}
-            sx={hideLabel ? { '&:not(:hover):not(:focus-within) fieldset': { borderColor: 'transparent' } } : undefined}
+            placeholder={emptyLabel}
+            sx={[
+              hideLabel ? { '&:not(:hover):not(:focus-within) fieldset': { borderColor: 'transparent' } } : {},
+              emptyLabel ? { '& input::placeholder': { color: sem('text-primary'), opacity: 1 } } : {},
+            ]}
             slotProps={{
               ...params.slotProps,
               input: {
                 ...params.slotProps.input,
                 startAdornment: value?.name ? (
                   <InputAdornment position="start" aria-hidden><Avatar name={value.name} /></InputAdornment>
+                ) : emptyLabel ? (
+                  <InputAdornment position="start" aria-hidden><UnassignedAvatar /></InputAdornment>
                 ) : undefined,
               },
               htmlInput: { ...params.slotProps.htmlInput, 'aria-label': hideLabel ? label : undefined },

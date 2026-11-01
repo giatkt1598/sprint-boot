@@ -118,10 +118,41 @@ test('sign in, run a space and an issue end to end', async ({ page }) => {
   await expect(page.getByText('Total logged: 1h 30m')).toBeVisible();
 
   // Subtask.
+  await expect(page.locator('aside').getByPlaceholder('Unassigned')).toBeVisible();
   await page.getByRole('button', { name: 'Add subtask' }).click();
-  await page.getByRole('dialog').getByLabel('Title').fill('Child work');
-  await page.getByRole('dialog').getByRole('button', { name: 'Create', exact: true }).click();
+  const subtask = page.getByLabel('Subtask name');
+  await expect(subtask).toBeFocused();
+  await expectAccessible(page);
+  await subtask.fill('Child work');
+  await page.keyboard.press('Enter');
   await expect(page.getByRole('link', { name: `${key}-2` })).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`/issues/${key}-1$`));
+  await expect(subtask).toHaveValue('');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Cancel' }).click();
+  await expect(subtask).toHaveCount(0);
+  await expect(page.getByRole('button', { name: `Assignee: Unassigned ${key}-2` })).toBeVisible();
+
+  // A subtask name edits on click and stays a selection on drag.
+  const childName = page.getByRole('button', { name: 'Child work', exact: true });
+  const nameBox = (await childName.boundingBox())!;
+  await page.mouse.move(nameBox.x + 2, nameBox.y + nameBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(nameBox.x + 40, nameBox.y + nameBox.height / 2, { steps: 5 });
+  await page.mouse.up();
+  await expect(page.getByRole('textbox', { name: 'Title' })).toHaveCount(0);
+  await page.mouse.click(5, 5);
+  await childName.click();
+  await page.getByRole('textbox', { name: 'Title' }).fill('Child work renamed');
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('button', { name: 'Child work renamed', exact: true })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Assign to me' }).click();
+  await expect(page.getByRole('button', { name: 'Assign to me' })).toHaveCount(0);
+  await page.getByRole('button', { name: new RegExp(`^Status: .* ${key}-2$`) }).click();
+  await page.getByRole('menuitem').first().click();
+  await expect(page.getByRole('button', { name: new RegExp(`^Status: To Do ${key}-2$`) })).toHaveCount(0);
+  await expectAccessible(page);
 
   // Ctrl K goes straight to an exact key.
   await page.goto(`/spaces/${key}/issues`);
@@ -939,7 +970,11 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await title.fill('');
   await expect(dialog.getByText('Title is required')).toBeVisible();
   await title.fill('Card row');
-  await dialog.getByRole('textbox', { name: 'Description' }).pressSequentially('Select this sentence with the mouse');
+  const description = dialog.getByRole('textbox', { name: 'Description' });
+  await description.pressSequentially('Select this sentence with the mouse');
+  await description.press('Enter');
+  await description.press('Enter');
+  await description.pressSequentially('After a blank line');
 
   await expect(dialog.getByText('Description', { exact: true })).toBeVisible();
   await expect(dialog.getByRole('toolbar', { name: 'Editor tools' })).toBeVisible();
@@ -967,6 +1002,11 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await dialog.getByRole('button', { name: 'Create', exact: true }).click();
   await page.waitForURL(`**/issues/${key}-1`);
   await expect(page.getByRole('heading', { name: 'Attachments' })).toHaveCSS('font-size', '16px');
+
+  // A blank line in the description keeps its height once saved.
+  await expect(page.getByText('After a blank line')).toBeVisible();
+  const blank = page.locator('.rich-text p:empty').first();
+  expect((await blank.boundingBox())!.height).toBeGreaterThan(15);
 
   // Sidebar edits: tags save one after another, points hold what was typed.
   const sidebarLabels = page.getByLabel('Labels');
@@ -1029,6 +1069,46 @@ test('create issue form, backlog cards and home follow the last space', async ({
     return { main: getComputedStyle(main).overflowY, mainScrolls: main.scrollHeight > main.clientHeight + 1 };
   });
   expect(scrollers.mainScrolls).toBe(false);
+
+  // Comments read newest first.
+  for (const comment of ['Older note', 'Newer note']) {
+    await page.getByLabel('Add a comment').click();
+    await page.getByRole('textbox', { name: 'Add a comment' }).pressSequentially(comment);
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByRole('article').getByText(comment)).toBeVisible();
+  }
+  await expect(page.getByRole('article').first()).toContainText('Newer note');
+
+  // Status, priority and assignee change right in the rows.
+  const quickEdit = async () => {
+    await page.getByRole('button', { name: new RegExp(`^Priority: .* ${key}-1$`) }).click();
+    await page.getByRole('menuitem', { name: 'High', exact: true }).click();
+    await expect(page.getByRole('button', { name: `Priority: High ${key}-1` })).toBeVisible();
+    await page.getByRole('button', { name: new RegExp(`^Priority: .* ${key}-1$`) }).click();
+    await page.getByRole('menuitem', { name: 'Low', exact: true }).click();
+    await expect(page.getByRole('button', { name: `Priority: Low ${key}-1` })).toBeVisible();
+  };
+  await page.goto(`/spaces/${key}/backlog`);
+  await quickEdit();
+  await page.goto(`/spaces/${key}/issues`);
+  await quickEdit();
+  await page.getByRole('button', { name: `Assignee: Unassigned ${key}-1` }).click();
+  await page.getByRole('menuitem').nth(1).click();
+  await expect(page.getByRole('button', { name: `Assignee: Unassigned ${key}-1` })).toHaveCount(0);
+  await page.getByRole('button', { name: new RegExp(`^Status: To Do ${key}-1$`) }).click();
+  await page.getByRole('menuitem').first().click();
+  await expect(page.getByRole('button', { name: new RegExp(`^Status: To Do ${key}-1$`) })).toHaveCount(0);
+
+  await page.goto(`/spaces/${key}/epics`);
+  await page.getByRole('button', { name: 'Create epic' }).click();
+  await page.getByRole('dialog').getByLabel('Title').fill('Quick epic');
+  await page.getByRole('dialog').getByRole('button', { name: 'Create', exact: true }).click();
+  await page.waitForURL(`**/issues/${key}-2`);
+  await page.goto(`/spaces/${key}/epics`);
+  await page.getByRole('button', { name: new RegExp(`^Priority: .* ${key}-2$`) }).click();
+  await page.getByRole('menuitem', { name: 'High', exact: true }).click();
+  await expect(page.getByRole('button', { name: `Priority: High ${key}-2` })).toBeVisible();
+  await expectAccessible(page);
 
   await page.goto(`/spaces/${key}/issues`);
   await expect(page.getByRole('columnheader', { name: 'Reporter' })).toBeVisible();

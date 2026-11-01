@@ -59,6 +59,7 @@ public class IssueMapper(
             SprintName = sprints.GetValueOrDefault(issue.Id),
             CreatedAt = issue.CreationTime,
             UpdatedAt = issue.LastModificationTime ?? issue.CreationTime,
+            ConcurrencyStamp = issue.ConcurrencyStamp,
         })];
     }
 
@@ -69,10 +70,11 @@ public class IssueMapper(
         var type = await types.GetAsync(issue.TypeId);
         var priority = await priorities.GetAsync(issue.PriorityId);
 
-        var userIds = new[] { issue.AssigneeId, issue.ReporterId }.Where(id => id.HasValue).Select(id => id!.Value);
+        var children = await issues.GetListAsync(child => child.ParentId == issue.Id);
+        var userIds = children.Select(child => child.AssigneeId).Append(issue.AssigneeId).Append(issue.ReporterId)
+            .Where(id => id.HasValue).Select(id => id!.Value).Distinct();
         var users = await userDirectory.GetByIdsAsync(userIds);
 
-        var children = await issues.GetListAsync(child => child.ParentId == issue.Id);
         var parent = issue.ParentId is { } parentId ? await issues.FindAsync(parentId) : null;
         var related = children.Concat(parent is null ? [] : [parent]).ToList();
         var relatedTypeIds = related.Select(item => item.TypeId).Distinct().ToList();
@@ -85,6 +87,8 @@ public class IssueMapper(
             Title = item.Title,
             TypeIcon = relatedTypes[item.TypeId].Icon,
             Status = statusMap[item.StatusId],
+            Assignee = item.AssigneeId is { } assignee ? users.GetValueOrDefault(assignee) : null,
+            ConcurrencyStamp = item.ConcurrencyStamp,
         };
 
         var labelIds = (await issueLabels.GetListAsync(link => link.IssueId == issue.Id)).Select(link => link.LabelId).ToList();

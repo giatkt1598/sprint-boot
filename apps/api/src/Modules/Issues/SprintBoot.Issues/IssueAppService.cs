@@ -263,6 +263,7 @@ public partial class IssueAppService(
         var project = await projectAccess.GetRefAsync(projectId);
         var statuses = (await statusLookup.GetListAsync()).ToDictionary(status => status.Id);
         var leads = await userDirectory.GetByIdsAsync(epics.Where(epic => epic.AssigneeId.HasValue).Select(epic => epic.AssigneeId!.Value));
+        var priorityMap = (await priorities.GetListAsync()).ToDictionary(priority => priority.Id);
 
         return [.. epics.OrderBy(epic => epic.Number).Select(epic =>
         {
@@ -273,8 +274,10 @@ public partial class IssueAppService(
                 Key = $"{project.Key}-{epic.Number}",
                 Title = epic.Title,
                 Status = statuses[epic.StatusId],
+                Priority = IssueMapper.ToDto(priorityMap[epic.PriorityId]),
                 DueDate = epic.DueDate,
                 Lead = epic.AssigneeId is { } lead ? leads.GetValueOrDefault(lead) : null,
+                ConcurrencyStamp = epic.ConcurrencyStamp,
                 Total = own.Count,
                 Done = own.Count(child => statuses[child.StatusId].Category == StatusCategory.Done),
                 InProgress = own.Count(child => statuses[child.StatusId].Category == StatusCategory.InProgress),
