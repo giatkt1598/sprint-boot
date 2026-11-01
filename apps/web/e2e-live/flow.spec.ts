@@ -943,8 +943,9 @@ test('a real Gitea connection links commits, pull requests and CI, and creates b
   await expectAccessible(page);
 });
 
-test('create issue form, backlog cards and home follow the last space', async ({ page }) => {
-  test.setTimeout(90_000);
+test('create issue form, backlog cards and home follow the last space', async ({ page, context }) => {
+  test.setTimeout(120_000);
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await signIn(page, ADMIN.email, ADMIN.password);
   const key = `U${suffix()}`;
   await page.goto('/admin/spaces');
@@ -1140,10 +1141,10 @@ test('create issue form, backlog cards and home follow the last space', async ({
   // Status, priority and assignee change right in the rows.
   const quickEdit = async () => {
     await page.getByRole('button', { name: new RegExp(`^Priority: .* ${key}-1$`) }).click();
-    await page.getByRole('menuitem', { name: 'High', exact: true }).click();
+    await page.getByRole('group', { name: 'Priority' }).getByRole('button', { name: 'High', exact: true }).click();
     await expect(page.getByRole('button', { name: `Priority: High ${key}-1` })).toBeVisible();
     await page.getByRole('button', { name: new RegExp(`^Priority: .* ${key}-1$`) }).click();
-    await page.getByRole('menuitem', { name: 'Low', exact: true }).click();
+    await page.getByRole('group', { name: 'Priority' }).getByRole('button', { name: 'Low', exact: true }).click();
     await expect(page.getByRole('button', { name: `Priority: Low ${key}-1` })).toBeVisible();
   };
   await page.goto(`/spaces/${key}/backlog`);
@@ -1151,7 +1152,9 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await page.goto(`/spaces/${key}/issues`);
   await quickEdit();
   await page.getByRole('button', { name: `Assignee: Unassigned ${key}-1` }).click();
-  await page.getByRole('menuitem').nth(1).click();
+  await expect(page.getByLabel('Search people')).toBeFocused();
+  await page.getByLabel('Search people').fill('adm');
+  await page.getByRole('group', { name: 'Assignee' }).getByRole('button').first().click();
   await expect(page.getByRole('button', { name: `Assignee: Unassigned ${key}-1` })).toHaveCount(0);
   await page.getByRole('button', { name: new RegExp(`^Status: To Do ${key}-1$`) }).click();
   await page.getByRole('menuitem').first().click();
@@ -1164,12 +1167,20 @@ test('create issue form, backlog cards and home follow the last space', async ({
   await page.waitForURL(`**/issues/${key}-2`);
   await page.goto(`/spaces/${key}/epics`);
   await page.getByRole('button', { name: new RegExp(`^Priority: .* ${key}-2$`) }).click();
-  await page.getByRole('menuitem', { name: 'High', exact: true }).click();
+  await page.getByRole('group', { name: 'Priority' }).getByRole('button', { name: 'High', exact: true }).click();
   await expect(page.getByRole('button', { name: `Priority: High ${key}-2` })).toBeVisible();
   await expectAccessible(page);
 
-  // The epic field is a purple tag with a searchable picker.
+  // Breadcrumb: change the type, copy the link.
   await page.goto(`/issues/${key}-1`);
+  await page.getByRole('button', { name: 'Issue type: Task' }).click();
+  await page.getByRole('group', { name: 'Issue type' }).getByRole('button', { name: 'Bug' }).click();
+  await expect(page.getByRole('button', { name: 'Issue type: Bug' })).toBeVisible();
+  await page.getByRole('navigation', { name: 'breadcrumb' }).getByText(`${key}-1`).hover();
+  await page.getByRole('navigation', { name: 'breadcrumb' }).getByRole('button', { name: 'Copy link' }).click();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(new RegExp(`/issues/${key}-1$`));
+
+  // The epic field is a purple tag with a searchable picker.
   await page.getByRole('button', { name: /^Epic:/ }).click();
   await page.getByLabel('Search epics').fill('quick');
   await expectAccessible(page);

@@ -58,24 +58,26 @@ function RowBody({ card, onOpen, actions }: IssueRowProps) {
   };
 
   return (
-    <div className="flex h-9 items-center gap-3 px-2">
-      <IssueTypeIcon type={card.type?.icon as IconType} />
-      <Link
+    <>
+      <td className="pl-2"><span className="flex"><IssueTypeIcon type={card.type?.icon as IconType} /></span></td>
+      <td><Link
         component={RouterLink}
         to={`/issues/${card.key}`}
         draggable={false}
         sx={{ width: 96, flexShrink: 0, fontSize: font.size.xs, color: sem('text-accent') }}
       >
         {card.key}
-      </Link>
-      <ButtonBase onClick={() => onOpen(card.key!)} className="min-w-0 flex-1 truncate" sx={{ justifyContent: 'flex-start', fontSize: font.size.md, textAlign: 'left' }}>
-        <span className="truncate">{card.title}</span>
-      </ButtonBase>
-      {card.epicTitle && <Badge tone="epic">{card.epicTitle}</Badge>}
-      <QuickStatus issue={card} canEdit={canEdit} people={people} />
-      <QuickPriority issue={card} canEdit={canEdit} />
-      <QuickAssignee issue={card} canEdit={canEdit} people={people} />
-      {actions && (
+      </Link></td>
+      <td className="pr-3">
+        <ButtonBase onClick={() => onOpen(card.key!)} className="w-full" sx={{ justifyContent: 'flex-start', fontSize: font.size.md, textAlign: 'left' }}>
+          <span className="truncate">{card.title}</span>
+        </ButtonBase>
+      </td>
+      <td className="truncate pr-3">{card.epicTitle && <Badge tone="epic">{card.epicTitle}</Badge>}</td>
+      <td><QuickStatus issue={card} canEdit={canEdit} people={people} /></td>
+      <td><QuickPriority issue={card} canEdit={canEdit} /></td>
+      <td className="py-1 pr-3"><QuickAssignee issue={card} canEdit={canEdit} people={people} showName /></td>
+      <td>{actions && (
         <>
           <IconButton size="small" aria-label={t('agile.rowActions', { key: card.key })} onClick={(event) => setAnchor(event.currentTarget)}>
             <Ellipsis size={16} strokeWidth={1.5} aria-hidden />
@@ -90,15 +92,36 @@ function RowBody({ card, onOpen, actions }: IssueRowProps) {
             ))}
           </Menu>
         </>
-      )}
-    </div>
+      )}</td>
+    </>
   );
 }
 
-export const IssueRow = memo(RowBody);
+const RowCells = memo(RowBody);
+
+const IssueColumns: { width?: number }[] = [{ width: 32 }, { width: 96 }, {}, { width: 144 }, { width: 120 }, { width: 40 }, { width: 176 }, { width: 40 }];
+
+/** Fixed columns, so sprints and the backlog line up with each other. */
+function IssueTable({ extraColumn, children }: { extraColumn?: boolean; children: ReactNode }) {
+  return (
+    <table className="w-full" style={{ tableLayout: 'fixed', borderCollapse: 'collapse' }}>
+      <colgroup>
+        {IssueColumns.map((column, index) => <col key={index} style={{ width: column.width }} />)}
+        {extraColumn && <col style={{ width: 128 }} />}
+      </colgroup>
+      <tbody>{children}</tbody>
+    </table>
+  );
+}
+
+/** A single row for places outside the backlog lists. */
+export function IssueRow({ card, onOpen }: IssueRowProps) {
+  return <IssueTable><Box component="tr" sx={rowStyles}><RowCells card={card} onOpen={onOpen} /></Box></IssueTable>;
+}
 
 /** Neighbouring rows share a line; the list draws the one above the first row. */
 const rowStyles = {
+  height: 36,
   backgroundColor: sem('bg-surface'),
   borderBottom: `1px solid ${sem('border-default')}`,
   '&:hover': { backgroundColor: sem('bg-hover') },
@@ -121,20 +144,21 @@ function DraggableRow({ card, onOpen, actions, canDrag }: IssueRowProps & { canD
 
   return (
     <Box
-      ref={(node: HTMLDivElement | null) => {
+      component="tr"
+      ref={(node: HTMLTableRowElement | null) => {
         dragRef(node);
         dropRef(node);
       }}
       data-testid={`row-${card.key}`}
       {...listeners}
-      sx={[rowStyles, { boxShadow: isOver ? `inset 0 2px 0 ${sem('border-focus')}` : undefined }]}
+      sx={[rowStyles, { '& td': { boxShadow: isOver ? `inset 0 2px 0 ${sem('border-focus')}` : undefined } }]}
       style={{
         opacity: isDragging ? 0.5 : 1,
         transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
         cursor: canDrag ? 'grab' : undefined,
       }}
     >
-      <IssueRow card={card} onOpen={onOpen} actions={actions} />
+      <RowCells card={card} onOpen={onOpen} actions={actions} />
     </Box>
   );
 }
@@ -157,9 +181,13 @@ function IssueList({ id, cards, canDrag, onOpen, actions, empty }: ListProps) {
       data-testid={`list-${id}`}
       style={{ minHeight: 40, borderTop: `1px solid ${sem('border-default')}`, backgroundColor: isOver ? sem('bg-selected') : undefined }}
     >
-      {cards.map((card) => (
-        <DraggableRow key={card.id} card={card} canDrag={canDrag} onOpen={onOpen} actions={actions} />
-      ))}
+      {cards.length > 0 && (
+        <IssueTable>
+          {cards.map((card) => (
+            <DraggableRow key={card.id} card={card} canDrag={canDrag} onOpen={onOpen} actions={actions} />
+          ))}
+        </IssueTable>
+      )}
       {cards.length === 0 && (
         <Typography variant="body2" color="textSecondary" className="px-2 py-2">{empty}</Typography>
       )}
@@ -410,12 +438,16 @@ export function BacklogPage() {
               <IssueList id={BACKLOG_LIST} cards={backlogCards} canDrag={canRank} onOpen={setOpenIssue} actions={actions} empty={t('agile.backlogEmpty')} />
             ) : (
               <div style={{ borderTop: `1px solid ${sem('border-default')}` }}>
-                {backlogCards.map((card) => (
-                  <Box key={card.id} className="flex items-center" sx={rowStyles}>
-                    <div className="min-w-0 flex-1"><IssueRow card={card} onOpen={setOpenIssue} /></div>
-                    {canRank && <Button kind="link" aria-label={t('agile.moveToBoardFor', { key: card.key })} onClick={() => pull.mutate(card)}>{t('agile.moveToBoard')}</Button>}
-                  </Box>
-                ))}
+                {backlogCards.length > 0 && (
+                  <IssueTable extraColumn={canRank}>
+                    {backlogCards.map((card) => (
+                      <Box key={card.id} component="tr" sx={rowStyles}>
+                        <RowCells card={card} onOpen={setOpenIssue} />
+                        {canRank && <td><Button kind="link" aria-label={t('agile.moveToBoardFor', { key: card.key })} onClick={() => pull.mutate(card)}>{t('agile.moveToBoard')}</Button></td>}
+                      </Box>
+                    ))}
+                  </IssueTable>
+                )}
                 {backlogCards.length === 0 && <EmptyState title={t('agile.backlogEmpty')} />}
               </div>
             )}

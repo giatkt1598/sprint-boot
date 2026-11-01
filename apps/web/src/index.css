@@ -288,3 +288,21 @@
   color: var(--sb-text-accent);
   font-weight: 500;
 }
+
+/* Options that are the current value: a darker row and a blue check. */
+.MuiMenuItem-root.Mui-selected,
+.MuiMenuItem-root.Mui-selected:hover,
+.MuiAutocomplete-listbox .MuiAutocomplete-option[aria-selected='true'] {
+  background-color: var(--sb-border-default);
+}
+
+.MuiMenuItem-root.Mui-selected::after,
+.MuiAutocomplete-listbox .MuiAutocomplete-option[aria-selected='true']::after {
+  content: '';
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-left: auto;
+  background-color: var(--sb-accent-default);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / contain no-repeat;
+}

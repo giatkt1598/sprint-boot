@@ -4,7 +4,7 @@ import { radius, sem, size } from '../theme/tokens';
 
 export interface SearchInputProps extends Omit<InputBaseProps, 'startAdornment'> {
   label: string;
-  width?: number;
+  width?: number | string;
 }
 
 export function SearchInput({ label, width = 200, ...props }: SearchInputProps) {

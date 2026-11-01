@@ -3,6 +3,7 @@ import ButtonBase from '@mui/material/ButtonBase';
 import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Menu from '@mui/material/Menu';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { DevelopmentPanel } from './DevelopmentPanel';
@@ -17,8 +18,8 @@ import { Button } from '../../components/Button';
 import { DialogConfirm } from '../../components/Dialog';
 import { IssueTypeIcon, PriorityIcon, type IssueType as IconType } from '../../components/IssueIcons';
 import { MenuItem } from '../../components/Menu';
+import { PickerPopover } from '../../components/PickerPopover';
 import { Popover } from '../../components/Popover';
-import { SearchInput } from '../../components/SearchInput';
 import { ErrorState, LoadingState } from '../../components/StateViews';
 import { Tabs } from '../../components/Tabs';
 import { TagInput } from '../../components/TagInput';
@@ -153,7 +154,8 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
 
   const copyLink = async () => {
     setMenuAnchor(null);
-    await navigator.clipboard.writeText(window.location.href);
+    // Not the current address: the drawer opens over a board or backlog.
+    await navigator.clipboard.writeText(`${window.location.origin}/issues/${issue.key}`);
     toast('success', t('issues.linkCopied'));
   };
 
@@ -186,10 +188,22 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
             <span aria-hidden>/</span>
           </>
         )}
-        <span className="flex items-center gap-1" style={{ color: sem('text-primary') }}>
-          <IssueTypeIcon type={issue.type?.icon as IconType} />
+        <Box
+          className="flex items-center gap-1"
+          sx={{
+            color: sem('text-primary'),
+            '& .copy-link': { opacity: 0 },
+            '&:hover .copy-link, & .copy-link:focus-visible': { opacity: 1 },
+          }}
+        >
+          <TypeField issue={issue} canEdit={canEdit} onPick={(typeId) => update.mutate({ type: typeId })} />
           {issue.key}
-        </span>
+          <Tooltip title={t('issues.copyLink')}>
+            <IconButton className="copy-link" size="small" aria-label={t('issues.copyLink')} onClick={() => void copyLink()}>
+              <Link2 size={16} strokeWidth={1.5} aria-hidden />
+            </IconButton>
+          </Tooltip>
+        </Box>
       </nav>
 
       <div className="flex items-center gap-2">
@@ -432,6 +446,47 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
   );
 }
 
+/** Only types of the same level: a task cannot become an epic or a subtask here. */
+function TypeField({ issue, canEdit, onPick }: { issue: Issue; canEdit: boolean; onPick: (typeId: string) => void }) {
+  const { t } = useTranslation();
+  const types = useIssueTypes(issue.projectId);
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const siblings = (types.data ?? []).filter((type) => type.hierarchy === issue.type?.hierarchy);
+  const icon = <IssueTypeIcon type={issue.type?.icon as IconType} />;
+
+  if (!canEdit || siblings.length < 2) {
+    return icon;
+  }
+
+  return (
+    <>
+      <ButtonBase
+        aria-label={`${t('issues.issueType')}: ${t(`issue.type.${issue.type?.icon}`)}`}
+        aria-haspopup="dialog"
+        onClick={(event) => setAnchor(event.currentTarget)}
+        sx={{ width: 24, height: 24, borderRadius: `${radius.control}px`, '&:hover': { backgroundColor: sem('bg-hover') } }}
+      >
+        <span aria-hidden className="flex">{icon}</span>
+      </ButtonBase>
+      <PickerPopover
+        label={t('issues.issueType')}
+        anchor={anchor}
+        selectedId={issue.type?.id}
+        items={siblings.map((type) => ({ id: type.id!, label: t(`issue.type.${type.icon}`), icon: <IssueTypeIcon type={type.icon as IconType} /> }))}
+        onClose={() => setAnchor(null)}
+        onPick={(typeId) => {
+          setAnchor(null);
+          if (typeId !== issue.type?.id) {
+            onPick(typeId);
+          }
+        }}
+      />
+    </>
+  );
+}
+
+const NO_EPIC = 'none';
+
 const epicTagStyle = {
   display: '-webkit-box',
   WebkitLineClamp: 2,
@@ -450,7 +505,6 @@ const epicTagStyle = {
 function EpicField({ issue, canEdit, epics, onPick }: { issue: Issue; canEdit: boolean; epics: { id?: string; key?: string | null; title?: string | null }[]; onPick: (epicId: string | null) => void }) {
   const { t } = useTranslation();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-  const [search, setSearch] = useState('');
   const parent = issue.parent;
   const name = parent ? `${parent.key} ${parent.title}` : null;
   const tag = name ? <span style={epicTagStyle} title={name}>{name}</span> : <span>{t('common.none')}</span>;
@@ -458,15 +512,6 @@ function EpicField({ issue, canEdit, epics, onPick }: { issue: Issue; canEdit: b
   if (!canEdit) {
     return parent ? <RouterLink to={`/issues/${parent.key}`} style={{ textDecoration: 'none' }}>{tag}</RouterLink> : tag;
   }
-
-  const pick = (epicId: string | null) => {
-    setAnchor(null);
-    setSearch('');
-    onPick(epicId);
-  };
-  const text = search.toLowerCase();
-  const matches = epics.filter((epic) => `${epic.key} ${epic.title}`.toLowerCase().includes(text));
-  const row = { justifyContent: 'flex-start', width: '100%', padding: 1, textAlign: 'left', fontSize: font.size.md, borderRadius: `${radius.control}px`, '&:hover': { backgroundColor: sem('bg-hover') } };
 
   return (
     <>
@@ -478,19 +523,21 @@ function EpicField({ issue, canEdit, epics, onPick }: { issue: Issue; canEdit: b
         <span className="sr-only">{t('issues.epic')}:</span>
         {tag}
       </ButtonBase>
-      <Popover open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}>
-        <div role="group" aria-label={t('issues.epic')} className="flex flex-col gap-1 p-1">
-          <SearchInput label={t('issues.searchEpics')} autoFocus value={search} onChange={(event) => setSearch(event.target.value)} />
-          <div className="flex max-h-64 flex-col overflow-y-auto">
-            <ButtonBase sx={row} onClick={() => pick(null)}>{t('common.none')}</ButtonBase>
-            {matches.map((epic) => (
-              <ButtonBase key={epic.id} sx={row} aria-pressed={epic.id === parent?.id} onClick={() => pick(epic.id!)}>
-                {epic.key} {epic.title}
-              </ButtonBase>
-            ))}
-          </div>
-        </div>
-      </Popover>
+      <PickerPopover
+        label={t('issues.epic')}
+        searchLabel={t('issues.searchEpics')}
+        anchor={anchor}
+        selectedId={parent?.id ?? NO_EPIC}
+        items={[
+          { id: NO_EPIC, label: t('common.none') },
+          ...epics.map((epic) => ({ id: epic.id!, label: `${epic.key} ${epic.title}` })),
+        ]}
+        onClose={() => setAnchor(null)}
+        onPick={(epicId) => {
+          setAnchor(null);
+          onPick(epicId === NO_EPIC ? null : epicId);
+        }}
+      />
     </>
   );
 }

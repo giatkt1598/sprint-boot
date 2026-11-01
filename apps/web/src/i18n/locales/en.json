@@ -412,7 +412,8 @@
     "assignToMe": "Assign to me",
     "moreReactions": "More reactions",
     "loadMore": "Load more",
-    "searchEpics": "Search epics"
+    "searchEpics": "Search epics",
+    "searchPeople": "Search people"
   },
   "workflows": {
     "title": "Workflows",

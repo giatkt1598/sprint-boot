@@ -1,5 +1,4 @@
 import ButtonBase from '@mui/material/ButtonBase';
-import Menu from '@mui/material/Menu';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,7 +6,7 @@ import { ApiError, apiClient, unwrap } from '../../api';
 import { Avatar, UnassignedAvatar } from '../../components/Avatar';
 import { StatusBadge } from '../../components/Badge';
 import { PriorityIcon } from '../../components/IssueIcons';
-import { MenuItem } from '../../components/Menu';
+import { PickerPopover } from '../../components/PickerPopover';
 import { useToast } from '../../components/ToastHost';
 import type { PickerUser } from '../../components/UserPicker';
 import { TextField } from '../../components/TextField';
@@ -16,6 +15,8 @@ import { hasSelectedText } from '../../lib/selection';
 import { radius } from '../../theme/tokens';
 import { TransitionControl, type TransitionIssue } from './TransitionControl';
 import { priorityLevel, statusCategory, usePriorities, type Issue } from './api';
+
+const UNASSIGNED = 'unassigned';
 
 type QuickIssue = TransitionIssue & Partial<Pick<Issue, 'priority' | 'title'>>;
 
@@ -159,28 +160,27 @@ export function QuickPriority({ issue, canEdit }: QuickProps) {
     <Isolated>
       <ButtonBase
         aria-label={`${t('issues.priority')}: ${issue.priority?.name} ${issue.key}`}
-        aria-haspopup="menu"
+        aria-haspopup="dialog"
         onClick={(event) => setAnchor(event.currentTarget)}
         sx={{ width: 24, height: 24, borderRadius: `${radius.control}px` }}
       >
         <span aria-hidden className="flex">{icon}</span>
       </ButtonBase>
-      <Menu open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}>
-        {(priorities.data ?? []).map((priority) => (
-          <MenuItem
-            key={priority.id}
-            onClick={() => {
-              setAnchor(null);
-              update.mutate({ priority: priority.id });
-            }}
-          >
-            <span className="flex items-center gap-2">
-              <span aria-hidden className="flex"><PriorityIcon priority={priorityLevel(priority)} /></span>
-              {priority.name}
-            </span>
-          </MenuItem>
-        ))}
-      </Menu>
+      <PickerPopover
+        label={t('issues.priority')}
+        anchor={anchor}
+        selectedId={issue.priority?.id}
+        items={(priorities.data ?? []).map((priority) => ({
+          id: priority.id!,
+          label: priority.name!,
+          icon: <PriorityIcon priority={priorityLevel(priority)} />,
+        }))}
+        onClose={() => setAnchor(null)}
+        onPick={(priority) => {
+          setAnchor(null);
+          update.mutate({ priority });
+        }}
+      />
     </Isolated>
   );
 }
@@ -202,31 +202,31 @@ export function QuickAssignee({ issue, canEdit, people, showName }: QuickProps &
     return shown;
   }
 
-  const pick = (id: string | null) => {
-    setAnchor(null);
-    update.mutate({ assignee: id });
-  };
-
   return (
     <Isolated>
       <ButtonBase
         aria-label={`${t('issues.assignee')}: ${name} ${issue.key}`}
-        aria-haspopup="menu"
+        aria-haspopup="dialog"
         onClick={(event) => setAnchor(event.currentTarget)}
         sx={{ font: 'inherit', borderRadius: `${radius.control}px` }}
       >
         <span aria-hidden className="flex">{shown}</span>
       </ButtonBase>
-      <Menu open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}>
-        <MenuItem onClick={() => pick(null)}>
-          <span className="flex items-center gap-2"><span aria-hidden className="flex"><UnassignedAvatar /></span>{t('common.unassigned')}</span>
-        </MenuItem>
-        {people.map((person) => (
-          <MenuItem key={person.id} onClick={() => pick(person.id!)}>
-            <span className="flex items-center gap-2"><span aria-hidden className="flex"><Avatar name={person.name ?? ''} /></span>{person.name}</span>
-          </MenuItem>
-        ))}
-      </Menu>
+      <PickerPopover
+        label={t('issues.assignee')}
+        searchLabel={t('issues.searchPeople')}
+        anchor={anchor}
+        selectedId={issue.assignee?.id ?? UNASSIGNED}
+        items={[
+          { id: UNASSIGNED, label: t('common.unassigned'), icon: <UnassignedAvatar /> },
+          ...people.map((person) => ({ id: person.id!, label: person.name ?? '', icon: <Avatar name={person.name ?? ''} decorative /> })),
+        ]}
+        onClose={() => setAnchor(null)}
+        onPick={(id) => {
+          setAnchor(null);
+          update.mutate({ assignee: id === UNASSIGNED ? null : id });
+        }}
+      />
     </Isolated>
   );
 }

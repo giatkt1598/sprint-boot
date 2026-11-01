@@ -412,7 +412,8 @@
     "assignToMe": "Giao cho tôi",
     "moreReactions": "Thêm cảm xúc khác",
     "loadMore": "Tải thêm",
-    "searchEpics": "Tìm Epic"
+    "searchEpics": "Tìm Epic",
+    "searchPeople": "Tìm người"
   },
   "workflows": {
     "title": "Workflow",

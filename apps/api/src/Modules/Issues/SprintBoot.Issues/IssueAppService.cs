@@ -527,7 +527,7 @@ public partial class IssueAppService(
                     ?? throw new BusinessException(IssueErrors.ProjectMismatch);
                 await EnsureParentIsValidAsync(issue.ProjectId, type, issue.ParentId);
                 await EnsureChildrenFitAsync(issue, type);
-                return Set(issue.TypeId.ToString(), typeId.ToString(), _ => issue.TypeId = typeId);
+                return Set((await types.GetAsync(issue.TypeId)).Name, type.Name, _ => issue.TypeId = typeId);
 
             case IssueFieldKeys.Parent:
                 var parent = ReadGuid(value);
