@@ -44,6 +44,14 @@ public interface IIssueFactsProvider
     Task<IssueFacts?> FindAsync(Guid issueId);
 }
 
+public record IssueRef(Guid IssueId, Guid ProjectId);
+
+/// <summary>For background work with no calling user. Keys that match no issue are left out.</summary>
+public interface IIssueKeyResolver
+{
+    Task<Dictionary<string, IssueRef>> ResolveAsync(IReadOnlyCollection<string> keys);
+}
+
 public class WatchersDto
 {
     public required int Count { get; set; }

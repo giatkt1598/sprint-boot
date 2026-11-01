@@ -787,3 +787,110 @@ test('a space admin invites by email, the person accepts with a password and joi
   await page.reload();
   await expect(page.getByRole('row', { name: new RegExp(email) }).getByText('Accepted')).toBeVisible();
 });
+
+const GITEA = 'http://localhost:3300';
+const GITEA_ADMIN = `Basic ${Buffer.from('sbadmin:Sbadmin123!dev').toString('base64')}`;
+
+const giteaAvailable = async () => {
+  try {
+    return (await fetch(`${GITEA}/api/v1/version`)).ok;
+  } catch {
+    return false;
+  }
+};
+
+test('a real Gitea connection links commits, pull requests and CI, and creates branches', async ({ page }) => {
+  test.setTimeout(120_000);
+  test.skip(!(await giteaAvailable()), 'Start Gitea with the git compose profile and create the sbadmin user');
+
+  const repoName = `repo-${suffix().toLowerCase()}`;
+  const tokenResponse = await fetch(`${GITEA}/api/v1/users/sbadmin/tokens`, {
+    method: 'POST',
+    headers: { Authorization: GITEA_ADMIN, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: `e2e-${repoName}`, scopes: ['all'] }),
+  });
+  const token = (await tokenResponse.json() as { sha1: string }).sha1;
+  const gitea = async <T,>(method: string, path: string, body?: unknown) => {
+    const response = await fetch(`${GITEA}/api/v1${path}`, {
+      method,
+      headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    expect(response.ok, `${method} ${path}`).toBe(true);
+    return await response.json() as T;
+  };
+  await gitea('POST', '/user/repos', { name: repoName, auto_init: true, default_branch: 'main' });
+
+  await signIn(page, ADMIN.email, ADMIN.password);
+  const key = `G${suffix()}`;
+  await page.getByRole('button', { name: 'Create space' }).click();
+  await page.getByLabel('Name').fill(`Space ${key}`);
+  await page.getByLabel('Key').fill(key);
+  await page.getByRole('dialog').getByRole('button', { name: 'Create space' }).click();
+  await page.waitForURL(`**/spaces/${key}/issues`);
+  await page.getByRole('button', { name: 'Create', exact: true }).click();
+  await page.getByRole('dialog').getByLabel('Title').fill('Connect the đồng hồ');
+  await page.getByRole('dialog').getByRole('button', { name: 'Create', exact: true }).click();
+  await page.waitForURL(`**/issues/${key}-1`);
+  const issueUrl = page.url();
+
+  await page.goto('/admin/git-connections');
+  await expect(page.getByText('No Git connections yet')).toBeVisible();
+  await expectAccessible(page);
+  await page.getByRole('button', { name: 'Add connection' }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('radio', { name: /Gitea/ }).click();
+  await dialog.getByLabel('Name').fill('Local Gitea');
+  await dialog.getByLabel('Base URL').fill(GITEA);
+  await dialog.getByLabel('Access token').fill('wrong-token');
+  await dialog.getByRole('button', { name: 'Test connection' }).click();
+  await expect(page.getByText('Could not connect with these details.')).toBeVisible();
+  await dialog.getByLabel('Access token').fill(token);
+  await dialog.getByRole('button', { name: 'Test connection' }).click();
+  await expect(page.getByText('Connection works.')).toBeVisible();
+  await expectAccessible(page);
+  await dialog.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByRole('cell', { name: 'Connected' })).toBeVisible();
+  await expectAccessible(page);
+
+  await page.getByRole('link', { name: /Repositories Local Gitea/ }).click();
+  await page.getByLabel('Search repositories').fill(repoName);
+  const row = page.getByRole('row', { name: new RegExp(repoName) });
+  await expect(row.getByText('Active')).toBeVisible();
+  await expectAccessible(page);
+
+  await page.goto(issueUrl);
+  await page.getByRole('button', { name: 'Create branch' }).click();
+  const branchDialog = page.getByRole('dialog');
+  await expect(branchDialog.getByLabel('Branch name')).toHaveValue(`feature/${key}-1-connect-the-dong-ho`);
+  await branchDialog.getByLabel('Repository').fill(repoName);
+  await page.getByRole('option', { name: new RegExp(repoName) }).click();
+  await expectAccessible(page);
+  await branchDialog.getByRole('button', { name: 'Create branch' }).click();
+  await expect(page.getByRole('link', { name: `feature/${key}-1-connect-the-dong-ho` })).toBeVisible();
+  const branch = `feature/${key}-1-connect-the-dong-ho`;
+
+  await page.getByRole('button', { name: 'Create branch' }).click();
+  await page.getByRole('dialog').getByLabel('Repository').fill(repoName);
+  await page.getByRole('option', { name: new RegExp(repoName) }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Create branch' }).click();
+  await expect(page.getByRole('dialog').getByText('A branch with this name already exists')).toBeVisible();
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click();
+
+  const owner = `sbadmin/${repoName}`;
+  const commit = await gitea<{ commit: { sha: string } }>('POST', `/repos/${owner}/contents/a.txt`, {
+    content: Buffer.from('x').toString('base64'),
+    message: `${key}-1 real commit`,
+    branch,
+  });
+  await expect(page.getByText(`${key}-1 real commit`)).toBeVisible({ timeout: 15_000 });
+
+  await gitea('POST', `/repos/${owner}/pulls`, { title: `${key}-1 ready`, head: branch, base: 'main' });
+  await expect(page.getByRole('link', { name: `#1 ${key}-1 ready` })).toBeVisible({ timeout: 15_000 });
+
+  await gitea('POST', `/repos/${owner}/statuses/${commit.commit.sha}`, { state: 'pending', context: 'ci/build', target_url: 'http://ci.local/1' });
+  await expect(page.getByText('Pending')).toBeVisible({ timeout: 15_000 });
+  await gitea('POST', `/repos/${owner}/statuses/${commit.commit.sha}`, { state: 'success', context: 'ci/build', target_url: 'http://ci.local/1' });
+  await expect(page.getByText('Passed')).toBeVisible({ timeout: 15_000 });
+  await expectAccessible(page);
+});

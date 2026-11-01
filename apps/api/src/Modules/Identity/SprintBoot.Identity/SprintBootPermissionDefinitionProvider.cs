@@ -13,6 +13,7 @@ public class SprintBootPermissionDefinitionProvider : PermissionDefinitionProvid
         group.AddPermission(SprintBootPermissions.ManageNotificationSchemes, new FixedLocalizableString("Manage notification schemes"));
         group.AddPermission(SprintBootPermissions.ManageSso, new FixedLocalizableString("Manage single sign-on"));
         group.AddPermission(SprintBootPermissions.ManageInvitations, new FixedLocalizableString("Manage all invitations"));
+        group.AddPermission(SprintBootPermissions.ManageGit, new FixedLocalizableString("Manage Git connections"));
         group.AddPermission(SprintBootPermissions.ManageWorkflows, new FixedLocalizableString("Manage workflows"));
         group.AddPermission(SprintBootPermissions.AccessAllProjects, new FixedLocalizableString("Access all projects"));
     }

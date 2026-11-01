@@ -136,6 +136,8 @@ public interface IProjectAccess
 
     Task<ProjectRef> GetRefAsync(Guid projectId);
 
+    Task<string?> GetBranchTemplateAsync(Guid projectId);
+
     Task<ProjectRef?> FindRefByKeyAsync(string key);
 
     Task<List<ProjectRef>> GetAllRefsAsync();

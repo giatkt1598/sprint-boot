@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using SprintBoot.GitIntegration;
 using SprintBoot.Identity;
 using SprintBoot.Projects;
 using Volo.Abp;
@@ -204,6 +205,17 @@ public class CommentRequiredValidator : ITransitionValidator, ITransientDependen
             : [];
         return Task.FromResult(problems);
     }
+}
+
+[ExposeServices(typeof(ITransitionValidator))]
+public class LinkedPullRequestValidator(IIssueGitFacts git) : ITransitionValidator, ITransientDependency
+{
+    public string Key => "linked-pull-request";
+
+    public RuleKind Kind => RuleKind.Validator;
+
+    public async Task<IReadOnlyList<RuleProblem>> ValidateAsync(RuleContext context, JsonElement? config) =>
+        await git.HasPullRequestAsync(context.Subject.IssueId) ? [] : [new RuleProblem(GitErrors.LinkedPullRequestRequired)];
 }
 
 [ExposeServices(typeof(ITransitionPostFunction))]

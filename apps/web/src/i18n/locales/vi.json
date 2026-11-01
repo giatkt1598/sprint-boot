@@ -184,7 +184,13 @@
     "InvitationRoleTooHigh": "Bạn chỉ có thể gán vai trò tối đa bằng vai trò của mình.",
     "InvitationRateLimited": "Bạn gửi quá nhiều lời mời. Hãy thử lại sau một giờ.",
     "InvitationEmailRegistered": "Người này đã có tài khoản.",
-    "InvitationNeedsRole": "Hãy chọn vai trò hoặc Space cho lời mời."
+    "InvitationNeedsRole": "Hãy chọn vai trò hoặc Space cho lời mời.",
+    "GitBranchExists": "Branch trùng tên đã tồn tại trong {{repository}}.",
+    "GitProviderUnavailable": "Không kết nối được tới Git provider. Vui lòng thử lại.",
+    "GitHubAppNotConfigured": "Máy chủ chưa cấu hình GitHub App.",
+    "GitConnectionInvalid": "Hãy nhập URL http hoặc https hợp lệ.",
+    "GitCredentialsRequired": "Hãy nhập thông tin xác thực cho kết nối này.",
+    "TransitionLinkedPullRequest": "Issue này cần có pull request liên kết."
   },
   "auth": {
     "signIn": "Đăng nhập",
@@ -390,7 +396,8 @@
       "workLog": "Ghi thời gian",
       "attachment": "Đính kèm",
       "status": "Trạng thái",
-      "sprint": "Sprint"
+      "sprint": "Sprint",
+      "branch": "Branch"
     },
     "addReaction": "Thêm cảm xúc",
     "reactWith": "Thả {{emoji}}",
@@ -637,5 +644,93 @@
     "delete": "Xóa nhà cung cấp",
     "deleteTitle": "Xóa nhà cung cấp?",
     "deleteBody": "Mọi người sẽ không thể đăng nhập bằng {{provider}} nữa."
+  },
+  "git": {
+    "title": "Kết nối Git",
+    "subtitle": "Mọi repository mà kết nối truy cập được đều tự liên kết với issue.",
+    "add": "Thêm kết nối",
+    "addTitle": "Thêm kết nối Git",
+    "editTitle": "Sửa {{name}}",
+    "empty": "Chưa có kết nối Git nào",
+    "name": "Tên",
+    "provider": "Provider",
+    "url": "URL",
+    "repositories": "Repository",
+    "repository": "Repository",
+    "status": "Trạng thái",
+    "lastSync": "Đồng bộ gần nhất",
+    "statuses": {
+      "pending": "Chờ thiết lập",
+      "connected": "Đã kết nối",
+      "attention": "Cần xử lý"
+    },
+    "problem": {
+      "1": "{{name}} mất quyền truy cập: token đã bị thu hồi. Hãy cập nhật token để đồng bộ tiếp.",
+      "2": "Không kết nối được tới {{name}}. Sprint Boot sẽ tiếp tục thử."
+    },
+    "githubHint": "github.com, qua GitHub App",
+    "giteaHint": "Máy chủ tự host",
+    "baseUrl": "Base URL",
+    "baseUrlHint": "Repository đã đồng bộ phụ thuộc URL này nên không thể đổi.",
+    "authentication": "Xác thực",
+    "accessToken": "Access token",
+    "newAccessToken": "Access token mới",
+    "tokenPlaceholder": "Dán token mới",
+    "tokenHint": "Được lưu mã hóa và không hiển thị lại.",
+    "oauthHint": "Được lưu mã hóa. Bước tiếp theo bạn sẽ cấp quyền trên Gitea.",
+    "installHint": "Cài GitHub App Sprint Boot cho organization, rồi chọn các repository được phép truy cập.",
+    "installApp": "Cài GitHub App",
+    "authorize": "Cấp quyền trên Gitea",
+    "test": "Kiểm tra kết nối",
+    "testPassed": "Kết nối hoạt động.",
+    "testFailed": "Không kết nối được bằng thông tin này.",
+    "save": "Lưu",
+    "remove": "Gỡ",
+    "removeTitle": "Gỡ kết nối?",
+    "removeBody": "Liên kết từ issue tới các repository của {{name}} cũng bị xóa.",
+    "repositoriesHint": "{{url}}. Mọi repository bên dưới liên kết với issue theo issue key.",
+    "searchRepositories": "Tìm repository",
+    "syncNow": "Đồng bộ ngay",
+    "noRepositories": "Chưa có repository nào",
+    "visibility": "Hiển thị",
+    "private": "Riêng tư",
+    "public": "Công khai",
+    "defaultBranch": "Branch mặc định",
+    "webhook": "Webhook",
+    "lastEvent": "Sự kiện gần nhất",
+    "never": "Chưa có",
+    "webhooks": {
+      "notRegistered": "Chưa đăng ký",
+      "active": "Hoạt động",
+      "failed": "Lỗi"
+    },
+    "setUp": "Thiết lập",
+    "webhookProblems_one": "Sprint Boot không đăng ký được webhook cho {{count}} repository. Chọn Thiết lập để thêm thủ công trên provider, rồi chọn Đồng bộ ngay.",
+    "webhookProblems_other": "Sprint Boot không đăng ký được webhook cho {{count}} repository. Chọn Thiết lập để thêm thủ công trên provider, rồi chọn Đồng bộ ngay.",
+    "webhookTitle": "Webhook của {{name}}",
+    "webhookHint": "Thêm webhook trên provider với URL và secret này, cho các sự kiện push, branch, pull request và status.",
+    "webhookUrl": "Payload URL",
+    "webhookSecret": "Secret"
+  },
+  "development": {
+    "title": "Phát triển",
+    "createBranch": "Tạo branch",
+    "empty": "Chưa có branch, commit hay pull request.",
+    "repository": "Repository",
+    "baseBranch": "Branch gốc",
+    "branchName": "Tên branch",
+    "usedInSpace": "Đã dùng trong Space này",
+    "allRepositories": "Tất cả repository",
+    "pull": {
+      "open": "Đang mở",
+      "merged": "Đã merge",
+      "closed": "Đã đóng"
+    },
+    "build": {
+      "pending": "Đang chờ",
+      "running": "Đang chạy",
+      "success": "Đạt",
+      "failure": "Lỗi"
+    }
   }
 }

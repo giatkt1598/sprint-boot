@@ -1,6 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\SprintBoot.GitIntegration.Contracts\SprintBoot.GitIntegration.Contracts.csproj" />
+    <ProjectReference Include="..\..\Identity\SprintBoot.Identity.Contracts\SprintBoot.Identity.Contracts.csproj" />
+    <ProjectReference Include="..\..\Issues\SprintBoot.Issues.Contracts\SprintBoot.Issues.Contracts.csproj" />
+    <ProjectReference Include="..\..\Projects\SprintBoot.Projects.Contracts\SprintBoot.Projects.Contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Volo.Abp.Ddd.Application" />

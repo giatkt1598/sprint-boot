@@ -190,7 +190,7 @@ public class AuthAppService(
     private async Task<CurrentUserDto> ToDtoAsync(IdentityUser user)
     {
         var permissions = new List<string>();
-        foreach (var permission in new[] { SprintBootPermissions.ManageUsers, SprintBootPermissions.RestoreIssues, SprintBootPermissions.ManageWorkflows, SprintBootPermissions.ManageNotificationSchemes, SprintBootPermissions.ManageSso, SprintBootPermissions.ManageInvitations })
+        foreach (var permission in new[] { SprintBootPermissions.ManageUsers, SprintBootPermissions.RestoreIssues, SprintBootPermissions.ManageWorkflows, SprintBootPermissions.ManageNotificationSchemes, SprintBootPermissions.ManageSso, SprintBootPermissions.ManageInvitations, SprintBootPermissions.ManageGit })
         {
             if (await AuthorizationService.IsGrantedAsync(permission))
             {

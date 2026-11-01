@@ -184,7 +184,13 @@
     "InvitationRoleTooHigh": "You can only assign a role up to your own.",
     "InvitationRateLimited": "Too many invitations. Try again in an hour.",
     "InvitationEmailRegistered": "This person already has an account.",
-    "InvitationNeedsRole": "Choose a role or a space for this invitation."
+    "InvitationNeedsRole": "Choose a role or a space for this invitation.",
+    "GitBranchExists": "A branch with this name already exists in {{repository}}.",
+    "GitProviderUnavailable": "The Git provider could not be reached. Please try again.",
+    "GitHubAppNotConfigured": "The GitHub App is not configured on this server.",
+    "GitConnectionInvalid": "Enter a valid http or https URL.",
+    "GitCredentialsRequired": "Enter the credentials for this connection.",
+    "TransitionLinkedPullRequest": "This issue needs a linked pull request."
   },
   "auth": {
     "signIn": "Sign in",
@@ -390,7 +396,8 @@
       "workLog": "Work log",
       "attachment": "Attachment",
       "status": "Status",
-      "sprint": "Sprint"
+      "sprint": "Sprint",
+      "branch": "Branch"
     },
     "addReaction": "Add reaction",
     "reactWith": "React with {{emoji}}",
@@ -637,5 +644,93 @@
     "delete": "Delete provider",
     "deleteTitle": "Delete provider?",
     "deleteBody": "People can no longer sign in with {{provider}}."
+  },
+  "git": {
+    "title": "Git connections",
+    "subtitle": "Every repository a connection can access links to issues automatically.",
+    "add": "Add connection",
+    "addTitle": "Add Git connection",
+    "editTitle": "Edit {{name}}",
+    "empty": "No Git connections yet",
+    "name": "Name",
+    "provider": "Provider",
+    "url": "URL",
+    "repositories": "Repositories",
+    "repository": "Repository",
+    "status": "Status",
+    "lastSync": "Last sync",
+    "statuses": {
+      "pending": "Waiting for setup",
+      "connected": "Connected",
+      "attention": "Needs attention"
+    },
+    "problem": {
+      "1": "{{name}} lost access: its token was revoked. Update the token to resume syncing.",
+      "2": "{{name}} could not be reached. Sprint Boot keeps trying."
+    },
+    "githubHint": "github.com, via GitHub App",
+    "giteaHint": "Self-hosted server",
+    "baseUrl": "Base URL",
+    "baseUrlHint": "Synced repositories depend on this URL, so it cannot be changed.",
+    "authentication": "Authentication",
+    "accessToken": "Access token",
+    "newAccessToken": "New access token",
+    "tokenPlaceholder": "Paste a new token",
+    "tokenHint": "Stored encrypted and never shown again.",
+    "oauthHint": "Stored encrypted. You will authorize on Gitea next.",
+    "installHint": "Install the Sprint Boot GitHub App on your organization, then choose which repositories it can access.",
+    "installApp": "Install GitHub App",
+    "authorize": "Authorize on Gitea",
+    "test": "Test connection",
+    "testPassed": "Connection works.",
+    "testFailed": "Could not connect with these details.",
+    "save": "Save",
+    "remove": "Remove",
+    "removeTitle": "Remove connection?",
+    "removeBody": "Links from issues to {{name}} repositories are removed too.",
+    "repositoriesHint": "{{url}}. Every repository below links to issues by issue key.",
+    "searchRepositories": "Search repositories",
+    "syncNow": "Sync now",
+    "noRepositories": "No repositories yet",
+    "visibility": "Visibility",
+    "private": "Private",
+    "public": "Public",
+    "defaultBranch": "Default branch",
+    "webhook": "Webhook",
+    "lastEvent": "Last event",
+    "never": "Never",
+    "webhooks": {
+      "notRegistered": "Not registered",
+      "active": "Active",
+      "failed": "Failed"
+    },
+    "setUp": "Set up",
+    "webhookProblems_one": "Sprint Boot could not register webhooks on {{count}} repository. Select Set up to add one manually in the provider, then select Sync now.",
+    "webhookProblems_other": "Sprint Boot could not register webhooks on {{count}} repositories. Select Set up to add them manually in the provider, then select Sync now.",
+    "webhookTitle": "Webhook for {{name}}",
+    "webhookHint": "Add a webhook in the provider with this URL and secret, for push, branch, pull request and status events.",
+    "webhookUrl": "Payload URL",
+    "webhookSecret": "Secret"
+  },
+  "development": {
+    "title": "Development",
+    "createBranch": "Create branch",
+    "empty": "No branches, commits or pull requests yet.",
+    "repository": "Repository",
+    "baseBranch": "Base branch",
+    "branchName": "Branch name",
+    "usedInSpace": "Used in this space",
+    "allRepositories": "All repositories",
+    "pull": {
+      "open": "Open",
+      "merged": "Merged",
+      "closed": "Closed"
+    },
+    "build": {
+      "pending": "Pending",
+      "running": "Running",
+      "success": "Passed",
+      "failure": "Failed"
+    }
   }
 }

@@ -7,6 +7,7 @@ using Microsoft.OpenApi;
 using SprintBoot.Agile;
 using SprintBoot.EntityFrameworkCore;
 using SprintBoot.Identity;
+using SprintBoot.GitIntegration;
 using SprintBoot.Issues;
 using SprintBoot.Notifications;
 using SprintBoot.Projects;
@@ -52,6 +53,7 @@ public class SprintBootHostModule : AbpModule
         typeof(IssuesModule).Assembly,
         typeof(AgileModule).Assembly,
         typeof(NotificationsModule).Assembly,
+        typeof(GitIntegrationModule).Assembly,
     ];
 
     public override void ConfigureServices(ServiceConfigurationContext context)

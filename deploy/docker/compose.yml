@@ -63,7 +63,23 @@ services:
     volumes:
       - ./keycloak:/opt/keycloak/data/import:ro
 
+  gitea:
+    image: gitea/gitea:1.24
+    profiles: ["git"]
+    environment:
+      GITEA__security__INSTALL_LOCK: "true"
+      GITEA__server__ROOT_URL: "http://localhost:${GITEA_PORT:-3300}/"
+      GITEA__webhook__ALLOWED_HOST_LIST: "*"
+      GITEA__webhook__DELIVER_TIMEOUT: "10"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "${GITEA_PORT:-3300}:3000"
+    volumes:
+      - gitea-data:/data
+
 volumes:
+  gitea-data:
   postgres-data:
   redis-data:
   rabbitmq-data:

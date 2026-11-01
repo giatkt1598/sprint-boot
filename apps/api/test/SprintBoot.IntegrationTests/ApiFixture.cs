@@ -34,6 +34,8 @@ public sealed class ApiFixture : IAsyncLifetime
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:17-alpine").Build();
     private readonly RedisContainer _redis = new RedisBuilder("redis:7-alpine").Build();
 
+    public const string GitHubWebhookSecret = "github-webhook-secret";
+
     public RabbitMqContainer RabbitMq { get; private set; } = null!;
 
     public WebApplicationFactory<Program> Factory { get; private set; } = null!;
@@ -60,6 +62,14 @@ public sealed class ApiFixture : IAsyncLifetime
         Environment.SetEnvironmentVariable("Workflows__Webhooks__BackoffSeconds", "1");
         Environment.SetEnvironmentVariable("Issues__Attachments__MaxFileSizeMb", "1");
         Environment.SetEnvironmentVariable("Storage__Local__Path", Path.Combine(Path.GetTempPath(), $"sb-test-{Guid.NewGuid():N}"));
+        using (var rsa = System.Security.Cryptography.RSA.Create(2048))
+        {
+            Environment.SetEnvironmentVariable("Git__GitHub__PrivateKey", rsa.ExportRSAPrivateKeyPem());
+        }
+
+        Environment.SetEnvironmentVariable("Git__GitHub__AppId", "1");
+        Environment.SetEnvironmentVariable("Git__GitHub__ApiUrl", FakeGitServer.GitHubApi);
+        Environment.SetEnvironmentVariable("Git__GitHub__WebhookSecret", GitHubWebhookSecret);
         Environment.SetEnvironmentVariable("RabbitMQ__Connections__Default__HostName", "localhost");
         Environment.SetEnvironmentVariable("RabbitMQ__Connections__Default__Port", rabbitPort.ToString());
         Environment.SetEnvironmentVariable("RabbitMQ__Connections__Default__UserName", RabbitUser);
@@ -78,7 +88,10 @@ public sealed class ApiFixture : IAsyncLifetime
             {
                 builder.UseEnvironment("Testing");
                 builder.ConfigureTestServices(services =>
-                    services.Replace(ServiceDescriptor.Transient<Volo.Abp.Emailing.IEmailSender, ScriptedEmailSender>()));
+                {
+                    services.Replace(ServiceDescriptor.Transient<Volo.Abp.Emailing.IEmailSender, ScriptedEmailSender>());
+                    services.AddHttpClient("git").ConfigurePrimaryHttpMessageHandler(() => FakeGitServer.Instance);
+                });
             });
         _ = Factory.Server;
 
@@ -118,6 +131,17 @@ public sealed class ApiFixture : IAsyncLifetime
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>();
         using var uow = unitOfWork.Begin(requiresNew: true);
         return await users.GeneratePasswordResetTokenAsync(await users.GetByIdAsync(userId));
+    }
+
+    public async Task InstallGitHubAppAsync(Guid connectionId, long installationId)
+    {
+        using var scope = Factory.Services.CreateScope();
+        using var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true);
+        var connections = scope.ServiceProvider.GetRequiredService<Volo.Abp.Domain.Repositories.IRepository<SprintBoot.GitIntegration.GitConnection, Guid>>();
+        var connection = await connections.GetAsync(connectionId);
+        connection.InstallationId = installationId;
+        await connections.UpdateAsync(connection);
+        await uow.CompleteAsync();
     }
 
     public async Task ExpireInvitationAsync(Guid id)

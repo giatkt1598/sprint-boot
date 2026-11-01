@@ -5,6 +5,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastHost } from './components/ToastHost';
 import { AccountIndex, AccountLayout, ProfilePage, SecurityPage } from './features/account/AccountPages';
 import { AdminIndex, AdminLayout, DeletedIssuesPage, ManageUserPage, UsersPage } from './features/admin/AdminPages';
+import { GitConnectionsPage, GitRepositoriesPage } from './features/admin/GitPages';
 import { InvitationsPage } from './features/admin/InvitationPages';
 import { SsoPage, SsoProviderPage } from './features/admin/SsoPages';
 import { StatusesPage, WorkflowsPage } from './features/admin/WorkflowPages';
@@ -50,6 +51,8 @@ export function App() {
               <Route path="invitations" element={<InvitationsPage />} />
               <Route path="sso" element={<SsoPage />} />
               <Route path="sso/:providerId" element={<SsoProviderPage />} />
+              <Route path="git-connections" element={<GitConnectionsPage />} />
+              <Route path="git-connections/:connectionId" element={<GitRepositoriesPage />} />
               <Route path="workflows" element={<WorkflowsPage />} />
               <Route path="notification-schemes" element={<NotificationSchemesPage />} />
               <Route path="notification-schemes/:schemeId" element={<EditSchemePage />} />

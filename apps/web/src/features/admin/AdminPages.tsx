@@ -41,8 +41,9 @@ export function AdminLayout() {
   const canManageSchemes = useCan('SprintBoot.NotificationSchemes.Manage');
   const canManageInvitations = useCan('SprintBoot.Invitations.Manage');
   const canManageSso = useCan('SprintBoot.Sso.Manage');
+  const canManageGit = useCan('SprintBoot.Git.Manage');
 
-  if (!canManageUsers && !canRestore && !canManageWorkflows && !canManageSchemes && !canManageInvitations && !canManageSso) {
+  if (!canManageGit && !canManageUsers && !canRestore && !canManageWorkflows && !canManageSchemes && !canManageInvitations && !canManageSso) {
     return <main className="p-8"><Typography role="alert">{t('errors.forbidden')}</Typography></main>;
   }
 
@@ -55,6 +56,7 @@ export function AdminLayout() {
           {canManageUsers && <SettingsMenuItem to="users" label={t('admin.users')} />}
           {canManageInvitations && <SettingsMenuItem to="invitations" label={t('invitations.title')} />}
           {canManageSso && <SettingsMenuItem to="sso" label={t('sso.title')} />}
+          {canManageGit && <SettingsMenuItem to="git-connections" label={t('git.title')} />}
           {canManageWorkflows && <SettingsMenuItem to="workflows" label={t('workflows.title')} />}
           {canManageSchemes && <SettingsMenuItem to="notification-schemes" label={t('topBar.notifications')} />}
           {canRestore && <SettingsMenuItem to="deleted-issues" label={t('admin.deletedIssues')} />}

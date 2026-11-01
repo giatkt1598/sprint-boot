@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SprintBoot.Agile;
+using SprintBoot.GitIntegration;
 using SprintBoot.Identity;
 using SprintBoot.Issues;
 using SprintBoot.Notifications;
@@ -46,6 +47,15 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
     public DbSet<AuthPolicy> AuthPolicies { get; set; } = null!;
     public DbSet<Invitation> Invitations { get; set; } = null!;
     public DbSet<InvitationProject> InvitationProjects { get; set; } = null!;
+
+    public DbSet<GitConnection> GitConnections { get; set; } = null!;
+    public DbSet<GitRepository> GitRepositories { get; set; } = null!;
+    public DbSet<GitBranch> GitBranches { get; set; } = null!;
+    public DbSet<GitCommit> GitCommits { get; set; } = null!;
+    public DbSet<GitPullRequest> GitPullRequests { get; set; } = null!;
+    public DbSet<IssueGitLink> IssueGitLinks { get; set; } = null!;
+    public DbSet<CiStatus> CiStatuses { get; set; } = null!;
+    public DbSet<GitWebhookDelivery> GitWebhookDeliveries { get; set; } = null!;
 
     public DbSet<SystemPingReceipt> SystemPingReceipts { get; set; } = null!;
 
@@ -110,5 +120,6 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
         builder.ConfigureIssues();
         builder.ConfigureAgile();
         builder.ConfigureNotifications();
+        builder.ConfigureGitIntegration();
     }
 }

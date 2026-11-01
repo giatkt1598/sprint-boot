@@ -3,6 +3,7 @@ import Link from '@mui/material/Link';
 import Menu from '@mui/material/Menu';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { DevelopmentPanel } from './DevelopmentPanel';
 import { Ellipsis, Eye, Link2, Plus, Trash2, Upload } from 'lucide-react';
 import { useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -286,9 +287,10 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
           </section>
         </div>
 
+        <div className="flex shrink-0 flex-col gap-4" style={{ width: compact ? '100%' : 320 }}>
         <aside
-          className="flex shrink-0 flex-col gap-1 p-3"
-          style={{ width: compact ? '100%' : 320, border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}
+          className="flex flex-col gap-1 p-3"
+          style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}
         >
           <Typography variant="h3" component="h2" className="pb-1">{t('issues.details')}</Typography>
           <DetailRow label={t('issues.status')}>
@@ -383,6 +385,8 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
           <DetailRow label={t('issues.createdAt')}>{formatDateTime(issue.createdAt, i18n.language)}</DetailRow>
           <DetailRow label={t('issues.updatedAt')}>{formatDateTime(issue.updatedAt, i18n.language)}</DetailRow>
         </aside>
+        <DevelopmentPanel issueId={issue.id!} label={`${issue.key} ${issue.title}`} canEdit={canEdit} />
+        </div>
       </div>
 
       <DialogConfirm

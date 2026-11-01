@@ -77,6 +77,9 @@ public class ProjectAccess(
         return [.. memberships.Select(item => item.ProjectId)];
     }
 
+    public async Task<string?> GetBranchTemplateAsync(Guid projectId) =>
+        (await projects.GetAsync(projectId)).BranchNameTemplate;
+
     public async Task<ProjectRef> GetRefAsync(Guid projectId) => ToRef(await projects.GetAsync(projectId));
 
     public async Task<ProjectRef?> FindRefByKeyAsync(string key)
