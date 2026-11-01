@@ -1,6 +1,7 @@
 import MenuList from '@mui/material/MenuList';
 import Typography from '@mui/material/Typography';
 import { Copy, Trash2 } from 'lucide-react';
+import { RichTextEditor } from '../features/issues/RichTextEditor';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Avatar } from '../components/Avatar';
@@ -27,6 +28,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 export function DevUiPage() {
+  const [richText, setRichText] = useState('');
   const { t } = useTranslation();
   const [tab, setTab] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -168,6 +170,14 @@ export function DevUiPage() {
         <Popover open={Boolean(popoverAnchor)} anchorEl={popoverAnchor} onClose={() => setPopoverAnchor(null)}>
           <Typography>{t('devUi.popoverBody')}</Typography>
         </Popover>
+      </Section>
+
+      <Section title={t('devUi.richText')}>
+        <div className="flex w-full flex-col gap-2">
+          {/* The list is rebuilt on every render on purpose: real pages pass their people the same way. */}
+          <RichTextEditor label={t('devUi.richText')} people={[{ id: 'a', name: 'Minh Anh' }]} onChange={setRichText} />
+          <pre data-testid="rich-text-html" className="whitespace-pre-wrap">{richText}</pre>
+        </div>
       </Section>
     </div>
   );

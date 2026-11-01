@@ -1,17 +1,20 @@
-import IconButton from '@mui/material/IconButton';
-import Mention from '@tiptap/extension-mention';
 import { EditorContent, useEditor, type Editor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import type { SuggestionKeyDownProps, SuggestionProps } from '@tiptap/suggestion';
-import { Bold, Code, Italic, List, ListOrdered, Underline, type LucideIcon } from 'lucide-react';
-import { useMemo } from 'react';
+import hljs from 'highlight.js/lib/common';
+import {
+  AtSign, Code2, Heading1, Heading2, Heading3, ImageIcon, Lightbulb, List, ListChecks, ListOrdered, Minus, Quote, Table, Type,
+  type LucideIcon,
+} from 'lucide-react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+import Typography from '@mui/material/Typography';
+import { Dialog, DialogFooter } from '../../components/Dialog';
+import { TextField } from '../../components/TextField';
 import { radius, sem, shadow } from '../../theme/tokens';
+import { EditorMenus, normalizeUrl } from './RichTextMenus';
+import { createExtensions, type MentionUser, type PopupState, type SlashCommand } from './richTextExtensions';
 
-export interface MentionUser {
-  id?: string;
-  name?: string | null;
-}
+export type { MentionUser } from './richTextExtensions';
 
 interface RichTextEditorProps {
   label: string;
@@ -21,151 +24,208 @@ interface RichTextEditorProps {
   onChange: (html: string) => void;
 }
 
-type MentionProps = SuggestionProps<MentionUser, { id: string; label: string }>;
+const POPUP_WIDTH = 280;
+const POPUP_MAX_HEIGHT = 300;
 
-/** A small accessible popup; rendered by hand because TipTap owns the editor DOM. */
-function mentionRenderer() {
-  let list: HTMLDivElement | null = null;
-  let current: MentionProps | null = null;
-  let active = 0;
+const SLASH_ICONS: Record<string, LucideIcon> = {
+  text: Type,
+  heading1: Heading1,
+  heading2: Heading2,
+  heading3: Heading3,
+  bullets: List,
+  numbers: ListOrdered,
+  tasks: ListChecks,
+  quote: Quote,
+  callout: Lightbulb,
+  codeBlock: Code2,
+  divider: Minus,
+  table: Table,
+  image: ImageIcon,
+  mention: AtSign,
+};
 
-  const paint = () => {
-    if (!list || !current) {
-      return;
-    }
-    list.replaceChildren(
-      ...current.items.map((item, index) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.textContent = item.name ?? '';
-        button.setAttribute('role', 'option');
-        button.setAttribute('aria-selected', String(index === active));
-        button.style.cssText = `display:block;width:100%;text-align:left;padding:8px;border:0;border-radius:${radius.control}px;cursor:pointer;background:${index === active ? sem('bg-selected') : 'transparent'};color:${sem('text-primary')}`;
-        button.onmousedown = (event) => {
-          event.preventDefault();
-          choose(index);
-        };
-        return button;
-      }),
-    );
-    const rect = current.clientRect?.();
-    if (rect) {
-      list.style.left = `${rect.left}px`;
-      list.style.top = `${rect.bottom + 4}px`;
-    }
-  };
+/** Portaled so a dialog cannot clip it; it never takes focus, so typing keeps filtering. */
+function SuggestionPopup<Item>({ popup, rowKey, render }: { popup: PopupState<Item>; rowKey: (item: Item) => string; render: (item: Item) => React.ReactNode }) {
+  const { t } = useTranslation();
+  const list = useRef<HTMLDivElement>(null);
 
-  const choose = (index: number) => {
-    const item = current?.items[index];
-    if (item?.id) {
-      current?.command({ id: item.id, label: item.name ?? '' });
-    }
-  };
+  useEffect(() => {
+    list.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' });
+  }, [popup.active]);
 
-  return {
-    onStart(props: MentionProps) {
-      current = props;
-      active = 0;
-      list = document.createElement('div');
-      list.setAttribute('role', 'listbox');
-      list.style.cssText = `position:fixed;z-index:1400;width:240px;padding:8px;background:${sem('bg-surface')};border:1px solid ${sem('border-default')};border-radius:${radius.card}px;box-shadow:${shadow.popover}`;
-      document.body.append(list);
-      paint();
-    },
-    onUpdate(props: MentionProps) {
-      current = props;
-      active = 0;
-      paint();
-    },
-    onKeyDown({ event }: SuggestionKeyDownProps) {
-      const count = current?.items.length ?? 0;
-      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-        active = count ? (active + (event.key === 'ArrowDown' ? 1 : count - 1)) % count : 0;
-        paint();
-        return true;
-      }
-      if (event.key === 'Enter') {
-        choose(active);
-        return true;
-      }
-      return event.key === 'Escape';
-    },
-    onExit() {
-      list?.remove();
-      list = null;
-      current = null;
-    },
-  };
-}
+  const rect = popup.rect;
+  const above = rect !== null && rect.bottom + POPUP_MAX_HEIGHT > window.innerHeight && rect.top > POPUP_MAX_HEIGHT;
 
-function ToolbarButton({ label, icon: Icon, active, onClick }: { label: string; icon: LucideIcon; active: boolean; onClick: () => void }) {
-  return (
-    <IconButton
-      size="small"
-      aria-label={label}
-      aria-pressed={active}
-      onClick={onClick}
-      sx={{ borderRadius: `${radius.control}px`, color: sem(active ? 'text-accent' : 'text-secondary') }}
+  return createPortal(
+    <div
+      ref={list}
+      role="listbox"
+      aria-label={t('editor.suggestions')}
+      className="flex flex-col gap-1 p-1"
+      style={{
+        position: 'fixed',
+        zIndex: 1400,
+        left: rect?.left ?? 0,
+        ...(above ? { bottom: window.innerHeight - (rect?.top ?? 0) + 4 } : { top: (rect?.bottom ?? 0) + 4 }),
+        width: POPUP_WIDTH,
+        maxHeight: POPUP_MAX_HEIGHT,
+        overflowY: 'auto',
+        backgroundColor: sem('bg-surface'),
+        border: `1px solid ${sem('border-default')}`,
+        borderRadius: radius.card,
+        boxShadow: shadow.popover,
+      }}
     >
-      <Icon size={16} strokeWidth={1.5} aria-hidden />
-    </IconButton>
+      {popup.items.length === 0 && <Typography variant="body2" color="textSecondary" className="p-2">{t('editor.noResults')}</Typography>}
+      {popup.items.map((item, index) => (
+        <button
+          key={rowKey(item)}
+          type="button"
+          role="option"
+          aria-selected={index === popup.active}
+          onMouseDown={(event) => {
+            event.preventDefault();
+            popup.choose(index);
+          }}
+          className="flex w-full cursor-pointer items-center gap-2 border-0 p-2 text-left"
+          style={{
+            borderRadius: radius.control,
+            color: sem('text-primary'),
+            backgroundColor: index === popup.active ? sem('bg-selected') : 'transparent',
+          }}
+        >
+          {render(item)}
+        </button>
+      ))}
+    </div>,
+    document.body,
   );
 }
 
-function Toolbar({ editor }: { editor: Editor }) {
+function ImageDialog({ onClose, onInsert }: { onClose: () => void; onInsert: (url: string) => void }) {
   const { t } = useTranslation();
-  const chain = () => editor.chain().focus();
+  const [url, setUrl] = useState('');
+  const href = normalizeUrl(url);
 
   return (
-    <div role="toolbar" aria-label={t('issues.description')} className="flex gap-1 p-1" style={{ borderBottom: `1px solid ${sem('border-default')}` }}>
-      <ToolbarButton label={t('issues.toolbarBold')} icon={Bold} active={editor.isActive('bold')} onClick={() => chain().toggleBold().run()} />
-      <ToolbarButton label={t('issues.toolbarItalic')} icon={Italic} active={editor.isActive('italic')} onClick={() => chain().toggleItalic().run()} />
-      <ToolbarButton label={t('issues.toolbarUnderline')} icon={Underline} active={editor.isActive('underline')} onClick={() => chain().toggleUnderline().run()} />
-      <ToolbarButton label={t('issues.toolbarBullets')} icon={List} active={editor.isActive('bulletList')} onClick={() => chain().toggleBulletList().run()} />
-      <ToolbarButton label={t('issues.toolbarNumbers')} icon={ListOrdered} active={editor.isActive('orderedList')} onClick={() => chain().toggleOrderedList().run()} />
-      <ToolbarButton label={t('issues.toolbarCode')} icon={Code} active={editor.isActive('codeBlock')} onClick={() => chain().toggleCodeBlock().run()} />
-    </div>
+    <Dialog
+      open
+      title={t('editor.insertImage')}
+      onClose={onClose}
+      footer={<DialogFooter confirmLabel={t('editor.insert')} confirmDisabled={!href} onCancel={onClose} onConfirm={() => href && onInsert(href)} />}
+    >
+      <TextField label={t('editor.imageUrl')} autoFocus value={url} onChange={(event) => setUrl(event.target.value)} />
+    </Dialog>
   );
 }
 
 export function RichTextEditor({ label, initialValue = '', people, autoFocus, onChange }: RichTextEditorProps) {
-  const extensions = useMemo(
-    () => [
-      StarterKit,
-      Mention.configure({
-        HTMLAttributes: { class: 'mention' },
-        suggestion: {
-          items: ({ query }: { query: string }) =>
-            people.filter((person) => person.name?.toLowerCase().includes(query.toLowerCase())).slice(0, 6),
-          render: mentionRenderer,
-        },
+  const { t } = useTranslation();
+  const [mentionPopup, setMentionPopup] = useState<PopupState<MentionUser> | null>(null);
+  const [slashPopup, setSlashPopup] = useState<PopupState<SlashCommand> | null>(null);
+  const [imageOpen, setImageOpen] = useState(false);
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
+
+  // Parents rebuild `people` on every render. Rebuilding the editor with it wiped the text after each
+  // keystroke, so the editor is created once and reads the latest values from here.
+  const latest = useRef({ people, t });
+  useLayoutEffect(() => {
+    latest.current = { people, t };
+  });
+
+  const slashCommands = useCallback((): SlashCommand[] => {
+    const tr = latest.current.t;
+    const start = (editor: Editor, range: { from: number; to: number }) => editor.chain().focus().deleteRange(range);
+    const row = (id: string, keywords: string, run: SlashCommand['run']): SlashCommand => ({ id, label: tr(`editor.${id}`), keywords, run });
+    return [
+      row('text', 'paragraph', (editor, range) => start(editor, range).setParagraph().run()),
+      row('heading1', 'h1 title', (editor, range) => start(editor, range).setHeading({ level: 1 }).run()),
+      row('heading2', 'h2', (editor, range) => start(editor, range).setHeading({ level: 2 }).run()),
+      row('heading3', 'h3', (editor, range) => start(editor, range).setHeading({ level: 3 }).run()),
+      row('bullets', 'ul list', (editor, range) => start(editor, range).toggleBulletList().run()),
+      row('numbers', 'ol list', (editor, range) => start(editor, range).toggleOrderedList().run()),
+      row('tasks', 'todo checkbox list', (editor, range) => start(editor, range).toggleTaskList().run()),
+      row('quote', 'blockquote', (editor, range) => start(editor, range).toggleBlockquote().run()),
+      row('callout', 'note info', (editor, range) => start(editor, range).wrapIn('callout').run()),
+      row('codeBlock', 'pre snippet', (editor, range) => start(editor, range).setCodeBlock().run()),
+      row('divider', 'hr line', (editor, range) => start(editor, range).setHorizontalRule().run()),
+      row('table', 'grid', (editor, range) => start(editor, range).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()),
+      row('image', 'picture photo', (editor, range) => {
+        start(editor, range).run();
+        setImageOpen(true);
       }),
-    ],
-    [people],
+      row('mention', 'person user', (editor, range) => start(editor, range).insertContent('@').run()),
+    ];
+  }, []);
+
+  const [extensions] = useState(() =>
+    createExtensions({
+      placeholder: () => latest.current.t('editor.placeholder'),
+      people: () => latest.current.people,
+      commands: slashCommands,
+      onMentionPopup: setMentionPopup,
+      onSlashPopup: setSlashPopup,
+    }),
   );
 
-  const editor = useEditor(
-    {
-      extensions,
-      content: initialValue,
-      autofocus: autoFocus ? 'end' : false,
-      editorProps: {
-        attributes: { 'aria-label': label, role: 'textbox', 'aria-multiline': 'true', class: 'rich-text p-3 outline-none' },
-      },
-      onUpdate: ({ editor: current }) => onChange(current.isEmpty ? '' : current.getHTML()),
+  const editor = useEditor({
+    extensions,
+    content: initialValue,
+    autofocus: autoFocus ? 'end' : false,
+    editorProps: {
+      attributes: { 'aria-label': label, role: 'textbox', 'aria-multiline': 'true', class: 'rich-text outline-none' },
     },
-    [extensions],
-  );
+    onUpdate: ({ editor: current }) => onChange(current.isEmpty ? '' : current.getHTML()),
+  });
 
   return (
-    <div style={{ border: `1px solid ${sem('border-strong')}`, borderRadius: radius.control }}>
-      {editor && <Toolbar editor={editor} />}
+    <div ref={setContainer} className="rich-text-editor">
       <EditorContent editor={editor} />
+      {editor && <EditorMenus editor={editor} container={container} />}
+      {slashPopup && (
+        <SuggestionPopup
+          popup={slashPopup}
+          rowKey={(item) => item.id}
+          render={(item) => {
+            const Icon = SLASH_ICONS[item.id] ?? Type;
+            return (
+              <>
+                <Icon size={16} strokeWidth={1.5} aria-hidden />
+                {item.label}
+              </>
+            );
+          }}
+        />
+      )}
+      {mentionPopup && <SuggestionPopup popup={mentionPopup} rowKey={(item) => item.id ?? ''} render={(item) => item.name} />}
+      {imageOpen && (
+        <ImageDialog
+          onClose={() => {
+            setImageOpen(false);
+            editor?.commands.focus();
+          }}
+          onInsert={(src) => {
+            setImageOpen(false);
+            editor?.chain().focus().setImage({ src }).run();
+          }}
+        />
+      )}
     </div>
   );
 }
 
 /** Backend-sanitized HTML, the only place user markup reaches the DOM. */
 export function RichTextView({ html }: { html: string }) {
-  return <div className="rich-text" dangerouslySetInnerHTML={{ __html: html }} />;
+  const view = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    view.current?.querySelectorAll<HTMLElement>('pre code[class*="language-"]').forEach((block) => hljs.highlightElement(block));
+
+    // The editor names checkboxes only while editing; screen readers need a name in saved text too.
+    view.current?.querySelectorAll('input[type="checkbox"]').forEach((box) => {
+      box.setAttribute('aria-label', box.closest('li')?.textContent.trim() ?? '');
+    });
+  }, [html]);
+
+  return <div ref={view} className="rich-text" dangerouslySetInnerHTML={{ __html: html }} />;
 }

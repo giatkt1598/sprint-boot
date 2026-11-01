@@ -16,20 +16,73 @@
 
 .rich-text {
   min-height: 1.4em;
+  line-height: 1.5;
   overflow-wrap: anywhere;
 }
 
-.rich-text .ProseMirror,
+.rich-text-editor {
+  position: relative;
+  border: 1px solid var(--sb-border-default);
+  border-radius: 6px;
+}
+
+.rich-text-editor:hover {
+  border-color: var(--sb-border-strong);
+}
+
+.rich-text-editor:focus-within {
+  border-color: var(--sb-border-focus);
+}
+
+/* The left gutter holds the block handle. */
 .ProseMirror.rich-text {
-  min-height: 72px;
+  min-height: 96px;
+  padding: 12px 12px 12px 48px;
+}
+
+.rich-text .is-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: var(--sb-text-secondary);
+  pointer-events: none;
 }
 
 .rich-text p {
   margin: 0 0 8px;
 }
 
-.rich-text p:last-child {
+.rich-text > :last-child,
+.rich-text li > p:last-child,
+.rich-text blockquote > :last-child,
+.rich-text .callout > :last-child,
+.rich-text td > :last-child,
+.rich-text th > :last-child {
   margin-bottom: 0;
+}
+
+.rich-text h1,
+.rich-text h2,
+.rich-text h3 {
+  margin: 16px 0 8px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.rich-text > :first-child {
+  margin-top: 0;
+}
+
+.rich-text h1 {
+  font-size: 20px;
+}
+
+.rich-text h2 {
+  font-size: 16px;
+}
+
+.rich-text h3 {
+  font-size: 14px;
 }
 
 .rich-text ul,
@@ -38,12 +91,191 @@
   padding-left: 24px;
 }
 
+.rich-text ul {
+  list-style: disc;
+}
+
+.rich-text ol {
+  list-style: decimal;
+}
+
+.rich-text ul[data-type='taskList'] {
+  padding-left: 0;
+  list-style: none;
+}
+
+.rich-text ul[data-type='taskList'] li {
+  display: flex;
+  min-height: 24px;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+/* The real input fills a 24px target for WCAG; the span next to it draws the 16px box. */
+.rich-text ul[data-type='taskList'] li > label {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+}
+
+.rich-text ul[data-type='taskList'] input {
+  position: absolute;
+  inset: 0;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.rich-text ul[data-type='taskList'] input + span {
+  display: flex;
+  width: 16px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--sb-border-strong);
+  border-radius: 4px;
+  color: var(--sb-text-on-accent);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.rich-text ul[data-type='taskList'] input:checked + span {
+  border-color: var(--sb-accent-default);
+  background: var(--sb-accent-default);
+}
+
+.rich-text ul[data-type='taskList'] input:checked + span::after {
+  content: '\2713';
+}
+
+.rich-text ul[data-type='taskList'] input:focus-visible + span {
+  outline: 2px solid var(--sb-border-focus);
+  outline-offset: 2px;
+}
+
+.rich-text ul[data-type='taskList'] li > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.rich-text ul[data-type='taskList'] li[data-checked='true'] > div {
+  color: var(--sb-text-secondary);
+  text-decoration: line-through;
+}
+
+.rich-text a {
+  color: var(--sb-text-accent);
+  text-decoration: underline;
+}
+
+.rich-text blockquote {
+  margin: 0 0 8px;
+  padding-left: 12px;
+  border-left: 3px solid var(--sb-border-strong);
+  color: var(--sb-text-secondary);
+}
+
+.rich-text .callout {
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--sb-bg-subtle);
+}
+
+.rich-text hr {
+  margin: 16px 0;
+  border: 0;
+  border-top: 1px solid var(--sb-border-default);
+}
+
+.rich-text img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+.rich-text img.ProseMirror-selectednode {
+  outline: 2px solid var(--sb-border-focus);
+}
+
+.rich-text table {
+  width: 100%;
+  margin: 0 0 8px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.rich-text th,
+.rich-text td {
+  padding: 4px 8px;
+  border: 1px solid var(--sb-border-default);
+  text-align: left;
+  vertical-align: top;
+}
+
+.rich-text th {
+  background: var(--sb-bg-subtle);
+  font-weight: 600;
+}
+
+.rich-text .selectedCell {
+  background: var(--sb-bg-selected);
+}
+
+.rich-text mark {
+  padding: 0 2px;
+  border-radius: 2px;
+  color: inherit;
+}
+
+.rich-text :not(pre) > code {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--sb-bg-subtle);
+  font-family: 'Source Code Pro', monospace;
+}
+
 .rich-text pre {
+  margin: 0 0 8px;
   padding: 8px 12px;
   border-radius: 6px;
   background: var(--sb-bg-subtle);
   font-family: 'Source Code Pro', monospace;
   overflow-x: auto;
+}
+
+.rich-text pre code {
+  background: none;
+  font-family: inherit;
+}
+
+.rich-text .hljs-comment,
+.rich-text .hljs-quote {
+  color: var(--sb-text-secondary);
+}
+
+.rich-text .hljs-keyword,
+.rich-text .hljs-selector-tag,
+.rich-text .hljs-built_in,
+.rich-text .hljs-type {
+  color: var(--sb-text-accent);
+}
+
+.rich-text .hljs-string,
+.rich-text .hljs-attr {
+  color: var(--sb-feedback-success-text);
+}
+
+.rich-text .hljs-number,
+.rich-text .hljs-literal,
+.rich-text .hljs-title {
+  color: var(--sb-feedback-warning-text);
 }
 
 .rich-text .mention {

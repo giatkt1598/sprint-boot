@@ -102,3 +102,21 @@ export const size = {
   topBar: 48,
   sidebar: 216,
 } as const;
+
+/** Colors people can pick inside rich text. Stored in the HTML, so they stay plain values. */
+export const editorColors = {
+  text: [
+    { name: 'default', value: null },
+    { name: 'red', value: p.red700 },
+    { name: 'amber', value: p.amber800 },
+    { name: 'green', value: p.green800 },
+    { name: 'blue', value: p.blue700 },
+  ],
+  highlight: [
+    { name: 'none', value: null },
+    { name: 'red', value: p.red100 },
+    { name: 'amber', value: p.amber100 },
+    { name: 'green', value: p.green100 },
+    { name: 'blue', value: p.blue100 },
+  ],
+};

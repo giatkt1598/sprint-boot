@@ -40,7 +40,9 @@ test('sign in, run a space and an issue end to end', async ({ page }) => {
   await page.getByRole('button', { name: 'Create', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Title').fill('Build đăng nhập screen');
-  await dialog.getByRole('textbox', { name: 'Description' }).fill('First description');
+  // Typed key by key on purpose: an editor rebuilt on each change only fails with real typing.
+  await dialog.getByRole('textbox', { name: 'Description' }).pressSequentially('First description');
+  await expect(dialog.getByRole('textbox', { name: 'Description' })).toHaveText('First description');
   await expectAccessible(page);
   await dialog.getByRole('button', { name: 'Create', exact: true }).click();
   await page.waitForURL(`**/issues/${key}-1`);
@@ -57,9 +59,23 @@ test('sign in, run a space and an issue end to end', async ({ page }) => {
   // Comment with rich text.
   await page.getByRole('tab', { name: 'Comments' }).click();
   await page.getByLabel('Add a comment').click();
-  await page.getByRole('textbox', { name: 'Add a comment' }).fill('Looks good');
+  await page.getByRole('textbox', { name: 'Add a comment' }).pressSequentially('Looks good');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('/to-do');
+  await page.getByRole('option', { name: 'To-do list' }).click();
+  await page.keyboard.type('Check the release');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('/code');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('const answer = 42;');
+  await expectAccessible(page);
   await page.getByRole('button', { name: 'Save' }).click();
-  await expect(page.getByRole('article').getByText('Looks good')).toBeVisible();
+  const saved = page.getByRole('article');
+  await expect(saved.getByText('Looks good')).toBeVisible();
+  await expect(saved.getByRole('checkbox')).toBeDisabled();
+  await expect(saved.locator('pre')).toContainText('const answer = 42;');
+  await expectAccessible(page);
   await page.getByRole('button', { name: 'Like' }).click();
   await expect(page.getByRole('button', { name: 'Like' })).toHaveAttribute('aria-pressed', 'true');
 
