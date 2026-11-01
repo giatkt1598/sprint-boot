@@ -71,7 +71,7 @@ function RowBody({ card, onOpen, actions }: IssueRowProps) {
       <ButtonBase onClick={() => onOpen(card.key!)} className="min-w-0 flex-1 truncate" sx={{ justifyContent: 'flex-start', fontSize: font.size.md, textAlign: 'left' }}>
         <span className="truncate">{card.title}</span>
       </ButtonBase>
-      {card.epicTitle && <Badge tone="neutral">{card.epicTitle}</Badge>}
+      {card.epicTitle && <Badge tone="epic">{card.epicTitle}</Badge>}
       <QuickStatus issue={card} canEdit={canEdit} people={people} />
       <QuickPriority issue={card} canEdit={canEdit} />
       <QuickAssignee issue={card} canEdit={canEdit} people={people} />

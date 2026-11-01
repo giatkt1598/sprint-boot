@@ -25,7 +25,7 @@ const kindStyles = {
   link: {
     fontSize: font.size.xs,
     color: sem('text-accent'),
-    '&:hover': { backgroundColor: sem('bg-hover') },
+    '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
   },
   danger: {
     backgroundColor: sem('feedback-danger-text'),

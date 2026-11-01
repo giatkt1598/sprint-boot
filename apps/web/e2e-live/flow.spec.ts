@@ -80,7 +80,8 @@ test('sign in, run a space and an issue end to end', async ({ page }) => {
   await expect(saved.locator('pre')).toContainText('const answer = 42;');
   await expectAccessible(page);
   await page.getByRole('button', { name: 'Like' }).click();
-  await expect(page.getByRole('button', { name: 'Like' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'React with 👍' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Like' })).toHaveCount(0);
 
   // Mention suggestions.
   await page.getByLabel('Add a comment').click();
@@ -1073,11 +1074,58 @@ test('create issue form, backlog cards and home follow the last space', async ({
   // Comments read newest first.
   for (const comment of ['Older note', 'Newer note']) {
     await page.getByLabel('Add a comment').click();
+    await expect(page.locator('[contenteditable="true"]')).toBeFocused();
     await page.getByRole('textbox', { name: 'Add a comment' }).pressSequentially(comment);
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.getByRole('article').getByText(comment)).toBeVisible();
   }
   await expect(page.getByRole('article').first()).toContainText('Newer note');
+
+  // Reactions: one row, an expandable set, and used ones stand out.
+  await page.getByRole('button', { name: 'Add reaction' }).first().click();
+  const quick = ['👍', '👎', '❤️', '🌸', '🔥', '😂', '😢', '🚀'];
+  const tops = await Promise.all(quick.map(async (emoji) => (await page.getByRole('button', { name: `React with ${emoji}` }).boundingBox())!.y));
+  expect(new Set(tops).size).toBe(1);
+  await page.getByRole('button', { name: 'More reactions' }).click();
+  await expect(page.getByRole('button', { name: 'React with 🐛' })).toBeInViewport();
+  const trigger = (await page.locator('button[aria-label="Add reaction"]').first().boundingBox())!;
+  expect((await page.getByRole('button', { name: 'React with 🐛' }).boundingBox())!.y).toBeLessThan(trigger.y);
+  await expectAccessible(page);
+  await page.getByRole('button', { name: 'React with 🔥' }).click();
+  await page.getByRole('button', { name: 'Add reaction' }).first().click();
+  await expect(page.getByRole('presentation').getByRole('button', { name: 'React with 🔥' })).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.press('Escape');
+
+  // Any reaction of mine retires the quick Like, which only drops a 👍.
+  await expect(page.getByRole('article').first().getByRole('button', { name: 'Like' })).toHaveCount(0);
+  await page.getByRole('article').nth(1).getByRole('button', { name: 'Like' }).click();
+  await expect(page.getByRole('article').nth(1).getByRole('button', { name: 'React with 👍' })).toContainText('1');
+  await expect(page.getByRole('article').nth(1).getByRole('button', { name: 'Like' })).toHaveCount(0);
+
+  // Long threads load in steps.
+  for (let index = 1; index <= 3; index += 1) {
+    await page.getByLabel('Add a comment').click();
+    await expect(page.locator('[contenteditable="true"]')).toBeFocused();
+    await page.getByRole('textbox', { name: 'Add a comment' }).pressSequentially(`Extra ${index}`);
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText(`Extra ${index}`)).toBeVisible();
+  }
+  await page.reload();
+  await expect(page.getByRole('article')).toHaveCount(3);
+  await page.getByRole('button', { name: 'Load more' }).click();
+  await expect(page.getByRole('article')).toHaveCount(5);
+  await expect(page.getByRole('button', { name: 'Load more' })).toHaveCount(0);
+
+  const thread = page.getByRole('article').first();
+  for (let index = 1; index <= 3; index += 1) {
+    await thread.getByRole('button', { name: 'Reply', exact: true }).click();
+    await thread.getByRole('textbox', { name: 'Reply' }).pressSequentially(`Reply ${index}`);
+    await thread.getByRole('button', { name: 'Save' }).click();
+    await expect(thread.getByText(index === 3 ? 'Reply 3' : `Reply ${index}`)).toBeVisible();
+  }
+  await expect(thread.getByText('Reply 1')).toHaveCount(0);
+  await thread.getByRole('button', { name: 'Load more' }).click();
+  await expect(thread.getByText('Reply 1')).toBeVisible();
 
   // Status, priority and assignee change right in the rows.
   const quickEdit = async () => {

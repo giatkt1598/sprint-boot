@@ -1,9 +1,11 @@
 import IconButton from '@mui/material/IconButton';
 import InputBase from '@mui/material/InputBase';
+import type { PopoverActions } from '@mui/material/Popover';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ellipsis, Link2, Pencil, Reply, SmilePlus, ThumbsUp, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ComponentProps } from 'react';
 import type { components } from '@sprint-boot/api-client';
 import { useTranslation } from 'react-i18next';
 import Menu from '@mui/material/Menu';
@@ -26,7 +28,73 @@ import { RichTextEditor, RichTextView, type MentionUser } from './RichTextEditor
 import type { Activity, Comment, Issue } from './api';
 
 const LIKE = '👍';
-const EMOJIS = ['😄', '🎉', '❤️', '🚀', '👀', '😕'];
+const QUICK_EMOJIS = [LIKE, '👎', '❤️', '🌸', '🔥', '😂', '😢', '🚀'];
+const MORE_EMOJIS = [
+  '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '🙂', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😋',
+  '😜', '🤔', '🤨', '😐', '😑', '🙄', '😏', '😴', '😎', '🤓', '😮', '😲', '😳', '🥺', '😭', '😱',
+  '😤', '😡', '🤯', '🥳', '🤝', '👏', '🙌', '🙏', '💪', '👌', '✌️', '🤞', '👀', '💯', '✅', '❌',
+  '⭐', '✨', '🎉', '🎊', '🏆', '💡', '🐛', '🔧', '📌', '📎', '☕', '🍕', '🌈', '☀️', '⚡', '💙',
+];
+const COMMENT_PAGE = 3;
+const REPLY_PAGE = 2;
+const LOAD_MORE_STEP = 6;
+
+const roundSx = (pressed = false) => ({
+  // MUI's faint default colour also fades colour emoji.
+  color: sem('text-primary'),
+  borderRadius: '50%',
+  backgroundColor: pressed ? sem('bg-selected') : undefined,
+  '&:hover': { backgroundColor: pressed ? sem('bg-selected') : sem('bg-hover') },
+});
+
+const reactionChipSx = (mine: boolean) => ({
+  minWidth: 0,
+  minHeight: 0,
+  height: 24,
+  padding: '0 6px',
+  fontSize: font.size.xs,
+  borderRadius: '12px',
+  backgroundColor: mine ? sem('bg-selected') : undefined,
+});
+
+function ActionButton({ label, pressed, ...props }: { label: string; pressed?: boolean } & ComponentProps<typeof IconButton>) {
+  return <Tooltip title={label}><RoundButton label={label} pressed={pressed} {...props} /></Tooltip>;
+}
+
+function RoundButton({ label, pressed, ...props }: { label: string; pressed?: boolean } & ComponentProps<typeof IconButton>) {
+  return <IconButton size="small" aria-label={label} aria-pressed={pressed} sx={roundSx(pressed)} {...props} />;
+}
+
+function EmojiPicker({ used, onPick, onResize }: { used: Set<string>; onPick: (emoji: string) => void; onResize: () => void }) {
+  const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
+
+  // The popover grows upward from its trigger, so it must be placed again.
+  useEffect(onResize, [expanded, onResize]);
+
+  const emojiButton = (emoji: string) => (
+    <RoundButton key={emoji} label={t('issues.reactWith', { emoji })} pressed={used.has(emoji)} onClick={() => onPick(emoji)}>
+      <span style={{ fontSize: font.size.lg, lineHeight: 1 }}>{emoji}</span>
+    </RoundButton>
+  );
+
+  return (
+    <div className="flex flex-col-reverse gap-1 p-1">
+      <div className="flex items-center gap-1">
+        {QUICK_EMOJIS.map(emojiButton)}
+        <ActionButton label={t('issues.moreReactions')} aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
+          <Ellipsis size={16} strokeWidth={1.5} aria-hidden />
+        </ActionButton>
+      </div>
+      {expanded && <div className="flex max-h-48 flex-wrap gap-1 overflow-y-auto">{MORE_EMOJIS.map(emojiButton)}</div>}
+    </div>
+  );
+}
+
+function LoadMore({ onClick }: { onClick: () => void }) {
+  const { t } = useTranslation();
+  return <Button kind="link" sx={{ alignSelf: 'flex-start' }} onClick={onClick}>{t('issues.loadMore')}</Button>;
+}
 
 interface PanelProps {
   tab: string;
@@ -101,9 +169,15 @@ function CommentItem({ comment, issue, replies, people, canEdit, canManage }: { 
   const [editing, setEditing] = useState(false);
   const [body, setBody] = useState(comment.body ?? '');
   const [emojiAnchor, setEmojiAnchor] = useState<HTMLElement | null>(null);
+  const emojiPopover = useRef<PopoverActions>(null);
+  const placeEmojiPopover = useCallback(() => emojiPopover.current?.updatePosition(), []);
+  const [params] = useSearchParams();
+  const linked = params.get('comment');
+  const newestReplies = replies.toReversed();
+  // A link to a reply has to land on it, however old it is.
+  const [replyCount, setReplyCount] = useState(Math.max(REPLY_PAGE, newestReplies.findIndex((reply) => reply.id === linked) + 1));
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const isMine = comment.author?.id === me.id;
-  const like = comment.reactions?.find((reaction) => reaction.emoji === LIKE);
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['issues', issue.id, 'comments'] });
   const onError = (failure: unknown) => toast('error', toMessage(failure));
@@ -158,57 +232,47 @@ function CommentItem({ comment, issue, replies, people, canEdit, canManage }: { 
         )}
         <div className="flex items-center gap-1">
           {canEdit && (
-            <IconButton size="small" aria-label={t('issues.addReaction')} onClick={(event) => setEmojiAnchor(event.currentTarget)}>
+            <ActionButton label={t('issues.addReaction')} onClick={(event) => setEmojiAnchor(event.currentTarget)}>
               <SmilePlus size={16} strokeWidth={1.5} aria-hidden />
-            </IconButton>
+            </ActionButton>
           )}
-          <Popover width={200} open={Boolean(emojiAnchor)} anchorEl={emojiAnchor} onClose={() => setEmojiAnchor(null)}>
-            <div className="flex flex-wrap gap-1">
-              {EMOJIS.map((emoji) => (
-                <IconButton
-                  key={emoji}
-                  size="small"
-                  aria-label={t('issues.reactWith', { emoji })}
-                  onClick={() => { react.mutate(emoji); setEmojiAnchor(null); }}
-                >
-                  {emoji}
-                </IconButton>
-              ))}
-            </div>
+          <Popover above width={360} action={emojiPopover} open={Boolean(emojiAnchor)} anchorEl={emojiAnchor} onClose={() => setEmojiAnchor(null)}>
+            <EmojiPicker
+              used={new Set((comment.reactions ?? []).filter((reaction) => reaction.reactedByMe).map((reaction) => reaction.emoji!))}
+              onPick={(emoji) => { react.mutate(emoji); setEmojiAnchor(null); }}
+              onResize={placeEmojiPopover}
+            />
           </Popover>
-          {canEdit && (
-            <Button
-              kind="ghost"
-              aria-label={t('issues.like')}
-              aria-pressed={like?.reactedByMe ?? false}
-              startIcon={<ThumbsUp size={16} strokeWidth={1.5} aria-hidden />}
-              onClick={() => react.mutate(LIKE)}
-            >
-              {like?.count ?? ''}
-            </Button>
+          {/* A shortcut to the 👍 reaction, which shows with the others. */}
+          {canEdit && !comment.reactions?.some((reaction) => reaction.reactedByMe) && (
+            <ActionButton label={t('issues.like')} onClick={() => react.mutate(LIKE)}>
+              <ThumbsUp size={16} strokeWidth={1.5} aria-hidden />
+            </ActionButton>
           )}
-          {!canEdit && (like?.count ?? 0) > 0 && <span style={{ fontSize: font.size.xs }}>{LIKE} {like?.count}</span>}
-          {(comment.reactions ?? []).filter((reaction) => reaction.emoji !== LIKE).map((reaction) => (
+          {(comment.reactions ?? []).map((reaction) => (
             <Button
               key={reaction.emoji}
               kind="ghost"
               disabled={!canEdit}
               aria-label={t('issues.reactWith', { emoji: reaction.emoji })}
               aria-pressed={reaction.reactedByMe ?? false}
+              sx={reactionChipSx(reaction.reactedByMe ?? false)}
               onClick={() => react.mutate(reaction.emoji!)}
             >
               {reaction.emoji} {reaction.count}
             </Button>
           ))}
+          {isMine && (
+            <ActionButton label={t('common.edit')} onClick={() => setEditing(true)}>
+              <Pencil size={16} strokeWidth={1.5} aria-hidden />
+            </ActionButton>
+          )}
           {canEdit && !comment.parentId && (
             <Button kind="ghost" startIcon={<Reply size={16} strokeWidth={1.5} aria-hidden />} onClick={() => setReplying(true)}>{t('issues.reply')}</Button>
           )}
-          {isMine && (
-            <Button kind="ghost" startIcon={<Pencil size={16} strokeWidth={1.5} aria-hidden />} onClick={() => setEditing(true)}>{t('common.edit')}</Button>
-          )}
-          <IconButton size="small" aria-label={t('issues.commentMore')} onClick={(event) => setMenuAnchor(event.currentTarget)}>
+          <ActionButton label={t('issues.commentMore')} onClick={(event) => setMenuAnchor(event.currentTarget)}>
             <Ellipsis size={16} strokeWidth={1.5} aria-hidden />
-          </IconButton>
+          </ActionButton>
           <Menu open={Boolean(menuAnchor)} anchorEl={menuAnchor} onClose={() => setMenuAnchor(null)}>
             <MenuItem icon={Link2} onClick={() => void copyLink()}>{t('issues.copyLink')}</MenuItem>
             {(isMine || canManage) && (
@@ -217,9 +281,10 @@ function CommentItem({ comment, issue, replies, people, canEdit, canManage }: { 
           </Menu>
         </div>
         <div className="flex flex-col gap-3 pt-2">
-          {replies.map((reply) => (
+          {newestReplies.slice(0, replyCount).map((reply) => (
             <CommentItem key={reply.id} comment={reply} issue={issue} replies={[]} people={people} canEdit={canEdit} canManage={canManage} />
           ))}
+          {replies.length > replyCount && <LoadMore onClick={() => setReplyCount(replyCount + LOAD_MORE_STEP)} />}
           {replying && (
             <Composer issueId={issue.id!} parentId={comment.id} people={people} placeholder={t('issues.reply')} onDone={() => setReplying(false)} />
           )}
@@ -362,6 +427,7 @@ export function IssueActivityPanel({ tab, issue, people, canEdit, canManage }: P
   const activity = useActivity(issue.id!);
   const [params] = useSearchParams();
   const linkedComment = params.get('comment');
+  const [commentCount, setCommentCount] = useState(COMMENT_PAGE);
 
   useEffect(() => {
     if (linkedComment && comments.isSuccess) {
@@ -395,11 +461,17 @@ export function IssueActivityPanel({ tab, issue, people, canEdit, canManage }: P
         ].sort((a, b) => b.at.localeCompare(a.at))
       : topLevel.toReversed().map((comment) => ({ at: '', node: renderComment(comment) }));
 
+  // The list may be cut short, and a link must still land on its comment.
+  const linked = (comments.data ?? []).find((comment) => comment.id === linkedComment);
+  const linkedIndex = topLevel.toReversed().findIndex((comment) => comment.id === (linked?.parentId ?? linked?.id));
+  const visible = tab === 'all' ? Math.max(commentCount, COMMENT_PAGE) : Math.max(commentCount, linkedIndex + 1);
+
   return (
     <div className="flex flex-col gap-4">
       {canEdit && <Composer issueId={issue.id!} people={people} placeholder={t('issues.addComment')} />}
       {comments.isSuccess && feed.length === 0 && <EmptyState title={t('issues.noComments')} />}
-      {feed.map((entry) => entry.node)}
+      {feed.slice(0, visible).map((entry) => entry.node)}
+      {feed.length > visible && <LoadMore onClick={() => setCommentCount(visible + LOAD_MORE_STEP)} />}
     </div>
   );
 }

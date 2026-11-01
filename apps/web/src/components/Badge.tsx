@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { font, radius, sem, type SemanticToken } from '../theme/tokens';
 
-export type BadgeTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
+export type BadgeTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger' | 'epic';
 
 const tones: Record<BadgeTone, [SemanticToken, SemanticToken]> = {
   neutral: ['status-todo-bg', 'status-todo-text'],
@@ -10,6 +10,7 @@ const tones: Record<BadgeTone, [SemanticToken, SemanticToken]> = {
   success: ['feedback-success-bg', 'feedback-success-text'],
   warning: ['feedback-warning-bg', 'feedback-warning-text'],
   danger: ['feedback-danger-bg', 'feedback-danger-text'],
+  epic: ['status-merged-bg', 'status-merged-text'],
 };
 
 export function Badge({ tone = 'neutral', children }: { tone?: BadgeTone; children: ReactNode }) {

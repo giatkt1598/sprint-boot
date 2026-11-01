@@ -336,7 +336,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
           </DetailRow>
           {canEdit && !issue.assignee && (
             <div style={{ paddingLeft: DETAIL_LABEL_WIDTH + DETAIL_GAP }}>
-              <Button kind="link" onClick={() => update.mutate({ assignee: me.id })}>{t('issues.assignToMe')}</Button>
+              <Button kind="link" sx={{ minHeight: 0, padding: 0 }} onClick={() => update.mutate({ assignee: me.id })}>{t('issues.assignToMe')}</Button>
             </div>
           )}
           <DetailRow label={t('issues.reporter')}>

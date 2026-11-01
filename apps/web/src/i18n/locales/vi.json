@@ -406,7 +406,9 @@
     "subtaskName": "Tên subtask",
     "subtaskPlaceholder": "Cần làm gì?",
     "noTransitions": "Không có bước chuyển nào",
-    "assignToMe": "Giao cho tôi"
+    "assignToMe": "Giao cho tôi",
+    "moreReactions": "Thêm cảm xúc khác",
+    "loadMore": "Tải thêm"
   },
   "workflows": {
     "title": "Workflow",

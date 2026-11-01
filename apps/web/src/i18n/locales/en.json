@@ -406,7 +406,9 @@
     "subtaskName": "Subtask name",
     "subtaskPlaceholder": "What needs to be done?",
     "noTransitions": "No moves available",
-    "assignToMe": "Assign to me"
+    "assignToMe": "Assign to me",
+    "moreReactions": "More reactions",
+    "loadMore": "Load more"
   },
   "workflows": {
     "title": "Workflows",
