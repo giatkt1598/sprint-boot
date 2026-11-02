@@ -1,5 +1,6 @@
 using Medallion.Threading;
 using Medallion.Threading.Redis;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
@@ -84,6 +85,11 @@ public class SprintBootHostModule : AbpModule
         context.Services.AddSingleton<IConnectionMultiplexer>(redis);
         context.Services.AddSingleton<IDistributedLockProvider>(
             _ => new RedisDistributedSynchronizationProvider(redis.GetDatabase()));
+
+        // Cookies, OAuth state and signed file links must survive restarts and work on every replica.
+        context.Services.AddDataProtection()
+            .SetApplicationName("SprintBoot")
+            .PersistKeysToStackExchangeRedis(redis, "SprintBoot:DataProtection-Keys");
 
         context.Services.AddSignalR().AddStackExchangeRedis(configuration["Redis:Configuration"]!);
 

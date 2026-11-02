@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Http;
@@ -39,6 +40,16 @@ public class IdentityModule : AbpModule
 
     public override void PreConfigureServices(ServiceConfigurationContext context)
     {
+        // Development certificates live in the local user store, so every container would get its own.
+        // Production supplies one PFX (base64) shared by all replicas and restarts.
+        var certificate = LoadServerCertificate(context.Services.GetConfiguration());
+        if (certificate is not null)
+        {
+            PreConfigure<AbpOpenIddictAspNetCoreOptions>(options => options.AddDevelopmentEncryptionAndSigningCertificate = false);
+            PreConfigure<OpenIddictServerBuilder>(builder => builder
+                .AddSigningCertificate(certificate)
+                .AddEncryptionCertificate(certificate));
+        }
 
         PreConfigure<OpenIddictBuilder>(builder => builder.AddValidation(options =>
         {
@@ -54,7 +65,20 @@ public class IdentityModule : AbpModule
             builder.SetAccessTokenLifetime(TimeSpan.FromMinutes(15));
             builder.SetRefreshTokenLifetime(TimeSpan.FromDays(14));
         });
+    }
 
+    private static X509Certificate2? LoadServerCertificate(IConfiguration configuration)
+    {
+        var value = configuration["OpenIddict:Certificate"];
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        return X509CertificateLoader.LoadPkcs12(
+            Convert.FromBase64String(value.Trim()),
+            configuration["OpenIddict:CertificatePassword"],
+            X509KeyStorageFlags.EphemeralKeySet);
     }
 
     public override void ConfigureServices(ServiceConfigurationContext context)
