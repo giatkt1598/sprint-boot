@@ -221,23 +221,23 @@ public class InvitationAppService(
         List<InvitationProject> projects,
         Dictionary<Guid, UserRefDto> people,
         Dictionary<Guid, ProjectRef> names) => new()
-    {
-        Id = item.Id,
-        Email = item.Email,
-        Status = item.EffectiveStatus(clock.Now),
-        EmailStatus = item.EmailStatus,
-        SystemRole = item.SystemRole,
-        InvitedBy = people.GetValueOrDefault(item.InvitedById),
-        ExpiresAt = item.ExpiresAt,
-        CreationTime = item.CreationTime,
-        Projects = [.. projects.Where(project => project.InvitationId == item.Id)
+        {
+            Id = item.Id,
+            Email = item.Email,
+            Status = item.EffectiveStatus(clock.Now),
+            EmailStatus = item.EmailStatus,
+            SystemRole = item.SystemRole,
+            InvitedBy = people.GetValueOrDefault(item.InvitedById),
+            ExpiresAt = item.ExpiresAt,
+            CreationTime = item.CreationTime,
+            Projects = [.. projects.Where(project => project.InvitationId == item.Id)
             .Select(project => new InvitationProjectDto
             {
                 ProjectId = project.ProjectId,
                 ProjectName = names.GetValueOrDefault(project.ProjectId)?.Name ?? string.Empty,
                 Role = project.ProjectRole,
             })],
-    };
+        };
 }
 
 public static class InvitationLinks

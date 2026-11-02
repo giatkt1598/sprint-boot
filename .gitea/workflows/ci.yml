@@ -15,7 +15,7 @@ jobs:
       - name: Build
         run: dotnet build apps/api/SprintBoot.slnx
       - name: Lint
-        run: dotnet format apps/api/SprintBoot.slnx --verify-no-changes --no-restore --exclude src/SprintBoot.EntityFrameworkCore/Migrations
+        run: dotnet format apps/api/SprintBoot.slnx --verify-no-changes --no-restore --exclude apps/api/src/SprintBoot.EntityFrameworkCore/Migrations
       - name: Test (Testcontainers needs Docker on the runner)
         run: dotnet test --solution apps/api/SprintBoot.slnx --no-build
 
