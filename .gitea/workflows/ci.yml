@@ -17,7 +17,17 @@ jobs:
       - name: Lint
         run: dotnet format apps/api/SprintBoot.slnx --verify-no-changes --no-restore --exclude apps/api/src/SprintBoot.EntityFrameworkCore/Migrations
       - name: Test (Testcontainers needs Docker on the runner)
-        run: dotnet test --solution apps/api/SprintBoot.slnx --no-build
+        shell: bash
+        run: |
+          # The job runs in a container next to the host's Docker daemon, so the ports Testcontainers
+          # publishes (Ryuk, Postgres, ...) are on the Docker host, not on localhost: use the default gateway.
+          if [[ -f /.dockerenv && -z "${TESTCONTAINERS_HOST_OVERRIDE:-}" ]]; then
+            hex="$(awk '$2 == "00000000" { print $3; exit }' /proc/net/route)"
+            gateway="$(printf '%d.%d.%d.%d' "0x${hex:6:2}" "0x${hex:4:2}" "0x${hex:2:2}" "0x${hex:0:2}")"
+            echo "Docker host for Testcontainers: ${gateway}"
+            export TESTCONTAINERS_HOST_OVERRIDE="${gateway}"
+          fi
+          dotnet test --solution apps/api/SprintBoot.slnx --no-build
 
   web:
     runs-on: ubuntu-latest

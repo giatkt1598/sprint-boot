@@ -70,7 +70,7 @@ public sealed class ApiFixture : IAsyncLifetime
         Environment.SetEnvironmentVariable("Git__GitHub__AppId", "1");
         Environment.SetEnvironmentVariable("Git__GitHub__ApiUrl", FakeGitServer.GitHubApi);
         Environment.SetEnvironmentVariable("Git__GitHub__WebhookSecret", GitHubWebhookSecret);
-        Environment.SetEnvironmentVariable("RabbitMQ__Connections__Default__HostName", "localhost");
+        Environment.SetEnvironmentVariable("RabbitMQ__Connections__Default__HostName", RabbitMq.Hostname);
         Environment.SetEnvironmentVariable("RabbitMQ__Connections__Default__Port", rabbitPort.ToString());
         Environment.SetEnvironmentVariable("RabbitMQ__Connections__Default__UserName", RabbitUser);
         Environment.SetEnvironmentVariable("RabbitMQ__Connections__Default__Password", RabbitPassword);
