@@ -77,7 +77,7 @@ function RowBody({ card, onOpen, actions }: IssueRowProps) {
       <td className="truncate pr-3">{card.epicTitle && <Badge tone="epic">{card.epicTitle}</Badge>}</td>
       <td><QuickStatus issue={card} canEdit={canEdit} people={people} /></td>
       <td><QuickPriority issue={card} canEdit={canEdit} /></td>
-      <td className="py-1 pr-3"><QuickAssignee issue={card} canEdit={canEdit} people={people} showName /></td>
+      <td className="overflow-hidden py-1 pr-3"><QuickAssignee issue={card} canEdit={canEdit} people={people} showName /></td>
       <td>{actions && (
         <>
           <IconButton size="small" aria-label={t('agile.rowActions', { key: card.key })} onClick={(event) => setAnchor(event.currentTarget)}>
@@ -100,7 +100,7 @@ function RowBody({ card, onOpen, actions }: IssueRowProps) {
 
 const RowCells = memo(RowBody);
 
-const IssueColumns: { width?: number }[] = [{ width: 32 }, { width: 96 }, {}, { width: 144 }, { width: 120 }, { width: 40 }, { width: 176 }, { width: 40 }];
+const IssueColumns: { width?: number }[] = [{ width: 32 }, { width: 96 }, {}, { width: 144 }, { width: 120 }, { width: 40 }, { width: 248 }, { width: 40 }];
 
 /** Fixed columns, so sprints and the backlog line up with each other. */
 function IssueTable({ extraColumn, children }: { extraColumn?: boolean; children: ReactNode }) {

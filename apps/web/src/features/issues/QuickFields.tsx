@@ -27,7 +27,7 @@ interface QuickProps {
 
 /** Rows sit inside drag sources, and portaled menus still bubble to them in React. */
 const Isolated = ({ children }: { children: ReactNode }) => (
-  <span className="inline-flex" onPointerDown={(event) => event.stopPropagation()}>{children}</span>
+  <span className="inline-flex min-w-0 max-w-full" onPointerDown={(event) => event.stopPropagation()}>{children}</span>
 );
 
 function useConflict() {
@@ -215,9 +215,9 @@ export function QuickAssignee({ issue, canEdit, people, showName }: QuickProps &
         aria-label={`${t('issues.assignee')}: ${name} ${issue.key}`}
         aria-haspopup="dialog"
         onClick={(event) => setAnchor(event.currentTarget)}
-        sx={{ font: 'inherit', borderRadius: `${radius.control}px` }}
+        sx={{ font: 'inherit', borderRadius: `${radius.control}px`, minWidth: 0, maxWidth: '100%' }}
       >
-        <span aria-hidden className="flex">{shown}</span>
+        <span aria-hidden className="flex min-w-0">{shown}</span>
       </ButtonBase>
       <PickerPopover
         label={t('issues.assignee')}
