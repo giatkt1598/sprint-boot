@@ -10,6 +10,7 @@ import { Badge, type BadgeTone } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { Checkbox } from '../../components/Checkbox';
 import { Dialog, DialogConfirm, DialogFooter } from '../../components/Dialog';
+import { EmailAutocomplete } from '../../components/EmailAutocomplete';
 import { Pagination } from '../../components/Pagination';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
 import { Table } from '../../components/Table';
@@ -18,7 +19,7 @@ import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { formatDate } from '../../lib/format';
 import { font, sem } from '../../theme/tokens';
-import { useSpaces } from '../spaces/api';
+import { useMembers, useSpaces } from '../spaces/api';
 
 type Invitation = components['schemas']['InvitationDto'];
 type InvitationLink = components['schemas']['InvitationLinkDto'];
@@ -67,6 +68,8 @@ export function InviteMemberDialog({ spaceId, spaceName, onClose }: { spaceId: s
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('Member');
   const invite = useInvite(onClose);
+  // People already in the space need no invitation, so they are not suggested.
+  const memberIds = (useMembers(spaceId).data ?? []).map((member) => member.user?.id ?? '');
 
   return (
     <Dialog
@@ -83,7 +86,7 @@ export function InviteMemberDialog({ spaceId, spaceName, onClose }: { spaceId: s
       }
     >
       <Typography color="textSecondary">{t('invitations.memberHint')}</Typography>
-      <TextField label={t('auth.email')} type="email" autoFocus value={email} onChange={(event) => setEmail(event.target.value)} />
+      <EmailAutocomplete label={t('auth.email')} autoFocus value={email} onChange={setEmail} excludeIds={memberIds} />
       <SelectField label={t('invitations.spaceRole')} value={role} onChange={(event) => setRole(event.target.value)} options={roles} />
       <Typography variant="body2" color="textSecondary">{t('invitations.roleCap')}</Typography>
       {invite.isError && <Typography role="alert" color="error" variant="body2">{toMessage(invite.error)}</Typography>}
