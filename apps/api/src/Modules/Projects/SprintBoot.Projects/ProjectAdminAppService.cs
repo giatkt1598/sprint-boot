@@ -11,7 +11,13 @@ public class ProjectAdminAppService(
     IRepository<ProjectMember, Guid> members)
     : ApplicationService, IProjectAdminAppService
 {
-    public async Task<List<UserSpaceDto>> GetUserSpacesAsync(Guid userId)
+    public Task<List<UserSpaceDto>> GetUserSpacesAsync(Guid userId) => UserSpaces.LoadAsync(projects, members, userId);
+}
+
+/// <summary>The spaces a person belongs to, with their role; for admins and for the person themselves.</summary>
+public static class UserSpaces
+{
+    public static async Task<List<UserSpaceDto>> LoadAsync(IRepository<Project, Guid> projects, IRepository<ProjectMember, Guid> members, Guid userId)
     {
         var memberships = await members.GetListAsync(member => member.UserId == userId);
         var ids = memberships.Select(member => member.ProjectId).ToList();

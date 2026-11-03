@@ -13,6 +13,22 @@ public class AuthTests(ApiFixture fixture)
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     [Fact]
+    public async Task People_see_their_own_spaces_and_roles()
+    {
+        var client = await fixture.CreateUserClientAsync(Token);
+        var key = $"Y{Random.Shared.Next(100000, 999999)}";
+        (await client.Http.PostAsJsonAsync("/api/v1/project", new { name = "Mine", key, type = 0 }, Token)).EnsureSuccessStatusCode();
+
+        var spaces = (await client.Http.GetFromJsonAsync<List<UserSpaceDto>>("/api/v1/project/my-spaces", Token))!;
+        var mine = spaces.ShouldHaveSingleItem();
+        mine.Key.ShouldBe(key);
+        mine.Role.ShouldBe(ProjectRoleNames.Admin);
+
+        var stranger = await fixture.CreateUserClientAsync(Token);
+        (await stranger.Http.GetFromJsonAsync<List<UserSpaceDto>>("/api/v1/project/my-spaces", Token))!.ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task A_profile_picture_is_uploaded_served_to_anyone_and_removed()
     {
         var client = await fixture.CreateUserClientAsync(Token);

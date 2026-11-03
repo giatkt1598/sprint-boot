@@ -24,6 +24,8 @@ public class ProjectAppService(
     IDistributedEventBus eventBus)
     : ApplicationService, IProjectAppService
 {
+    public Task<List<UserSpaceDto>> GetMySpacesAsync() => UserSpaces.LoadAsync(projects, members, CurrentUser.GetId());
+
     public async Task<List<ProjectDto>> GetListAsync()
     {
         var visible = await access.GetVisibleProjectIdsAsync();

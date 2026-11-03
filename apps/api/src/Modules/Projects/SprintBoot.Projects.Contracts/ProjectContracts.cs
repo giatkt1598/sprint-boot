@@ -112,6 +112,9 @@ public interface IProjectAppService : IApplicationService
 {
     Task<List<ProjectDto>> GetListAsync();
 
+    /// <summary>The spaces the caller is a member of, with their role in each.</summary>
+    Task<List<UserSpaceDto>> GetMySpacesAsync();
+
     Task<ProjectDto> GetAsync(Guid id);
 
     Task<ProjectDto> GetByKeyAsync(string key);

@@ -1,12 +1,16 @@
 import Typography from '@mui/material/Typography';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Navigate } from 'react-router';
+import { Link as RouterLink, Navigate } from 'react-router';
+import Link from '@mui/material/Link';
 import { apiClient, unwrap } from '../../api';
 import { useCurrentUser } from '../../auth/AuthProvider';
 import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
+import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
+import { Table } from '../../components/Table';
+import { formatDate } from '../../lib/format';
 import { SelectField, TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
@@ -125,6 +129,46 @@ function AvatarSection() {
   );
 }
 
+const SPACE_ROLES: Record<string, string> = {
+  ProjectAdmin: 'spaces.roleProjectAdmin',
+  Member: 'spaces.roleMember',
+  Viewer: 'spaces.roleViewer',
+};
+
+function MySpaces() {
+  const { t, i18n } = useTranslation();
+  const spaces = useQuery({
+    queryKey: ['auth', 'me', 'spaces'],
+    queryFn: () => unwrap(apiClient.GET('/api/v1/project/my-spaces')),
+  });
+
+  return (
+    <section aria-labelledby="my-spaces" className="flex flex-col gap-3">
+      <Typography id="my-spaces" variant="h2">{t('account.mySpaces')}</Typography>
+      {spaces.isPending && <LoadingState />}
+      {spaces.isError && <ErrorState onRetry={() => void spaces.refetch()} />}
+      {spaces.data?.length === 0 && <EmptyState title={t('admin.noSpaces')} />}
+      {(spaces.data?.length ?? 0) > 0 && (
+        <Table
+          label={t('account.mySpaces')}
+          rows={spaces.data!}
+          rowKey={(space) => space.projectId!}
+          columns={[
+            {
+              key: 'name',
+              header: t('admin.spaceColumn'),
+              render: (space) => <Link component={RouterLink} to={`/spaces/${space.key}`} variant="body2">{space.name}</Link>,
+            },
+            { key: 'key', header: t('spaces.key'), render: (space) => space.key },
+            { key: 'role', header: t('spaces.role'), render: (space) => t(SPACE_ROLES[space.role ?? ''] ?? 'spaces.roleMember') },
+            { key: 'added', header: t('spaces.joined'), render: (space) => formatDate(space.addedAt, i18n.language) },
+          ]}
+        />
+      )}
+    </section>
+  );
+}
+
 export function ProfilePage() {
   const { t, i18n } = useTranslation();
   const user = useCurrentUser();
@@ -150,6 +194,7 @@ export function ProfilePage() {
   };
 
   return (
+    <div className="flex flex-col gap-8">
     <form className="flex max-w-md flex-col gap-4" onSubmit={submit}>
       <Typography variant="h1">{t('account.profile')}</Typography>
       <AvatarSection />
@@ -168,6 +213,8 @@ export function ProfilePage() {
         <Button type="submit" disabled={!name.trim() || save.isPending}>{t('common.save')}</Button>
       </div>
     </form>
+    <MySpaces />
+    </div>
   );
 }
 
