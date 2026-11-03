@@ -8,10 +8,11 @@ import type { components } from '@sprint-boot/api-client';
 import logo from '../../../../assets/brand/sprint-boot-logo.png';
 import { ApiError, apiClient, fetchCsrfToken, unwrap } from '../api';
 import { BrandSignInButton } from '../components/BrandSignInButton';
+import { CustomSignInButton } from '../components/CustomSignInButton';
 import { Button } from '../components/Button';
 import { TextField } from '../components/TextField';
 import { useErrorMessage } from '../lib/errors';
-import { brand, font, radius, sem } from '../theme/tokens';
+import { font, radius, sem } from '../theme/tokens';
 import { userManager } from './oidc';
 
 function AuthCard({ title, children }: { title: string; children: ReactNode }) {
@@ -64,9 +65,7 @@ function ProviderButtons({ providers, query }: { providers: SignInProvider[]; qu
     return kind ? (
       <BrandSignInButton key={provider.name} kind={kind} href={href} label={label} />
     ) : (
-      <Button key={provider.name} kind="secondary" component="a" href={href} sx={{ height: brand.signInHeight, width: '100%' }}>
-        {label}
-      </Button>
+      <CustomSignInButton key={provider.name} href={href} label={label} logoUrl={provider.logoUrl} color={provider.buttonColor} />
     );
   });
 }

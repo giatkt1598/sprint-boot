@@ -1,7 +1,7 @@
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router';
 import type { components } from '@sprint-boot/api-client';
@@ -9,6 +9,7 @@ import { apiClient, unwrap } from '../../api';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { CopyField } from '../../components/CopyField';
+import { CustomSignInButton } from '../../components/CustomSignInButton';
 import { Toggle } from '../../components/Checkbox';
 import { Dialog, DialogConfirm, DialogFooter } from '../../components/Dialog';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
@@ -44,7 +45,107 @@ const toInput = (provider: Provider): SaveProvider => ({
   emailClaim: provider.emailClaim,
   nameClaim: provider.nameClaim,
   isEnabled: provider.isEnabled,
+  buttonColor: provider.buttonColor,
 });
+
+const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
+const DEFAULT_PICKER_COLOR = '#2563EB';
+
+/** Logo uploads at once; the color is saved with the rest of the form. The preview shows both. */
+function SignInButtonLook({ provider, displayName, color, onColor }: {
+  provider: Provider;
+  displayName: string;
+  color: string;
+  onColor: (color: string) => void;
+}) {
+  const { t } = useTranslation();
+  const toast = useToast();
+  const toMessage = useErrorMessage();
+  const queryClient = useQueryClient();
+  const input = useRef<HTMLInputElement>(null);
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin', 'sso'] });
+
+  const upload = useMutation({
+    mutationFn: (file: File) =>
+      unwrap(
+        apiClient.POST('/api/v1/sso-admin/{id}/upload-logo', {
+          params: { path: { id: provider.id! } },
+          body: {} as never,
+          bodySerializer: () => {
+            const form = new FormData();
+            form.append('file', file);
+            return form;
+          },
+        }),
+      ),
+    onSuccess: refresh,
+    onError: (failure) => toast('error', toMessage(failure)),
+  });
+  const remove = useMutation({
+    mutationFn: () => unwrap(apiClient.DELETE('/api/v1/sso-admin/{id}/logo', { params: { path: { id: provider.id! } } })),
+    onSuccess: refresh,
+    onError: (failure) => toast('error', toMessage(failure)),
+  });
+
+  const pick = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (file) {
+      upload.mutate(file);
+    }
+  };
+  const valid = color === '' || HEX_COLOR.test(color);
+
+  return (
+    <section className="flex flex-col gap-4 p-4" style={{ maxWidth: 800, border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}>
+      <div>
+        <Typography variant="h2">{t('sso.buttonLook')}</Typography>
+        <Typography variant="body2" color="textSecondary">{t('sso.buttonLookHint')}</Typography>
+      </div>
+      <div className="flex flex-col gap-1">
+        <Typography variant="caption" color="textSecondary">{t('sso.logo')}</Typography>
+        <div className="flex items-center gap-3">
+          {provider.logoUrl && <img src={provider.logoUrl} alt="" width={32} height={32} style={{ objectFit: 'contain' }} />}
+          <Button kind="secondary" disabled={upload.isPending} onClick={() => input.current?.click()}>
+            {t(provider.logoUrl ? 'sso.changeLogo' : 'sso.uploadLogo')}
+          </Button>
+          {provider.logoUrl && <Button kind="ghost" disabled={remove.isPending} onClick={() => remove.mutate()}>{t('sso.removeLogo')}</Button>}
+        </div>
+        <Typography variant="caption" color="textSecondary">{t('sso.logoHint')}</Typography>
+        <input ref={input} type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden aria-label={t('sso.uploadLogo')} onChange={pick} />
+      </div>
+      <div className="flex items-end gap-3">
+        <input
+          type="color"
+          aria-label={t('sso.buttonColor')}
+          value={HEX_COLOR.test(color) ? color : DEFAULT_PICKER_COLOR}
+          onChange={(event) => onColor(event.target.value.toUpperCase())}
+          style={{ width: 40, height: 36, padding: 0, border: `1px solid ${sem('border-strong')}`, borderRadius: radius.control, background: 'none' }}
+        />
+        <div className="w-40">
+          <TextField
+            label={t('sso.buttonColor')}
+            placeholder={t('sso.defaultColor')}
+            value={color}
+            error={valid ? undefined : t('sso.colorInvalid')}
+            onChange={(event) => onColor(event.target.value.trim())}
+          />
+        </div>
+        {color && <Button kind="ghost" onClick={() => onColor('')}>{t('sso.resetColor')}</Button>}
+      </div>
+      <div className="flex flex-col gap-2" style={{ maxWidth: 400 }}>
+        <Typography variant="caption" color="textSecondary">{t('sso.preview')}</Typography>
+        <div aria-hidden className="p-4" style={{ backgroundColor: sem('bg-page'), borderRadius: radius.card }}>
+          <CustomSignInButton
+            label={t('auth.continueWith', { provider: displayName || provider.displayName })}
+            logoUrl={provider.logoUrl}
+            color={valid && color ? color : null}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function useSaveProvider(id: string) {
   const queryClient = useQueryClient();
@@ -279,6 +380,7 @@ function ProviderForm({ provider }: { provider: Provider }) {
   const [scopes, setScopes] = useState(provider.scopes ?? 'openid profile email');
   const [mapping, setMapping] = useState(`email=${provider.emailClaim ?? 'email'}, name=${provider.nameClaim ?? 'name'}`);
   const [deleting, setDeleting] = useState(false);
+  const [buttonColor, setButtonColor] = useState(provider.buttonColor ?? '');
   const isOidc = provider.type === OIDC;
 
   const save = useSaveProvider(provider.id!);
@@ -299,7 +401,17 @@ function ProviderForm({ provider }: { provider: Provider }) {
   const submit = () => {
     const claims = parseMapping(mapping) as { email?: string; name?: string };
     save.mutate(
-      { ...toInput(provider), displayName, discoveryUrl: isOidc ? discoveryUrl : null, clientId, clientSecret, scopes, emailClaim: claims.email, nameClaim: claims.name },
+      {
+        ...toInput(provider),
+        displayName,
+        discoveryUrl: isOidc ? discoveryUrl : null,
+        clientId,
+        clientSecret,
+        scopes,
+        emailClaim: claims.email,
+        nameClaim: claims.name,
+        buttonColor: isOidc && HEX_COLOR.test(buttonColor) ? buttonColor : null,
+      },
       {
         onSuccess: () => {
           setClientSecret('');
@@ -333,9 +445,10 @@ function ProviderForm({ provider }: { provider: Provider }) {
         <div className="flex justify-end gap-2">
           <Button kind="ghost" onClick={() => setDeleting(true)}>{t('sso.delete')}</Button>
           {isOidc && <Button kind="secondary" disabled={test.isPending} onClick={() => test.mutate()}>{t('sso.test')}</Button>}
-          <Button disabled={save.isPending} onClick={submit}>{t('sso.save')}</Button>
+          <Button disabled={save.isPending || (buttonColor !== '' && !HEX_COLOR.test(buttonColor))} onClick={submit}>{t('sso.save')}</Button>
         </div>
       </section>
+      {isOidc && <SignInButtonLook provider={provider} displayName={displayName} color={buttonColor} onColor={setButtonColor} />}
       <DialogConfirm
         open={deleting}
         title={t('sso.deleteTitle')}

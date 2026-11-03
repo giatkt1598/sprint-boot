@@ -129,6 +129,7 @@
     "richText": "Văn bản định dạng"
   },
   "errors": {
+    "ProviderLogoInvalid": "Hãy dùng logo PNG, JPEG, WebP hoặc GIF, tối đa 256 KB.",
     "CannotDeleteSelf": "Bạn không thể xóa tài khoản của chính mình.",
     "LastSystemAdmin": "Đây là quản trị hệ thống cuối cùng. Hãy cấp quyền admin cho người khác trước.",
     "generic": "Đã có lỗi xảy ra. Vui lòng thử lại.",
@@ -672,6 +673,18 @@
     "roleFor": "Space role trong {{space}}"
   },
   "sso": {
+    "buttonLook": "Nút đăng nhập",
+    "buttonLookHint": "Cách provider này hiển thị trên trang đăng nhập. Logo được lưu ngay; màu được lưu cùng form phía trên.",
+    "logo": "Logo",
+    "uploadLogo": "Tải logo lên",
+    "changeLogo": "Đổi logo",
+    "removeLogo": "Gỡ",
+    "logoHint": "PNG, JPEG, WebP hoặc GIF, tối đa 256 KB, hiển thị ở 18px. Ảnh vuông sẽ đẹp nhất.",
+    "buttonColor": "Màu nút",
+    "defaultColor": "Mặc định",
+    "resetColor": "Dùng mặc định",
+    "colorInvalid": "Hãy nhập màu dạng #2563EB.",
+    "preview": "Xem trước",
     "title": "Đăng nhập một lần",
     "subtitle": "Chọn cách mọi người đăng nhập. Thay đổi có hiệu lực không cần khởi động lại.",
     "policy": "Chính sách đăng nhập",

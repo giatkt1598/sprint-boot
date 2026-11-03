@@ -129,6 +129,7 @@
     "richText": "Rich text"
   },
   "errors": {
+    "ProviderLogoInvalid": "Use a PNG, JPEG, WebP or GIF logo up to 256 KB.",
     "CannotDeleteSelf": "You cannot delete your own account.",
     "LastSystemAdmin": "This is the last system admin. Make someone else an admin first.",
     "generic": "Something went wrong. Please try again.",
@@ -672,6 +673,18 @@
     "roleFor": "Space role in {{space}}"
   },
   "sso": {
+    "buttonLook": "Sign-in button",
+    "buttonLookHint": "How this provider looks on the sign-in page. The logo saves at once; the color saves with the form above.",
+    "logo": "Logo",
+    "uploadLogo": "Upload logo",
+    "changeLogo": "Change logo",
+    "removeLogo": "Remove",
+    "logoHint": "PNG, JPEG, WebP or GIF up to 256 KB, shown at 18px. A square image works best.",
+    "buttonColor": "Button color",
+    "defaultColor": "Default",
+    "resetColor": "Use default",
+    "colorInvalid": "Use a color like #2563EB.",
+    "preview": "Preview",
     "title": "Single sign-on",
     "subtitle": "Choose how people sign in. Changes apply without a restart.",
     "policy": "Sign-in policy",

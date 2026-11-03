@@ -1,3 +1,4 @@
+using Volo.Abp.Content;
 using System.ComponentModel.DataAnnotations;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
@@ -36,6 +37,12 @@ public class ExternalProviderDto
     public required string? NameClaim { get; set; }
 
     public required bool IsEnabled { get; set; }
+
+    /// <summary>OIDC providers only: the picture on their sign-in button.</summary>
+    public string? LogoUrl { get; set; }
+
+    /// <summary>OIDC providers only: the button color, as #RRGGBB.</summary>
+    public string? ButtonColor { get; set; }
 }
 
 public class SaveProviderInput
@@ -68,6 +75,10 @@ public class SaveProviderInput
 
     [StringLength(64)]
     public string? NameClaim { get; set; }
+
+    /// <summary>OIDC only; blank keeps our own button style.</summary>
+    [RegularExpression("^#[0-9A-Fa-f]{6}$")]
+    public string? ButtonColor { get; set; }
 
     public bool IsEnabled { get; set; }
 }
@@ -114,6 +125,10 @@ public class SignInProviderDto
 
     /// <summary>Lets the sign-in page draw Google and GitHub in their own brand style.</summary>
     public required ExternalProviderType Type { get; set; }
+
+    public string? LogoUrl { get; set; }
+
+    public string? ButtonColor { get; set; }
 }
 
 public class SignInMethodsDto
@@ -133,6 +148,11 @@ public interface ISsoAdminAppService : IApplicationService
 
     Task DeleteProviderAsync(Guid id);
 
+    /// <summary>PNG, JPEG, WebP or GIF up to 256 KB; only for OIDC providers.</summary>
+    Task<ExternalProviderDto> UploadLogoAsync(Guid id, IRemoteStreamContent file);
+
+    Task<ExternalProviderDto> DeleteLogoAsync(Guid id);
+
     Task<ConnectionTestDto> TestConnectionAsync(TestConnectionInput input);
 
     Task<AuthPolicyDto> GetPolicyAsync();
@@ -144,6 +164,7 @@ public static class SsoErrors
 {
     public const string ProviderNameTaken = "SprintBoot:ProviderNameTaken";
     public const string LastMethod = "SprintBoot:LastSignInMethod";
+    public const string LogoInvalid = "SprintBoot:ProviderLogoInvalid";
     public const string AlreadyLinked = "SprintBoot:LoginAlreadyLinked";
     public const string LinkedElsewhere = "SprintBoot:LoginLinkedElsewhere";
     public const string RegistrationClosed = "SprintBoot:RegistrationClosed";

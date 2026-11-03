@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
+using Volo.Abp.Content;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Security.Encryption;
 
@@ -13,7 +14,8 @@ public class SsoAdminAppService(
     IRepository<ExternalProviderConfig, Guid> providers,
     IRepository<AuthPolicy, Guid> policies,
     IStringEncryptionService encryption,
-    IHttpClientFactory httpClients)
+    IHttpClientFactory httpClients,
+    ProviderLogos logos)
     : ApplicationService, ISsoAdminAppService
 {
     public async Task<List<ExternalProviderDto>> GetProvidersAsync()
@@ -48,6 +50,22 @@ public class SsoAdminAppService(
     {
         await EnsureAMethodRemainsAsync(null, id, enabled: false);
         await providers.DeleteAsync(id);
+    }
+
+    public async Task<ExternalProviderDto> UploadLogoAsync(Guid id, IRemoteStreamContent file)
+    {
+        var provider = await providers.GetAsync(id);
+        await logos.SaveAsync(provider, file);
+        await providers.UpdateAsync(provider, autoSave: true);
+        return ToDto(provider);
+    }
+
+    public async Task<ExternalProviderDto> DeleteLogoAsync(Guid id)
+    {
+        var provider = await providers.GetAsync(id);
+        await logos.RemoveAsync(provider);
+        await providers.UpdateAsync(provider, autoSave: true);
+        return ToDto(provider);
     }
 
     public async Task<ConnectionTestDto> TestConnectionAsync(TestConnectionInput input)
@@ -105,6 +123,7 @@ public class SsoAdminAppService(
 
         provider.DisplayName = input.DisplayName;
         provider.Type = input.Type;
+        ProviderLogos.SetColor(provider, input.ButtonColor);
         provider.DiscoveryUrl = input.DiscoveryUrl;
         provider.ClientId = input.ClientId;
         provider.Scopes = input.Scopes;
@@ -130,6 +149,8 @@ public class SsoAdminAppService(
         EmailClaim = provider.EmailClaim,
         NameClaim = provider.NameClaim,
         IsEnabled = provider.IsEnabled,
+        LogoUrl = ProviderLogos.Url(provider),
+        ButtonColor = ProviderLogos.Color(provider),
     };
 
     private static AuthPolicyDto ToDto(AuthPolicy policy) => new()

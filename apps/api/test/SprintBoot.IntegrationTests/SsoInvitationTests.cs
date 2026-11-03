@@ -344,6 +344,40 @@ public class SsoInvitationTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task An_oidc_provider_gets_a_logo_and_color_for_its_sign_in_button()
+    {
+        var admin = await AdminAsync();
+        var name = $"look{Random.Shared.Next(1000, 9999)}";
+        var created = await admin.Http.PostAsJsonAsync("/api/v1/sso-admin/provider", Provider(name, "client", enabled: true), Token);
+        var provider = (await created.Content.ReadFromJsonAsync<ExternalProviderDto>(Token))!;
+
+        byte[] png = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0];
+        using (var svg = new MultipartFormDataContent { { new ByteArrayContent("<svg onload=alert(1)/>"u8.ToArray()), "file", "a.svg" } })
+        {
+            (await (await admin.Http.PostAsync($"/api/v1/sso-admin/{provider.Id}/upload-logo", svg, Token)).Content.ReadAsStringAsync(Token)).ShouldContain(SsoErrors.LogoInvalid);
+        }
+
+        using var form = new MultipartFormDataContent { { new ByteArrayContent(png), "file", "logo.png" } };
+        var uploaded = await admin.Http.PostAsync($"/api/v1/sso-admin/{provider.Id}/upload-logo", form, Token);
+        uploaded.StatusCode.ShouldBe(HttpStatusCode.OK, await uploaded.Content.ReadAsStringAsync(Token));
+        var logoUrl = (await uploaded.Content.ReadFromJsonAsync<ExternalProviderDto>(Token))!.LogoUrl!;
+
+        var body = new { name, displayName = name, type = 0, discoveryUrl = "http://localhost:1/realms/x", clientId = "client", isEnabled = true, buttonColor = "#1a73e8" };
+        (await admin.Http.PutAsJsonAsync($"/api/v1/sso-admin/{provider.Id}/provider", body, Token)).EnsureSuccessStatusCode();
+
+        var methods = await fixture.Factory.CreateClient().GetFromJsonAsync<SignInMethodsDto>("/api/v1/auth/methods", Token);
+        var shown = methods!.Providers.Single(item => item.Name == name);
+        shown.LogoUrl.ShouldBe(logoUrl);
+        shown.ButtonColor.ShouldBe("#1A73E8");
+        (await fixture.Factory.CreateClient().GetAsync(logoUrl, Token)).Content.Headers.ContentType!.MediaType.ShouldBe("image/png");
+
+        (await admin.Http.DeleteAsync($"/api/v1/sso-admin/{provider.Id}/logo", Token)).EnsureSuccessStatusCode();
+        (await fixture.Factory.CreateClient().GetAsync(logoUrl, Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        (await admin.Http.PutAsJsonAsync($"/api/v1/sso-admin/{provider.Id}/provider", Provider(name, "client", enabled: false), Token)).EnsureSuccessStatusCode();
+    }
+
+    [Fact]
     public async Task A_link_works_once_and_a_resend_retires_the_old_one()
     {
         var admin = await AdminAsync();
