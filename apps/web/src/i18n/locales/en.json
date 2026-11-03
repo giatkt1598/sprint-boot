@@ -1041,6 +1041,19 @@
     }
   },
   "mcp": {
+    "clients": "MCP clients",
+    "client": {
+      "claudeCode": "Claude Code",
+      "codex": "Codex",
+      "copilot": "GitHub Copilot",
+      "config": "Cursor and others"
+    },
+    "clientHint": {
+      "claudeCode": "Run this in a terminal.",
+      "codex": "Run both lines in a terminal, then open a new one so Codex sees {{variable}}. On macOS or Linux, use export {{variable}}=... in your shell profile instead of setx.",
+      "copilot": "Save as .vscode/mcp.json in your project, or add it to your user mcp.json, then start the server from the MCP view in VS Code.",
+      "config": "For Cursor (~/.cursor/mcp.json) and other clients that read an mcpServers file."
+    },
     "createdConnect": "Add the server to your client with one of these. They already hold the new token.",
     "copyCommand": "Copy command",
     "copyConfig": "Copy configuration",
@@ -1053,7 +1066,6 @@
     "url": "Server URL",
     "copyUrl": "Copy server URL",
     "urlCopied": "Server URL copied",
-    "otherClients": "Other clients",
     "toolsTitle": "Tools",
     "toolsHint": "Read tools work with every MCP token. Write tools need a token that is not read only.",
     "tool": "Tool",

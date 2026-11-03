@@ -16,10 +16,12 @@ import { CopyField } from '../../components/CopyField';
 import { Dialog, DialogConfirm, DialogFooter } from '../../components/Dialog';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
 import { Table } from '../../components/Table';
+import { Tabs } from '../../components/Tabs';
 import { SelectField, TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { formatDate, formatRelative } from '../../lib/format';
+import { radius, sem } from '../../theme/tokens';
 
 type PersonalToken = components['schemas']['PersonalTokenDto'];
 type Kind = 0 | 1;
@@ -31,30 +33,47 @@ const LIFETIMES = ['30', '90', '365', 'never'];
 
 const MCP_PLACEHOLDER = 'YOUR_MCP_TOKEN';
 
+const MCP_TOKEN_ENV = 'SPRINT_BOOT_MCP_TOKEN';
+
 /**
- * How a client connects. The command stays on one line: cmd and PowerShell do not continue
- * a line on a backslash, so a wrapped command breaks there.
+ * How each client connects. Commands stay on one line: cmd and PowerShell do not continue a
+ * line on a backslash, so a wrapped command breaks there.
  */
 function mcpSetup(token: string) {
   const url = `${window.location.origin}/mcp`;
+  const header = `Bearer ${token}`;
   return {
     url,
-    claudeCode: `claude mcp add --transport http sprint-boot ${url} --header "Authorization: Bearer ${token}"`,
-    config: JSON.stringify({ mcpServers: { 'sprint-boot': { type: 'http', url, headers: { Authorization: `Bearer ${token}` } } } }, null, 2),
+    claudeCode: `claude mcp add --transport http sprint-boot ${url} --header "Authorization: ${header}"`,
+    // Codex reads the token from an environment variable rather than keeping it in its config.
+    codex: [
+      `setx ${MCP_TOKEN_ENV} "${token}"`,
+      `codex mcp add sprint-boot --url ${url} --bearer-token-env-var ${MCP_TOKEN_ENV}`,
+    ].join('\n'),
+    copilot: JSON.stringify({ servers: { 'sprint-boot': { type: 'http', url, headers: { Authorization: header } } } }, null, 2),
+    config: JSON.stringify({ mcpServers: { 'sprint-boot': { type: 'http', url, headers: { Authorization: header } } } }, null, 2),
   };
 }
 
+const MCP_CLIENTS = ['claudeCode', 'codex', 'copilot', 'config'] as const;
+type McpClient = (typeof MCP_CLIENTS)[number];
+
 function McpConnect({ token }: { token: string }) {
   const { t } = useTranslation();
+  const [client, setClient] = useState<McpClient>('claudeCode');
   const setup = mcpSetup(token);
 
   return (
-    <>
-      <Typography variant="h3" component="h3">Claude Code</Typography>
-      <CodeBlock code={setup.claudeCode} copyLabel={t('mcp.copyCommand')} />
-      <Typography variant="h3" component="h3">{t('mcp.otherClients')}</Typography>
-      <CodeBlock code={setup.config} copyLabel={t('mcp.copyConfig')} />
-    </>
+    <div className="flex flex-col gap-2">
+      <Tabs
+        label={t('mcp.clients')}
+        value={client}
+        onChange={(next) => setClient(next as McpClient)}
+        items={MCP_CLIENTS.map((value) => ({ value, label: t(`mcp.client.${value}`) }))}
+      />
+      <Typography variant="body2" color="textSecondary">{t(`mcp.clientHint.${client}`, { variable: MCP_TOKEN_ENV })}</Typography>
+      <CodeBlock code={setup[client]} copyLabel={t(client === 'claudeCode' || client === 'codex' ? 'mcp.copyCommand' : 'mcp.copyConfig')} />
+    </div>
   );
 }
 
@@ -257,7 +276,21 @@ function CodeBlock({ code, copyLabel }: { code: string; copyLabel?: string }) {
       <pre style={copyLabel ? { paddingRight: 44 } : undefined}><code>{code}</code></pre>
       {copyLabel && (
         <Tooltip title={copyLabel}>
-          <IconButton size="small" aria-label={copyLabel} onClick={() => void copy()} sx={{ position: 'absolute', top: 4, right: 4 }}>
+          <IconButton
+            size="small"
+            aria-label={copyLabel}
+            onClick={() => void copy()}
+            sx={{
+              position: 'absolute',
+              top: 6,
+              right: 6,
+              backgroundColor: sem('bg-surface'),
+              border: `1px solid ${sem('border-default')}`,
+              borderRadius: `${radius.control}px`,
+              color: sem('text-secondary'),
+              '&:hover': { backgroundColor: sem('bg-hover'), color: sem('text-primary') },
+            }}
+          >
             <Copy size={16} strokeWidth={1.5} aria-hidden />
           </IconButton>
         </Tooltip>

@@ -1041,6 +1041,19 @@
     }
   },
   "mcp": {
+    "clients": "Client MCP",
+    "client": {
+      "claudeCode": "Claude Code",
+      "codex": "Codex",
+      "copilot": "GitHub Copilot",
+      "config": "Cursor và client khác"
+    },
+    "clientHint": {
+      "claudeCode": "Chạy lệnh này trong terminal.",
+      "codex": "Chạy cả hai dòng trong terminal, rồi mở terminal mới để Codex đọc được {{variable}}. Trên macOS hoặc Linux, dùng export {{variable}}=... trong shell profile thay cho setx.",
+      "copilot": "Lưu thành .vscode/mcp.json trong project, hoặc thêm vào mcp.json của user, rồi bật server trong mục MCP của VS Code.",
+      "config": "Cho Cursor (~/.cursor/mcp.json) và các client đọc file mcpServers."
+    },
     "createdConnect": "Thêm server vào client bằng một trong các cách dưới đây. Token mới đã được điền sẵn.",
     "copyCommand": "Sao chép lệnh",
     "copyConfig": "Sao chép cấu hình",
@@ -1053,7 +1066,6 @@
     "url": "URL server",
     "copyUrl": "Sao chép URL server",
     "urlCopied": "Đã sao chép URL server",
-    "otherClients": "Client khác",
     "toolsTitle": "Các tool",
     "toolsHint": "Tool đọc dùng được với mọi MCP token. Tool ghi cần token không chỉ đọc.",
     "tool": "Tool",
