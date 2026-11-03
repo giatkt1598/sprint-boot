@@ -7,6 +7,7 @@ import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router';
 import type { components } from '@sprint-boot/api-client';
 import logo from '../../../../assets/brand/sprint-boot-logo.png';
 import { ApiError, apiClient, fetchCsrfToken, unwrap } from '../api';
+import { BrandSignInButton } from '../components/BrandSignInButton';
 import { Button } from '../components/Button';
 import { TextField } from '../components/TextField';
 import { useErrorMessage } from '../lib/errors';
@@ -55,16 +56,19 @@ type SignInProvider = components['schemas']['SignInProviderDto'];
 function ProviderButtons({ providers, query }: { providers: SignInProvider[]; query: string }) {
   const { t } = useTranslation();
 
-  return providers.map((provider) => (
-    <Button
-      key={provider.name}
-      kind="secondary"
-      component="a"
-      href={`/connect/external/${provider.name}/challenge?${query}`}
-    >
-      {t('auth.continueWith', { provider: provider.displayName })}
-    </Button>
-  ));
+  return providers.map((provider) => {
+    const href = `/connect/external/${provider.name}/challenge?${query}`;
+    const label = t('auth.continueWith', { provider: provider.displayName });
+    // Google and GitHub ask for their own look; any other provider uses ours.
+    const kind = provider.type === 1 ? 'google' : provider.type === 2 ? 'github' : null;
+    return kind ? (
+      <BrandSignInButton key={provider.name} kind={kind} href={href} label={label} />
+    ) : (
+      <Button key={provider.name} kind="secondary" component="a" href={href}>
+        {label}
+      </Button>
+    );
+  });
 }
 
 function OrDivider() {

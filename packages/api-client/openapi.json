@@ -21593,7 +21593,8 @@
       "SignInProviderDto": {
         "required": [
           "displayName",
-          "name"
+          "name",
+          "type"
         ],
         "type": "object",
         "properties": {
@@ -21604,6 +21605,9 @@
           "displayName": {
             "type": "string",
             "nullable": true
+          },
+          "type": {
+            "$ref": "#/components/schemas/ExternalProviderType"
           }
         },
         "additionalProperties": false

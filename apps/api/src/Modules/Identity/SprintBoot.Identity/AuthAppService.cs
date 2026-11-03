@@ -74,7 +74,7 @@ public class AuthAppService(
         return new SignInMethodsDto
         {
             LocalLoginEnabled = policy?.LocalLoginEnabled ?? true,
-            Providers = [.. enabled.OrderBy(item => item.DisplayName).Select(item => new SignInProviderDto { Name = item.Name, DisplayName = item.DisplayName })],
+            Providers = [.. enabled.OrderBy(item => item.DisplayName).Select(item => new SignInProviderDto { Name = item.Name, DisplayName = item.DisplayName, Type = item.Type })],
         };
     }
 

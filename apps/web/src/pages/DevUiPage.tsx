@@ -6,6 +6,7 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Avatar } from '../components/Avatar';
 import { Badge, StatusBadge } from '../components/Badge';
+import { BrandSignInButton } from '../components/BrandSignInButton';
 import { Button } from '../components/Button';
 import { Checkbox, Toggle } from '../components/Checkbox';
 import { Dialog, DialogConfirm, DialogFooter } from '../components/Dialog';
@@ -105,6 +106,13 @@ export function DevUiPage() {
           <PriorityIcon priority="medium" />
           <PriorityIcon priority="low" />
           <Avatar name={t('devUi.assignee')} />
+        </div>
+      </Section>
+
+      <Section title={t('devUi.signIn')}>
+        <div className="flex max-w-sm flex-col gap-3">
+          <BrandSignInButton kind="google" href="#" label={t('auth.continueWith', { provider: 'Google' })} />
+          <BrandSignInButton kind="github" href="#" label={t('auth.continueWith', { provider: 'GitHub' })} />
         </div>
       </Section>
 

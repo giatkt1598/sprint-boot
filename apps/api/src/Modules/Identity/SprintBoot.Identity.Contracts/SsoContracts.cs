@@ -111,6 +111,9 @@ public class SignInProviderDto
     public required string Name { get; set; }
 
     public required string DisplayName { get; set; }
+
+    /// <summary>Lets the sign-in page draw Google and GitHub in their own brand style.</summary>
+    public required ExternalProviderType Type { get; set; }
 }
 
 public class SignInMethodsDto

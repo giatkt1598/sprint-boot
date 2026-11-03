@@ -14778,6 +14778,7 @@ export interface components {
         SignInProviderDto: {
             name: string | null;
             displayName: string | null;
+            type: components["schemas"]["ExternalProviderType"];
         };
         SprintDefaultsDto: {
             name: string | null;
