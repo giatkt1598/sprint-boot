@@ -289,6 +289,61 @@ public class SsoInvitationTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task People_link_and_unlink_providers_but_keep_one_way_in()
+    {
+        var admin = await AdminAsync();
+        var name = $"link{Random.Shared.Next(1000, 9999)}";
+        var created = await admin.Http.PostAsJsonAsync("/api/v1/sso-admin/provider", Provider(name, "client", enabled: true), Token);
+        var provider = (await created.Content.ReadFromJsonAsync<ExternalProviderDto>(Token))!;
+
+        var client = await fixture.CreateUserClientAsync(Token);
+        var listed = (await client.Http.GetFromJsonAsync<List<LinkedLoginDto>>("/api/v1/auth/logins", Token))!;
+        listed.Single(item => item.Provider == name).CanLink.ShouldBeTrue();
+
+        var start = await client.Http.PostAsync($"/api/v1/auth/logins/{name}/link", null, Token);
+        start.StatusCode.ShouldBe(HttpStatusCode.OK, await start.Content.ReadAsStringAsync(Token));
+        var url = (await start.Content.ReadFromJsonAsync<LinkStartDto>(Token))!.Url;
+        url.ShouldStartWith($"/connect/external/{name}/challenge?link=");
+        var ticket = WebUtility.UrlDecode(url[(url.IndexOf("link=", StringComparison.Ordinal) + 5)..]);
+
+        using (var scope = fixture.Factory.Services.CreateScope())
+        using (scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true))
+        {
+            var service = scope.ServiceProvider.GetRequiredService<LinkedLoginService>();
+            var redeemed = (await service.RedeemAsync(ticket))!;
+            redeemed.UserId.ShouldBe(client.UserId);
+            (await service.RedeemAsync(ticket)).ShouldBeNull();
+
+            var subject = Guid.NewGuid().ToString();
+            await service.LinkAsync(client.UserId, new ExternalIdentity(name, name, subject, null, false, null));
+            var taken = await Should.ThrowAsync<BusinessException>(() => service.LinkAsync(Guid.NewGuid(), new ExternalIdentity(name, name, subject, null, false, null)));
+            taken.Code.ShouldBe(SsoErrors.LinkedElsewhere);
+        }
+
+        var linked = (await client.Http.GetFromJsonAsync<List<LinkedLoginDto>>("/api/v1/auth/logins", Token))!.Single(item => item.Provider == name);
+        linked.IsLinked.ShouldBeTrue();
+        linked.CanUnlink.ShouldBeTrue();
+        (await client.Http.DeleteAsync($"/api/v1/auth/logins/{name}", Token)).EnsureSuccessStatusCode();
+
+        // Someone who joined through the IdP has no password, so their only login stays.
+        await SetPolicyAsync(selfRegistration: true);
+        var (external, error) = await LinkAsync(Identity($"x{Guid.NewGuid():N}@test.local"));
+        await SetPolicyAsync(selfRegistration: false);
+        error.ShouldBeNull();
+        using (var scope = fixture.Factory.Services.CreateScope())
+        using (scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true))
+        {
+            var users = scope.ServiceProvider.GetRequiredService<Volo.Abp.Identity.IdentityUserManager>();
+            var service = scope.ServiceProvider.GetRequiredService<LinkedLoginService>();
+            var user = await users.GetByIdAsync(external);
+            (await service.GetListAsync(user)).Single(item => item.Provider == "keycloak").CanUnlink.ShouldBeFalse();
+            (await Should.ThrowAsync<BusinessException>(() => service.UnlinkAsync(user, "keycloak"))).Code.ShouldBe(SsoErrors.LastMethod);
+        }
+
+        (await admin.Http.PutAsJsonAsync($"/api/v1/sso-admin/{provider.Id}/provider", Provider(name, "client", enabled: false), Token)).EnsureSuccessStatusCode();
+    }
+
+    [Fact]
     public async Task A_link_works_once_and_a_resend_retires_the_old_one()
     {
         var admin = await AdminAsync();

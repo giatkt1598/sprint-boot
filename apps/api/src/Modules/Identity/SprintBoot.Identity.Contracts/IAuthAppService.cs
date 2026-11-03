@@ -31,4 +31,11 @@ public interface IAuthAppService : IApplicationService
     Task<CurrentUserDto> UploadAvatarAsync(IRemoteStreamContent file);
 
     Task<CurrentUserDto> DeleteAvatarAsync();
+
+    Task<List<LinkedLoginDto>> GetLoginsAsync();
+
+    Task<LinkStartDto> StartLinkAsync(string provider);
+
+    /// <summary>Refused when it is the only way left to sign in.</summary>
+    Task UnlinkAsync(string provider);
 }

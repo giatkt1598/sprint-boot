@@ -86,4 +86,16 @@ public class AuthController(IAuthAppService authAppService, IAbpAntiForgeryManag
     [HttpDelete("avatar")]
     [Authorize]
     public Task<CurrentUserDto> DeleteAvatarAsync() => authAppService.DeleteAvatarAsync();
+
+    [HttpGet("logins")]
+    [Authorize]
+    public Task<List<LinkedLoginDto>> GetLoginsAsync() => authAppService.GetLoginsAsync();
+
+    [HttpPost("logins/{provider}/link")]
+    [Authorize]
+    public Task<LinkStartDto> StartLinkAsync(string provider) => authAppService.StartLinkAsync(provider);
+
+    [HttpDelete("logins/{provider}")]
+    [Authorize]
+    public Task UnlinkAsync(string provider) => authAppService.UnlinkAsync(provider);
 }

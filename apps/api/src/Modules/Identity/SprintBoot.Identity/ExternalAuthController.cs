@@ -20,14 +20,17 @@ public class ExternalAuthController(
     ExternalAccountLinker linker,
     AbpSignInManager signInManager,
     IRepository<ExternalProviderConfig, Guid> providers,
+    LinkedLoginService linkedLogins,
     IUnitOfWorkManager unitOfWorkManager) : AbpController
 {
     private const string InvitationItem = "invitation";
     private const string ReturnItem = "returnUrl";
     private const string ProviderItem = "provider";
+    private const string LinkItem = "link";
+    private const string ProfilePage = "/account/profile";
 
     [HttpGet("{provider}/challenge")]
-    public async Task<IActionResult> ChallengeAsync(string provider, string? returnUrl, string? invitation)
+    public async Task<IActionResult> ChallengeAsync(string provider, string? returnUrl, string? invitation, string? link)
     {
         if (!await registry.EnsureAsync(provider))
         {
@@ -40,6 +43,11 @@ public class ExternalAuthController(
         if (!string.IsNullOrEmpty(invitation))
         {
             properties.Items[InvitationItem] = invitation;
+        }
+
+        if (!string.IsNullOrEmpty(link))
+        {
+            properties.Items[LinkItem] = link;
         }
 
         return Challenge(properties, ExternalSchemeRegistry.SchemeName(provider));
@@ -58,6 +66,10 @@ public class ExternalAuthController(
         var items = result.Properties.Items;
         var providerName = Item(items, ProviderItem) ?? string.Empty;
         var invitation = Item(items, InvitationItem);
+        if (Item(items, LinkItem) is { } link)
+        {
+            return await CompleteLinkAsync(result.Principal, providerName, link);
+        }
 
         try
         {
@@ -75,6 +87,30 @@ public class ExternalAuthController(
         // Only our own authorize endpoint, never a redirect chosen by the caller.
         var returnUrl = Item(items, ReturnItem);
         return Redirect(returnUrl?.StartsWith("/connect/authorize", StringComparison.Ordinal) == true ? returnUrl : "/");
+    }
+
+    /// <summary>Adds the IdP login to the account that asked for it, without signing anyone in.</summary>
+    private async Task<IActionResult> CompleteLinkAsync(ClaimsPrincipal principal, string providerName, string link)
+    {
+        try
+        {
+            using var uow = unitOfWorkManager.Begin(requiresNew: true, isTransactional: true);
+            var ticket = await linkedLogins.RedeemAsync(link);
+            if (ticket is null || ticket.Provider != providerName)
+            {
+                throw new BusinessException(SsoErrors.ExternalFailed);
+            }
+
+            var provider = await providers.GetAsync(item => item.Name == providerName);
+            await linkedLogins.LinkAsync(ticket.UserId, ReadIdentity(principal, provider));
+            await uow.CompleteAsync();
+        }
+        catch (BusinessException failure)
+        {
+            return Redirect($"{ProfilePage}?linkError={Code(failure.Code)}");
+        }
+
+        return Redirect($"{ProfilePage}?linked={Uri.EscapeDataString(providerName)}");
     }
 
     public static ExternalIdentity ReadIdentity(ClaimsPrincipal principal, ExternalProviderConfig provider)

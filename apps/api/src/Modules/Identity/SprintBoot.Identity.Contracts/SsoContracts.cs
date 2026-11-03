@@ -141,6 +141,8 @@ public static class SsoErrors
 {
     public const string ProviderNameTaken = "SprintBoot:ProviderNameTaken";
     public const string LastMethod = "SprintBoot:LastSignInMethod";
+    public const string AlreadyLinked = "SprintBoot:LoginAlreadyLinked";
+    public const string LinkedElsewhere = "SprintBoot:LoginLinkedElsewhere";
     public const string RegistrationClosed = "SprintBoot:RegistrationClosed";
     public const string DomainNotAllowed = "SprintBoot:DomainNotAllowed";
     public const string EmailNotVerified = "SprintBoot:EmailNotVerified";

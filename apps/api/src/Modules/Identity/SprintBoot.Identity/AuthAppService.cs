@@ -27,7 +27,8 @@ public class AuthAppService(
     IRepository<InvitationProject, Guid> invitationProjects,
     IProjectAccess projectAccess,
     IUserDirectory userDirectory,
-    AvatarStore avatars)
+    AvatarStore avatars,
+    LinkedLoginService linkedLogins)
     : ApplicationService, IAuthAppService
 {
     public const string LanguageProperty = "Language";
@@ -193,6 +194,18 @@ public class AuthAppService(
         await avatars.RemoveAsync(user);
         return await ToDtoAsync(user);
     }
+
+    public async Task<List<LinkedLoginDto>> GetLoginsAsync() =>
+        await linkedLogins.GetListAsync(await userManager.GetByIdAsync(CurrentUser.GetId()));
+
+    public async Task<LinkStartDto> StartLinkAsync(string provider)
+    {
+        var ticket = await linkedLogins.CreateTicketAsync(await userManager.GetByIdAsync(CurrentUser.GetId()), provider);
+        return new LinkStartDto { Url = $"/connect/external/{Uri.EscapeDataString(provider)}/challenge?link={Uri.EscapeDataString(ticket)}" };
+    }
+
+    public async Task UnlinkAsync(string provider) =>
+        await linkedLogins.UnlinkAsync(await userManager.GetByIdAsync(CurrentUser.GetId()), provider);
 
     private static void ThrowIfRejected(IdentityResult result)
     {

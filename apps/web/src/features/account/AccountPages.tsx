@@ -1,12 +1,15 @@
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link as RouterLink, Navigate } from 'react-router';
+import { Link as RouterLink, Navigate, useSearchParams } from 'react-router';
 import Link from '@mui/material/Link';
+import type { components } from '@sprint-boot/api-client';
 import { apiClient, unwrap } from '../../api';
 import { useCurrentUser } from '../../auth/AuthProvider';
 import { Avatar } from '../../components/Avatar';
+import { Badge } from '../../components/Badge';
+import { DialogConfirm } from '../../components/Dialog';
 import { Button } from '../../components/Button';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
 import { Table } from '../../components/Table';
@@ -135,6 +138,106 @@ const SPACE_ROLES: Record<string, string> = {
   Viewer: 'spaces.roleViewer',
 };
 
+type LinkedLogin = components['schemas']['LinkedLoginDto'];
+
+/** Sign-in providers this account can use, linked or not; linking leaves for the IdP and comes back here. */
+function LinkedAccounts() {
+  const { t } = useTranslation();
+  const toast = useToast();
+  const toMessage = useErrorMessage();
+  const queryClient = useQueryClient();
+  const [params, setParams] = useSearchParams();
+  const [unlinking, setUnlinking] = useState<LinkedLogin | null>(null);
+
+  const logins = useQuery({
+    queryKey: ['auth', 'me', 'logins'],
+    queryFn: () => unwrap(apiClient.GET('/api/v1/auth/logins')),
+  });
+
+  // The IdP round trip reports back through the address; say it once, then tidy the address.
+  const linked = params.get('linked');
+  const linkError = params.get('linkError');
+  useEffect(() => {
+    if (!linked && !linkError) {
+      return;
+    }
+    if (linked) {
+      toast('success', t('account.linkedNow'));
+    } else {
+      const key = `errors.${linkError}`;
+      toast('error', t(key, { defaultValue: t('errors.generic') }));
+    }
+    setParams((current) => {
+      current.delete('linked');
+      current.delete('linkError');
+      return current;
+    }, { replace: true });
+  }, [linked, linkError, setParams, t, toast]);
+
+  const link = useMutation({
+    mutationFn: (provider: string) =>
+      unwrap(apiClient.POST('/api/v1/auth/logins/{provider}/link', { params: { path: { provider } } })),
+    onSuccess: (start) => window.location.assign(start.url ?? '/account/profile'),
+    onError: (failure) => toast('error', toMessage(failure)),
+  });
+
+  const unlink = useMutation({
+    mutationFn: (provider: string) => unwrap(apiClient.DELETE('/api/v1/auth/logins/{provider}', { params: { path: { provider } } })),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['auth', 'me', 'logins'] });
+      toast('success', t('account.unlinked'));
+    },
+    onError: (failure) => toast('error', toMessage(failure)),
+    onSettled: () => setUnlinking(null),
+  });
+
+  return (
+    <section aria-labelledby="linked-accounts" className="flex flex-col gap-3">
+      <div>
+        <Typography id="linked-accounts" variant="h2">{t('account.linkedAccounts')}</Typography>
+        <Typography variant="body2" color="textSecondary">{t('account.linkedHint')}</Typography>
+      </div>
+      {logins.isPending && <LoadingState />}
+      {logins.isError && <ErrorState onRetry={() => void logins.refetch()} />}
+      {logins.data?.length === 0 && <EmptyState title={t('account.noProviders')} />}
+      {(logins.data?.length ?? 0) > 0 && (
+        <ul className="flex max-w-md flex-col gap-2">
+          {logins.data!.map((login) => (
+            <li key={login.provider} className="flex min-h-10 items-center gap-3">
+              <Typography variant="body1" className="flex-1">{login.displayName}</Typography>
+              {login.isLinked ? <Badge tone="success">{t('account.linked')}</Badge> : <Badge>{t('account.notLinked')}</Badge>}
+              {login.canLink && (
+                <Button kind="secondary" disabled={link.isPending} onClick={() => link.mutate(login.provider ?? '')}>
+                  {t('account.link')}
+                </Button>
+              )}
+              {login.isLinked && (
+                <Button
+                  kind="ghost"
+                  disabled={!login.canUnlink || unlink.isPending}
+                  title={login.canUnlink ? undefined : t('account.lastMethod')}
+                  aria-label={`${t('account.unlink')} ${login.displayName}`}
+                  onClick={() => setUnlinking(login)}
+                >
+                  {t('account.unlink')}
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      <DialogConfirm
+        open={unlinking !== null}
+        title={t('account.unlinkTitle', { provider: unlinking?.displayName })}
+        description={t('account.unlinkBody', { provider: unlinking?.displayName })}
+        confirmLabel={t('account.unlink')}
+        onCancel={() => setUnlinking(null)}
+        onConfirm={() => unlinking && unlink.mutate(unlinking.provider ?? '')}
+      />
+    </section>
+  );
+}
+
 function MySpaces() {
   const { t, i18n } = useTranslation();
   const spaces = useQuery({
@@ -213,6 +316,7 @@ export function ProfilePage() {
         <Button type="submit" disabled={!name.trim() || save.isPending}>{t('common.save')}</Button>
       </div>
     </form>
+    <LinkedAccounts />
     <MySpaces />
     </div>
   );

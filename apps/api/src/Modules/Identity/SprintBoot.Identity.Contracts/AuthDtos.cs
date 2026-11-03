@@ -20,6 +20,30 @@ public class LoginInput
     public required string Password { get; set; }
 }
 
+public class LinkedLoginDto
+{
+    /// <summary>The provider name used in sign-in addresses, such as google.</summary>
+    public required string Provider { get; set; }
+
+    public required string DisplayName { get; set; }
+
+    /// <summary>Null for a link to a provider that has since been switched off.</summary>
+    public required ExternalProviderType? Type { get; set; }
+
+    public required bool IsLinked { get; set; }
+
+    public required bool CanLink { get; set; }
+
+    /// <summary>False when this is the only way left to sign in.</summary>
+    public required bool CanUnlink { get; set; }
+}
+
+public class LinkStartDto
+{
+    /// <summary>Open as a full page: it leaves for the IdP and comes back to the profile.</summary>
+    public required string Url { get; set; }
+}
+
 public class CurrentUserDto
 {
     public required Guid Id { get; set; }
