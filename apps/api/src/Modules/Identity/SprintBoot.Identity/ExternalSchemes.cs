@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -106,6 +107,10 @@ public class ExternalSchemeRegistry(
             ClientId = config.ClientId,
             ClientSecret = secret,
             ResponseType = "code",
+            // The default form_post comes back as a cross-site POST when the IdP lives on another
+            // domain, and browsers drop the Lax correlation cookie on those: "Correlation failed".
+            // A redirect with the code in the query is a top-level GET, which keeps the cookie.
+            ResponseMode = OpenIdConnectResponseMode.Query,
             UsePkce = true,
             CallbackPath = CallbackPrefix + config.Name,
             GetClaimsFromUserInfoEndpoint = true,
