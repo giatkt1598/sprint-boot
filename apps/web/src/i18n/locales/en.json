@@ -646,7 +646,7 @@
     "roles": {
       "Viewer": "Viewer",
       "Member": "Member",
-      "Admin": "Space admin"
+      "ProjectAdmin": "Space admin"
     },
     "statuses": {
       "pending": "Pending",

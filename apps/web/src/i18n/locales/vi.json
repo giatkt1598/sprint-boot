@@ -646,7 +646,7 @@
     "roles": {
       "Viewer": "Người xem",
       "Member": "Thành viên",
-      "Admin": "Quản trị Space"
+      "ProjectAdmin": "Quản trị Space"
     },
     "statuses": {
       "pending": "Đang chờ",

@@ -36,7 +36,8 @@ const DELIVERY: [string, BadgeTone][] = [
   ['sent', 'success'],
   ['failed', 'danger'],
 ];
-const SPACE_ROLES = ['Viewer', 'Member', 'Admin'];
+// The API's role names (ProjectRoleNames); the label says Space admin.
+const SPACE_ROLES = ['Viewer', 'Member', 'ProjectAdmin'];
 
 function useRoleOptions() {
   const { t } = useTranslation();
