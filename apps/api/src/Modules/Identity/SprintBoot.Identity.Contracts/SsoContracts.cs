@@ -186,6 +186,14 @@ public class CreateInvitationInput
     public List<InvitationProjectInput> Projects { get; set; } = [];
 }
 
+public class UpdateInvitationRoleInput
+{
+    public required Guid ProjectId { get; set; }
+
+    [Required]
+    public required string Role { get; set; }
+}
+
 public class InvitationDto
 {
     public required Guid Id { get; set; }
@@ -269,8 +277,17 @@ public interface IInvitationAppService : IApplicationService
 {
     Task<PagedResultDto<InvitationDto>> GetListAsync(InvitationListInput input);
 
-    /// <summary>Invitations into one space that can still be accepted, for its member list.</summary>
+    /// <summary>Every invitation into one space, newest first, for the admins of that space.</summary>
     Task<List<InvitationDto>> GetForProjectAsync(Guid projectId);
+
+    /// <summary>Changes the role an invitation gives in one space, up to the caller's own.</summary>
+    Task<InvitationDto> UpdateProjectRoleAsync(Guid id, UpdateInvitationRoleInput input);
+
+    /// <summary>
+    /// Takes one space out of an invitation; with nothing left to grant, the invitation is revoked.
+    /// Space admins use this instead of revoking access to places they do not manage.
+    /// </summary>
+    Task RemoveProjectAsync(Guid id, Guid projectId);
 
     Task<InvitationLinkDto> CreateAsync(CreateInvitationInput input);
 

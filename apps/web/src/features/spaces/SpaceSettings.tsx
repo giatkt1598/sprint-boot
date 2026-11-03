@@ -1,14 +1,13 @@
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Navigate, Outlet, useOutletContext, useParams } from 'react-router';
 import ButtonBase from '@mui/material/ButtonBase';
 import { apiClient, unwrap } from '../../api';
-import { Avatar, UnassignedAvatar } from '../../components/Avatar';
-import { Badge } from '../../components/Badge';
+import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
 import { DialogConfirm } from '../../components/Dialog';
 import { ErrorState, LoadingState } from '../../components/StateViews';
@@ -19,7 +18,7 @@ import { useErrorMessage } from '../../lib/errors';
 import { formatDate } from '../../lib/format';
 import { font, radius, sem, size } from '../../theme/tokens';
 import { SpaceSchemeField } from '../notifications/NotificationPages';
-import { InviteMemberDialog } from '../admin/InvitationPages';
+import { InviteMemberDialog, SpaceInvitations } from '../admin/InvitationPages';
 import { SpacePermission, useMembers, useSpace, type Space, type SpaceMember } from './api';
 
 const ROLE_LABELS: Record<string, string> = {
@@ -192,10 +191,6 @@ export function SpaceGeneralPage() {
   );
 }
 
-type MemberRow =
-  | { kind: 'member'; key: string; member: SpaceMember }
-  | { kind: 'invited'; key: string; email: string; role: string; expiresAt: string };
-
 export function SpaceMembersPage() {
   const { t, i18n } = useTranslation();
   const space = useOutletContext<Space>();
@@ -206,23 +201,6 @@ export function SpaceMembersPage() {
   const canManage = space.permissions?.includes(SpacePermission.manageMembers);
   const [adding, setAdding] = useState(false);
   const [removing, setRemoving] = useState<SpaceMember | null>(null);
-
-  // Invited people are not members yet, but managers need to see who is still to come.
-  const invited = useQuery({
-    queryKey: ['spaces', space.id, 'members', 'invited'],
-    enabled: Boolean(canManage),
-    queryFn: () => unwrap(apiClient.GET('/api/v1/invitation/for-project/{projectId}', { params: { path: { projectId: space.id! } } })),
-  });
-  const rows: MemberRow[] = [
-    ...(members.data ?? []).map((member) => ({ kind: 'member' as const, key: member.user!.id!, member })),
-    ...(invited.data ?? []).map((invitation) => ({
-      kind: 'invited' as const,
-      key: `invited:${invitation.id}`,
-      email: invitation.email ?? '',
-      role: invitation.projects?.find((project) => project.projectId === space.id)?.role ?? 'Member',
-      expiresAt: invitation.expiresAt ?? '',
-    })),
-  ];
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['spaces', space.id, 'members'] });
 
@@ -258,37 +236,27 @@ export function SpaceMembersPage() {
       {members.isPending && <LoadingState />}
       {members.isError && <ErrorState onRetry={() => void members.refetch()} />}
       {members.data && (
-        <Table<MemberRow>
+        <Table<SpaceMember>
           label={t('spaces.members')}
-          rows={rows}
-          rowKey={(row) => row.key}
+          rows={members.data}
+          rowKey={(member) => member.user!.id!}
           columns={[
             {
               key: 'name',
               header: t('spaces.name'),
-              render: (row) =>
-                row.kind === 'member' ? (
-                  <span className="flex items-center gap-2">
-                    <Avatar name={row.member.user?.name ?? ''} src={row.member.user?.avatarUrl} />
-                    {row.member.user?.name}
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <UnassignedAvatar />
-                    <Badge tone="warning">{t('spaces.invited')}</Badge>
-                  </span>
-                ),
+              render: (member) => (
+                <span className="flex items-center gap-2">
+                  <Avatar name={member.user?.name ?? ''} src={member.user?.avatarUrl} />
+                  {member.user?.name}
+                </span>
+              ),
             },
-            { key: 'email', header: t('auth.email'), render: (row) => (row.kind === 'member' ? row.member.user?.email : row.email) },
+            { key: 'email', header: t('auth.email'), render: (member) => member.user?.email },
             {
               key: 'role',
               header: t('spaces.role'),
-              render: (row) => {
-                if (row.kind === 'invited') {
-                  return t(`invitations.roles.${row.role}`, { defaultValue: row.role });
-                }
-                const member = row.member;
-                return canManage ? (
+              render: (member) =>
+                canManage ? (
                   <SelectField
                     quiet
                     label={`${t('spaces.role')}: ${member.user?.name}`}
@@ -298,23 +266,15 @@ export function SpaceMembersPage() {
                   />
                 ) : (
                   t(ROLE_LABELS[member.role ?? ''] ?? 'spaces.roleMember')
-                );
-              },
+                ),
             },
-            {
-              key: 'joined',
-              header: t('spaces.joined'),
-              render: (row) =>
-                row.kind === 'member'
-                  ? formatDate(row.member.joinedAt, i18n.language)
-                  : t('spaces.invitationExpires', { date: formatDate(row.expiresAt, i18n.language) }),
-            },
+            { key: 'joined', header: t('spaces.joined'), render: (member) => formatDate(member.joinedAt, i18n.language) },
             {
               key: 'actions',
               header: '',
-              render: (row) =>
-                canManage && row.kind === 'member' && (
-                  <Button kind="ghost" aria-label={`${t('spaces.remove')} ${row.member.user?.name}`} sx={{ color: sem('feedback-danger-text') }} onClick={() => setRemoving(row.member)}>
+              render: (member) =>
+                canManage && (
+                  <Button kind="ghost" aria-label={`${t('spaces.remove')} ${member.user?.name}`} sx={{ color: sem('feedback-danger-text') }} onClick={() => setRemoving(member)}>
                     {t('spaces.remove')}
                   </Button>
                 ),
@@ -322,6 +282,7 @@ export function SpaceMembersPage() {
           ]}
         />
       )}
+      {canManage && <SpaceInvitations spaceId={space.id!} />}
       {adding && (
         <InviteMemberDialog
           spaceId={space.id!}

@@ -9,6 +9,7 @@ using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Authorization;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Emailing;
 using Volo.Abp.EventBus.Distributed;
@@ -61,15 +62,41 @@ public class InvitationAppService(
         await projectAccess.CheckAsync(projectId, ProjectPermissions.ManageMembers);
         var links = await invitationProjects.GetListAsync(item => item.ProjectId == projectId);
         var ids = links.Select(item => item.InvitationId).ToList();
-        var now = clock.Now;
-        var pending = (await invitations.GetListAsync(item => ids.Contains(item.Id) && item.Status == InvitationStatus.Pending))
-            .Where(item => item.IsUsable(now))
-            .OrderByDescending(item => item.CreationTime)
-            .ToList();
+        var list = (await invitations.GetListAsync(item => ids.Contains(item.Id))).OrderByDescending(item => item.CreationTime).ToList();
 
-        var people = await userDirectory.GetByIdsAsync(pending.Select(item => item.InvitedById));
+        // Only this space is shown: its admins have no business with the other places an invitation opens.
+        var people = await userDirectory.GetByIdsAsync(list.Select(item => item.InvitedById));
         var names = await projectAccess.GetRefsAsync([projectId]);
-        return [.. pending.Select(item => ToDto(item, links, people, names))];
+        return [.. list.Select(item => ToDto(item, links, people, names))];
+    }
+
+    public async Task<InvitationDto> UpdateProjectRoleAsync(Guid id, UpdateInvitationRoleInput input)
+    {
+        var invitation = await GetPendingAsync(id);
+        var link = await invitationProjects.FirstOrDefaultAsync(item => item.InvitationId == id && item.ProjectId == input.ProjectId)
+            ?? throw new EntityNotFoundException(typeof(InvitationProject), input.ProjectId);
+        await EnsureRoleAllowedAsync(input.ProjectId, input.Role);
+        link.ChangeRole(input.Role);
+        await invitationProjects.UpdateAsync(link, autoSave: true);
+
+        var people = await userDirectory.GetByIdsAsync([invitation.InvitedById]);
+        return ToDto(invitation, [link], people, await projectAccess.GetRefsAsync([input.ProjectId]));
+    }
+
+    public async Task RemoveProjectAsync(Guid id, Guid projectId)
+    {
+        await projectAccess.CheckAsync(projectId, ProjectPermissions.ManageMembers);
+        var invitation = await GetPendingAsync(id);
+        var links = await invitationProjects.GetListAsync(item => item.InvitationId == id);
+        var link = links.FirstOrDefault(item => item.ProjectId == projectId)
+            ?? throw new EntityNotFoundException(typeof(InvitationProject), projectId);
+        await invitationProjects.DeleteAsync(link, autoSave: true);
+
+        if (links.Count == 1 && invitation.SystemRole is null)
+        {
+            invitation.Status = InvitationStatus.Revoked;
+            await invitations.UpdateAsync(invitation, autoSave: true);
+        }
     }
 
     public async Task<InvitationLinkDto> CreateAsync(CreateInvitationInput input)
@@ -175,7 +202,7 @@ public class InvitationAppService(
     private async Task<Invitation> GetPendingAsync(Guid id)
     {
         var invitation = await invitations.GetAsync(id);
-        if (invitation.InvitedById != CurrentUser.GetId() && !await CanManageAllAsync())
+        if (invitation.InvitedById != CurrentUser.GetId() && !await CanManageAllAsync() && !await ManagesAnySpaceOfAsync(invitation))
         {
             throw new AbpAuthorizationException(code: InvitationErrors.Forbidden);
         }
@@ -183,6 +210,20 @@ public class InvitationAppService(
         return invitation.Status == InvitationStatus.Pending
             ? invitation
             : throw new BusinessException(InvitationErrors.Invalid);
+    }
+
+    /// <summary>The admins of a space look after every invitation into it, whoever sent it.</summary>
+    private async Task<bool> ManagesAnySpaceOfAsync(Invitation invitation)
+    {
+        foreach (var link in await invitationProjects.GetListAsync(item => item.InvitationId == invitation.Id))
+        {
+            if (await projectAccess.IsGrantedAsync(link.ProjectId, ProjectPermissions.ManageMembers))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private async Task<bool> CanManageAllAsync() => await AuthorizationService.IsGrantedAsync(SprintBootPermissions.ManageInvitations);
@@ -212,12 +253,24 @@ public class InvitationAppService(
                 throw new BusinessException(ProjectErrors.InvalidRole);
             }
 
-            await projectAccess.CheckAsync(project.ProjectId, ProjectPermissions.ManageMembers);
-            var own = isAdmin ? ProjectRoleNames.Admin : await projectAccess.GetCurrentRoleAsync(project.ProjectId);
-            if (Array.IndexOf(RoleOrder, project.Role) > Array.IndexOf(RoleOrder, own))
-            {
-                throw new BusinessException(InvitationErrors.RoleTooHigh);
-            }
+            await EnsureRoleAllowedAsync(project.ProjectId, project.Role);
+        }
+    }
+
+    private async Task EnsureRoleAllowedAsync(Guid projectId, string role)
+    {
+        if (!RoleOrder.Contains(role))
+        {
+            throw new BusinessException(ProjectErrors.InvalidRole);
+        }
+
+        await projectAccess.CheckAsync(projectId, ProjectPermissions.ManageMembers);
+        var own = await AuthorizationService.IsGrantedAsync(SprintBootPermissions.ManageUsers)
+            ? ProjectRoleNames.Admin
+            : await projectAccess.GetCurrentRoleAsync(projectId);
+        if (Array.IndexOf(RoleOrder, role) > Array.IndexOf(RoleOrder, own))
+        {
+            throw new BusinessException(InvitationErrors.RoleTooHigh);
         }
     }
 

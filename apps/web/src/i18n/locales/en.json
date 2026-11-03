@@ -285,8 +285,6 @@
     "lastActive": "Last active {{date}}"
   },
   "spaces": {
-    "invited": "Invited",
-    "invitationExpires": "Invitation expires {{date}}",
     "title": "Spaces",
     "create": "Create space",
     "name": "Name",

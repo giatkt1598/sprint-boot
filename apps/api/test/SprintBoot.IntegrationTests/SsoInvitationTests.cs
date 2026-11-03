@@ -243,7 +243,42 @@ public class SsoInvitationTests(ApiFixture fixture)
 
         var members = await admin.Http.GetFromJsonAsync<List<ProjectMemberDto>>($"/api/v1/project/{project.Id}/members", Token);
         members!.Single(member => member.User.Email == email).Role.ShouldBe(ProjectRoleNames.Member);
-        (await admin.Http.GetFromJsonAsync<List<InvitationDto>>($"/api/v1/invitation/for-project/{project.Id}", Token))!.ShouldBeEmpty();
+        (await admin.Http.GetFromJsonAsync<List<InvitationDto>>($"/api/v1/invitation/for-project/{project.Id}", Token))!.ShouldHaveSingleItem().Status.ShouldBe(InvitationStatus.Accepted);
+    }
+
+    [Fact]
+    public async Task Space_admins_manage_every_invitation_into_their_space_and_only_that()
+    {
+        var admin = await AdminAsync();
+        var owner = await fixture.CreateUserClientAsync(Token);
+        var space = await ProjectAsync(owner);
+        var other = await ProjectAsync(admin);
+
+        var shared = await InviteAsync(admin, new
+        {
+            email = NewEmail(),
+            projects = new[] { new { projectId = space.Id, role = ProjectRoleNames.Member }, new { projectId = other.Id, role = ProjectRoleNames.Member } },
+        });
+        var only = await InviteAsync(admin, new { email = NewEmail(), projects = new[] { new { projectId = space.Id, role = ProjectRoleNames.Member } } });
+
+        var listed = (await owner.Http.GetFromJsonAsync<List<InvitationDto>>($"/api/v1/invitation/for-project/{space.Id}", Token))!;
+        listed.Select(item => item.Id).ShouldBe([only.Invitation!.Id, shared.Invitation!.Id], ignoreOrder: true);
+        listed.Single(item => item.Id == shared.Invitation.Id).Projects.ShouldHaveSingleItem().ProjectId.ShouldBe(space.Id);
+
+        (await owner.Http.PutAsJsonAsync($"/api/v1/invitation/{shared.Invitation.Id}/project-role", new { projectId = space.Id, role = ProjectRoleNames.Viewer }, Token)).EnsureSuccessStatusCode();
+        (await owner.Http.PostAsync($"/api/v1/invitation/{shared.Invitation.Id}/resend", null, Token)).EnsureSuccessStatusCode();
+
+        // Taking their space out leaves the other space in the invitation, and revokes one that had nothing else.
+        (await owner.Http.DeleteAsync($"/api/v1/invitation/{shared.Invitation.Id}/project/{space.Id}", Token)).EnsureSuccessStatusCode();
+        (await owner.Http.DeleteAsync($"/api/v1/invitation/{only.Invitation.Id}/project/{space.Id}", Token)).EnsureSuccessStatusCode();
+        var all = (await admin.Http.GetFromJsonAsync<PagedResultDto<InvitationDto>>("/api/v1/invitation?MaxResultCount=100", Token))!.Items;
+        var remaining = all.Single(item => item.Id == shared.Invitation.Id);
+        remaining.Status.ShouldBe(InvitationStatus.Pending);
+        remaining.Projects.ShouldHaveSingleItem().ProjectId.ShouldBe(other.Id);
+        all.Single(item => item.Id == only.Invitation.Id).Status.ShouldBe(InvitationStatus.Revoked);
+
+        (await owner.Http.GetAsync($"/api/v1/invitation/for-project/{other.Id}", Token)).IsSuccessStatusCode.ShouldBeFalse();
+        (await owner.Http.DeleteAsync($"/api/v1/invitation/{shared.Invitation.Id}/project/{other.Id}", Token)).IsSuccessStatusCode.ShouldBeFalse();
     }
 
     [Fact]

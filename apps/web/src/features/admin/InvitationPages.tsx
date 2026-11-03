@@ -289,3 +289,143 @@ export function InvitationsPage() {
     </div>
   );
 }
+
+/** Every invitation into one space, for its admins: they manage them whoever sent them. */
+export function SpaceInvitations({ spaceId }: { spaceId: string }) {
+  const { t, i18n } = useTranslation();
+  const toast = useToast();
+  const toMessage = useErrorMessage();
+  const queryClient = useQueryClient();
+  const roles = useRoleOptions();
+  const [revoking, setRevoking] = useState<Invitation | null>(null);
+
+  const invitations = useQuery({
+    queryKey: ['spaces', spaceId, 'invitations'],
+    queryFn: () => unwrap(apiClient.GET('/api/v1/invitation/for-project/{projectId}', { params: { path: { projectId: spaceId } } })),
+  });
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ['spaces', spaceId, 'invitations'] });
+
+  const resend = useMutation({
+    mutationFn: (id: string) => unwrap(apiClient.POST('/api/v1/invitation/{id}/resend', { params: { path: { id } } })),
+    onSuccess: async () => {
+      await refresh();
+      toast('success', t('invitations.sent'));
+    },
+    onError: (failure) => toast('error', toMessage(failure)),
+  });
+
+  const copy = useMutation({
+    mutationFn: async (id: string) => {
+      const result = await unwrap(apiClient.POST('/api/v1/invitation/{id}/link', { params: { path: { id } } }));
+      await navigator.clipboard.writeText(result.link ?? '');
+    },
+    onSuccess: async () => {
+      await refresh();
+      toast('success', t('invitations.copied'));
+    },
+    onError: (failure) => toast('error', toMessage(failure)),
+  });
+
+  const changeRole = useMutation({
+    mutationFn: ({ id, role }: { id: string; role: string }) =>
+      unwrap(apiClient.PUT('/api/v1/invitation/{id}/project-role', { params: { path: { id } }, body: { projectId: spaceId, role } })),
+    onSuccess: refresh,
+    onError: (failure) => toast('error', toMessage(failure)),
+  });
+
+  // Takes only this space out: an invitation may also open places its admins do not manage.
+  const revoke = useMutation({
+    mutationFn: (id: string) =>
+      unwrap(apiClient.DELETE('/api/v1/invitation/{id}/project/{projectId}', { params: { path: { id, projectId: spaceId } } })),
+    onSuccess: async () => {
+      await refresh();
+      setRevoking(null);
+    },
+    onError: (failure) => toast('error', toMessage(failure)),
+  });
+
+  // Expired invitations are still pending underneath, so they can be sent again.
+  const open = (item: Invitation) => item.status === 0 || item.status === 3;
+
+  return (
+    <section aria-labelledby="space-invitations" className="flex flex-col gap-3">
+      <div>
+        <Typography id="space-invitations" variant="h2">{t('invitations.title')}</Typography>
+        <Typography variant="body2" color="textSecondary">{t('invitations.subtitle')}</Typography>
+      </div>
+      {invitations.isPending && <LoadingState />}
+      {invitations.isError && <ErrorState onRetry={() => void invitations.refetch()} />}
+      {invitations.data?.length === 0 && <EmptyState title={t('invitations.empty')} />}
+      {(invitations.data?.length ?? 0) > 0 && (
+        <Table<Invitation>
+          label={t('invitations.title')}
+          rows={invitations.data ?? []}
+          rowKey={(item) => item.id!}
+          columns={[
+            { key: 'email', header: t('auth.email'), render: (item) => item.email },
+            {
+              key: 'role',
+              header: t('invitations.spaceRole'),
+              render: (item) => {
+                const role = item.projects?.find((project) => project.projectId === spaceId)?.role ?? 'Member';
+                return item.status === 0 ? (
+                  <SelectField
+                    quiet
+                    label={`${t('invitations.spaceRole')}: ${item.email}`}
+                    value={role}
+                    onChange={(event) => changeRole.mutate({ id: item.id!, role: event.target.value })}
+                    options={roles}
+                  />
+                ) : (
+                  t(`invitations.roles.${role}`, { defaultValue: role })
+                );
+              },
+            },
+            { key: 'by', header: t('invitations.invitedBy'), render: (item) => item.invitedBy?.name ?? '' },
+            {
+              key: 'status',
+              header: t('invitations.status'),
+              render: (item) => {
+                const [name, tone] = STATUS[item.status ?? 0]!;
+                return <Badge tone={tone}>{t(`invitations.statuses.${name}`)}</Badge>;
+              },
+            },
+            {
+              key: 'delivery',
+              header: t('invitations.delivery'),
+              render: (item) => {
+                const [name, tone] = DELIVERY[item.emailStatus ?? 0]!;
+                return <Badge tone={tone}>{t(`invitations.deliveries.${name}`)}</Badge>;
+              },
+            },
+            {
+              key: 'expires',
+              header: t('invitations.expires'),
+              render: (item) => (item.status === 1 ? '—' : formatDate(item.expiresAt ?? '', i18n.language)),
+            },
+            {
+              key: 'actions',
+              header: <span className="sr-only">{t('invitations.actions')}</span>,
+              render: (item) =>
+                open(item) && (
+                  <div className="flex gap-2 whitespace-nowrap">
+                    <Link component="button" variant="body2" aria-label={`${t('invitations.resend')} ${item.email}`} onClick={() => resend.mutate(item.id!)}>{t('invitations.resend')}</Link>
+                    <Link component="button" variant="body2" aria-label={`${t('invitations.copyLink')} ${item.email}`} onClick={() => copy.mutate(item.id!)}>{t('invitations.copyLink')}</Link>
+                    <Link component="button" variant="body2" aria-label={`${t('invitations.revoke')} ${item.email}`} sx={{ color: sem('feedback-danger-text') }} onClick={() => setRevoking(item)}>{t('invitations.revoke')}</Link>
+                  </div>
+                ),
+            },
+          ]}
+        />
+      )}
+      <DialogConfirm
+        open={revoking !== null}
+        title={t('invitations.revokeTitle')}
+        description={t('invitations.revokeBody', { email: revoking?.email })}
+        confirmLabel={t('invitations.revoke')}
+        onCancel={() => setRevoking(null)}
+        onConfirm={() => revoking && revoke.mutate(revoking.id!)}
+      />
+    </section>
+  );
+}

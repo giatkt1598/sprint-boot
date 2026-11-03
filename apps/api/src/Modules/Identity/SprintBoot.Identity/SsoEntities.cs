@@ -109,6 +109,8 @@ public class InvitationProject : Entity<Guid>
     {
     }
 
+    public void ChangeRole(string projectRole) => ProjectRole = projectRole;
+
     public InvitationProject(Guid id, Guid invitationId, Guid projectId, string projectRole)
         : base(id)
     {
