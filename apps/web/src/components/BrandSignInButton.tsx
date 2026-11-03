@@ -1,7 +1,7 @@
 import ButtonBase from '@mui/material/ButtonBase';
 import { brand, font, motion, sem } from '../theme/tokens';
 
-type Brand = keyof typeof brand;
+type Brand = 'google' | 'github';
 
 /** The Google "G" as Google publishes it; the four colors are part of the mark. */
 export function GoogleMark() {
@@ -39,7 +39,7 @@ export function BrandSignInButton({ kind, href, label }: { kind: Brand; href: st
         position: 'relative',
         display: 'flex',
         width: '100%',
-        height: style.height,
+        height: brand.signInHeight,
         paddingInline: '12px',
         gap: '10px',
         justifyContent: 'center',

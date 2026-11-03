@@ -128,13 +128,14 @@ export const editorColors = {
  * the Google Identity branding guidelines and GitHub's Primer, and never change with the theme.
  */
 export const brand = {
+  /** Every sign-in button shares Google's 40px, so a stack of providers lines up. */
+  signInHeight: 40,
   google: {
     background: '#FFFFFF',
     hover: '#F2F2F2',
     border: '#747775',
     text: '#1F1F1F',
     radius: 4,
-    height: 40,
   },
   github: {
     background: '#24292F',
@@ -142,6 +143,5 @@ export const brand = {
     border: '#24292F',
     text: '#FFFFFF',
     radius: 6,
-    height: 40,
   },
 } as const;
