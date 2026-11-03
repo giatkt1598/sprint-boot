@@ -4,7 +4,7 @@ import Typography from '@mui/material/Typography';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link as RouterLink, Navigate, useParams } from 'react-router';
+import { Link as RouterLink, Navigate, useNavigate, useParams } from 'react-router';
 import type { components } from '@sprint-boot/api-client';
 import { apiClient, unwrap } from '../../api';
 import { useCan } from '../../auth/AuthProvider';
@@ -235,6 +235,40 @@ function AddToSpaceDialog({ userId, joined, onClose }: { userId: string; joined:
   );
 }
 
+/** Deleting cannot be undone, so the admin types the email to confirm they mean this person. */
+function DeleteUserDialog({ name, email, onCancel, onDelete, pending, error }: {
+  name: string;
+  email: string;
+  onCancel: () => void;
+  onDelete: () => void;
+  pending: boolean;
+  error: string | null;
+}) {
+  const { t } = useTranslation();
+  const [typed, setTyped] = useState('');
+
+  return (
+    <Dialog
+      open
+      title={t('admin.deleteTitle', { name })}
+      onClose={onCancel}
+      footer={
+        <DialogFooter
+          confirmLabel={t('admin.deleteAccount')}
+          confirmKind="danger"
+          confirmDisabled={typed.trim().toLowerCase() !== email.toLowerCase() || pending}
+          onCancel={onCancel}
+          onConfirm={onDelete}
+        />
+      }
+    >
+      <Typography variant="body1" color="textSecondary">{t('admin.deleteBody')}</Typography>
+      <TextField label={t('admin.deleteConfirm', { email })} autoFocus value={typed} onChange={(event) => setTyped(event.target.value)} />
+      {error && <Typography role="alert" color="error" variant="body2">{error}</Typography>}
+    </Dialog>
+  );
+}
+
 export function ManageUserPage() {
   const { t, i18n } = useTranslation();
   const { userId } = useParams();
@@ -242,6 +276,8 @@ export function ManageUserPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
   const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const navigate = useNavigate();
   const [roleAnchor, setRoleAnchor] = useState<HTMLElement | null>(null);
   const [adding, setAdding] = useState(false);
   const [removing, setRemoving] = useState<UserSpace | null>(null);
@@ -285,6 +321,15 @@ export function ManageUserPage() {
     onSettled: () => setRemoving(null),
   });
 
+  const remove = useMutation({
+    mutationFn: () => unwrap(apiClient.DELETE('/api/v1/user-admin/{id}', { params: { path: { id: userId! } } })),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      toast('success', t('admin.deleted'));
+      await navigate('/admin/users');
+    },
+  });
+
   if (user.isPending) {
     return <LoadingState />;
   }
@@ -321,6 +366,7 @@ export function ManageUserPage() {
         ) : (
           <Button kind="secondary" onClick={() => setConfirming(true)}>{t('admin.lockAccount')}</Button>
         )}
+        <Button kind="danger" onClick={() => setDeleting(true)}>{t('admin.deleteAccount')}</Button>
       </div>
 
       <section className="flex flex-col gap-2">
@@ -391,6 +437,16 @@ export function ManageUserPage() {
         onCancel={() => setRemoving(null)}
         onConfirm={() => removeFromSpace.mutate(removing!)}
       />
+      {deleting && (
+        <DeleteUserDialog
+          name={user.data.name ?? ''}
+          email={user.data.email ?? ''}
+          pending={remove.isPending}
+          error={remove.isError ? toMessage(remove.error) : null}
+          onCancel={() => setDeleting(false)}
+          onDelete={() => remove.mutate()}
+        />
+      )}
       {adding && (
         <AddToSpaceDialog
           userId={userId!}

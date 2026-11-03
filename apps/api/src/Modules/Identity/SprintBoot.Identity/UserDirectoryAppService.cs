@@ -1,3 +1,5 @@
+using Volo.Abp;
+using Volo.Abp.Data;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Application.Services;
 using Volo.Abp.DependencyInjection;
@@ -19,12 +21,18 @@ public class UserDirectoryAppService(IIdentityUserRepository users) : Applicatio
 }
 
 /// <summary>In-process lookups with no calling user required, so background consumers can use them.</summary>
-public class UserDirectory(IIdentityUserRepository users) : IUserDirectory, ITransientDependency
+public class UserDirectory(IIdentityUserRepository users, IDataFilter dataFilter) : IUserDirectory, ITransientDependency
 {
+    public const string DeactivatedName = "Deactivated User";
+
+    /// <summary>Deleted people are included, so their past work still shows who did it.</summary>
     public async Task<Dictionary<Guid, UserRefDto>> GetByIdsAsync(IEnumerable<Guid> ids)
     {
-        var found = await users.GetListByIdsAsync(ids.Distinct().ToArray());
-        return found.ToDictionary(user => user.Id, ToDto);
+        using (dataFilter.Disable<ISoftDelete>())
+        {
+            var found = await users.GetListByIdsAsync(ids.Distinct().ToArray());
+            return found.ToDictionary(user => user.Id, ToDto);
+        }
     }
 
     public async Task<HashSet<Guid>> GetActiveIdsAsync(IEnumerable<Guid> ids)
@@ -34,7 +42,9 @@ public class UserDirectory(IIdentityUserRepository users) : IUserDirectory, ITra
         return [.. found.Where(user => user.IsActive && (user.LockoutEnd is null || user.LockoutEnd <= now)).Select(user => user.Id)];
     }
 
-    public static UserRefDto ToDto(IdentityUser user) => new()
+    public static UserRefDto ToDto(IdentityUser user) => user.IsDeleted
+        ? new UserRefDto { Id = user.Id, Name = DeactivatedName, Email = string.Empty, IsDeactivated = true }
+        : new()
     {
         Id = user.Id,
         Name = string.IsNullOrWhiteSpace(user.Name) ? user.UserName : user.Name,

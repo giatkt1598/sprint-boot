@@ -35,6 +35,7 @@
     "back": "Về trang chủ"
   },
   "common": {
+    "deactivatedUser": "Người dùng đã ngừng hoạt động",
     "cancel": "Hủy",
     "confirm": "Xác nhận",
     "close": "Đóng",
@@ -128,6 +129,8 @@
     "richText": "Văn bản định dạng"
   },
   "errors": {
+    "CannotDeleteSelf": "Bạn không thể xóa tài khoản của chính mình.",
+    "LastSystemAdmin": "Đây là quản trị hệ thống cuối cùng. Hãy cấp quyền admin cho người khác trước.",
     "generic": "Đã có lỗi xảy ra. Vui lòng thử lại.",
     "loadFailed": "Không tải được trang này.",
     "forbidden": "Bạn không có quyền thực hiện thao tác này.",
@@ -263,6 +266,11 @@
     "passwordChanged": "Đã đổi mật khẩu"
   },
   "admin": {
+    "deleteAccount": "Xóa tài khoản",
+    "deleteTitle": "Xóa {{name}}?",
+    "deleteBody": "Người này sẽ không đăng nhập được và bị gỡ khỏi mọi space. Issue, comment và lịch sử của họ vẫn giữ lại, hiển thị là người dùng đã ngừng hoạt động. Không thể hoàn tác.",
+    "deleteConfirm": "Nhập {{email}} để xác nhận",
+    "deleted": "Đã xóa tài khoản",
     "title": "Quản trị",
     "users": "Người dùng",
     "deletedIssues": "Issue đã xóa",

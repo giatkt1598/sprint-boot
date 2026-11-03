@@ -174,6 +174,46 @@ public class AuthTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task Admin_deletes_an_account_whose_work_then_shows_a_deactivated_user()
+    {
+        var admin = new AuthClient(fixture);
+        await admin.SignInAsync(ApiFixture.AdminEmail, ApiFixture.AdminPassword, Token);
+        var gone = await fixture.CreateUserClientAsync(Token);
+        var key = $"D{Random.Shared.Next(100000, 999999)}";
+        var space = (await (await admin.Http.PostAsJsonAsync("/api/v1/project", new { name = "Del", key, type = 0 }, Token)).Content.ReadFromJsonAsync<ProjectDto>(Token))!;
+        (await admin.Http.PostAsJsonAsync($"/api/v1/project/{space.Id}/member", new { userId = gone.UserId, role = ProjectRoleNames.Member }, Token)).EnsureSuccessStatusCode();
+        var types = (await admin.Http.GetFromJsonAsync<List<SprintBoot.Issues.IssueTypeDto>>($"/api/v1/issue/types/{space.Id}", Token))!;
+        var issue = (await (await admin.Http.PostAsJsonAsync("/api/v1/issue", new { projectId = space.Id, typeId = types.Single(type => type.Name == "Task").Id, title = "Theirs", assigneeId = gone.UserId }, Token)).Content.ReadFromJsonAsync<SprintBoot.Issues.IssueDto>(Token))!;
+
+        var me = (await admin.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!;
+        var self = await admin.Http.DeleteAsync($"/api/v1/user-admin/{me.Id}", Token);
+        (await self.Content.ReadAsStringAsync(Token)).ShouldContain(AuthErrors.CannotDeleteSelf);
+        (await admin.Http.DeleteAsync($"/api/v1/user-admin/{gone.UserId}", Token)).EnsureSuccessStatusCode();
+
+        var read = (await admin.Http.GetFromJsonAsync<SprintBoot.Issues.IssueDto>($"/api/v1/issue/by-key?key={issue.Key}", Token))!;
+        read.Assignee!.Name.ShouldBe(UserDirectory.DeactivatedName);
+        read.Assignee.IsDeactivated.ShouldBeTrue();
+        read.Assignee.Email.ShouldBeEmpty();
+
+        (await admin.Http.GetAsync($"/api/v1/user-admin/{gone.UserId}", Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await gone.Http.GetAsync("/api/v1/auth/me", Token)).IsSuccessStatusCode.ShouldBeFalse();
+
+        // Memberships go through the outbox, so they leave shortly after.
+        for (var wait = 0; wait < 50; wait++)
+        {
+            var members = (await admin.Http.GetFromJsonAsync<List<ProjectMemberDto>>($"/api/v1/project/{space.Id}/members", Token))!;
+            if (members.All(member => member.User.Id != gone.UserId))
+            {
+                return;
+            }
+
+            await Task.Delay(200, Token);
+        }
+
+        throw new TimeoutException("The deleted user is still a member.");
+    }
+
+    [Fact]
     public async Task Admin_sees_spaces_and_sign_in_methods_of_a_user_but_a_member_cannot()
     {
         var member = await fixture.CreateUserClientAsync(Token);

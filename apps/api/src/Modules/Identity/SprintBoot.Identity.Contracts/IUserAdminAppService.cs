@@ -18,4 +18,10 @@ public interface IUserAdminAppService : IApplicationService
     Task<UserSummaryDto> UnlockAsync(Guid id);
 
     Task<UserSummaryDto> SetSystemRoleAsync(Guid id, SetSystemRoleInput input);
+
+    /// <summary>
+    /// Removes the account: it can no longer sign in and leaves every space. Its work stays,
+    /// shown as by a deactivated user. Not for yourself, nor for the last system admin.
+    /// </summary>
+    Task DeleteAsync(Guid id);
 }

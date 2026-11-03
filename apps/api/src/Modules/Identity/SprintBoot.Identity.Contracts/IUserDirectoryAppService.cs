@@ -12,6 +12,9 @@ public class UserRefDto
 
     /// <summary>Null until the user uploads a picture; clients then show initials.</summary>
     public string? AvatarUrl { get; set; }
+
+    /// <summary>The account was deleted; the name then reads Deactivated User.</summary>
+    public bool IsDeactivated { get; set; }
 }
 
 /// <summary>Minimal user info any signed-in user may see, for pickers and display names.</summary>

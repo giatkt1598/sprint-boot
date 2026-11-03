@@ -1,5 +1,6 @@
 import { createApiClient } from '@sprint-boot/api-client';
 import { getAccessToken } from './auth/oidc';
+import i18n from './i18n';
 
 const ANONYMOUS_PATHS = [
   '/api/v1/auth/login',
@@ -50,6 +51,25 @@ interface ApiResult<T> {
   response: Response;
 }
 
+/**
+ * The API names a deleted person "Deactivated User" in English; every user reference carries
+ * isDeactivated, so the name is swapped for the reader's language in one place.
+ */
+function translateDeactivated(value: unknown, depth = 0): void {
+  if (depth > 12 || value === null || typeof value !== 'object') {
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item) => translateDeactivated(item, depth + 1));
+    return;
+  }
+  const record = value as Record<string, unknown>;
+  if (record.isDeactivated === true && 'name' in record) {
+    record.name = i18n.t('common.deactivatedUser');
+  }
+  Object.values(record).forEach((item) => translateDeactivated(item, depth + 1));
+}
+
 /** Throws ApiError for a failed call, otherwise returns the body. */
 export async function unwrap<T>(call: Promise<ApiResult<T>>): Promise<T> {
   const { data, error, response } = await call;
@@ -57,6 +77,7 @@ export async function unwrap<T>(call: Promise<ApiResult<T>>): Promise<T> {
     const detail = (error as { error?: { code?: string; message?: string; data?: Record<string, string> } } | undefined)?.error;
     throw new ApiError(response.status, detail?.code, detail?.message ?? response.statusText, detail?.data);
   }
+  translateDeactivated(data);
   return data as T;
 }
 

@@ -10,4 +10,6 @@ public static class AuthErrors
     public const string LocalDisabled = SsoErrors.LocalDisabled;
     public const string CannotLockSelf = "SprintBoot:CannotLockSelf";
     public const string AvatarInvalid = "SprintBoot:AvatarInvalid";
+    public const string CannotDeleteSelf = "SprintBoot:CannotDeleteSelf";
+    public const string LastSystemAdmin = "SprintBoot:LastSystemAdmin";
 }

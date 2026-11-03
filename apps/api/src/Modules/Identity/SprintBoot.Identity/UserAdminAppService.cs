@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Identity;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
+using OpenIddict.Abstractions;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.Identity;
 using Volo.Abp.Users;
 using IdentityUser = Volo.Abp.Identity.IdentityUser;
@@ -11,7 +13,12 @@ using IdentityUser = Volo.Abp.Identity.IdentityUser;
 namespace SprintBoot.Identity;
 
 [Authorize(SprintBootPermissions.ManageUsers)]
-public class UserAdminAppService(IdentityUserManager userManager, IIdentityUserRepository users)
+public class UserAdminAppService(
+    IdentityUserManager userManager,
+    IIdentityUserRepository users,
+    IRepository<PersonalToken, Guid> personalTokens,
+    IOpenIddictTokenManager oidcTokens,
+    IDistributedEventBus eventBus)
     : ApplicationService, IUserAdminAppService
 {
     /// <summary>Stable value the UI translates; external logins show their provider name.</summary>
@@ -103,6 +110,37 @@ public class UserAdminAppService(IdentityUserManager userManager, IIdentityUserR
         var user = await userManager.GetByIdAsync(id);
         (await userManager.SetRolesAsync(user, [input.SystemRole])).CheckErrors();
         return await ToDtoAsync(user);
+    }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        if (id == CurrentUser.GetId())
+        {
+            throw new BusinessException(AuthErrors.CannotDeleteSelf);
+        }
+
+        var user = await userManager.GetByIdAsync(id);
+        if (await userManager.IsInRoleAsync(user, SystemRoles.Admin)
+            && (await userManager.GetUsersInRoleAsync(SystemRoles.Admin)).All(admin => admin.Id == id))
+        {
+            throw new BusinessException(AuthErrors.LastSystemAdmin);
+        }
+
+        // Nothing it signed in with may keep working, and its IdP logins are freed for a new account.
+        await personalTokens.DeleteAsync(token => token.UserId == id, autoSave: true);
+        await foreach (var token in oidcTokens.FindBySubjectAsync(id.ToString()))
+        {
+            await oidcTokens.TryRevokeAsync(token);
+        }
+
+        foreach (var login in await userManager.GetLoginsAsync(user))
+        {
+            (await userManager.RemoveLoginAsync(user, login.LoginProvider, login.ProviderKey)).CheckErrors();
+        }
+
+        // Soft delete: issues, comments and history keep pointing at the person.
+        (await userManager.DeleteAsync(user)).CheckErrors();
+        await eventBus.PublishAsync(new UserDeletedEto { EventId = GuidGenerator.Create(), UserId = id }, useOutbox: true);
     }
 
     private static Task EnsureRoleExistsAsync(string role)
