@@ -112,12 +112,14 @@ public class TicketTests(ApiFixture fixture)
     {
         var client = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(client);
-        var parent = await CreateIssueAsync(client, project, "Parent");
+        var created = await PostIssueAsync(client, project.Id, await TypeIdAsync(client, project.Id, "Epic"), "Parent");
+        var parent = (await created.Content.ReadFromJsonAsync<IssueDto>(Token))!;
         var issue = await CreateIssueAsync(client, project);
         var priorities = (await client.Http.GetFromJsonAsync<List<PriorityDto>>("/api/v1/issue/priorities", Token))!;
         var high = priorities.Single(item => item.Name == "High");
 
-        (await PatchAsync(client, issue, new { assignee = client.UserId, priority = high.Id, parent = parent.Id })).EnsureSuccessStatusCode();
+        var patched = await PatchAsync(client, issue, new { assignee = client.UserId, priority = high.Id, parent = parent.Id });
+        patched.StatusCode.ShouldBe(HttpStatusCode.OK, await patched.Content.ReadAsStringAsync(Token));
 
         var activity = (await client.Http.GetFromJsonAsync<List<IssueActivityDto>>($"/api/v1/issue/{issue.Id}/activity", Token))!;
         activity.Single(item => item.Field == "assignee").NewValue.ShouldEndWith("@test.local");

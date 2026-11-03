@@ -38,7 +38,7 @@ public class IssueDraft
     [Description("create_issues only: the index (from 0) of an earlier item in the same batch to use as parent.")]
     public int? ParentRef { get; set; }
 
-    public string[]? Labels { get; set; }
+    public List<string>? Labels { get; set; }
 
     public decimal? StoryPoints { get; set; }
 
@@ -89,12 +89,12 @@ public class IssueTools(
     public Task<string> SearchIssues(
         [Description("Words to look for in the key, title or description.")] string? text = null,
         [Description("Space key, such as BANK.")] string? space = null,
-        [Description("Issue type names.")] string[]? types = null,
-        [Description("Status names.")] string[]? statuses = null,
-        [Description("Priority names.")] string[]? priorities = null,
-        [Description("Assignees: me, emails, names or ids.")] string[]? assignees = null,
-        [Description("Reporters: me, emails, names or ids.")] string[]? reporters = null,
-        [Description("Labels; an issue matches when it has any of them.")] string[]? labels = null,
+        [Description("Issue type names.")] List<string>? types = null,
+        [Description("Status names.")] List<string>? statuses = null,
+        [Description("Priority names.")] List<string>? priorities = null,
+        [Description("Assignees: me, emails, names or ids.")] List<string>? assignees = null,
+        [Description("Reporters: me, emails, names or ids.")] List<string>? reporters = null,
+        [Description("Labels; an issue matches when it has any of them.")] List<string>? labels = null,
         [Description("Parent issue key, to list its children.")] string? parent = null,
         [Description("Created on or after, such as 2026-11-01.")] string? createdFrom = null,
         [Description("Created on or before.")] string? createdTo = null,
@@ -110,14 +110,14 @@ public class IssueTools(
             Text = text,
             SkipCount = Math.Max(0, offset),
             MaxResultCount = Math.Clamp(limit, 1, 50),
-            Labels = labels is { Length: > 0 } ? labels : null,
+            Labels = labels is { Count: > 0 } ? [.. labels] : null,
             CreatedFrom = createdFrom is null ? null : McpResolver.Time(createdFrom, "createdFrom"),
             CreatedTo = createdTo is null ? null : EndOfDay(createdTo, "createdTo"),
             UpdatedFrom = updatedFrom is null ? null : McpResolver.Time(updatedFrom, "updatedFrom"),
             UpdatedTo = updatedTo is null ? null : EndOfDay(updatedTo, "updatedTo"),
         };
 
-        if (types is { Length: > 0 })
+        if (types is { Count: > 0 })
         {
             var spaces = project is null ? await projects.GetListAsync() : [project];
             var known = new List<IssueTypeDto>();
@@ -129,13 +129,13 @@ public class IssueTools(
             input.TypeIds = [.. types.SelectMany(name => Matching(known, name, type => type.Name, type => type.Id, "issue type"))];
         }
 
-        if (statuses is { Length: > 0 })
+        if (statuses is { Count: > 0 })
         {
             var known = await resolver.StatusesAsync(project?.Id);
             input.StatusIds = [.. statuses.SelectMany(name => Matching(known, name, status => status.Name, status => status.Id, "status"))];
         }
 
-        if (priorities is { Length: > 0 })
+        if (priorities is { Count: > 0 })
         {
             var ids = new List<Guid>();
             foreach (var name in priorities)
@@ -146,12 +146,12 @@ public class IssueTools(
             input.PriorityIds = [.. ids];
         }
 
-        if (assignees is { Length: > 0 })
+        if (assignees is { Count: > 0 })
         {
             input.AssigneeIds = [.. await UserIdsAsync(assignees)];
         }
 
-        if (reporters is { Length: > 0 })
+        if (reporters is { Count: > 0 })
         {
             input.ReporterIds = [.. await UserIdsAsync(reporters)];
         }
@@ -233,7 +233,7 @@ public class IssueTools(
         [Description("Assignee: me, an email, a name or a user id.")] string? assignee = null,
         [Description("Reporter; defaults to you.")] string? reporter = null,
         [Description("Parent issue key: the epic, or the issue a subtask belongs to.")] string? parent = null,
-        string[]? labels = null,
+        List<string>? labels = null,
         decimal? storyPoints = null,
         [Description("Date like 2026-11-30.")] string? startDate = null,
         [Description("Date like 2026-11-30.")] string? dueDate = null,
@@ -278,17 +278,17 @@ public class IssueTools(
         "Creates up to 20 issues in one space. Each item succeeds or fails on its own; an item can name an earlier one as parent with parentRef.")]
     public Task<string> CreateIssues(
         [Description("Space key.")] string space,
-        [Description("The issues to create, in order.")] IssueDraft[] items) => runner.WriteAsync(async () =>
+        [Description("The issues to create, in order.")] List<IssueDraft> items) => runner.WriteAsync(async () =>
     {
-        if (items.Length is 0 or > MaxBatch)
+        if (items.Count is 0 or > MaxBatch)
         {
             throw new McpException($"Send between 1 and {MaxBatch} issues.");
         }
 
         var project = await resolver.SpaceAsync(space);
-        var keys = new string?[items.Length];
+        var keys = new string?[items.Count];
         var results = new List<object>();
-        for (var index = 0; index < items.Length; index++)
+        for (var index = 0; index < items.Count; index++)
         {
             var draft = items[index];
             string? parentKey = null;
@@ -322,14 +322,14 @@ public class IssueTools(
         [Description("Assignee: me, an email, a name or a user id.")] string? assignee = null,
         string? reporter = null,
         [Description("Parent issue key.")] string? parent = null,
-        [Description("Replaces all labels.")] string[]? labels = null,
-        [Description("Labels to add, keeping the others.")] string[]? addLabels = null,
-        [Description("Labels to remove.")] string[]? removeLabels = null,
+        [Description("Replaces all labels.")] List<string>? labels = null,
+        [Description("Labels to add, keeping the others.")] List<string>? addLabels = null,
+        [Description("Labels to remove.")] List<string>? removeLabels = null,
         decimal? storyPoints = null,
         [Description("Date like 2026-11-30.")] string? startDate = null,
         [Description("Date like 2026-11-30.")] string? dueDate = null,
         [Description("Sprint name, active, or backlog.")] string? sprint = null,
-        [Description("Fields to empty: description, assignee, reporter, parent, labels, storyPoints, startDate, dueDate.")] string[]? clear = null,
+        [Description("Fields to empty: description, assignee, reporter, parent, labels, storyPoints, startDate, dueDate.")] List<string>? clear = null,
         [Description("The concurrencyStamp from get_issue, to refuse the change if someone edited the issue since.")] string? concurrencyStamp = null)
         => runner.WriteAsync(async () =>
     {
@@ -349,7 +349,7 @@ public class IssueTools(
         "insert_after_section. Returns the new description.")]
     public Task<string> EditDescription(
         [Description("Issue key.")] string key,
-        [Description("The edits, applied in order.")] DescriptionEdit[] edits,
+        [Description("The edits, applied in order.")] List<DescriptionEdit> edits,
         [Description("The concurrencyStamp from get_issue, to refuse the change if someone edited the issue since.")] string? concurrencyStamp = null)
         => runner.WriteAsync(async () =>
     {
@@ -362,22 +362,22 @@ public class IssueTools(
     [McpServerTool(Name = "update_issues", Destructive = false), Description(
         "Applies the same change to up to 50 issues, such as assigning them or adding a label. Each issue succeeds or fails on its own.")]
     public Task<string> UpdateIssues(
-        [Description("Issue keys.")] string[] keys,
+        [Description("Issue keys.")] List<string> keys,
         string? type = null,
         string? priority = null,
         [Description("Assignee: me, an email, a name or a user id.")] string? assignee = null,
         string? reporter = null,
         [Description("Parent issue key.")] string? parent = null,
-        [Description("Labels to add.")] string[]? addLabels = null,
-        [Description("Labels to remove.")] string[]? removeLabels = null,
+        [Description("Labels to add.")] List<string>? addLabels = null,
+        [Description("Labels to remove.")] List<string>? removeLabels = null,
         decimal? storyPoints = null,
         string? startDate = null,
         string? dueDate = null,
         [Description("Sprint name, active, or backlog.")] string? sprint = null,
-        [Description("Fields to empty: assignee, reporter, parent, labels, storyPoints, startDate, dueDate.")] string[]? clear = null)
+        [Description("Fields to empty: assignee, reporter, parent, labels, storyPoints, startDate, dueDate.")] List<string>? clear = null)
         => runner.WriteAsync(async () =>
     {
-        if (keys.Length is 0 or > MaxBulkUpdate)
+        if (keys.Count is 0 or > MaxBulkUpdate)
         {
             throw new McpException($"Send between 1 and {MaxBulkUpdate} keys.");
         }
@@ -466,7 +466,7 @@ public class IssueTools(
             AssigneeId = draft.Assignee is null ? null : (await resolver.UserAsync(draft.Assignee)).Id,
             ReporterId = draft.Reporter is null ? null : (await resolver.UserAsync(draft.Reporter)).Id,
             ParentId = parentKey is null ? null : (await resolver.IssueAsync(parentKey)).Id,
-            Labels = draft.Labels,
+            Labels = draft.Labels?.ToArray(),
             StoryPoints = draft.StoryPoints,
             StartDate = draft.StartDate is null ? null : McpResolver.Date(draft.StartDate, "startDate"),
             DueDate = draft.DueDate is null ? null : McpResolver.Date(draft.DueDate, "dueDate"),
@@ -498,11 +498,11 @@ public class IssueTools(
 
         public string? Parent { get; init; }
 
-        public string[]? Labels { get; init; }
+        public List<string>? Labels { get; init; }
 
-        public string[]? AddLabels { get; init; }
+        public List<string>? AddLabels { get; init; }
 
-        public string[]? RemoveLabels { get; init; }
+        public List<string>? RemoveLabels { get; init; }
 
         public decimal? StoryPoints { get; init; }
 
@@ -512,7 +512,7 @@ public class IssueTools(
 
         public string? Sprint { get; init; }
 
-        public string[]? Clear { get; init; }
+        public List<string>? Clear { get; init; }
     }
 
     private async Task<IssueDto> ApplyAsync(IssueDto issue, Changes changes, string? concurrencyStamp)
@@ -562,7 +562,7 @@ public class IssueTools(
 
         if (changes.Labels is not null || changes.AddLabels is not null || changes.RemoveLabels is not null)
         {
-            var next = (changes.Labels ?? issue.Labels).Concat(changes.AddLabels ?? [])
+            var next = ((IEnumerable<string>?)changes.Labels ?? issue.Labels).Concat(changes.AddLabels ?? [])
                 .Where(label => !(changes.RemoveLabels ?? []).Contains(label, StringComparer.OrdinalIgnoreCase))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray();

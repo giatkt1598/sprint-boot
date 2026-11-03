@@ -58,12 +58,12 @@ public class AgileTools(McpRunner runner, McpResolver resolver, ISprintAppServic
     [McpServerTool(Name = "move_to_sprint", Destructive = false, Idempotent = true), Description(
         "Puts issues into a sprint or back in the backlog, optionally ranked after or before another issue. Epics and subtasks are not planned.")]
     public Task<string> MoveToSprint(
-        [Description("Issue keys, all in one space.")] string[] keys,
+        [Description("Issue keys, all in one space.")] List<string> keys,
         [Description("Sprint name, active for the running sprint, or backlog.")] string sprint,
         [Description("Rank the issues right after this issue key.")] string? after = null,
         [Description("Rank the issues right before this issue key.")] string? before = null) => runner.WriteAsync(async () =>
     {
-        if (keys.Length == 0)
+        if (keys.Count == 0)
         {
             throw new McpException("Give at least one issue key.");
         }

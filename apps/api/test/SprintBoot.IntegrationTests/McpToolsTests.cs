@@ -60,6 +60,29 @@ public class McpToolsTests(ApiFixture fixture)
     private static string Text(JsonElement element, string name) => element.GetProperty(name).GetString()!;
 
     [Fact]
+    public async Task Every_parameter_is_in_the_tool_schemas()
+    {
+        var agent = await AgentAsync();
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/mcp")
+        {
+            Content = JsonContent.Create(new { jsonrpc = "2.0", id = 1, method = "tools/list", @params = new { } }),
+        };
+        request.Headers.Accept.ParseAdd("application/json");
+        request.Headers.Accept.ParseAdd("text/event-stream");
+        var body = await (await agent.Http.SendAsync(request, Token)).Content.ReadAsStringAsync(Token);
+        var json = body.Split('\n').FirstOrDefault(line => line.StartsWith("data:", StringComparison.Ordinal))?[5..] ?? body;
+        var tools = JsonDocument.Parse(json).RootElement.GetProperty("result").GetProperty("tools").EnumerateArray()
+            .ToDictionary(tool => Text(tool, "name"), tool => tool.GetProperty("inputSchema").GetProperty("properties"));
+
+        // Arrays and dictionaries can be taken for services and silently dropped from a schema.
+        tools["move_to_sprint"].TryGetProperty("keys", out _).ShouldBeTrue();
+        tools["create_issues"].TryGetProperty("items", out _).ShouldBeTrue();
+        tools["edit_description"].TryGetProperty("edits", out _).ShouldBeTrue();
+        tools["update_issue"].TryGetProperty("labels", out _).ShouldBeTrue();
+        tools["transition_issue"].TryGetProperty("fields", out _).ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task Issues_are_created_with_every_field_and_read_back_as_markdown()
     {
         var agent = await AgentAsync();
