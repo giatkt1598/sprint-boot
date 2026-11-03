@@ -199,10 +199,8 @@ export function TransitionControl({ issue, people, onConflict, lazy }: ControlPr
       >
         {badge}
       </ButtonBase>
-      <Menu open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}>
-        <Typography variant="body2" color="textSecondary" component="li" role="presentation" className="px-2 pb-1">
-          {t('issues.moveTo')}
-        </Typography>
+      {/* No visible heading: the list of statuses says what it is; screen readers still hear it. */}
+      <Menu open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)} slotProps={{ list: { 'aria-label': t('issues.moveTo') } }}>
         {targets.length === 0 && !available.isPending && (
           <Typography variant="body2" color="textSecondary" component="li" role="presentation" className="px-2">{t('issues.noTransitions')}</Typography>
         )}
