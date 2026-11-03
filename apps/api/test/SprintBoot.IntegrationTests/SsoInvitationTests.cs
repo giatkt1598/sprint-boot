@@ -370,6 +370,8 @@ public class SsoInvitationTests(ApiFixture fixture)
         shown.LogoUrl.ShouldBe(logoUrl);
         shown.ButtonColor.ShouldBe("#1A73E8");
         (await fixture.Factory.CreateClient().GetAsync(logoUrl, Token)).Content.Headers.ContentType!.MediaType.ShouldBe("image/png");
+        var member = await fixture.CreateUserClientAsync(Token);
+        (await member.Http.GetFromJsonAsync<List<LinkedLoginDto>>("/api/v1/auth/logins", Token))!.Single(item => item.Provider == name).LogoUrl.ShouldBe(logoUrl);
 
         (await admin.Http.DeleteAsync($"/api/v1/sso-admin/{provider.Id}/logo", Token)).EnsureSuccessStatusCode();
         (await fixture.Factory.CreateClient().GetAsync(logoUrl, Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);

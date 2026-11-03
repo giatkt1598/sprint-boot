@@ -44,6 +44,7 @@ public class LinkedLoginService(
                 IsLinked = login is not null,
                 CanLink = login is null,
                 CanUnlink = login is not null && canUnlink,
+                LogoUrl = ProviderLogos.Url(provider),
             };
         }).ToList();
 

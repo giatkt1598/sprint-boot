@@ -21131,6 +21131,10 @@
           },
           "canUnlink": {
             "type": "boolean"
+          },
+          "logoUrl": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false

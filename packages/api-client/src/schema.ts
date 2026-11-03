@@ -14963,6 +14963,7 @@ export interface components {
             isLinked: boolean;
             canLink: boolean;
             canUnlink: boolean;
+            logoUrl?: string | null;
         };
         LoginInput: {
             /** Format: email */

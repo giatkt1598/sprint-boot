@@ -36,6 +36,9 @@ public class LinkedLoginDto
 
     /// <summary>False when this is the only way left to sign in.</summary>
     public required bool CanUnlink { get; set; }
+
+    /// <summary>The logo an admin uploaded for an OIDC provider.</summary>
+    public string? LogoUrl { get; set; }
 }
 
 public class LinkStartDto

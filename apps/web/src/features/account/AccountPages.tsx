@@ -207,7 +207,13 @@ function LinkedAccounts() {
           {logins.data!.map((login) => (
             <li key={login.provider} className="flex min-h-10 items-center gap-3">
               <span className="flex w-5 shrink-0 justify-center">
-                {login.type === 1 ? <GoogleMark /> : login.type === 2 ? <GitHubMark /> : null}
+                {login.type === 1 ? (
+                  <GoogleMark />
+                ) : login.type === 2 ? (
+                  <GitHubMark />
+                ) : login.logoUrl ? (
+                  <img src={login.logoUrl} alt="" width={18} height={18} style={{ objectFit: 'contain' }} />
+                ) : null}
               </span>
               <Typography variant="body1" className="flex-1">{login.displayName}</Typography>
               {login.isLinked ? <Badge tone="success">{t('account.linked')}</Badge> : <Badge>{t('account.notLinked')}</Badge>}
