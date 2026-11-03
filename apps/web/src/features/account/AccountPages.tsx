@@ -9,6 +9,7 @@ import { apiClient, unwrap } from '../../api';
 import { useCurrentUser } from '../../auth/AuthProvider';
 import { Avatar } from '../../components/Avatar';
 import { Badge } from '../../components/Badge';
+import { GitHubMark, GoogleMark } from '../../components/BrandSignInButton';
 import { DialogConfirm } from '../../components/Dialog';
 import { Button } from '../../components/Button';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
@@ -204,6 +205,9 @@ function LinkedAccounts() {
         <ul className="flex max-w-md flex-col gap-2">
           {logins.data!.map((login) => (
             <li key={login.provider} className="flex min-h-10 items-center gap-3">
+              <span className="flex w-5 shrink-0 justify-center">
+                {login.type === 1 ? <GoogleMark /> : login.type === 2 ? <GitHubMark /> : null}
+              </span>
               <Typography variant="body1" className="flex-1">{login.displayName}</Typography>
               {login.isLinked ? <Badge tone="success">{t('account.linked')}</Badge> : <Badge>{t('account.notLinked')}</Badge>}
               {login.canLink && (
