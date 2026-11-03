@@ -84,14 +84,15 @@ export function IssueContent({ issueKey, compact }: { issueKey: string | undefin
 }
 
 const SIDEBAR_WIDTH_KEY = 'sprint-boot.issue-sidebar-width';
-const SIDEBAR_MIN = 280;
+// Wide enough that the assignee and reporter pickers show a full name next to the label column.
+const SIDEBAR_MIN = 320;
 const SIDEBAR_MAX = 560;
 const SIDEBAR_STEP = 16;
 
 const clampSidebar = (width: number) => Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, width));
 
 function useSidebarWidth() {
-  const [width, setWidth] = useState(() => clampSidebar(Number(localStorage.getItem(SIDEBAR_WIDTH_KEY)) || 320));
+  const [width, setWidth] = useState(() => clampSidebar(Number(localStorage.getItem(SIDEBAR_WIDTH_KEY)) || 360));
   const change = (next: number) => {
     const clamped = clampSidebar(next);
     setWidth(clamped);

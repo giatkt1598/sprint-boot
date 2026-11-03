@@ -293,17 +293,59 @@ public partial class IssueAppService(
         await projectAccess.CheckAsync(issue.ProjectId, ProjectPermissions.ViewIssues);
 
         var list = await activities.GetListAsync(activity => activity.IssueId == id);
+        var names = await ActivityNamesAsync(list);
         var users = await userDirectory.GetByIdsAsync(list.Select(activity => activity.ActorId));
+        string? Show(string? value) => value is not null && Guid.TryParse(value, out var key) && names.TryGetValue(key, out var name) ? name : value;
         return [.. list.OrderByDescending(activity => activity.CreatedAt).Select(activity => new IssueActivityDto
         {
             Id = activity.Id,
             Actor = users.GetValueOrDefault(activity.ActorId),
             ActorType = activity.ActorType,
             Field = activity.Field,
-            OldValue = activity.OldValue,
-            NewValue = activity.NewValue,
+            OldValue = Show(activity.OldValue),
+            NewValue = Show(activity.NewValue),
             CreatedAt = activity.CreatedAt,
         })];
+    }
+
+    /// <summary>
+    /// History stores ids for fields that point at people, priorities or issues, so a rename shows
+    /// everywhere; readers get the current name instead.
+    /// </summary>
+    private async Task<Dictionary<Guid, string>> ActivityNamesAsync(List<IssueActivity> list)
+    {
+        HashSet<Guid> IdsOf(params string[] fields) =>
+            [.. list.Where(activity => fields.Contains(activity.Field))
+                .SelectMany(activity => new[] { activity.OldValue, activity.NewValue })
+                .Select(value => Guid.TryParse(value, out var key) ? key : Guid.Empty)
+                .Where(key => key != Guid.Empty)];
+
+        var names = new Dictionary<Guid, string>();
+        var people = IdsOf(IssueFieldKeys.Assignee, IssueFieldKeys.Reporter);
+        foreach (var (key, user) in await userDirectory.GetByIdsAsync(people))
+        {
+            names[key] = user.Name;
+        }
+
+        var priorityIds = IdsOf(IssueFieldKeys.Priority);
+        foreach (var priority in await priorities.GetListAsync(priority => priorityIds.Contains(priority.Id)))
+        {
+            names[priority.Id] = priority.Name;
+        }
+
+        // A parent may have been deleted since; its key still says which one it was.
+        var parentIds = IdsOf(IssueFieldKeys.Parent);
+        using (dataFilter.Disable<ISoftDelete>())
+        {
+            var parents = await issues.GetListAsync(issue => parentIds.Contains(issue.Id));
+            var projects = await projectAccess.GetRefsAsync(parents.Select(parent => parent.ProjectId));
+            foreach (var parent in parents)
+            {
+                names[parent.Id] = projects.TryGetValue(parent.ProjectId, out var project) ? $"{project.Key}-{parent.Number} {parent.Title}" : parent.Title;
+            }
+        }
+
+        return names;
     }
 
     [Authorize(SprintBootPermissions.RestoreIssues)]

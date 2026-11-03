@@ -108,6 +108,25 @@ public class TicketTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task History_shows_names_for_people_priorities_and_parents()
+    {
+        var client = await fixture.CreateUserClientAsync(Token);
+        var project = await CreateProjectAsync(client);
+        var parent = await CreateIssueAsync(client, project, "Parent");
+        var issue = await CreateIssueAsync(client, project);
+        var priorities = (await client.Http.GetFromJsonAsync<List<PriorityDto>>("/api/v1/issue/priorities", Token))!;
+        var high = priorities.Single(item => item.Name == "High");
+
+        (await PatchAsync(client, issue, new { assignee = client.UserId, priority = high.Id, parent = parent.Id })).EnsureSuccessStatusCode();
+
+        var activity = (await client.Http.GetFromJsonAsync<List<IssueActivityDto>>($"/api/v1/issue/{issue.Id}/activity", Token))!;
+        activity.Single(item => item.Field == "assignee").NewValue.ShouldEndWith("@test.local");
+        activity.Single(item => item.Field == "priority").OldValue.ShouldBe("Medium");
+        activity.Single(item => item.Field == "priority").NewValue.ShouldBe("High");
+        activity.Single(item => item.Field == "parent").NewValue.ShouldBe($"{parent.Key} Parent");
+    }
+
+    [Fact]
     public async Task Saving_the_same_value_writes_no_activity()
     {
         var client = await fixture.CreateUserClientAsync(Token);
