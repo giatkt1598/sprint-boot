@@ -185,16 +185,23 @@ export function QuickPriority({ issue, canEdit }: QuickProps) {
   );
 }
 
+const ASSIGNEE_NAME_MAX = 200;
+
 export function QuickAssignee({ issue, canEdit, people, showName }: QuickProps & { people: PickerUser[]; showName?: boolean }) {
   const { t } = useTranslation();
   const update = useQuickUpdate(issue);
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const name = issue.assignee?.name ?? t('common.unassigned');
   const face = issue.assignee?.name ? <Avatar name={issue.assignee.name} src={issue.assignee.avatarUrl} decorative /> : <UnassignedAvatar />;
+  // Long names stay on one line and cut off, so they never widen or wrap the row.
   const shown = (
-    <span className="flex items-center gap-2">
-      {face}
-      {showName && name}
+    <span className="flex min-w-0 items-center gap-2">
+      <span className="flex shrink-0">{face}</span>
+      {showName && (
+        <span title={name} className="truncate" style={{ maxWidth: ASSIGNEE_NAME_MAX }}>
+          {name}
+        </span>
+      )}
     </span>
   );
 
