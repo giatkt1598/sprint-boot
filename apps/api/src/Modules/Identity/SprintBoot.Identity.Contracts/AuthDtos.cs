@@ -31,6 +31,9 @@ public class CurrentUserDto
     public required string Language { get; set; }
 
     public required string[] Permissions { get; set; }
+
+    /// <summary>Null until the user uploads a picture.</summary>
+    public string? AvatarUrl { get; set; }
 }
 
 public class ForgotPasswordInput

@@ -114,7 +114,7 @@ export function IssuesListPage() {
               {
                 key: 'reporter',
                 header: t('issues.reporter'),
-                render: (issue) => issue.reporter && <span className="flex items-center gap-2"><Avatar name={issue.reporter.name ?? ''} />{issue.reporter.name}</span>,
+                render: (issue) => issue.reporter && <span className="flex items-center gap-2"><Avatar name={issue.reporter.name ?? ''} src={issue.reporter.avatarUrl} />{issue.reporter.name}</span>,
               },
               { key: 'sprint', header: t('agile.sprint'), render: (issue) => issue.sprintName },
               { key: 'created', header: t('issues.createdAt'), render: (issue) => formatDate(issue.createdAt, i18n.language) },

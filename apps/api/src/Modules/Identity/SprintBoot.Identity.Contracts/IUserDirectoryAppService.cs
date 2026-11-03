@@ -9,6 +9,9 @@ public class UserRefDto
     public required string Name { get; set; }
 
     public required string Email { get; set; }
+
+    /// <summary>Null until the user uploads a picture; clients then show initials.</summary>
+    public string? AvatarUrl { get; set; }
 }
 
 /// <summary>Minimal user info any signed-in user may see, for pickers and display names.</summary>

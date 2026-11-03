@@ -67,7 +67,7 @@ function CardBody({ card }: { card: Card }) {
         <span className="flex-1" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>{has('key') && card.key}</span>
         {has('points') && card.storyPoints != null && <span style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>{card.storyPoints}</span>}
         {has('priority') && <PriorityIcon priority={priorityLevel(card.priority)} />}
-        {has('assignee') && (card.assignee ? <Avatar name={card.assignee.name ?? ''} /> : <UnassignedAvatar />)}
+        {has('assignee') && (card.assignee ? <Avatar name={card.assignee.name ?? ''} src={card.assignee.avatarUrl} /> : <UnassignedAvatar />)}
       </span>
     </div>
   );

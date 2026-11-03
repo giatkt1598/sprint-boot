@@ -1,4 +1,5 @@
 using Volo.Abp.Application.Services;
+using Volo.Abp.Content;
 
 namespace SprintBoot.Identity;
 
@@ -25,4 +26,9 @@ public interface IAuthAppService : IApplicationService
     Task ChangePasswordAsync(ChangePasswordInput input);
 
     Task<CurrentUserDto> UpdateProfileAsync(UpdateProfileInput input);
+
+    /// <summary>PNG, JPEG, WebP or GIF up to 2 MB; replaces the previous picture.</summary>
+    Task<CurrentUserDto> UploadAvatarAsync(IRemoteStreamContent file);
+
+    Task<CurrentUserDto> DeleteAvatarAsync();
 }

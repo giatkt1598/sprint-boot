@@ -4,6 +4,7 @@
     <ProjectReference Include="..\..\Projects\SprintBoot.Projects.Contracts\SprintBoot.Projects.Contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Volo.Abp.BlobStoring" />
     <PackageReference Include="Volo.Abp.Ddd.Application" />
     <PackageReference Include="Volo.Abp.Ddd.Domain" />
     <PackageReference Include="Volo.Abp.EntityFrameworkCore" />

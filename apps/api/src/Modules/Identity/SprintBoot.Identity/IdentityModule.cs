@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using OpenIddict.Server.AspNetCore;
 using OpenIddict.Validation.AspNetCore;
 using Volo.Abp.Application;
+using Volo.Abp.BlobStoring;
 using Volo.Abp.AspNetCore.Mvc.AntiForgery;
 using Volo.Abp.Domain;
 using Volo.Abp.EntityFrameworkCore;
@@ -24,6 +25,7 @@ namespace SprintBoot.Identity;
 
 [DependsOn(
     typeof(IdentityContractsModule),
+    typeof(AbpBlobStoringModule),
     typeof(AbpDddApplicationModule),
     typeof(AbpDddDomainModule),
     typeof(AbpEntityFrameworkCoreModule),

@@ -13,6 +13,32 @@ public class AuthTests(ApiFixture fixture)
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     [Fact]
+    public async Task A_profile_picture_is_uploaded_served_to_anyone_and_removed()
+    {
+        var client = await fixture.CreateUserClientAsync(Token);
+        byte[] png = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0];
+
+        using var refused = new MultipartFormDataContent { { new ByteArrayContent("<svg/>"u8.ToArray()), "file", "a.svg" } };
+        var rejected = await client.Http.PostAsync("/api/v1/auth/avatar", refused, Token);
+        rejected.IsSuccessStatusCode.ShouldBeFalse();
+        (await rejected.Content.ReadAsStringAsync(Token)).ShouldContain(AuthErrors.AvatarInvalid);
+
+        using var form = new MultipartFormDataContent { { new ByteArrayContent(png), "file", "a.png" } };
+        var uploaded = await client.Http.PostAsync("/api/v1/auth/avatar", form, Token);
+        uploaded.StatusCode.ShouldBe(HttpStatusCode.OK, await uploaded.Content.ReadAsStringAsync(Token));
+        var url = (await uploaded.Content.ReadFromJsonAsync<CurrentUserDto>(Token))!.AvatarUrl!;
+
+        var served = await fixture.Factory.CreateClient().GetAsync(url, Token);
+        served.StatusCode.ShouldBe(HttpStatusCode.OK);
+        served.Content.Headers.ContentType!.MediaType.ShouldBe("image/png");
+        (await client.Http.GetFromJsonAsync<List<UserRefDto>>("/api/v1/user-directory/search?search=" + Uri.EscapeDataString((await client.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!.Email), Token))!
+            .ShouldHaveSingleItem().AvatarUrl.ShouldBe(url);
+
+        (await client.Http.DeleteAsync("/api/v1/auth/avatar", Token)).EnsureSuccessStatusCode();
+        (await fixture.Factory.CreateClient().GetAsync(url, Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
     public async Task Login_without_csrf_token_is_rejected()
     {
         var client = new AuthClient(fixture);

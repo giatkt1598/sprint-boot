@@ -213,7 +213,7 @@ function CommentItem({ comment, issue, replies, people, canEdit, canManage }: { 
   return (
     <article id={`comment-${comment.id}`} className="flex flex-col gap-1">
       <div className="flex items-center gap-2">
-        <Avatar name={comment.author?.name ?? ''} />
+        <Avatar name={comment.author?.name ?? ''} src={comment.author?.avatarUrl} />
         <span style={{ fontWeight: font.weight.medium }}>{comment.author?.name}</span>
         <span style={{ fontSize: font.size.xs, color: sem('text-tertiary') }}>
           {formatDateTime(comment.createdAt, i18n.language)}{comment.isEdited ? ` · ${t('issues.edited')}` : ''}
@@ -303,7 +303,7 @@ function ActivityLine({ item }: { item: Activity }) {
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2">
-        <Avatar name={item.actor?.name ?? ''} />
+        <Avatar name={item.actor?.name ?? ''} src={item.actor?.avatarUrl} />
         <span>{item.actor?.name} {t('issues.historyLine', { field })}</span>
         <span style={{ fontSize: font.size.xs, color: sem('text-tertiary') }}>{formatDateTime(item.createdAt, i18n.language)}</span>
       </div>
@@ -399,7 +399,7 @@ function WorkLogPanel({ issue, canEdit, canManage }: { issue: Issue; canEdit: bo
       {logs.data?.items?.length === 0 && <EmptyState title={t('issues.noWorkLogs')} />}
       {(logs.data?.items ?? []).map((log) => (
         <div key={log.id} className="flex items-center gap-2">
-          <Avatar name={log.author?.name ?? ''} />
+          <Avatar name={log.author?.name ?? ''} src={log.author?.avatarUrl} />
           <span>{log.author?.name}</span>
           <span style={{ fontWeight: font.weight.medium }}>{formatMinutes(log.minutes ?? 0)}</span>
           <span style={{ fontSize: font.size.xs, color: sem('text-tertiary') }}>{formatDate(log.workDate, i18n.language)}</span>

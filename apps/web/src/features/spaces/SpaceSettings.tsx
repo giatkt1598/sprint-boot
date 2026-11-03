@@ -246,7 +246,7 @@ export function SpaceMembersPage() {
               header: t('spaces.name'),
               render: (member) => (
                 <span className="flex items-center gap-2">
-                  <Avatar name={member.user?.name ?? ''} />
+                  <Avatar name={member.user?.name ?? ''} src={member.user?.avatarUrl} />
                   {member.user?.name}
                 </span>
               ),

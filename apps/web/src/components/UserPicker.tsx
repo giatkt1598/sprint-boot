@@ -9,6 +9,7 @@ export interface PickerUser {
   id?: string;
   name?: string | null;
   email?: string | null;
+  avatarUrl?: string | null;
 }
 
 export interface UserPickerProps {
@@ -51,7 +52,7 @@ export function UserPicker({ label, hideLabel, options, value, onChange, onInput
         renderOption={({ key, ...props }, option) => (
           <li key={key} {...props}>
             <span className="flex items-center gap-2">
-              <span aria-hidden className="flex"><Avatar name={option.name ?? ''} /></span>
+              <span aria-hidden className="flex"><Avatar name={option.name ?? ''} src={option.avatarUrl} /></span>
               {option.name}
             </span>
           </li>
@@ -69,7 +70,7 @@ export function UserPicker({ label, hideLabel, options, value, onChange, onInput
               input: {
                 ...params.slotProps.input,
                 startAdornment: value?.name ? (
-                  <InputAdornment position="start" aria-hidden><Avatar name={value.name} /></InputAdornment>
+                  <InputAdornment position="start" aria-hidden><Avatar name={value.name} src={value.avatarUrl} /></InputAdornment>
                 ) : emptyLabel ? (
                   <InputAdornment position="start" aria-hidden><UnassignedAvatar /></InputAdornment>
                 ) : undefined,

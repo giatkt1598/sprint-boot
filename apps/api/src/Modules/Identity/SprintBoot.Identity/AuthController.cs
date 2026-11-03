@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.AntiForgery;
+using Volo.Abp.Content;
 using Volo.Abp.Uow;
 
 namespace SprintBoot.Identity;
@@ -77,4 +78,12 @@ public class AuthController(IAuthAppService authAppService, IAbpAntiForgeryManag
     [Authorize]
     public Task<CurrentUserDto> UpdateProfileAsync([FromBody] UpdateProfileInput input) =>
         authAppService.UpdateProfileAsync(input);
+
+    [HttpPost("avatar")]
+    [Authorize]
+    public Task<CurrentUserDto> UploadAvatarAsync(IRemoteStreamContent file) => authAppService.UploadAvatarAsync(file);
+
+    [HttpDelete("avatar")]
+    [Authorize]
+    public Task<CurrentUserDto> DeleteAvatarAsync() => authAppService.DeleteAvatarAsync();
 }

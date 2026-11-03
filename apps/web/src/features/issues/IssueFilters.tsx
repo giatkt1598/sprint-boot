@@ -190,7 +190,7 @@ export function FilterControls({ filters, onChange }: { filters: IssueFilters; o
               onClick={() => toggle('assignee', user.id!)}
               sx={{ borderRadius: '50%', outline: selected ? `2px solid ${sem('border-focus')}` : 'none' }}
             >
-              <Avatar name={user.name ?? ''} />
+              <Avatar name={user.name ?? ''} src={user.avatarUrl} />
             </ButtonBase>
           );
         })}

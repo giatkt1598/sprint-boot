@@ -9,6 +9,7 @@
     <PackageVersion Include="Volo.Abp.AspNetCore.Serilog" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.AuditLogging.EntityFrameworkCore" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.Autofac" Version="$(AbpVersion)" />
+    <PackageVersion Include="Volo.Abp.BlobStoring" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.BlobStoring.Aws" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.BlobStoring.FileSystem" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.Caching.StackExchangeRedis" Version="$(AbpVersion)" />

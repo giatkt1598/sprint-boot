@@ -39,5 +39,6 @@ public class UserDirectory(IIdentityUserRepository users) : IUserDirectory, ITra
         Id = user.Id,
         Name = string.IsNullOrWhiteSpace(user.Name) ? user.UserName : user.Name,
         Email = user.Email,
+        AvatarUrl = UserAvatars.Url(user),
     };
 }

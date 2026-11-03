@@ -190,7 +190,7 @@ export function QuickAssignee({ issue, canEdit, people, showName }: QuickProps &
   const update = useQuickUpdate(issue);
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const name = issue.assignee?.name ?? t('common.unassigned');
-  const face = issue.assignee?.name ? <Avatar name={issue.assignee.name} decorative /> : <UnassignedAvatar />;
+  const face = issue.assignee?.name ? <Avatar name={issue.assignee.name} src={issue.assignee.avatarUrl} decorative /> : <UnassignedAvatar />;
   const shown = (
     <span className="flex items-center gap-2">
       {face}
@@ -219,7 +219,7 @@ export function QuickAssignee({ issue, canEdit, people, showName }: QuickProps &
         selectedId={issue.assignee?.id ?? UNASSIGNED}
         items={[
           { id: UNASSIGNED, label: t('common.unassigned'), icon: <UnassignedAvatar /> },
-          ...people.map((person) => ({ id: person.id!, label: person.name ?? '', icon: <Avatar name={person.name ?? ''} decorative /> })),
+          ...people.map((person) => ({ id: person.id!, label: person.name ?? '', icon: <Avatar name={person.name ?? ''} src={person.avatarUrl} decorative /> })),
         ]}
         onClose={() => setAnchor(null)}
         onPick={(id) => {

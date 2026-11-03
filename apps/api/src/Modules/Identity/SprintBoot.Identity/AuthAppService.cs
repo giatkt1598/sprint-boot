@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Authorization;
+using Volo.Abp.Content;
 using Volo.Abp.Data;
 using SprintBoot.Projects;
 using Volo.Abp.Domain.Repositories;
@@ -25,7 +26,8 @@ public class AuthAppService(
     InvitationAcceptor invitationAcceptor,
     IRepository<InvitationProject, Guid> invitationProjects,
     IProjectAccess projectAccess,
-    IUserDirectory userDirectory)
+    IUserDirectory userDirectory,
+    AvatarStore avatars)
     : ApplicationService, IAuthAppService
 {
     public const string LanguageProperty = "Language";
@@ -178,6 +180,20 @@ public class AuthAppService(
         return await ToDtoAsync(user);
     }
 
+    public async Task<CurrentUserDto> UploadAvatarAsync(IRemoteStreamContent file)
+    {
+        var user = await userManager.GetByIdAsync(CurrentUser.GetId());
+        await avatars.SaveAsync(user, file);
+        return await ToDtoAsync(user);
+    }
+
+    public async Task<CurrentUserDto> DeleteAvatarAsync()
+    {
+        var user = await userManager.GetByIdAsync(CurrentUser.GetId());
+        await avatars.RemoveAsync(user);
+        return await ToDtoAsync(user);
+    }
+
     private static void ThrowIfRejected(IdentityResult result)
     {
         if (!result.Succeeded)
@@ -205,6 +221,7 @@ public class AuthAppService(
             Name = string.IsNullOrWhiteSpace(user.Name) ? user.UserName : user.Name,
             Language = user.GetProperty(LanguageProperty, "en")!,
             Permissions = [.. permissions],
+            AvatarUrl = UserAvatars.Url(user),
         };
     }
 }

@@ -117,7 +117,7 @@ export function SpacesPage() {
               render: (space) =>
                 space.lead && (
                   <span className="flex items-center gap-2">
-                    <Avatar name={space.lead.name ?? ''} />
+                    <Avatar name={space.lead.name ?? ''} src={space.lead.avatarUrl} />
                     {space.lead.name}
                   </span>
                 ),

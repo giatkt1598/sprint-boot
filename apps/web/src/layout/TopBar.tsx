@@ -50,7 +50,7 @@ export function TopBar() {
       <Button onClick={() => setCreating(true)}>{t('topBar.create')}</Button>
       <NotificationBell />
       <IconButton size="small" sx={{ padding: 0.5 }} onClick={(event) => setMenuAnchor(event.currentTarget)}>
-        <Avatar name={user.name ?? ''} />
+        <Avatar name={user.name ?? ''} src={user.avatarUrl} />
         <span className="sr-only">{t('topBar.account')}</span>
       </IconButton>
       <Menu open={Boolean(menuAnchor)} anchorEl={menuAnchor} onClose={() => setMenuAnchor(null)}>

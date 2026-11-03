@@ -18,14 +18,21 @@ const avatarStyles = {
   color: sem('status-todo-text'),
 };
 
-/** `decorative` draws the initials in CSS, for controls whose accessible name is the person's full name. */
-export function Avatar({ name, src, decorative }: { name: string; src?: string; decorative?: boolean }) {
+/**
+ * `decorative` draws the initials in CSS, for controls whose accessible name is the person's full name.
+ * Without a picture, or while it fails to load, the initials show instead.
+ */
+export function Avatar({ name, src, decorative, size = 24 }: { name: string; src?: string | null; decorative?: boolean; size?: number }) {
   return (
     <MuiAvatar
-      src={src}
+      src={src ?? undefined}
       alt={name}
       title={name}
-      sx={[avatarStyles, { '& [data-initials]::before': { content: 'attr(data-initials)' } }]}
+      sx={[
+        avatarStyles,
+        size === 24 ? {} : { width: size, height: size, fontSize: size >= 48 ? font.size.lg : font.size.xs },
+        { '& [data-initials]::before': { content: 'attr(data-initials)' } },
+      ]}
     >
       {decorative ? <span data-initials={initials(name)} /> : initials(name)}
     </MuiAvatar>

@@ -414,7 +414,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
                 onChange={(user) => update.mutate({ assignee: user?.id ?? null })}
               />
             ) : (
-              <Person name={issue.assignee?.name} />
+              <Person name={issue.assignee?.name} src={issue.assignee?.avatarUrl} />
             )}
           </DetailRow>
           {canEdit && !issue.assignee && (
@@ -432,7 +432,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
                 onChange={(user) => update.mutate({ reporter: user?.id ?? null })}
               />
             ) : (
-              <Person name={issue.reporter?.name} />
+              <Person name={issue.reporter?.name} src={issue.reporter?.avatarUrl} />
             )}
           </DetailRow>
           <DetailRow label={t('issues.priority')}>
@@ -680,18 +680,18 @@ function WatchControl({ issueId }: { issueId: string }) {
           <Button kind="secondary" onClick={() => toggle.mutate()}>
             {t(watchers.data?.watchedByMe ? 'issues.stopWatching' : 'issues.startWatching')}
           </Button>
-          {(watchers.data?.users ?? []).map((user) => <Person key={user.id} name={user.name} />)}
+          {(watchers.data?.users ?? []).map((user) => <Person key={user.id} name={user.name} src={user.avatarUrl} />)}
         </div>
       </Popover>
     </>
   );
 }
 
-function Person({ name }: { name?: string | null }) {
+function Person({ name, src }: { name?: string | null; src?: string | null }) {
   const { t } = useTranslation();
   return (
     <span className="flex items-center gap-2">
-      {name ? <Avatar name={name} /> : <UnassignedAvatar />}
+      {name ? <Avatar name={name} src={src} /> : <UnassignedAvatar />}
       {name ?? t('common.unassigned')}
     </span>
   );
