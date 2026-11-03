@@ -70,8 +70,8 @@ function RowBody({ card, onOpen, actions }: IssueRowProps) {
         {card.key}
       </Link></td>
       <td className="pr-3">
-        <ButtonBase onClick={() => onOpen(card.key!)} className="w-full" sx={{ justifyContent: 'flex-start', fontSize: font.size.md, textAlign: 'left' }}>
-          <span className="truncate">{card.title}</span>
+        <ButtonBase onClick={() => onOpen(card.key!)} className="w-full min-w-0" sx={{ justifyContent: 'flex-start', fontSize: font.size.md, textAlign: 'left' }}>
+          <span className="min-w-0 truncate">{card.title}</span>
         </ButtonBase>
       </td>
       <td className="truncate pr-3">{card.epicTitle && <Badge tone="epic">{card.epicTitle}</Badge>}</td>
@@ -123,6 +123,8 @@ export function IssueRow({ card, onOpen }: IssueRowProps) {
 /** Neighbouring rows share a line; the list draws the one above the first row. */
 const rowStyles = {
   height: 36,
+  // One line per issue: whatever does not fit its column is cut off, never wrapped.
+  '& > td': { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
   backgroundColor: sem('bg-surface'),
   borderBottom: `1px solid ${sem('border-default')}`,
   '&:hover': { backgroundColor: sem('bg-hover') },

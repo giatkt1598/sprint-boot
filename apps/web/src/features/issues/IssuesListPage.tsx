@@ -19,6 +19,10 @@ import type { IssueSummary } from './api';
 
 const PAGE_SIZE = 25;
 
+// One line per issue: long titles, names and sprints stop here and end in an ellipsis.
+const TITLE_MAX = 480;
+const PERSON_MAX = 200;
+
 export function IssuesListPage() {
   const { t, i18n } = useTranslation();
   const { spaceKey } = useParams();
@@ -88,6 +92,7 @@ export function IssuesListPage() {
             label={t('issues.title')}
             rows={search.data.items ?? []}
             rowKey={(issue) => issue.id!}
+            nowrap
             columns={[
               {
                 key: 'key',
@@ -102,7 +107,11 @@ export function IssuesListPage() {
               {
                 key: 'title',
                 header: t('issues.titleField'),
-                render: (issue) => <Link component={RouterLink} to={`/issues/${issue.key}`} color="inherit">{issue.title}</Link>,
+                render: (issue) => (
+                  <Link component={RouterLink} to={`/issues/${issue.key}`} color="inherit" title={issue.title ?? undefined} className="block truncate" sx={{ maxWidth: TITLE_MAX }}>
+                    {issue.title}
+                  </Link>
+                ),
               },
               { key: 'status', header: t('issues.status'), render: (issue) => <QuickStatus issue={issue} canEdit={canEdit} people={people} /> },
               { key: 'priority', header: t('issues.priority'), render: (issue) => <QuickPriority issue={issue} canEdit={canEdit} /> },
@@ -114,9 +123,19 @@ export function IssuesListPage() {
               {
                 key: 'reporter',
                 header: t('issues.reporter'),
-                render: (issue) => issue.reporter && <span className="flex items-center gap-2"><Avatar name={issue.reporter.name ?? ''} src={issue.reporter.avatarUrl} />{issue.reporter.name}</span>,
+                render: (issue) =>
+                  issue.reporter && (
+                    <span className="flex items-center gap-2">
+                      <span className="flex shrink-0"><Avatar name={issue.reporter.name ?? ''} src={issue.reporter.avatarUrl} /></span>
+                      <span title={issue.reporter.name ?? undefined} className="truncate" style={{ maxWidth: PERSON_MAX }}>{issue.reporter.name}</span>
+                    </span>
+                  ),
               },
-              { key: 'sprint', header: t('agile.sprint'), render: (issue) => issue.sprintName },
+              {
+                key: 'sprint',
+                header: t('agile.sprint'),
+                render: (issue) => <span title={issue.sprintName ?? undefined} className="block truncate" style={{ maxWidth: PERSON_MAX }}>{issue.sprintName}</span>,
+              },
               { key: 'created', header: t('issues.createdAt'), render: (issue) => formatDate(issue.createdAt, i18n.language) },
               { key: 'updated', header: t('issues.updatedAt'), render: (issue) => formatDate(issue.updatedAt, i18n.language) },
             ]}

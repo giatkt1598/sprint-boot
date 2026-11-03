@@ -18,7 +18,7 @@ export function Badge({ tone = 'neutral', children }: { tone?: BadgeTone; childr
 
   return (
     <span
-      className="inline-flex h-6 items-center px-2"
+      className="inline-flex h-6 max-w-full items-center whitespace-nowrap px-2"
       style={{
         backgroundColor: sem(background),
         color: sem(color),
@@ -27,7 +27,7 @@ export function Badge({ tone = 'neutral', children }: { tone?: BadgeTone; childr
         fontWeight: font.weight.medium,
       }}
     >
-      {children}
+      <span className="truncate">{children}</span>
     </span>
   );
 }

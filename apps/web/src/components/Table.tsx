@@ -17,15 +17,18 @@ export interface TableProps<Row> {
   columns: TableColumn<Row>[];
   rows: Row[];
   rowKey: (row: Row) => Key;
+  /** Every cell on one line; long text should be cut with ellipsis by the column itself. */
+  nowrap?: boolean;
 }
 
-export function Table<Row>({ label, columns, rows, rowKey }: TableProps<Row>) {
+export function Table<Row>({ label, columns, rows, rowKey, nowrap }: TableProps<Row>) {
+  const cell = nowrap ? { whiteSpace: 'nowrap' } : undefined;
   return (
     <MuiTable aria-label={label} size="small">
       <TableHead>
         <TableRow>
           {columns.map((column) => (
-            <TableCell key={column.key}>{column.header}</TableCell>
+            <TableCell key={column.key} sx={cell}>{column.header}</TableCell>
           ))}
         </TableRow>
       </TableHead>
@@ -33,7 +36,7 @@ export function Table<Row>({ label, columns, rows, rowKey }: TableProps<Row>) {
         {rows.map((row) => (
           <TableRow key={rowKey(row)} sx={{ '&:hover': { backgroundColor: sem('bg-hover') } }}>
             {columns.map((column) => (
-              <TableCell key={column.key}>{column.render(row)}</TableCell>
+              <TableCell key={column.key} sx={cell}>{column.render(row)}</TableCell>
             ))}
           </TableRow>
         ))}
