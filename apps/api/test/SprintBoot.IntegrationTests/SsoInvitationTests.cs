@@ -227,6 +227,26 @@ public class SsoInvitationTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task An_invited_person_signing_in_with_the_idp_without_the_link_gets_the_invitation()
+    {
+        await SetPolicyAsync(selfRegistration: false);
+        var admin = await AdminAsync();
+        var project = await ProjectAsync(admin);
+        var email = NewEmail();
+        await InviteAsync(admin, new { email, projects = new[] { new { projectId = project.Id, role = ProjectRoleNames.Member } } });
+
+        var pending = await admin.Http.GetFromJsonAsync<List<InvitationDto>>($"/api/v1/invitation/for-project/{project.Id}", Token);
+        pending!.ShouldHaveSingleItem().Email.ShouldBe(email);
+
+        (await LinkAsync(Identity(email, verified: false))).Error.ShouldBe(SsoErrors.RegistrationClosed);
+        (await LinkAsync(Identity(email.ToUpperInvariant()))).Error.ShouldBeNull();
+
+        var members = await admin.Http.GetFromJsonAsync<List<ProjectMemberDto>>($"/api/v1/project/{project.Id}/members", Token);
+        members!.Single(member => member.User.Email == email).Role.ShouldBe(ProjectRoleNames.Member);
+        (await admin.Http.GetFromJsonAsync<List<InvitationDto>>($"/api/v1/invitation/for-project/{project.Id}", Token))!.ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task A_link_works_once_and_a_resend_retires_the_old_one()
     {
         var admin = await AdminAsync();

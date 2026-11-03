@@ -269,6 +269,9 @@ public interface IInvitationAppService : IApplicationService
 {
     Task<PagedResultDto<InvitationDto>> GetListAsync(InvitationListInput input);
 
+    /// <summary>Invitations into one space that can still be accepted, for its member list.</summary>
+    Task<List<InvitationDto>> GetForProjectAsync(Guid projectId);
+
     Task<InvitationLinkDto> CreateAsync(CreateInvitationInput input);
 
     Task<InvitationLinkDto> ResendAsync(Guid id);

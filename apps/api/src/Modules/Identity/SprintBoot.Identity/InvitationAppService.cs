@@ -56,6 +56,22 @@ public class InvitationAppService(
         return new PagedResultDto<InvitationDto>(filtered.Count, [.. page.Select(item => ToDto(item, projects, people, names))]);
     }
 
+    public async Task<List<InvitationDto>> GetForProjectAsync(Guid projectId)
+    {
+        await projectAccess.CheckAsync(projectId, ProjectPermissions.ManageMembers);
+        var links = await invitationProjects.GetListAsync(item => item.ProjectId == projectId);
+        var ids = links.Select(item => item.InvitationId).ToList();
+        var now = clock.Now;
+        var pending = (await invitations.GetListAsync(item => ids.Contains(item.Id) && item.Status == InvitationStatus.Pending))
+            .Where(item => item.IsUsable(now))
+            .OrderByDescending(item => item.CreationTime)
+            .ToList();
+
+        var people = await userDirectory.GetByIdsAsync(pending.Select(item => item.InvitedById));
+        var names = await projectAccess.GetRefsAsync([projectId]);
+        return [.. pending.Select(item => ToDto(item, links, people, names))];
+    }
+
     public async Task<InvitationLinkDto> CreateAsync(CreateInvitationInput input)
     {
         var email = InvitationToken.NormalizeEmail(input.Email);

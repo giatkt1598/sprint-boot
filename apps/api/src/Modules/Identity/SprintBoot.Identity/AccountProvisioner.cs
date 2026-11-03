@@ -41,6 +41,17 @@ public class InvitationAcceptor(
             : throw new BusinessException(InvitationErrors.Invalid);
     }
 
+    /// <summary>The newest invitation to this address that can still be accepted.</summary>
+    public async Task<Invitation?> FindUsableAsync(string email)
+    {
+        var normalized = InvitationToken.NormalizeEmail(email);
+        var now = clock.Now;
+        return (await invitations.GetListAsync(item => item.Email == normalized && item.Status == InvitationStatus.Pending))
+            .Where(item => item.IsUsable(now))
+            .OrderByDescending(item => item.CreationTime)
+            .FirstOrDefault();
+    }
+
     public async Task ApplyAsync(Invitation invitation, IdentityUser user)
     {
         // A project invitation carries no system role, yet a new person still needs the basic one.
@@ -105,6 +116,15 @@ public class ExternalAccountLinker(
             EnsureActive(existing);
             await AddLoginAsync(existing, identity);
             return existing;
+        }
+
+        // Someone invited may sign in with the IdP straight from the login page instead of the
+        // link; the verified address proves it is them, as the link would have.
+        if (identity.EmailVerified && await invitations.FindUsableAsync(email) is { } invited)
+        {
+            var created = await CreateAsync(identity, email, role: null);
+            await invitations.ApplyAsync(invited, created);
+            return created;
         }
 
         var policy = await policies.FirstOrDefaultAsync();

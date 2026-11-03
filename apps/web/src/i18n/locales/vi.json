@@ -285,6 +285,8 @@
     "lastActive": "Hoạt động gần nhất {{date}}"
   },
   "spaces": {
+    "invited": "Đã mời",
+    "invitationExpires": "Lời mời hết hạn {{date}}",
     "title": "Space",
     "create": "Tạo Space",
     "name": "Tên",
