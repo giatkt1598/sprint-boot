@@ -531,6 +531,38 @@ public class WorkflowTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task A_draft_that_matches_the_live_version_is_not_kept()
+    {
+        var (admin, _, _, workflowId) = await ProjectWithWorkflowAsync(Basic, AllThree);
+        async Task<WorkflowDetailDto> SaveAsync(object definition)
+        {
+            var response = await admin.Http.PostAsJsonAsync($"/api/v1/workflow/{workflowId}/save-draft", definition, Token);
+            response.StatusCode.ShouldBe(HttpStatusCode.OK, await response.Content.ReadAsStringAsync(Token));
+            return (await response.Content.ReadFromJsonAsync<WorkflowDetailDto>(Token))!;
+        }
+
+        // Same behaviour, other transition order and layout: the layout moves onto the live version.
+        var same = await SaveAsync(new { initialStatusId = ToDo, statusIds = AllThree, transitions = Enumerable.Reverse(Basic).ToArray(), layoutJson = "{\"positions\":{}}" });
+        same.Draft.ShouldBeNull();
+        same.Published!.LayoutJson.ShouldBe("{\"positions\":{}}");
+
+        var changed = await SaveAsync(new { initialStatusId = ToDo, statusIds = AllThree, transitions = new[] { Move("Start", ToDo, InProgress), Move("Close", InProgress, Done) } });
+        changed.Draft.ShouldNotBeNull();
+
+        (await SaveAsync(new { initialStatusId = ToDo, statusIds = AllThree, transitions = Basic })).Draft.ShouldBeNull();
+        var versions = (await admin.Http.GetFromJsonAsync<List<WorkflowVersionDto>>($"/api/v1/workflow/{workflowId}/versions", Token))!;
+        versions.ShouldHaveSingleItem().State.ShouldBe(WorkflowVersionState.Published);
+    }
+
+    [Fact]
+    public async Task Status_lists_of_a_space_follow_its_workflow()
+    {
+        var (admin, project, _, _) = await ProjectWithWorkflowAsync(new[] { Move("Back", Done, InProgress), Move("Start", ToDo, Done) }, [Done, InProgress, ToDo]);
+        var listed = await admin.Http.GetFromJsonAsync<List<StatusDto>>($"/api/v1/status?projectId={project.Id}", Token);
+        listed!.Select(status => status.Id).Take(3).ShouldBe([Done, InProgress, ToDo]);
+    }
+
+    [Fact]
     public async Task Versions_are_listed_keep_their_status_order_and_can_be_restored()
     {
         var (admin, project, typeId, workflowId) = await ProjectWithWorkflowAsync(new[]

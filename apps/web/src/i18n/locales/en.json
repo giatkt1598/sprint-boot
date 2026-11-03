@@ -951,6 +951,7 @@
     "deleteStatusUsed": "{{issues}} issues and epics and {{workflows}} published workflows use this status. Choose the status that takes its place everywhere.",
     "replacementStatus": "Replace with",
     "beautify": "Beautify",
+    "nothingToPublish": "Nothing changed since the published version, so there is nothing to publish.",
     "defaultName": "{{from}} to {{to}}",
     "history": "History",
     "draft": "Draft",

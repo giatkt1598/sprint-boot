@@ -23,18 +23,26 @@ public class StatusAppService(
     IRepository<WorkflowVersion, Guid> versions,
     IWorkflowIssueGateway issues,
     IProjectAccess projectAccess,
+    IWorkflowRuntime runtime,
     StatusRemover remover)
     : ApplicationService, IStatusAppService
 {
     public async Task<List<StatusDto>> GetListAsync(Guid? projectId)
     {
-        if (projectId is { } id)
+        var items = await statuses.GetListAsync(status => status.ProjectId == null || status.ProjectId == projectId);
+        if (projectId is not { } id)
         {
-            await projectAccess.CheckAsync(id, ProjectPermissions.ViewIssues);
+            return [.. items.OrderBy(status => status.Order).Select(StatusMapping.ToDto)];
         }
 
-        var items = await statuses.GetListAsync(status => status.ProjectId == null || status.ProjectId == projectId);
-        return [.. items.OrderBy(status => status.Order).Select(StatusMapping.ToDto)];
+        await projectAccess.CheckAsync(id, ProjectPermissions.ViewIssues);
+
+        // Pickers in a space follow its workflows; statuses no workflow uses come after.
+        var flow = (await runtime.GetProjectStatusIdsAsync(id)).Select((statusId, index) => (statusId, index)).ToDictionary(item => item.statusId, item => item.index);
+        return [.. items
+            .OrderBy(status => flow.GetValueOrDefault(status.Id, int.MaxValue))
+            .ThenBy(status => status.Order)
+            .Select(StatusMapping.ToDto)];
     }
 
     private async Task CheckManageAsync(Guid? projectId)
@@ -182,6 +190,32 @@ public class WorkflowStore(
                 guids.Create(), transition.Id, rule.Kind, rule.Key, order, rule.Config?.GetRawText())));
         }
     }
+
+    public async Task DeleteAsync(WorkflowVersion version)
+    {
+        await ClearAsync(version.Id);
+        await versions.DeleteAsync(version, autoSave: true);
+    }
+
+    /// <summary>
+    /// Whether two definitions behave the same. The layout and the order of transitions only change
+    /// how the designer draws them, so they do not count.
+    /// </summary>
+    public static bool SameBehaviour(WorkflowDefinitionDto first, WorkflowDefinitionDto second) =>
+        first.InitialStatusId == second.InitialStatusId
+        && first.StatusIds.Distinct().SequenceEqual(second.StatusIds.Distinct())
+        && Transitions(first).SequenceEqual(Transitions(second));
+
+    private static List<string> Transitions(WorkflowDefinitionDto definition) =>
+        [.. definition.Transitions
+            .Select(transition => JsonSerializer.Serialize(new
+            {
+                transition.Name,
+                transition.FromStatusId,
+                transition.ToStatusId,
+                Rules = transition.Rules.Select(rule => new { rule.Kind, rule.Key, Config = rule.Config is { } config ? JsonSerializer.Serialize(config) : null }),
+            }))
+            .Order(StringComparer.Ordinal)];
 
     private async Task ClearAsync(Guid versionId)
     {
@@ -407,6 +441,24 @@ public class WorkflowAppService(
     {
         await CheckManageAsync((await workflows.GetAsync(id)).ProjectId);
         var draft = await store.FindDraftAsync(id);
+
+        // Nothing to publish when the edits lead back to the live version: drop the draft, keep the layout.
+        if (await store.FindPublishedAsync(id) is { } published && WorkflowStore.SameBehaviour(await store.LoadAsync(published), input))
+        {
+            if (draft is not null)
+            {
+                await store.DeleteAsync(draft);
+            }
+
+            if (published.LayoutJson != input.LayoutJson)
+            {
+                published.LayoutJson = input.LayoutJson;
+                await versions.UpdateAsync(published, autoSave: true);
+            }
+
+            return await GetAsync(id);
+        }
+
         if (draft is null)
         {
             var numbers = await versions.GetListAsync(version => version.WorkflowId == id);
@@ -554,16 +606,17 @@ public class WorkflowRuntime(IRepository<ProjectWorkflowMapping, Guid> mappings,
         var mapped = await mappings.GetListAsync(item => item.ProjectId == projectId);
         var workflowIds = mapped.Select(item => item.WorkflowId).Append(WorkflowsDataSeedContributor.DefaultWorkflowId).Distinct();
 
-        var result = new HashSet<Guid>();
+        // In workflow order, the space's own workflows first, so status lists read as the flow does.
+        var result = new List<Guid>();
         foreach (var workflowId in workflowIds)
         {
             if (await store.FindPublishedAsync(workflowId) is { } version)
             {
-                result.UnionWith((await store.LoadAsync(version)).StatusIds);
+                result.AddRange((await store.LoadAsync(version)).StatusIds);
             }
         }
 
-        return [.. result];
+        return [.. result.Distinct()];
     }
 }
 

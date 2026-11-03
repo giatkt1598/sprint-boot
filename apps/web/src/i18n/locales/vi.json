@@ -951,6 +951,7 @@
     "deleteStatusUsed": "{{issues}} issue và epic cùng {{workflows}} workflow đã publish đang dùng status này. Hãy chọn status thay thế ở mọi nơi.",
     "replacementStatus": "Thay bằng",
     "beautify": "Sắp xếp gọn",
+    "nothingToPublish": "Không có thay đổi nào so với phiên bản đã publish nên không cần publish.",
     "defaultName": "{{from}} sang {{to}}",
     "history": "Lịch sử",
     "draft": "Nháp",

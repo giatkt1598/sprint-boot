@@ -25,7 +25,7 @@ import { useStatuses, type Status } from '../issues/api';
 import { StatusOrderList, WorkflowHistory } from './WorkflowSidePanels';
 import { TransitionRules, type DraftRule } from './TransitionRules';
 import { ANY, arrow, edgeTypes, facingSides, nodeTypes, parallelOffset } from './WorkflowCanvas';
-import { arrangeStatuses, replaceStatus, unreachableStatuses, type DraftTransition } from './workflowGraph';
+import { layeredLayout, replaceStatus, unreachableStatuses, type DraftTransition } from './workflowGraph';
 
 type Definition = components['schemas']['WorkflowDefinitionDto'];
 type Point = { x: number; y: number };
@@ -240,10 +240,11 @@ export function WorkflowDesignerPage() {
 
   const writeDraft = async (next: Draft) => {
     const positions = placeOf(next.statusIds);
-    await unwrap(apiClient.POST('/api/v1/workflow/{id}/save-draft', { params: { path: { id: workflowId } }, body: toDefinition(next, positions) }));
+    const result = await unwrap(apiClient.POST('/api/v1/workflow/{id}/save-draft', { params: { path: { id: workflowId } }, body: toDefinition(next, positions) }));
     setSaved(JSON.stringify({ draft: next, positions }));
     setSavedAt(new Date().toISOString());
     await queryClient.invalidateQueries({ queryKey: ['admin', 'workflows'] });
+    return result;
   };
 
   // Scoped so a slow save cannot land after a newer one.
@@ -282,13 +283,16 @@ export function WorkflowDesignerPage() {
   const publish = useMutation({
     scope: { id: `workflow-draft-${workflowId}` },
     mutationFn: async () => {
-      await writeDraft(draft!);
+      // The server keeps no draft when the edits match the live version, so there is nothing to publish.
+      if (!(await writeDraft(draft!)).draft) {
+        return null;
+      }
       return unwrap(apiClient.POST('/api/v1/workflow/{id}/publish', { params: { path: { id: workflowId } }, body: { statusMappings: mappings } }));
     },
     onSuccess: async (result) => {
       closePublish();
       await queryClient.invalidateQueries({ queryKey: ['admin', 'workflows'] });
-      toast('success', t(result.migrationQueued ? 'workflows.publishedQueued' : 'workflows.published'));
+      toast(result ? 'success' : 'info', t(!result ? 'designer.nothingToPublish' : result.migrationQueued ? 'workflows.publishedQueued' : 'workflows.published'));
     },
     onError: (failure) => {
       if (failure instanceof ApiError && failure.code?.endsWith('StatusMappingRequired')) {
@@ -353,15 +357,12 @@ export function WorkflowDesignerPage() {
   };
 
   const beautify = () => {
-    const order = [...draft!.statusIds].sort((first, second) =>
-      Number(second === draft!.initialStatusId) - Number(first === draft!.initialStatusId)
-      || (statusOf(first)?.category ?? 0) - (statusOf(second)?.category ?? 0));
-    const places = arrangeStatuses(order, draft!.transitions);
+    const places = layeredLayout(draft!.statusIds, draft!.initialStatusId, draft!.transitions, (id) => statusOf(id)?.category ?? 0);
     // Any status nodes sit above their target, so rows leave room for them.
     const rowGap = draft!.transitions.some((item) => item.fromStatusId === null) ? NODE_GAP_Y * 2 : NODE_GAP_Y;
     const point = (id: string): Point => {
       const place = places.get(id);
-      return { x: 80 + (place?.column ?? 0) * NODE_GAP_X, y: 240 + (place?.row ?? 0) * rowGap };
+      return { x: 80 + (place?.layer ?? 0) * NODE_GAP_X, y: 240 + (place?.row ?? 0) * rowGap };
     };
     setNodes((current) =>
       current.map((node) => {
@@ -588,7 +589,11 @@ export function WorkflowDesignerPage() {
           status={deleting}
           isStart={draft.initialStatusId === deleting.id}
           statuses={statuses.data ?? []}
-          beforeDelete={() => (dirty ? writeDraft(draft) : Promise.resolve())}
+          beforeDelete={async () => {
+            if (dirty) {
+              await writeDraft(draft);
+            }
+          }}
           onCancel={() => setDeleting(null)}
           onDeleted={(replacementId) => void onStatusDeleted(deleting, replacementId)}
         />

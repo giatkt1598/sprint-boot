@@ -164,7 +164,16 @@ export function TransitionControl({ issue, people, onConflict, lazy }: ControlPr
   const shown = execute.isPending && moving ? moving : issue.status;
   const badge = <StatusBadge status={statusCategory(shown)} label={shown?.name} />;
   // People pick a status, so two transitions into one show as one, preferring the one that can run.
-  const targets = [...new Map([...(available.data ?? [])].reverse().sort((first, second) => (second.problems?.length ?? 0) - (first.problems?.length ?? 0)).map((item) => [item.toStatus?.id, item])).values()];
+  // The server sends them in workflow order, which the menu keeps.
+  const targets = (available.data ?? []).reduce<Available[]>((list, item) => {
+    const index = list.findIndex((other) => other.toStatus?.id === item.toStatus?.id);
+    if (index < 0) {
+      list.push(item);
+    } else if (list[index].problems?.length && !item.problems?.length) {
+      list[index] = item;
+    }
+    return list;
+  }, []);
   if (!lazy && !available.data?.length) {
     return badge;
   }
