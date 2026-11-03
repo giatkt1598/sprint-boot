@@ -117,6 +117,8 @@ public class ExternalSchemeRegistry(
             MapInboundClaims = false,
             RequireHttpsMetadata = configuration.GetValue("Auth:RequireHttps", defaultValue: true),
         };
+        // The user info endpoint is where some providers put the picture; keep it next to the name.
+        oidc.ClaimActions.MapUniqueJsonKey("picture", "picture");
         oidc.Scope.Clear();
         foreach (var scope in (config.Scopes ?? "openid profile email").Split(' ', StringSplitOptions.RemoveEmptyEntries))
         {

@@ -94,6 +94,13 @@ public class SsoInvitationTests(ApiFixture fixture)
         var subject = Guid.NewGuid().ToString();
 
         (await LinkAsync(Identity(user.Email, subject: subject))).UserId.ShouldBe(user.Id);
+
+        // The account had only its email as a name, so the IdP's name fills it in.
+        using (var scope = fixture.Factory.Services.CreateScope())
+        {
+            (await scope.ServiceProvider.GetRequiredService<Volo.Abp.Identity.IdentityUserManager>().GetByIdAsync(user.Id)).Name.ShouldBe("External Person");
+        }
+
         (await LinkAsync(Identity("renamed@elsewhere.io", subject: subject))).UserId.ShouldBe(user.Id);
     }
 

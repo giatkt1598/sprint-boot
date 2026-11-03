@@ -90,7 +90,8 @@ public class ExternalAuthController(
             subject,
             Claim(provider.EmailClaim, "email", ClaimTypes.Email),
             verified,
-            Claim(provider.NameClaim, "name", ClaimTypes.Name));
+            Claim(provider.NameClaim, "name", ClaimTypes.Name),
+            provider.Type == ExternalProviderType.Google ? AvatarImporter.TrustedPicture(Claim("picture")) : null);
     }
 
     private static string? Item(IDictionary<string, string?> items, string key) =>

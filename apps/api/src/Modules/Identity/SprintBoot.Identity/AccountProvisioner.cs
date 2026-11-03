@@ -10,7 +10,9 @@ using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
 namespace SprintBoot.Identity;
 
-public record ExternalIdentity(string Provider, string ProviderDisplayName, string Subject, string? Email, bool EmailVerified, string? Name);
+/// <param name="PictureUrl">Only set for providers whose picture addresses we trust to fetch.</param>
+public record ExternalIdentity(
+    string Provider, string ProviderDisplayName, string Subject, string? Email, bool EmailVerified, string? Name, string? PictureUrl = null);
 
 public static class InvitationToken
 {
@@ -83,6 +85,7 @@ public class ExternalAccountLinker(
     IdentityUserManager userManager,
     IRepository<AuthPolicy, Guid> policies,
     InvitationAcceptor invitations,
+    AvatarImporter avatars,
     IGuidGenerator guids) : ITransientDependency
 {
     public async Task<IdentityUser> ResolveAsync(ExternalIdentity identity, string? invitationToken)
@@ -115,6 +118,7 @@ public class ExternalAccountLinker(
 
             EnsureActive(existing);
             await AddLoginAsync(existing, identity);
+            await FillProfileAsync(existing, identity);
             return existing;
         }
 
@@ -170,6 +174,7 @@ public class ExternalAccountLinker(
         else
         {
             await AddLoginAsync(EnsureActive(user), identity);
+            await FillProfileAsync(user, identity);
         }
 
         await invitations.ApplyAsync(invitation, user);
@@ -187,7 +192,26 @@ public class ExternalAccountLinker(
         }
 
         await AddLoginAsync(user, identity);
+        await FillProfileAsync(user, identity);
         return user;
+    }
+
+    /// <summary>
+    /// Takes the name and picture from the IdP for whatever the profile still lacks, so people
+    /// start with a recognisable face; anything they set themselves is never overwritten.
+    /// </summary>
+    private async Task FillProfileAsync(IdentityUser user, ExternalIdentity identity)
+    {
+        if (!string.IsNullOrWhiteSpace(identity.Name) && (string.IsNullOrWhiteSpace(user.Name) || user.Name == user.Email))
+        {
+            user.Name = identity.Name;
+            (await userManager.UpdateAsync(user)).CheckErrors();
+        }
+
+        if (identity.PictureUrl is not null && UserAvatars.Url(user) is null)
+        {
+            await avatars.TryImportAsync(user, identity.PictureUrl);
+        }
     }
 
     private async Task AddLoginAsync(IdentityUser user, ExternalIdentity identity) =>

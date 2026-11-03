@@ -8,6 +8,18 @@ namespace SprintBoot.UnitTests;
 public class SsoRulesTests
 {
     [Theory]
+    [InlineData("https://lh3.googleusercontent.com/a/ACg8ocK=s96-c", "https://lh3.googleusercontent.com/a/ACg8ocK=s256-c")]
+    [InlineData("https://lh3.googleusercontent.com/a/ACg8ocK", "https://lh3.googleusercontent.com/a/ACg8ocK=s256-c")]
+    [InlineData("http://lh3.googleusercontent.com/a/x", null)]
+    [InlineData("https://googleusercontent.com.evil.io/a/x", null)]
+    [InlineData("https://169.254.169.254/latest/meta-data", null)]
+    [InlineData(null, null)]
+    public void Only_google_image_hosts_are_fetched_for_pictures(string? url, string? expected)
+    {
+        AvatarImporter.TrustedPicture(url).ShouldBe(expected);
+    }
+
+    [Theory]
     [InlineData("a@corp.com", "corp.com", true)]
     [InlineData("a@CORP.com", "corp.com, other.io", true)]
     [InlineData("a@evil.com", "corp.com", false)]

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using IdentityUser = Volo.Abp.Identity.IdentityUser;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Volo.Abp;
 using Volo.Abp.BlobStoring;
 using Volo.Abp.Content;
@@ -120,5 +121,57 @@ public class AvatarController(AvatarStore store) : ControllerBase
         Response.Headers.XContentTypeOptions = "nosniff";
         Response.Headers.CacheControl = "public, max-age=31536000, immutable";
         return File(avatar.Content, avatar.Type);
+    }
+}
+
+/// <summary>Copies an IdP profile picture into our own store, so it keeps working after the IdP link expires.</summary>
+public class AvatarImporter(IHttpClientFactory clients, AvatarStore store, ILogger<AvatarImporter> logger) : ITransientDependency
+{
+    private const int Size = 256;
+
+    /// <summary>
+    /// Google pictures only, from Google's own image host: the server fetches the address, so
+    /// it must never be one an IdP could point at our internal network.
+    /// </summary>
+    public static string? TrustedPicture(string? url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps
+            || !uri.Host.EndsWith(".googleusercontent.com", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        // Google serves 96px by default; the size suffix asks for one that matches our avatars.
+        var address = uri.GetLeftPart(UriPartial.Path);
+        var sized = System.Text.RegularExpressions.Regex.Replace(address, "=s\\d+(-c)?$", string.Empty) + $"=s{Size}-c";
+        return sized;
+    }
+
+    /// <summary>A failed download only leaves the initials; it must never block signing in.</summary>
+    public async Task TryImportAsync(IdentityUser user, string url)
+    {
+        try
+        {
+            using var client = clients.CreateClient();
+            client.Timeout = TimeSpan.FromSeconds(5);
+            using var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+            if (!response.IsSuccessStatusCode || response.Content.Headers.ContentLength > UserAvatars.MaxBytes)
+            {
+                return;
+            }
+
+            using var buffer = new MemoryStream();
+            await using (var stream = await response.Content.ReadAsStreamAsync())
+            {
+                await stream.CopyToAsync(buffer);
+            }
+
+            buffer.Position = 0;
+            await store.SaveAsync(user, new RemoteStreamContent(buffer, "avatar", response.Content.Headers.ContentType?.MediaType, buffer.Length));
+        }
+        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or BusinessException)
+        {
+            logger.LogWarning(exception, "Could not import the profile picture of user {UserId}", user.Id);
+        }
     }
 }
