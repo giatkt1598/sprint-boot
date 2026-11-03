@@ -1041,6 +1041,10 @@
     }
   },
   "mcp": {
+    "createdConnect": "Thêm server vào client bằng một trong các cách dưới đây. Token mới đã được điền sẵn.",
+    "copyCommand": "Sao chép lệnh",
+    "copyConfig": "Sao chép cấu hình",
+    "copied": "Đã sao chép",
     "back": "Quay lại danh sách token",
     "title": "Tài liệu MCP",
     "intro": "Model Context Protocol cho phép trợ lý AI dùng các tool. Với MCP token, trợ lý có thể đọc và cập nhật công việc của bạn trong Sprint Boot, đúng với quyền bạn đang có.",

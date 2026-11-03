@@ -1,6 +1,9 @@
+import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Copy } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink } from 'react-router';
@@ -25,6 +28,35 @@ const API: Kind = 0;
 const MCP: Kind = 1;
 const KEY = ['account', 'tokens'];
 const LIFETIMES = ['30', '90', '365', 'never'];
+
+const MCP_PLACEHOLDER = 'YOUR_MCP_TOKEN';
+
+/**
+ * How a client connects. The command stays on one line: cmd and PowerShell do not continue
+ * a line on a backslash, so a wrapped command breaks there.
+ */
+function mcpSetup(token: string) {
+  const url = `${window.location.origin}/mcp`;
+  return {
+    url,
+    claudeCode: `claude mcp add --transport http sprint-boot ${url} --header "Authorization: Bearer ${token}"`,
+    config: JSON.stringify({ mcpServers: { 'sprint-boot': { type: 'http', url, headers: { Authorization: `Bearer ${token}` } } } }, null, 2),
+  };
+}
+
+function McpConnect({ token }: { token: string }) {
+  const { t } = useTranslation();
+  const setup = mcpSetup(token);
+
+  return (
+    <>
+      <Typography variant="h3" component="h3">Claude Code</Typography>
+      <CodeBlock code={setup.claudeCode} copyLabel={t('mcp.copyCommand')} />
+      <Typography variant="h3" component="h3">{t('mcp.otherClients')}</Typography>
+      <CodeBlock code={setup.config} copyLabel={t('mcp.copyConfig')} />
+    </>
+  );
+}
 
 function CreateTokenDialog({ kind, onClose }: { kind: Kind; onClose: () => void }) {
   const { t } = useTranslation();
@@ -52,6 +84,12 @@ function CreateTokenDialog({ kind, onClose }: { kind: Kind; onClose: () => void 
       >
         <Typography role="alert" variant="body2" color="textSecondary">{t('tokens.createdHint')}</Typography>
         <CopyField label={t('tokens.token')} value={create.data.token ?? ''} copyLabel={t('tokens.copy')} copiedMessage={t('tokens.copied')} />
+        {kind === MCP && (
+          <>
+            <Typography variant="body2" color="textSecondary">{t('mcp.createdConnect')}</Typography>
+            <McpConnect token={create.data.token ?? ''} />
+          </>
+        )}
       </Dialog>
     );
   }
@@ -204,19 +242,33 @@ const MCP_TOOLS: { name: string; write: boolean }[] = [
   { name: 'add_comment', write: true },
 ];
 
-function CodeBlock({ code }: { code: string }) {
-  return <div className="rich-text"><pre><code>{code}</code></pre></div>;
+function CodeBlock({ code, copyLabel }: { code: string; copyLabel?: string }) {
+  const { t } = useTranslation();
+  const toast = useToast();
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(code);
+    toast('success', t('mcp.copied'));
+  };
+
+  return (
+    <div className="rich-text relative">
+      {/* Room on the right, so the copy button never covers the end of a line. */}
+      <pre style={copyLabel ? { paddingRight: 44 } : undefined}><code>{code}</code></pre>
+      {copyLabel && (
+        <Tooltip title={copyLabel}>
+          <IconButton size="small" aria-label={copyLabel} onClick={() => void copy()} sx={{ position: 'absolute', top: 4, right: 4 }}>
+            <Copy size={16} strokeWidth={1.5} aria-hidden />
+          </IconButton>
+        </Tooltip>
+      )}
+    </div>
+  );
 }
 
 export function McpDocsPage() {
   const { t } = useTranslation();
-  const url = `${window.location.origin}/mcp`;
-  const claudeCode = `claude mcp add --transport http sprint-boot ${url} \\\n  --header "Authorization: Bearer YOUR_MCP_TOKEN"`;
-  const config = JSON.stringify(
-    { mcpServers: { 'sprint-boot': { type: 'http', url, headers: { Authorization: 'Bearer YOUR_MCP_TOKEN' } } } },
-    null,
-    2,
-  );
+  const { url } = mcpSetup(MCP_PLACEHOLDER);
 
   return (
     <div className="flex flex-col gap-6">
@@ -229,10 +281,7 @@ export function McpDocsPage() {
         <Typography variant="h2">{t('mcp.connectTitle')}</Typography>
         <Typography variant="body2" color="textSecondary">{t('mcp.connectHint')}</Typography>
         <CopyField label={t('mcp.url')} value={url} copyLabel={t('mcp.copyUrl')} copiedMessage={t('mcp.urlCopied')} />
-        <Typography variant="h3" component="h3">Claude Code</Typography>
-        <CodeBlock code={claudeCode} />
-        <Typography variant="h3" component="h3">{t('mcp.otherClients')}</Typography>
-        <CodeBlock code={config} />
+        <McpConnect token={MCP_PLACEHOLDER} />
       </section>
       <section className="flex flex-col gap-2">
         <Typography variant="h2">{t('mcp.toolsTitle')}</Typography>

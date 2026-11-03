@@ -1041,6 +1041,10 @@
     }
   },
   "mcp": {
+    "createdConnect": "Add the server to your client with one of these. They already hold the new token.",
+    "copyCommand": "Copy command",
+    "copyConfig": "Copy configuration",
+    "copied": "Copied",
     "back": "Back to tokens",
     "title": "MCP Documentation",
     "intro": "The Model Context Protocol lets AI assistants use tools. With an MCP token, an assistant can read and update your work in Sprint Boot, with exactly the permissions you have.",
