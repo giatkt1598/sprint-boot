@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <ProjectReference Include="..\..\Platform\SprintBoot.Platform.Contracts\SprintBoot.Platform.Contracts.csproj" />
     <ProjectReference Include="..\SprintBoot.Identity.Contracts\SprintBoot.Identity.Contracts.csproj" />
     <ProjectReference Include="..\..\Projects\SprintBoot.Projects.Contracts\SprintBoot.Projects.Contracts.csproj" />
   </ItemGroup>

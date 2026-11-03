@@ -10,6 +10,7 @@ import { apiClient, unwrap } from '../../api';
 import { useCan } from '../../auth/AuthProvider';
 import { Avatar } from '../../components/Avatar';
 import { Badge } from '../../components/Badge';
+import { SpaceLogo } from '../../components/SpaceLogo';
 import { Button } from '../../components/Button';
 import { Dialog, DialogConfirm, DialogFooter } from '../../components/Dialog';
 import { MenuItem } from '../../components/Menu';
@@ -383,7 +384,16 @@ export function ManageUserPage() {
             rows={spaces.data!}
             rowKey={(space) => space.projectId!}
             columns={[
-              { key: 'name', header: t('admin.spaceColumn'), render: (space) => space.name },
+              {
+                key: 'name',
+                header: t('admin.spaceColumn'),
+                render: (space) => (
+                  <span className="flex items-center gap-2">
+                    <SpaceLogo spaceKey={space.key} logoUrl={space.logoUrl} />
+                    {space.name}
+                  </span>
+                ),
+              },
               { key: 'key', header: t('spaces.key'), render: (space) => space.key },
               { key: 'role', header: t('spaces.role'), render: (space) => t(SPACE_ROLES[space.role ?? ''] ?? 'spaces.roleMember') },
               { key: 'added', header: t('admin.added'), render: (space) => formatDate(space.addedAt, i18n.language) },

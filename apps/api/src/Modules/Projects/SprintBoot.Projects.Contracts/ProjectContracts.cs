@@ -1,3 +1,4 @@
+using Volo.Abp.Content;
 using System.ComponentModel.DataAnnotations;
 using SprintBoot.Identity;
 using Volo.Abp.Application.Services;
@@ -32,6 +33,9 @@ public class ProjectDto
 
     /// <summary>Keys the caller holds in this project, so the UI can hide actions.</summary>
     public required string[] Permissions { get; set; }
+
+    /// <summary>Null until an admin uploads one; clients then show the key.</summary>
+    public string? LogoUrl { get; set; }
 }
 
 public class CreateProjectInput
@@ -100,6 +104,8 @@ public class UserSpaceDto
     public required string Role { get; set; }
 
     public required DateTime AddedAt { get; set; }
+
+    public string? LogoUrl { get; set; }
 }
 
 /// <summary>System administration view of a user's memberships.</summary>
@@ -130,6 +136,11 @@ public interface IProjectAppService : IApplicationService
     Task<ProjectMemberDto> UpdateMemberAsync(Guid id, Guid userId, UpdateMemberInput input);
 
     Task RemoveMemberAsync(Guid id, Guid userId);
+
+    /// <summary>PNG, JPEG, WebP or GIF up to 512 KB.</summary>
+    Task<ProjectDto> UploadLogoAsync(Guid id, IRemoteStreamContent file);
+
+    Task<ProjectDto> DeleteLogoAsync(Guid id);
 }
 
 /// <summary>Used by other modules. Every project-scoped call must pass through this.</summary>
@@ -196,5 +207,6 @@ public static class ProjectErrors
     public const string KeyTaken = "SprintBoot:ProjectKeyTaken";
     public const string InvalidRole = "SprintBoot:InvalidProjectRole";
     public const string AlreadyMember = "SprintBoot:AlreadyMember";
+    public const string LogoInvalid = "SprintBoot:SpaceLogoInvalid";
     public const string LastAdmin = "SprintBoot:LastProjectAdmin";
 }

@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useNavigate } from 'react-router';
 import { apiClient, unwrap } from '../../api';
 import { Avatar } from '../../components/Avatar';
+import { SpaceLogo } from '../../components/SpaceLogo';
 import { Button } from '../../components/Button';
 import { Dialog, DialogFooter } from '../../components/Dialog';
 import { SearchInput } from '../../components/SearchInput';
@@ -106,7 +107,10 @@ export function SpacesPage() {
               key: 'name',
               header: t('spaces.name'),
               render: (space) => (
-                <Link component={RouterLink} to={`/spaces/${space.key}/issues`} color="inherit">{space.name}</Link>
+                <span className="flex items-center gap-2">
+                  <SpaceLogo spaceKey={space.key} logoUrl={space.logoUrl} />
+                  <Link component={RouterLink} to={`/spaces/${space.key}/issues`} color="inherit">{space.name}</Link>
+                </span>
               ),
             },
             { key: 'key', header: t('spaces.key'), render: (space) => space.key },

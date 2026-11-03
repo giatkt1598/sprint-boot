@@ -2,12 +2,13 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Navigate, Outlet, useOutletContext, useParams } from 'react-router';
 import ButtonBase from '@mui/material/ButtonBase';
 import { apiClient, unwrap } from '../../api';
 import { Avatar } from '../../components/Avatar';
+import { SpaceLogo } from '../../components/SpaceLogo';
 import { Button } from '../../components/Button';
 import { DialogConfirm } from '../../components/Dialog';
 import { ErrorState, LoadingState } from '../../components/StateViews';
@@ -114,6 +115,68 @@ const SPRINT_PRESETS = [14, 21, 28];
 const DEFAULT_SPRINT_DAYS = 14;
 const CUSTOM_LENGTH = 'custom';
 
+/** Uploads at once, apart from the form: a picture has nothing to save with the name. */
+function SpaceLogoField({ space, canManage }: { space: Space; canManage: boolean }) {
+  const { t } = useTranslation();
+  const toast = useToast();
+  const toMessage = useErrorMessage();
+  const queryClient = useQueryClient();
+  const input = useRef<HTMLInputElement>(null);
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ['spaces'] });
+
+  const upload = useMutation({
+    mutationFn: (file: File) =>
+      unwrap(
+        apiClient.POST('/api/v1/project/{id}/upload-logo', {
+          params: { path: { id: space.id! } },
+          body: {} as never,
+          bodySerializer: () => {
+            const form = new FormData();
+            form.append('file', file);
+            return form;
+          },
+        }),
+      ),
+    onSuccess: async () => {
+      await refresh();
+      toast('success', t('spaces.logoSaved'));
+    },
+    onError: (failure) => toast('error', toMessage(failure)),
+  });
+  const remove = useMutation({
+    mutationFn: () => unwrap(apiClient.DELETE('/api/v1/project/{id}/logo', { params: { path: { id: space.id! } } })),
+    onSuccess: refresh,
+    onError: (failure) => toast('error', toMessage(failure)),
+  });
+
+  const pick = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (file) {
+      upload.mutate(file);
+    }
+  };
+  const busy = upload.isPending || remove.isPending;
+
+  return (
+    <section aria-label={t('spaces.logo')} className="flex items-center gap-4">
+      <SpaceLogo spaceKey={space.key} logoUrl={space.logoUrl} size={64} />
+      {canManage && (
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <Button kind="secondary" disabled={busy} onClick={() => input.current?.click()}>
+              {t(space.logoUrl ? 'spaces.changeLogo' : 'spaces.uploadLogo')}
+            </Button>
+            {space.logoUrl && <Button kind="ghost" disabled={busy} onClick={() => remove.mutate()}>{t('spaces.removeLogo')}</Button>}
+          </div>
+          <Typography variant="caption" color="textSecondary">{t('spaces.logoHint')}</Typography>
+          <input ref={input} type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden aria-label={t('spaces.uploadLogo')} onChange={pick} />
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function SpaceGeneralPage() {
   const { t } = useTranslation();
   const space = useOutletContext<Space>();
@@ -149,6 +212,7 @@ export function SpaceGeneralPage() {
   return (
     <form className="flex flex-col gap-4" onSubmit={submit}>
       <Typography variant="h1">{t('spaces.general')}</Typography>
+      <SpaceLogoField space={space} canManage={Boolean(canManage)} />
       <TextField label={t('spaces.name')} value={name} disabled={!canManage} onChange={(event) => setName(event.target.value)} />
       <TextField label={t('spaces.key')} value={space.key ?? ''} disabled />
       <TextField label={t('spaces.branchTemplate')} placeholder="feature/{issue_key}-{issue_title}" value={template} disabled={!canManage} onChange={(event) => setTemplate(event.target.value)} />

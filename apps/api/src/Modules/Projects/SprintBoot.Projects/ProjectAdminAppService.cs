@@ -33,6 +33,7 @@ public static class UserSpaces
                 Name = spaces[member.ProjectId].Name,
                 Role = member.Role,
                 AddedAt = member.CreationTime,
+                LogoUrl = SpaceLogos.Url(spaces[member.ProjectId]),
             })];
     }
 }

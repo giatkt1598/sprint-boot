@@ -9,6 +9,7 @@ import { apiClient, unwrap } from '../../api';
 import { useCurrentUser } from '../../auth/AuthProvider';
 import { Avatar } from '../../components/Avatar';
 import { Badge } from '../../components/Badge';
+import { SpaceLogo } from '../../components/SpaceLogo';
 import { GitHubMark, GoogleMark } from '../../components/BrandSignInButton';
 import { DialogConfirm } from '../../components/Dialog';
 import { Button } from '../../components/Button';
@@ -264,7 +265,12 @@ function MySpaces() {
             {
               key: 'name',
               header: t('admin.spaceColumn'),
-              render: (space) => <Link component={RouterLink} to={`/spaces/${space.key}`} variant="body2">{space.name}</Link>,
+              render: (space) => (
+                <span className="flex items-center gap-2">
+                  <SpaceLogo spaceKey={space.key} logoUrl={space.logoUrl} />
+                  <Link component={RouterLink} to={`/spaces/${space.key}`} variant="body2">{space.name}</Link>
+                </span>
+              ),
             },
             { key: 'key', header: t('spaces.key'), render: (space) => space.key },
             { key: 'role', header: t('spaces.role'), render: (space) => t(SPACE_ROLES[space.role ?? ''] ?? 'spaces.roleMember') },

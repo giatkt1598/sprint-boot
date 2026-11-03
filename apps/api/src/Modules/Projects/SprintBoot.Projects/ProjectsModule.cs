@@ -7,6 +7,7 @@ namespace SprintBoot.Projects;
 
 [DependsOn(
     typeof(ProjectsContractsModule),
+    typeof(Volo.Abp.BlobStoring.AbpBlobStoringModule),
     typeof(AbpDddApplicationModule),
     typeof(AbpDddDomainModule),
     typeof(AbpEntityFrameworkCoreModule))]

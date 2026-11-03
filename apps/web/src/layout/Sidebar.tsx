@@ -7,6 +7,7 @@ import { useCan, useCurrentUser } from '../auth/AuthProvider';
 import { MenuItem } from '../components/Menu';
 import { SidebarItem } from '../components/SidebarItem';
 import { SpaceSwitcher } from '../components/SpaceSwitcher';
+import { SpaceLogo } from '../components/SpaceLogo';
 import { useSpace, useSpaces } from '../features/spaces/api';
 import { rememberSpace } from '../features/spaces/HomePage';
 import { CreateSpaceDialog } from '../features/spaces/SpacesPage';
@@ -49,6 +50,7 @@ export function Sidebar() {
     >
       <SpaceSwitcher
         spaceKey={(space.data?.key ?? '').slice(0, 2)}
+        logoUrl={space.data?.logoUrl}
         name={space.data?.name ?? t('spaces.title')}
         label={t('nav.switchSpace')}
         onClick={(event) => setAnchor(event.currentTarget)}
@@ -56,7 +58,12 @@ export function Sidebar() {
       <Menu open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}>
         {/* Managing spaces is an admin screen, so everyone else needs the full list here. */}
         {(canManageSpaces ? (spaces.data ?? []).slice(0, RECENT_SPACES) : (spaces.data ?? [])).map((item) => (
-          <MenuItem key={item.id} onClick={() => open(`/spaces/${item.key}/issues`)}>{item.name}</MenuItem>
+          <MenuItem key={item.id} onClick={() => open(`/spaces/${item.key}/issues`)}>
+            <span className="flex min-w-0 items-center gap-2">
+              <SpaceLogo spaceKey={item.key} logoUrl={item.logoUrl} />
+              <span className="truncate">{item.name}</span>
+            </span>
+          </MenuItem>
         ))}
         {canManageSpaces && <MenuItem onClick={() => open('/admin/spaces')}>{t('nav.allSpaces')}</MenuItem>}
         <MenuItem onClick={() => { setAnchor(null); setCreating(true); }}>{t('spaces.create')}</MenuItem>

@@ -13,6 +13,36 @@ public class AuthTests(ApiFixture fixture)
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     [Fact]
+    public async Task A_space_admin_uploads_a_logo_that_shows_wherever_the_space_does()
+    {
+        var owner = await fixture.CreateUserClientAsync(Token);
+        var key = $"L{Random.Shared.Next(100000, 999999)}";
+        var space = (await (await owner.Http.PostAsJsonAsync("/api/v1/project", new { name = "Logo", key, type = 0 }, Token)).Content.ReadFromJsonAsync<ProjectDto>(Token))!;
+        byte[] png = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0];
+
+        using (var svg = new MultipartFormDataContent { { new ByteArrayContent("<svg/>"u8.ToArray()), "file", "a.svg" } })
+        {
+            (await (await owner.Http.PostAsync($"/api/v1/project/{space.Id}/upload-logo", svg, Token)).Content.ReadAsStringAsync(Token)).ShouldContain(ProjectErrors.LogoInvalid);
+        }
+
+        using var form = new MultipartFormDataContent { { new ByteArrayContent(png), "file", "logo.png" } };
+        var uploaded = await owner.Http.PostAsync($"/api/v1/project/{space.Id}/upload-logo", form, Token);
+        uploaded.StatusCode.ShouldBe(HttpStatusCode.OK, await uploaded.Content.ReadAsStringAsync(Token));
+        var url = (await uploaded.Content.ReadFromJsonAsync<ProjectDto>(Token))!.LogoUrl!;
+
+        (await fixture.Factory.CreateClient().GetAsync(url, Token)).Content.Headers.ContentType!.MediaType.ShouldBe("image/png");
+        (await owner.Http.GetFromJsonAsync<List<ProjectDto>>("/api/v1/project", Token))!.Single(item => item.Id == space.Id).LogoUrl.ShouldBe(url);
+        (await owner.Http.GetFromJsonAsync<List<UserSpaceDto>>("/api/v1/project/my-spaces", Token))!.Single().LogoUrl.ShouldBe(url);
+
+        var stranger = await fixture.CreateUserClientAsync(Token);
+        using var other = new MultipartFormDataContent { { new ByteArrayContent(png), "file", "logo.png" } };
+        (await stranger.Http.PostAsync($"/api/v1/project/{space.Id}/upload-logo", other, Token)).IsSuccessStatusCode.ShouldBeFalse();
+
+        (await owner.Http.DeleteAsync($"/api/v1/project/{space.Id}/logo", Token)).EnsureSuccessStatusCode();
+        (await fixture.Factory.CreateClient().GetAsync(url, Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
     public async Task People_see_their_own_spaces_and_roles()
     {
         var client = await fixture.CreateUserClientAsync(Token);

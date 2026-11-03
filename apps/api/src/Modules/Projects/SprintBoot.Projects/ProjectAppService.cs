@@ -3,6 +3,7 @@ using SprintBoot.Identity;
 using SprintBoot.Issues;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
+using Volo.Abp.Content;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.EventBus.Distributed;
@@ -21,7 +22,8 @@ public class ProjectAppService(
     IUserDirectory userDirectory,
     IIssueProjectStats issueStats,
     ILocalEventBus localEventBus,
-    IDistributedEventBus eventBus)
+    IDistributedEventBus eventBus,
+    SpaceLogos logos)
     : ApplicationService, IProjectAppService
 {
     public Task<List<UserSpaceDto>> GetMySpacesAsync() => UserSpaces.LoadAsync(projects, members, CurrentUser.GetId());
@@ -76,6 +78,24 @@ public class ProjectAppService(
         }
 
         await localEventBus.PublishAsync(new ProjectCreatedEvent(project.Id));
+        return (await ToDtosAsync([project])).Single();
+    }
+
+    public async Task<ProjectDto> UploadLogoAsync(Guid id, IRemoteStreamContent file)
+    {
+        await access.CheckAsync(id, ProjectPermissions.Manage);
+        var project = await projects.GetAsync(id);
+        await logos.SaveAsync(project, file);
+        await projects.UpdateAsync(project, autoSave: true);
+        return (await ToDtosAsync([project])).Single();
+    }
+
+    public async Task<ProjectDto> DeleteLogoAsync(Guid id)
+    {
+        await access.CheckAsync(id, ProjectPermissions.Manage);
+        var project = await projects.GetAsync(id);
+        await logos.RemoveAsync(project);
+        await projects.UpdateAsync(project, autoSave: true);
         return (await ToDtosAsync([project])).Single();
     }
 
@@ -194,6 +214,7 @@ public class ProjectAppService(
                 IssueCount = stat?.Count ?? 0,
                 UpdatedAt = stat?.UpdatedAt ?? project.LastModificationTime ?? project.CreationTime,
                 Permissions = [.. await access.GetPermissionsAsync(project.Id)],
+                LogoUrl = SpaceLogos.Url(project),
             });
         }
 

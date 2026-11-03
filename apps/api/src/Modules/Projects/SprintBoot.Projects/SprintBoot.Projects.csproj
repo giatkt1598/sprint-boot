@@ -1,8 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <ProjectReference Include="..\..\Platform\SprintBoot.Platform.Contracts\SprintBoot.Platform.Contracts.csproj" />
     <ProjectReference Include="..\SprintBoot.Projects.Contracts\SprintBoot.Projects.Contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Volo.Abp.BlobStoring" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Volo.Abp.Ddd.Application" />
     <PackageReference Include="Volo.Abp.Ddd.Domain" />
     <PackageReference Include="Volo.Abp.EntityFrameworkCore" />

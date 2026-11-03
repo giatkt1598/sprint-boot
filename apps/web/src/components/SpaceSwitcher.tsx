@@ -2,15 +2,17 @@ import ButtonBase from '@mui/material/ButtonBase';
 import { ChevronsUpDown } from 'lucide-react';
 import type { MouseEvent } from 'react';
 import { font, radius, sem } from '../theme/tokens';
+import { SpaceLogo } from './SpaceLogo';
 
 export interface SpaceSwitcherProps {
   spaceKey: string;
+  logoUrl?: string | null;
   name: string;
   label: string;
   onClick?: (event: MouseEvent<HTMLElement>) => void;
 }
 
-export function SpaceSwitcher({ spaceKey, name, label, onClick }: SpaceSwitcherProps) {
+export function SpaceSwitcher({ spaceKey, logoUrl, name, label, onClick }: SpaceSwitcherProps) {
   return (
     <ButtonBase
       onClick={onClick}
@@ -22,18 +24,7 @@ export function SpaceSwitcher({ spaceKey, name, label, onClick }: SpaceSwitcherP
         '&:hover': { backgroundColor: sem('bg-hover') },
       }}
     >
-      <span
-        className="flex size-6 shrink-0 items-center justify-center"
-        style={{
-          backgroundColor: sem('accent-default'),
-          color: sem('text-on-accent'),
-          borderRadius: radius.control,
-          fontSize: font.size.xs,
-          fontWeight: font.weight.semibold,
-        }}
-      >
-        {spaceKey}
-      </span>
+      <SpaceLogo spaceKey={spaceKey} logoUrl={logoUrl} />
       <span className="flex-1 truncate text-left" style={{ fontSize: font.size.md, fontWeight: font.weight.medium }}>
         {name}
       </span>

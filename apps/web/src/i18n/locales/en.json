@@ -129,6 +129,7 @@
     "richText": "Rich text"
   },
   "errors": {
+    "SpaceLogoInvalid": "Use a PNG, JPEG, WebP or GIF logo up to 512 KB.",
     "ProviderLogoInvalid": "Use a PNG, JPEG, WebP or GIF logo up to 256 KB.",
     "CannotDeleteSelf": "You cannot delete your own account.",
     "LastSystemAdmin": "This is the last system admin. Make someone else an admin first.",
@@ -310,6 +311,12 @@
     "lastActive": "Last active {{date}}"
   },
   "spaces": {
+    "logo": "Space logo",
+    "uploadLogo": "Upload logo",
+    "changeLogo": "Change logo",
+    "removeLogo": "Remove",
+    "logoHint": "PNG, JPEG, WebP or GIF up to 512 KB. A square image works best.",
+    "logoSaved": "Logo updated",
     "title": "Spaces",
     "create": "Create space",
     "name": "Name",

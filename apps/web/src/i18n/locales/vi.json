@@ -129,6 +129,7 @@
     "richText": "Văn bản định dạng"
   },
   "errors": {
+    "SpaceLogoInvalid": "Hãy dùng logo PNG, JPEG, WebP hoặc GIF, tối đa 512 KB.",
     "ProviderLogoInvalid": "Hãy dùng logo PNG, JPEG, WebP hoặc GIF, tối đa 256 KB.",
     "CannotDeleteSelf": "Bạn không thể xóa tài khoản của chính mình.",
     "LastSystemAdmin": "Đây là quản trị hệ thống cuối cùng. Hãy cấp quyền admin cho người khác trước.",
@@ -310,6 +311,12 @@
     "lastActive": "Hoạt động gần nhất {{date}}"
   },
   "spaces": {
+    "logo": "Logo space",
+    "uploadLogo": "Tải logo lên",
+    "changeLogo": "Đổi logo",
+    "removeLogo": "Gỡ",
+    "logoHint": "PNG, JPEG, WebP hoặc GIF, tối đa 512 KB. Ảnh vuông sẽ đẹp nhất.",
+    "logoSaved": "Đã cập nhật logo",
     "title": "Space",
     "create": "Tạo Space",
     "name": "Tên",
