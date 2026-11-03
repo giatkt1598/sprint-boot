@@ -530,6 +530,7 @@ function TypeField({ issue, canEdit, onPick }: { issue: Issue; canEdit: boolean;
       </ButtonBase>
       <PickerPopover
         label={t('issues.issueType')}
+        width={132}
         anchor={anchor}
         selectedId={issue.type?.id}
         items={siblings.map((type) => ({ id: type.id!, label: t(`issue.type.${type.icon}`), icon: <IssueTypeIcon type={type.icon as IconType} /> }))}

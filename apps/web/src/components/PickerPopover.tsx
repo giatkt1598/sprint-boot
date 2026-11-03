@@ -2,7 +2,7 @@ import ButtonBase from '@mui/material/ButtonBase';
 import { Check } from 'lucide-react';
 import { useRef, useState, type ReactNode } from 'react';
 import { font, radius, sem } from '../theme/tokens';
-import { Popover } from './Popover';
+import { Popover, type PopoverWidth } from './Popover';
 import { SearchInput } from './SearchInput';
 
 export interface PickerItem {
@@ -21,10 +21,11 @@ interface PickerPopoverProps {
   searchLabel?: string;
   onClose: () => void;
   onPick: (id: string) => void;
+  width?: PopoverWidth;
 }
 
 /** Everything that picks one value from a popover looks and behaves the same. */
-export function PickerPopover({ label, anchor, items, selectedId, searchLabel, onClose, onPick }: PickerPopoverProps) {
+export function PickerPopover({ label, anchor, items, selectedId, searchLabel, onClose, onPick, width }: PickerPopoverProps) {
   const [search, setSearch] = useState('');
   const input = useRef<HTMLInputElement>(null);
   const text = search.toLowerCase();
@@ -37,6 +38,7 @@ export function PickerPopover({ label, anchor, items, selectedId, searchLabel, o
 
   return (
     <Popover
+      width={width}
       open={Boolean(anchor)}
       anchorEl={anchor}
       onClose={() => close(onClose)}
