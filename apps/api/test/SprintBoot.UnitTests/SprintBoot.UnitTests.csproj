@@ -8,6 +8,7 @@
     <ProjectReference Include="..\..\src\Modules\Issues\SprintBoot.Issues\SprintBoot.Issues.csproj" />
     <ProjectReference Include="..\..\src\Modules\Identity\SprintBoot.Identity\SprintBoot.Identity.csproj" />
     <ProjectReference Include="..\..\src\Modules\GitIntegration\SprintBoot.GitIntegration\SprintBoot.GitIntegration.csproj" />
+    <ProjectReference Include="..\..\src\SprintBoot.Host\SprintBoot.Host.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />

@@ -117,9 +117,13 @@ public class SprintBootHostModule : AbpModule
         });
 
         // Stateless, so every call runs as a plain request with its token's user.
-        context.Services.AddMcpServer()
+        context.Services.AddMcpServer(options => options.ServerInstructions = McpInstructions.Text)
             .WithHttpTransport(options => options.Stateless = true)
-            .WithTools<SprintBootMcpTools>();
+            .WithTools<IssueTools>()
+            .WithTools<CommentTools>()
+            .WithTools<AgileTools>()
+            .WithTools<WorkTools>()
+            .WithTools<LookupTools>();
     }
 
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
