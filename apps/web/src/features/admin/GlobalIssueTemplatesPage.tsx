@@ -58,7 +58,6 @@ function GlobalTemplateDialog({ draft, onClose }: { draft: Draft; onClose: () =>
       }
     >
       <TextField label={t('templates.name')} value={value.name} autoFocus onChange={(event) => setValue({ ...value, name: event.target.value })} />
-      <TemplateModeField value={value.mode} onChange={(mode) => setValue({ ...value, mode })} />
       {/* No space is given, so a template holds no uploaded files an issue could later lose. */}
       <RichTextEditor
         label={t('templates.content')}
@@ -67,6 +66,7 @@ function GlobalTemplateDialog({ draft, onClose }: { draft: Draft; onClose: () =>
         initialValue={draft.content}
         onChange={(content) => setValue((current) => ({ ...current, content }))}
       />
+      <TemplateModeField value={value.mode} onChange={(mode) => setValue({ ...value, mode })} />
     </Dialog>
   );
 }
