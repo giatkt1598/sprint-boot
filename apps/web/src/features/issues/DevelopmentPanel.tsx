@@ -194,7 +194,8 @@ function DevelopmentDialog({ data, tab, onTab, onClose }: { data: Development; t
           { value: 'builds', label: t('development.tabBuild') },
         ]}
       />
-      <div className="flex max-h-96 flex-col overflow-y-auto">
+      {/* A fixed height keeps the dialog from jumping when switching tabs; longer lists scroll. */}
+      <div className="flex h-96 max-h-[60vh] flex-col overflow-y-auto">
         {tab === 'branches' && (data.branches?.length ? data.branches.map((branch) => (
           <DetailRow key={branch.url}>
             <MuiLink href={branch.url ?? undefined} {...external}>{branch.name}</MuiLink>
