@@ -520,6 +520,8 @@
     "issueCountFiltered": "{{shown}} trên {{total}} issue",
     "points": "{{total}} point",
     "pointsProgress": "{{done}} trên {{total}} point",
+    "storyPoints_one": "{{count}} point",
+    "storyPoints_other": "{{count}} point",
     "sprintActions": "Thao tác với {{name}}",
     "rowActions": "Thao tác với {{key}}",
     "moveUp": "Chuyển lên",

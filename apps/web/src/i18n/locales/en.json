@@ -520,6 +520,8 @@
     "issueCountFiltered": "{{shown}} of {{total}} issues",
     "points": "{{total}} points",
     "pointsProgress": "{{done}} of {{total}} points",
+    "storyPoints_one": "{{count}} point",
+    "storyPoints_other": "{{count}} points",
     "sprintActions": "Actions for {{name}}",
     "rowActions": "Actions for {{key}}",
     "moveUp": "Move up",
