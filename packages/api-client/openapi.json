@@ -566,6 +566,37 @@
         }
       }
     },
+    "/api/v1/auth/ldap-login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LdapLoginInput"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LdapLoginInput"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LdapLoginInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/v1/auth/methods": {
       "get": {
         "tags": [
@@ -21753,6 +21784,14 @@
           "buttonColor": {
             "type": "string",
             "nullable": true
+          },
+          "searchBase": {
+            "type": "string",
+            "nullable": true
+          },
+          "userFilter": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -21761,7 +21800,9 @@
         "enum": [
           0,
           1,
-          2
+          2,
+          3,
+          4
         ],
         "type": "integer",
         "format": "int32"
@@ -23013,6 +23054,34 @@
         },
         "additionalProperties": false
       },
+      "LdapLoginInput": {
+        "required": [
+          "password",
+          "provider",
+          "userName"
+        ],
+        "type": "object",
+        "properties": {
+          "provider": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "userName": {
+            "maxLength": 256,
+            "minLength": 0,
+            "type": "string"
+          },
+          "password": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "invitation": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "Lexeme": {
         "type": "object",
         "properties": {
@@ -24029,6 +24098,18 @@
             "type": "string",
             "nullable": true
           },
+          "searchBase": {
+            "maxLength": 256,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
+          "userFilter": {
+            "maxLength": 256,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
           "isEnabled": {
             "type": "boolean"
           }
@@ -24569,10 +24650,26 @@
         ],
         "type": "object",
         "properties": {
+          "type": {
+            "$ref": "#/components/schemas/ExternalProviderType"
+          },
           "discoveryUrl": {
             "maxLength": 512,
             "minLength": 0,
             "type": "string"
+          },
+          "clientId": {
+            "type": "string",
+            "nullable": true
+          },
+          "clientSecret": {
+            "type": "string",
+            "nullable": true
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
           }
         },
         "additionalProperties": false

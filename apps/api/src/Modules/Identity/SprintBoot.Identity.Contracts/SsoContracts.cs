@@ -11,6 +11,15 @@ public enum ExternalProviderType
     Oidc = 0,
     Google = 1,
     GitHub = 2,
+
+    /// <summary>DiscoveryUrl holds the IdP metadata address and ClientId this service's entity ID.</summary>
+    Saml2 = 3,
+
+    /// <summary>
+    /// LDAP or Active Directory, signed into with a username and password on our page. DiscoveryUrl holds the
+    /// server (ldap:// or ldaps://), ClientId the bind DN of a service account and the secret its password.
+    /// </summary>
+    Ldap = 4,
 }
 
 public class ExternalProviderDto
@@ -43,6 +52,12 @@ public class ExternalProviderDto
 
     /// <summary>OIDC providers only: the button color, as #RRGGBB.</summary>
     public string? ButtonColor { get; set; }
+
+    /// <summary>LDAP only: where people are looked up, such as dc=example,dc=com.</summary>
+    public string? SearchBase { get; set; }
+
+    /// <summary>LDAP only: the filter that finds one person, with {0} for what they typed.</summary>
+    public string? UserFilter { get; set; }
 }
 
 public class SaveProviderInput
@@ -80,7 +95,29 @@ public class SaveProviderInput
     [RegularExpression("^#[0-9A-Fa-f]{6}$")]
     public string? ButtonColor { get; set; }
 
+    [StringLength(256)]
+    public string? SearchBase { get; set; }
+
+    [StringLength(256)]
+    public string? UserFilter { get; set; }
+
     public bool IsEnabled { get; set; }
+}
+
+public class LdapLoginInput
+{
+    [Required]
+    public required string Provider { get; set; }
+
+    [Required]
+    [StringLength(256)]
+    public required string UserName { get; set; }
+
+    [Required]
+    public required string Password { get; set; }
+
+    /// <summary>The invitation token when signing in from an invitation link.</summary>
+    public string? Invitation { get; set; }
 }
 
 public class AuthPolicyDto
@@ -105,15 +142,27 @@ public class SaveAuthPolicyInput
 
 public class TestConnectionInput
 {
+    public ExternalProviderType Type { get; set; }
+
+    /// <summary>The OIDC issuer, the SAML metadata address or the LDAP server.</summary>
     [Required]
     [StringLength(512)]
     public required string DiscoveryUrl { get; set; }
+
+    /// <summary>LDAP only: the bind DN to try.</summary>
+    public string? ClientId { get; set; }
+
+    /// <summary>LDAP only: the bind password; blank uses the one stored for <see cref="ProviderId"/>.</summary>
+    public string? ClientSecret { get; set; }
+
+    public Guid? ProviderId { get; set; }
 }
 
 public class ConnectionTestDto
 {
     public required bool Succeeded { get; set; }
 
+    /// <summary>The OIDC issuer or SAML entity ID found; for LDAP, the server that accepted the bind.</summary>
     public required string? Issuer { get; set; }
 }
 
@@ -175,6 +224,9 @@ public static class SsoErrors
     public const string ExternalFailed = "SprintBoot:ExternalSignInFailed";
     public const string LocalDisabled = "SprintBoot:LocalLoginDisabled";
     public const string DiscoveryRequired = "SprintBoot:DiscoveryUrlRequired";
+    public const string LdapAddressInvalid = "SprintBoot:LdapAddressInvalid";
+    public const string LdapSearchBaseRequired = "SprintBoot:LdapSearchBaseRequired";
+    public const string LdapFilterInvalid = "SprintBoot:LdapFilterInvalid";
 }
 
 public enum InvitationStatus

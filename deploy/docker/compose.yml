@@ -63,6 +63,20 @@ services:
     volumes:
       - ./keycloak:/opt/keycloak/data/import:ro
 
+  # Bind DN cn=admin,dc=sso,dc=local, password admin; people live under ou=people,dc=sso,dc=local.
+  openldap:
+    image: osixia/openldap:1.5.0
+    profiles: ["sso"]
+    command: ["--copy-service"]
+    environment:
+      LDAP_DOMAIN: sso.local
+      LDAP_ORGANISATION: Sprint Boot SSO
+      LDAP_ADMIN_PASSWORD: admin
+    ports:
+      - "${LDAP_PORT:-1389}:389"
+    volumes:
+      - ./openldap/50-people.ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom/50-people.ldif:ro
+
   gitea:
     image: gitea/gitea:1.24
     profiles: ["git"]

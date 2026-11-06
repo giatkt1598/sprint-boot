@@ -26,7 +26,29 @@ type SaveProvider = components['schemas']['SaveProviderInput'];
 const OIDC = 0;
 const GOOGLE = 1;
 const GITHUB = 2;
+const SAML = 3;
+const LDAP = 4;
 const DISPLAY_NAMES: Record<number, string> = { [GOOGLE]: 'Google', [GITHUB]: 'GitHub' };
+const TYPE_LABELS: Record<number, string> = { [OIDC]: 'OIDC', [GOOGLE]: 'OAuth', [GITHUB]: 'OAuth', [SAML]: 'SAML 2.0', [LDAP]: 'LDAP' };
+
+/** Every protocol keeps its address, its identifier and its secret in the same three fields, under its own names. */
+const FIELD_LABELS: Record<number, { address: string; id: string; secret: string | null }> = {
+  [OIDC]: { address: 'sso.discoveryUrl', id: 'sso.clientId', secret: 'sso.clientSecret' },
+  [GOOGLE]: { address: 'sso.discoveryUrl', id: 'sso.clientId', secret: 'sso.clientSecret' },
+  [GITHUB]: { address: 'sso.discoveryUrl', id: 'sso.clientId', secret: 'sso.clientSecret' },
+  [SAML]: { address: 'sso.samlMetadataUrl', id: 'sso.samlEntityId', secret: null },
+  [LDAP]: { address: 'sso.ldapServer', id: 'sso.ldapBindDn', secret: 'sso.ldapBindPassword' },
+};
+
+/** Types whose address the admin types in; Google and GitHub have a fixed one. */
+const hasAddress = (type: number | undefined) => type === OIDC || type === SAML || type === LDAP;
+
+const DEFAULT_MAPPING: Record<number, { email: string; name: string }> = {
+  [SAML]: { email: 'email', name: 'name' },
+  [LDAP]: { email: 'mail', name: 'displayName' },
+};
+
+const samlMetadataUrl = (name: string) => `${window.location.origin}/connect/signin-${name}`;
 
 export const toProviderName = (displayName: string) =>
   displayName.toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 32);
@@ -46,6 +68,8 @@ const toInput = (provider: Provider): SaveProvider => ({
   nameClaim: provider.nameClaim,
   isEnabled: provider.isEnabled,
   buttonColor: provider.buttonColor,
+  searchBase: provider.searchBase,
+  userFilter: provider.userFilter,
 });
 
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
@@ -217,8 +241,20 @@ function PolicyCard() {
 }
 
 /** Sign-in goes through this same address, so it is what the provider must call back. */
-function RedirectUrlField({ name }: { name: string }) {
+function RedirectUrlField({ name, type = OIDC }: { name: string; type?: number }) {
   const { t } = useTranslation();
+  if (type === LDAP) {
+    return null;
+  }
+  if (type === SAML) {
+    // The IdP reads our metadata from the first address and posts its answer to the second.
+    return (
+      <>
+        <CopyField label={t('sso.samlSpMetadata')} value={samlMetadataUrl(name)} copyLabel={t('sso.copyRedirect')} copiedMessage={t('sso.redirectCopied')} />
+        <CopyField label={t('sso.samlAcs')} value={`${samlMetadataUrl(name)}/Acs`} copyLabel={t('sso.copyRedirect')} copiedMessage={t('sso.redirectCopied')} />
+      </>
+    );
+  }
   return (
     <CopyField
       label={t('sso.redirectUrl')}
@@ -226,6 +262,22 @@ function RedirectUrlField({ name }: { name: string }) {
       copyLabel={t('sso.copyRedirect')}
       copiedMessage={t('sso.redirectCopied')}
     />
+  );
+}
+
+function LdapFields({ searchBase, userFilter, onSearchBase, onUserFilter }: {
+  searchBase: string;
+  userFilter: string;
+  onSearchBase: (value: string) => void;
+  onUserFilter: (value: string) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <>
+      <TextField label={t('sso.ldapSearchBase')} placeholder="ou=people,dc=example,dc=com" value={searchBase} onChange={(event) => onSearchBase(event.target.value)} />
+      <TextField label={t('sso.ldapUserFilter')} placeholder="(|(uid={0})(sAMAccountName={0})(mail={0}))" value={userFilter} onChange={(event) => onUserFilter(event.target.value)} />
+      <Typography variant="body2" color="textSecondary">{t('sso.ldapUserFilterHint')}</Typography>
+    </>
   );
 }
 
@@ -238,19 +290,30 @@ function AddProviderDialog({ onClose }: { onClose: () => void }) {
   const [discoveryUrl, setDiscoveryUrl] = useState('');
   const [clientId, setClientId] = useState('');
   const [clientSecret, setClientSecret] = useState('');
+  const [searchBase, setSearchBase] = useState('');
+  const [userFilter, setUserFilter] = useState('');
   const shownName = DISPLAY_NAMES[type ?? OIDC] ?? displayName;
+  const labels = FIELD_LABELS[type ?? OIDC]!;
+  const name = toProviderName(shownName);
+  // The SP entity ID only has to be unique; our metadata address is the usual choice.
+  const entityId = type === SAML && !clientId ? samlMetadataUrl(name) : clientId;
+  const needsSecret = type === OIDC || type === GOOGLE || type === GITHUB;
 
   const add = useMutation({
     mutationFn: () =>
       unwrap(
         apiClient.POST('/api/v1/sso-admin/provider', {
           body: {
-            name: toProviderName(shownName),
+            name,
             displayName: shownName,
             type,
-            discoveryUrl: type === OIDC ? discoveryUrl : null,
-            clientId,
+            discoveryUrl: hasAddress(type) ? discoveryUrl : null,
+            clientId: entityId,
             clientSecret,
+            emailClaim: DEFAULT_MAPPING[type ?? OIDC]?.email,
+            nameClaim: DEFAULT_MAPPING[type ?? OIDC]?.name,
+            searchBase: type === LDAP ? searchBase : null,
+            userFilter: type === LDAP ? userFilter || null : null,
             isEnabled: true,
           },
         }),
@@ -269,7 +332,7 @@ function AddProviderDialog({ onClose }: { onClose: () => void }) {
       footer={
         <DialogFooter
           confirmLabel={t('sso.add')}
-          confirmDisabled={!toProviderName(shownName) || !clientId || !clientSecret || (type === OIDC && !discoveryUrl) || add.isPending}
+          confirmDisabled={!name || !entityId || (needsSecret && !clientSecret) || (hasAddress(type) && !discoveryUrl) || (type === LDAP && !searchBase) || add.isPending}
           onCancel={onClose}
           onConfirm={() => add.mutate()}
         />
@@ -283,17 +346,22 @@ function AddProviderDialog({ onClose }: { onClose: () => void }) {
           { value: String(OIDC), label: t('sso.oidc') },
           { value: String(GOOGLE), label: 'Google' },
           { value: String(GITHUB), label: 'GitHub' },
+          { value: String(SAML), label: 'SAML 2.0' },
+          { value: String(LDAP), label: t('sso.ldap') },
         ]}
       />
-      {type === OIDC && (
+      {hasAddress(type) && (
         <>
           <TextField label={t('sso.displayName')} autoFocus value={displayName} onChange={(event) => setDisplayName(event.target.value)} />
-          <TextField label={t('sso.discoveryUrl')} value={discoveryUrl} onChange={(event) => setDiscoveryUrl(event.target.value)} />
+          <TextField label={t(labels.address)} placeholder={type === LDAP ? 'ldaps://ldap.example.com:636' : undefined} value={discoveryUrl} onChange={(event) => setDiscoveryUrl(event.target.value)} />
         </>
       )}
-      <RedirectUrlField name={toProviderName(shownName)} />
-      <TextField label={t('sso.clientId')} value={clientId} onChange={(event) => setClientId(event.target.value)} />
-      <TextField label={t('sso.clientSecret')} type="password" autoComplete="off" placeholder={t('sso.secretPlaceholder')} value={clientSecret} onChange={(event) => setClientSecret(event.target.value)} />
+      <RedirectUrlField name={name} type={type} />
+      <TextField label={t(labels.id)} placeholder={type === SAML ? samlMetadataUrl(name) : undefined} value={clientId} onChange={(event) => setClientId(event.target.value)} />
+      {labels.secret && (
+        <TextField label={t(labels.secret)} type="password" autoComplete="off" placeholder={type === LDAP ? undefined : t('sso.secretPlaceholder')} value={clientSecret} onChange={(event) => setClientSecret(event.target.value)} />
+      )}
+      {type === LDAP && <LdapFields searchBase={searchBase} userFilter={userFilter} onSearchBase={setSearchBase} onUserFilter={setUserFilter} />}
       {add.isError && <Typography role="alert" color="error" variant="body2">{toMessage(add.error)}</Typography>}
     </Dialog>
   );
@@ -341,12 +409,12 @@ export function SsoPage() {
           rowKey={(item) => item.id!}
           columns={[
             { key: 'name', header: t('sso.provider'), render: (item) => item.displayName },
-            { key: 'type', header: t('sso.type'), render: (item) => (item.type === OIDC ? 'OIDC' : 'OAuth') },
+            { key: 'type', header: t('sso.type'), render: (item) => TYPE_LABELS[item.type ?? OIDC] },
             {
               key: 'status',
               header: t('sso.status'),
               render: (item) =>
-                item.hasSecret ? <Badge tone="success">{t('sso.connected')}</Badge> : <Badge>{t('sso.notSetUp')}</Badge>,
+                item.hasSecret || item.type === SAML ? <Badge tone="success">{t('sso.connected')}</Badge> : <Badge>{t('sso.notSetUp')}</Badge>,
             },
             { key: 'enabled', header: t('sso.enabled'), render: (item) => <ProviderToggle provider={item} /> },
             {
@@ -381,11 +449,17 @@ function ProviderForm({ provider }: { provider: Provider }) {
   const [mapping, setMapping] = useState(`email=${provider.emailClaim ?? 'email'}, name=${provider.nameClaim ?? 'name'}`);
   const [deleting, setDeleting] = useState(false);
   const [buttonColor, setButtonColor] = useState(provider.buttonColor ?? '');
+  const [searchBase, setSearchBase] = useState(provider.searchBase ?? '');
+  const [userFilter, setUserFilter] = useState(provider.userFilter ?? '');
   const isOidc = provider.type === OIDC;
+  const type = provider.type ?? OIDC;
+  const labels = FIELD_LABELS[type]!;
+  const directory = type === SAML || type === LDAP;
 
   const save = useSaveProvider(provider.id!);
   const test = useMutation({
-    mutationFn: () => unwrap(apiClient.POST('/api/v1/sso-admin/test-connection', { body: { discoveryUrl } })),
+    mutationFn: () =>
+      unwrap(apiClient.POST('/api/v1/sso-admin/test-connection', { body: { type, discoveryUrl, clientId, clientSecret: clientSecret || null, providerId: provider.id } })),
     onSuccess: (result) => toast(result.succeeded ? 'success' : 'error', t(result.succeeded ? 'sso.testPassed' : 'sso.testFailed')),
     onError: (failure) => toast('error', toMessage(failure)),
   });
@@ -404,10 +478,12 @@ function ProviderForm({ provider }: { provider: Provider }) {
       {
         ...toInput(provider),
         displayName,
-        discoveryUrl: isOidc ? discoveryUrl : null,
+        discoveryUrl: hasAddress(type) ? discoveryUrl : null,
         clientId,
         clientSecret,
         scopes,
+        searchBase: type === LDAP ? searchBase : null,
+        userFilter: type === LDAP ? userFilter || null : null,
         emailClaim: claims.email,
         nameClaim: claims.name,
         buttonColor: isOidc && HEX_COLOR.test(buttonColor) ? buttonColor : null,
@@ -426,25 +502,31 @@ function ProviderForm({ provider }: { provider: Provider }) {
     <div className="flex flex-col gap-6">
       <div>
         <Typography variant="h1">{provider.displayName}</Typography>
-        <Typography variant="body2" color="textSecondary">{isOidc ? t('sso.oidcProvider') : t('sso.oauthProvider')}</Typography>
+        <Typography variant="body2" color="textSecondary">
+          {t(type === SAML ? 'sso.samlProvider' : type === LDAP ? 'sso.ldapProvider' : isOidc ? 'sso.oidcProvider' : 'sso.oauthProvider')}
+        </Typography>
       </div>
       <section className="flex flex-col gap-4 p-4" style={{ maxWidth: 800, border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}>
         <Typography variant="h2">{t('sso.connection')}</Typography>
         <TextField label={t('sso.displayName')} value={displayName} onChange={(event) => setDisplayName(event.target.value)} />
-        {isOidc && <TextField label={t('sso.discoveryUrl')} value={discoveryUrl} onChange={(event) => setDiscoveryUrl(event.target.value)} />}
-        <RedirectUrlField name={provider.name!} />
-        <TextField label={t('sso.clientId')} value={clientId} onChange={(event) => setClientId(event.target.value)} />
-        <TextField label={t('sso.clientSecret')} type="password" autoComplete="off" placeholder={provider.hasSecret ? '••••••••••••' : t('sso.secretPlaceholder')} value={clientSecret} onChange={(event) => setClientSecret(event.target.value)} />
-        <Typography variant="body2" color="textSecondary">{t('sso.secretHint')}</Typography>
-        {isOidc && (
+        {hasAddress(type) && <TextField label={t(labels.address)} value={discoveryUrl} onChange={(event) => setDiscoveryUrl(event.target.value)} />}
+        <RedirectUrlField name={provider.name!} type={type} />
+        <TextField label={t(labels.id)} value={clientId} onChange={(event) => setClientId(event.target.value)} />
+        {labels.secret && (
           <>
-            <TextField label={t('sso.scopes')} value={scopes} onChange={(event) => setScopes(event.target.value)} />
-            <TextField label={t('sso.claimMapping')} value={mapping} onChange={(event) => setMapping(event.target.value)} />
+            <TextField label={t(labels.secret)} type="password" autoComplete="off" placeholder={provider.hasSecret ? '••••••••••••' : t('sso.secretPlaceholder')} value={clientSecret} onChange={(event) => setClientSecret(event.target.value)} />
+            <Typography variant="body2" color="textSecondary">{t('sso.secretHint')}</Typography>
           </>
         )}
+        {type === LDAP && <LdapFields searchBase={searchBase} userFilter={userFilter} onSearchBase={setSearchBase} onUserFilter={setUserFilter} />}
+        {isOidc && <TextField label={t('sso.scopes')} value={scopes} onChange={(event) => setScopes(event.target.value)} />}
+        {(isOidc || directory) && (
+          <TextField label={t(directory ? 'sso.attributeMapping' : 'sso.claimMapping')} value={mapping} onChange={(event) => setMapping(event.target.value)} />
+        )}
+        {directory && <Typography variant="body2" color="textSecondary">{t('sso.directoryEmailTrusted')}</Typography>}
         <div className="flex justify-end gap-2">
           <Button kind="ghost" onClick={() => setDeleting(true)}>{t('sso.delete')}</Button>
-          {isOidc && <Button kind="secondary" disabled={test.isPending} onClick={() => test.mutate()}>{t('sso.test')}</Button>}
+          {(isOidc || directory) && <Button kind="secondary" disabled={test.isPending} onClick={() => test.mutate()}>{t('sso.test')}</Button>}
           <Button disabled={save.isPending || (buttonColor !== '' && !HEX_COLOR.test(buttonColor))} onClick={submit}>{t('sso.save')}</Button>
         </div>
       </section>

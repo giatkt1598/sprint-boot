@@ -90,6 +90,7 @@ public class IdentityModule : AbpModule
         // Schemes are added at runtime, so their handlers cannot be registered through AddOpenIdConnect.
         context.Services.AddTransient<OpenIdConnectHandler>();
         context.Services.AddTransient<OAuthHandler<OAuthOptions>>();
+        context.Services.AddTransient<Sustainsys.Saml2.AspNetCore2.Saml2Handler>();
         context.Services.AddHttpClient();
 
         context.Services.ConfigureApplicationCookie(options =>

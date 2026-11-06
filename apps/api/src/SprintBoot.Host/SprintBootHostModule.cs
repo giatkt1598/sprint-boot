@@ -141,7 +141,7 @@ public class SprintBootHostModule : AbpModule
             if (path.StartsWith(ExternalSchemeRegistry.CallbackPrefix, StringComparison.Ordinal))
             {
                 await http.RequestServices.GetRequiredService<ExternalSchemeRegistry>()
-                    .EnsureAsync(path[ExternalSchemeRegistry.CallbackPrefix.Length..]);
+                    .EnsureAsync(ExternalSchemeRegistry.ProviderOfCallback(path));
             }
 
             await next();

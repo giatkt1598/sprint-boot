@@ -15,7 +15,8 @@ public class SsoAdminAppService(
     IRepository<AuthPolicy, Guid> policies,
     IStringEncryptionService encryption,
     IHttpClientFactory httpClients,
-    ProviderLogos logos)
+    ProviderLogos logos,
+    LdapAuthenticator ldap)
     : ApplicationService, ISsoAdminAppService
 {
     public async Task<List<ExternalProviderDto>> GetProvidersAsync()
@@ -70,6 +71,34 @@ public class SsoAdminAppService(
 
     public async Task<ConnectionTestDto> TestConnectionAsync(TestConnectionInput input)
     {
+        if (input.Type == ExternalProviderType.Ldap)
+        {
+            var password = input.ClientSecret;
+            if (string.IsNullOrEmpty(password) && input.ProviderId is { } providerId
+                && (await providers.FindAsync(providerId))?.EncryptedSecret is { } stored)
+            {
+                password = encryption.Decrypt(stored);
+            }
+
+            var problem = await ldap.TestAsync(new LdapServer(input.DiscoveryUrl.Trim(), input.ClientId ?? string.Empty, password));
+            return new ConnectionTestDto { Succeeded = problem is null, Issuer = problem is null ? input.DiscoveryUrl.Trim() : null };
+        }
+
+        if (input.Type == ExternalProviderType.Saml2)
+        {
+            try
+            {
+                using var metadata = httpClients.CreateClient();
+                metadata.Timeout = TimeSpan.FromSeconds(10);
+                return new ConnectionTestDto { Succeeded = true, Issuer = await SamlMetadata.ReadEntityIdAsync(metadata, input.DiscoveryUrl.Trim()) };
+            }
+            catch (Exception failure) when (failure is HttpRequestException or TaskCanceledException or System.Xml.XmlException or UriFormatException or InvalidOperationException)
+            {
+                Logger.LogInformation(failure, "SAML metadata test failed for {Url}", input.DiscoveryUrl);
+                return new ConnectionTestDto { Succeeded = false, Issuer = null };
+            }
+        }
+
         var url = $"{ExternalSchemeRegistry.ToAuthority(input.DiscoveryUrl)}/.well-known/openid-configuration";
         try
         {
@@ -116,10 +145,32 @@ public class SsoAdminAppService(
 
     private void Apply(ExternalProviderConfig provider, SaveProviderInput input)
     {
-        if (input.Type == ExternalProviderType.Oidc && string.IsNullOrWhiteSpace(input.DiscoveryUrl))
+        // OIDC needs its issuer, SAML its metadata and LDAP its server: all of them live in DiscoveryUrl.
+        if (input.Type is ExternalProviderType.Oidc or ExternalProviderType.Saml2 or ExternalProviderType.Ldap
+            && string.IsNullOrWhiteSpace(input.DiscoveryUrl))
         {
             throw new BusinessException(SsoErrors.DiscoveryRequired);
         }
+
+        if (input.Type == ExternalProviderType.Ldap)
+        {
+            if (!Uri.TryCreate(input.DiscoveryUrl!.Trim(), UriKind.Absolute, out var server) || server.Scheme is not ("ldap" or "ldaps"))
+            {
+                throw new BusinessException(SsoErrors.LdapAddressInvalid);
+            }
+
+            if (string.IsNullOrWhiteSpace(input.SearchBase))
+            {
+                throw new BusinessException(SsoErrors.LdapSearchBaseRequired);
+            }
+
+            if (!string.IsNullOrWhiteSpace(input.UserFilter) && !input.UserFilter.Contains("{0}", StringComparison.Ordinal))
+            {
+                throw new BusinessException(SsoErrors.LdapFilterInvalid);
+            }
+        }
+
+        LdapSettings.Set(provider, input.Type == ExternalProviderType.Ldap ? input.SearchBase : null, input.Type == ExternalProviderType.Ldap ? input.UserFilter : null);
 
         provider.DisplayName = input.DisplayName;
         provider.Type = input.Type;
@@ -151,6 +202,8 @@ public class SsoAdminAppService(
         IsEnabled = provider.IsEnabled,
         LogoUrl = ProviderLogos.Url(provider),
         ButtonColor = ProviderLogos.Color(provider),
+        SearchBase = LdapSettings.SearchBase(provider),
+        UserFilter = provider.Type == ExternalProviderType.Ldap ? LdapSettings.UserFilter(provider) : null,
     };
 
     private static AuthPolicyDto ToDto(AuthPolicy policy) => new()

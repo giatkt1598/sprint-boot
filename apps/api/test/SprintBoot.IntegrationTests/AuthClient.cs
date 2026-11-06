@@ -54,7 +54,12 @@ public sealed class AuthClient(ApiFixture fixture)
         var csrf = await GetCsrfTokenAsync(token);
         var login = await PostLoginAsync(email, password, csrf, token);
         login.StatusCode.ShouldBe(HttpStatusCode.NoContent, await login.Content.ReadAsStringAsync(token));
+        await AuthorizeAsync(token);
+    }
 
+    /// <summary>After any cookie sign-in: the SPA's authorize request and token exchange.</summary>
+    public async Task AuthorizeAsync(CancellationToken token)
+    {
         var verifier = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
         var challenge = Base64Url(SHA256.HashData(Encoding.ASCII.GetBytes(verifier)));
         var query = HttpUtility.ParseQueryString(string.Empty);

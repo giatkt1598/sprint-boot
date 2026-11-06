@@ -11,6 +11,7 @@ using Volo.Abp.Domain.Repositories;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.Identity;
 using Volo.Abp.Identity.AspNetCore;
+using Volo.Abp.Security.Encryption;
 using Volo.Abp.Users;
 using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
@@ -29,7 +30,10 @@ public class AuthAppService(
     IProjectAccess projectAccess,
     IUserDirectory userDirectory,
     AvatarStore avatars,
-    LinkedLoginService linkedLogins)
+    LinkedLoginService linkedLogins,
+    ExternalAccountLinker linker,
+    LdapAuthenticator ldap,
+    IStringEncryptionService encryption)
     : ApplicationService, IAuthAppService
 {
     public const string LanguageProperty = "Language";
@@ -172,6 +176,31 @@ public class AuthAppService(
         }
 
         ThrowIfRejected(result);
+    }
+
+    /// <summary>
+    /// A wrong username or password is a value, like local sign-in; what the account rules refuse, such as a
+    /// closed registration, is thrown with its code.
+    /// </summary>
+    [AllowAnonymous]
+    public async Task<LoginOutcome> LdapLoginAsync(LdapLoginInput input)
+    {
+        var provider = await providers.FirstOrDefaultAsync(item => item.Name == input.Provider && item.IsEnabled && item.Type == ExternalProviderType.Ldap);
+        if (provider is null)
+        {
+            return LoginOutcome.InvalidCredentials;
+        }
+
+        var bindPassword = provider.EncryptedSecret is null ? null : encryption.Decrypt(provider.EncryptedSecret);
+        var identity = await ldap.AuthenticateAsync(provider, bindPassword, input.UserName, input.Password);
+        if (identity is null)
+        {
+            return LoginOutcome.InvalidCredentials;
+        }
+
+        var user = await linker.ResolveAsync(identity, input.Invitation);
+        await signInManager.SignInAsync(user, isPersistent: false, authenticationMethod: provider.Name);
+        return LoginOutcome.Succeeded;
     }
 
     [Authorize]

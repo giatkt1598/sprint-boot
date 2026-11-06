@@ -36,6 +36,17 @@ public class AuthController(IAuthAppService authAppService, IAbpAntiForgeryManag
         }
     }
 
+    [HttpPost("ldap-login")]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public async Task LdapLoginAsync([FromBody] LdapLoginInput input)
+    {
+        if (await authAppService.LdapLoginAsync(input) != LoginOutcome.Succeeded)
+        {
+            throw new UserFriendlyException("Invalid username or password", AuthErrors.InvalidCredentials);
+        }
+    }
+
     [HttpGet("methods")]
     [AllowAnonymous]
     public Task<SignInMethodsDto> GetMethodsAsync() => authAppService.GetMethodsAsync();

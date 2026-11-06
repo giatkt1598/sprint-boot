@@ -15,6 +15,48 @@
       "webOrigins": [
         "+"
       ]
+    },
+    {
+      "clientId": "http://localhost:5173/connect/signin-keycloak-saml",
+      "name": "Sprint Boot (SAML)",
+      "enabled": true,
+      "protocol": "saml",
+      "frontchannelLogout": true,
+      "redirectUris": [
+        "http://localhost:*"
+      ],
+      "attributes": {
+        "saml.client.signature": "false",
+        "saml.server.signature": "true",
+        "saml.assertion.signature": "true",
+        "saml_force_name_id_format": "true",
+        "saml_name_id_format": "persistent",
+        "saml_assertion_consumer_url_post": "http://localhost:5173/connect/signin-keycloak-saml/Acs"
+      },
+      "protocolMappers": [
+        {
+          "name": "email",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "email",
+            "attribute.name": "email",
+            "attribute.nameformat": "Basic"
+          }
+        },
+        {
+          "name": "name",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "firstName",
+            "attribute.name": "name",
+            "attribute.nameformat": "Basic"
+          }
+        }
+      ]
     }
   ],
   "users": [

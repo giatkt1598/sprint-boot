@@ -479,6 +479,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/ldap-login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["LdapLoginInput"];
+                    "text/json": components["schemas"]["LdapLoginInput"];
+                    "application/*+json": components["schemas"]["LdapLoginInput"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/methods": {
         parameters: {
             query?: never;
@@ -15913,12 +15952,14 @@ export interface components {
             isEnabled: boolean;
             logoUrl?: string | null;
             buttonColor?: string | null;
+            searchBase?: string | null;
+            userFilter?: string | null;
         };
         /**
          * Format: int32
          * @enum {integer}
          */
-        ExternalProviderType: 0 | 1 | 2;
+        ExternalProviderType: 0 | 1 | 2 | 3 | 4;
         ForgotPasswordInput: {
             /** Format: email */
             email: string;
@@ -16294,6 +16335,12 @@ export interface components {
             icon: string | null;
             hierarchy: components["schemas"]["IssueHierarchy"];
         };
+        LdapLoginInput: {
+            provider: string;
+            userName: string;
+            password: string;
+            invitation?: string | null;
+        };
         Lexeme: {
             text?: string | null;
             /** Format: int32 */
@@ -16569,6 +16616,8 @@ export interface components {
             emailClaim?: string | null;
             nameClaim?: string | null;
             buttonColor?: string | null;
+            searchBase?: string | null;
+            userFilter?: string | null;
             isEnabled?: boolean;
         };
         SaveSchemeInput: {
@@ -16726,7 +16775,12 @@ export interface components {
             serverTime: string;
         };
         TestConnectionInput: {
+            type?: components["schemas"]["ExternalProviderType"];
             discoveryUrl: string;
+            clientId?: string | null;
+            clientSecret?: string | null;
+            /** Format: uuid */
+            providerId?: string | null;
         };
         TestGitConnectionInput: {
             /** Format: uuid */

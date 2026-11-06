@@ -1,0 +1,13 @@
+# Development people for the "sso" profile. Sign in with uid or mail and the password Ldap123!dev.
+dn: ou=people,dc=sso,dc=local
+objectClass: organizationalUnit
+ou: people
+
+dn: uid=lena,ou=people,dc=sso,dc=local
+objectClass: inetOrgPerson
+uid: lena
+cn: Lena Ldap
+sn: Ldap
+displayName: Lena Ldap
+mail: lena@sso.local
+userPassword: Ldap123!dev

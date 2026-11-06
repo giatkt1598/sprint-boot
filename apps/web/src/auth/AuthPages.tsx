@@ -10,6 +10,7 @@ import { ApiError, apiClient, fetchCsrfToken, unwrap } from '../api';
 import { BrandSignInButton } from '../components/BrandSignInButton';
 import { CustomSignInButton } from '../components/CustomSignInButton';
 import { Button } from '../components/Button';
+import { Dialog } from '../components/Dialog';
 import { TextField } from '../components/TextField';
 import { useErrorMessage } from '../lib/errors';
 import { font, radius, sem } from '../theme/tokens';
@@ -53,13 +54,72 @@ function FormError({ message }: { message: string | null }) {
 
 type SignInProvider = components['schemas']['SignInProviderDto'];
 
+const LDAP = 4;
+
+/** After any sign-in on our page: continue our own authorize request, or start one. */
+async function continueSignIn(returnUrl: string | null) {
+  if (returnUrl?.startsWith('/connect/authorize')) {
+    window.location.assign(returnUrl);
+  } else {
+    await userManager.signinRedirect();
+  }
+}
+
+/** LDAP has no page of its own to send people to, so they type their directory password here. */
+function LdapSignInDialog({ provider, query, onClose }: { provider: SignInProvider; query: string; onClose: () => void }) {
+  const { t } = useTranslation();
+  const toMessage = useErrorMessage();
+  const [userName, setUserName] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const params = new URLSearchParams(query);
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      const csrf = await fetchCsrfToken();
+      await unwrap(
+        apiClient.POST('/api/v1/auth/ldap-login', {
+          body: { provider: provider.name!, userName, password, invitation: params.get('invitation') },
+          headers: { RequestVerificationToken: csrf },
+        }),
+      );
+      await continueSignIn(params.get('returnUrl'));
+    } catch (failure) {
+      setError(toMessage(failure));
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog open title={t('auth.ldapTitle', { provider: provider.displayName })} onClose={onClose}>
+      <form className="flex flex-col gap-4" onSubmit={(event) => void submit(event)}>
+        <FormError message={error} />
+        <TextField label={t('auth.userName')} autoComplete="username" autoFocus required value={userName} onChange={(event) => setUserName(event.target.value)} />
+        <TextField label={t('auth.password')} type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} />
+        <div className="flex justify-end gap-2">
+          <Button kind="ghost" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button type="submit" disabled={busy || !userName.trim() || !password}>{t('auth.ldapSignIn')}</Button>
+        </div>
+      </form>
+    </Dialog>
+  );
+}
+
 /** Full page navigation, because the server redirects to the identity provider. */
 function ProviderButtons({ providers, query }: { providers: SignInProvider[]; query: string }) {
   const { t } = useTranslation();
+  const [directory, setDirectory] = useState<SignInProvider | null>(null);
 
-  return providers.map((provider) => {
+  const buttons = providers.map((provider) => {
     const href = `/connect/external/${provider.name}/challenge?${query}`;
     const label = t('auth.continueWith', { provider: provider.displayName });
+    if (provider.type === LDAP) {
+      return <CustomSignInButton key={provider.name} onClick={() => setDirectory(provider)} label={label} logoUrl={provider.logoUrl} color={provider.buttonColor} />;
+    }
     // Google and GitHub ask for their own look; any other provider uses ours.
     const kind = provider.type === 1 ? 'google' : provider.type === 2 ? 'github' : null;
     return kind ? (
@@ -68,6 +128,13 @@ function ProviderButtons({ providers, query }: { providers: SignInProvider[]; qu
       <CustomSignInButton key={provider.name} href={href} label={label} logoUrl={provider.logoUrl} color={provider.buttonColor} />
     );
   });
+
+  return (
+    <>
+      {buttons}
+      {directory && <LdapSignInDialog provider={directory} query={query} onClose={() => setDirectory(null)} />}
+    </>
+  );
 }
 
 function OrDivider() {

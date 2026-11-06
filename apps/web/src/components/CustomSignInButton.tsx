@@ -16,13 +16,21 @@ function contrast(hex: string) {
  * The sign-in button of an OpenID Connect provider, in the logo and color an admin chose; without
  * a color it keeps our secondary look. The same component draws the admin's preview.
  */
-export function CustomSignInButton({ href, label, logoUrl, color }: { href?: string; label: string; logoUrl?: string | null; color?: string | null }) {
+export function CustomSignInButton({ href, onClick, label, logoUrl, color }: {
+  href?: string;
+  /** For providers signed into on our own page, such as LDAP, instead of a link away. */
+  onClick?: () => void;
+  label: string;
+  logoUrl?: string | null;
+  color?: string | null;
+}) {
   const custom = color ? { background: color, ...contrast(color) } : null;
 
   return (
     <ButtonBase
-      component={href ? 'a' : 'span'}
+      component={href ? 'a' : onClick ? 'button' : 'span'}
       href={href}
+      onClick={onClick}
       sx={{
         position: 'relative',
         display: 'flex',

@@ -10,6 +10,9 @@ public interface IAuthAppService : IApplicationService
 
     Task<CurrentUserDto> GetMeAsync();
 
+    /// <summary>Checks the password with the directory, then signs in like any other identity provider.</summary>
+    Task<LoginOutcome> LdapLoginAsync(LdapLoginInput input);
+
     Task<SignInMethodsDto> GetMethodsAsync();
 
     Task<InvitationPreviewDto> GetInvitationAsync(TokenInput input);

@@ -119,16 +119,21 @@ public class ExternalAuthController(
             types.Where(type => !string.IsNullOrEmpty(type)).Select(type => principal.FindFirst(type!)?.Value).FirstOrDefault(value => !string.IsNullOrEmpty(value));
 
         var subject = Claim("sub", ClaimTypes.NameIdentifier) ?? throw new BusinessException(SsoErrors.ExternalFailed);
-        var verified = string.Equals(Claim("email_verified"), "true", StringComparison.OrdinalIgnoreCase);
+        // SAML has no email_verified claim; the IdP is the organization's own, so its email is taken as verified.
+        var verified = provider.Type == ExternalProviderType.Saml2
+            || string.Equals(Claim("email_verified"), "true", StringComparison.OrdinalIgnoreCase);
         return new ExternalIdentity(
             provider.Name,
             provider.DisplayName,
             subject,
-            Claim(provider.EmailClaim, "email", ClaimTypes.Email),
+            Claim(provider.EmailClaim, "email", ClaimTypes.Email, SamlEmailAttribute),
             verified,
             Claim(provider.NameClaim, "name", ClaimTypes.Name),
             provider.Type == ExternalProviderType.Google ? AvatarImporter.TrustedPicture(Claim("picture")) : null);
     }
+
+    /// <summary>The attribute name many SAML IdPs use for email (the LDAP mail OID).</summary>
+    private const string SamlEmailAttribute = "urn:oid:0.9.2342.19200300.100.1.3";
 
     private static string? Item(IDictionary<string, string?> items, string key) =>
         items.TryGetValue(key, out var value) ? value : null;
