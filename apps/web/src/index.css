@@ -212,6 +212,66 @@
   outline: 2px solid var(--sb-border-focus);
 }
 
+/* Image resizing in the editor: handles appear on hover or when the image is selected. */
+.rich-text [data-resize-container] {
+  max-width: 100%;
+}
+
+.rich-text [data-resize-wrapper] {
+  max-width: 100%;
+}
+
+.rich-text [data-resize-handle] {
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 150ms;
+}
+
+.rich-text [data-resize-container]:hover [data-resize-handle],
+.rich-text [data-resize-container].ProseMirror-selectednode [data-resize-handle] {
+  opacity: 1;
+}
+
+.rich-text [data-resize-handle='left'],
+.rich-text [data-resize-handle='right'] {
+  width: 8px;
+  cursor: ew-resize;
+}
+
+.rich-text [data-resize-handle='left']::after,
+.rich-text [data-resize-handle='right']::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: 4px;
+  height: 32px;
+  transform: translateY(-50%);
+  border-radius: 2px;
+  background: var(--sb-border-focus);
+}
+
+.rich-text [data-resize-handle='bottom-left'],
+.rich-text [data-resize-handle='bottom-right'] {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--sb-border-focus);
+  border-radius: 2px;
+  background: var(--sb-bg-surface);
+}
+
+.rich-text [data-resize-handle='bottom-left'] {
+  cursor: nesw-resize;
+}
+
+.rich-text [data-resize-handle='bottom-right'] {
+  cursor: nwse-resize;
+}
+
+.rich-text [data-resize-container].ProseMirror-selectednode img {
+  outline: 2px solid var(--sb-border-focus);
+}
+
 .rich-text table {
   width: 100%;
   margin: 0 0 8px;

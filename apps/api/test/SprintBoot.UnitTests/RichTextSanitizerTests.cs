@@ -21,6 +21,7 @@ public class RichTextSanitizerTests
     [InlineData("<p><s>a</s><u>b</u></p>", "<s>")]
     [InlineData("<hr>", "<hr")]
     [InlineData("<img src=\"https://x.test/a.png\">", "src=\"https://x.test/a.png\"")]
+    [InlineData("<img src=\"https://x.test/a.png\" width=\"320\" height=\"180\">", "width=\"320\" height=\"180\"")]
     [InlineData("<a href=\"mailto:a@b.c\" rel=\"noopener noreferrer\" target=\"_blank\">a</a>", "mailto:a@b.c")]
     [InlineData("<span data-type=\"mention\" data-id=\"1\" class=\"mention\">@a</span>", "class=\"mention\"")]
     public void Everything_the_editor_writes_survives(string html, string expected)

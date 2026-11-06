@@ -111,6 +111,7 @@ public class RichTextMarkdownTests
     [InlineData("<pre><code class=\"language-sql\">select * from issues where a_b = 1;</code></pre>")]
     [InlineData("<p>Ask <span data-type=\"mention\" class=\"mention\" data-id=\"0b9a3f44-58a5-4c3e-9a4f-3f1f2d7f6a11\" data-label=\"Ann\">@Ann</span></p>")]
     [InlineData("<p>Costs 5 * 3 &lt;b&gt; [x](y) a_b</p>")]
+    [InlineData("<p><img src=\"https://x.test/a.png\" alt=\"chart\" width=\"320\" height=\"180\"></p>")]
     public void Editor_html_survives_a_round_trip(string html)
     {
         // Stored text has always been through the sanitizer, which also rewrites colors.

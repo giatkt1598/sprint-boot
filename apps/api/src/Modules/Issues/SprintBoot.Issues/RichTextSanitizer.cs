@@ -19,6 +19,8 @@ public partial class RichTextSanitizer : ISingletonDependency
         _sanitizer.AllowedSchemes.Add("mailto");
         _sanitizer.AllowedTags.Add("video");
         _sanitizer.AllowedAttributes.Add("controls");
+        // Resized images keep their size as attributes, never as inline style.
+        _sanitizer.AllowedAttributes.UnionWith(["width", "height"]);
 
         // Only what the editor writes, so stored text cannot reposition or restyle the page around it.
         _sanitizer.AllowedCssProperties.Clear();

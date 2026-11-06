@@ -196,7 +196,8 @@ export function createExtensions(options: RichTextOptions) {
     Color,
     Highlight.configure({ multicolor: true }),
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
-    Image,
+    // Dragging a handle stores the new size as width and height attributes, which the saved HTML keeps.
+    Image.configure({ resize: { enabled: true, directions: ['left', 'right', 'bottom-left', 'bottom-right'], minWidth: 64, alwaysPreserveAspectRatio: true } }),
     Typography,
     Callout,
     Video,

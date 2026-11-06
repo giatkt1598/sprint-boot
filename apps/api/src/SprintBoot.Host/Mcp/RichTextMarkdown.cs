@@ -453,6 +453,10 @@ public static partial class RichTextMarkdown
             case "br":
                 return "\n";
 
+            // Markdown has no size, so a resized image stays HTML and keeps it through an edit.
+            case "img" when element.HasAttribute("width") || element.HasAttribute("height"):
+                return element.OuterHtml;
+
             case "img":
                 return $"![{element.GetAttribute("alt") ?? string.Empty}]({Url(element.GetAttribute("src") ?? string.Empty)})";
 
