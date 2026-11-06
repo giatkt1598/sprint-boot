@@ -1,7 +1,7 @@
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useId, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router';
 import type { components } from '@sprint-boot/api-client';
@@ -74,6 +74,7 @@ function LdapSignInDialog({ provider, query, onClose }: { provider: SignInProvid
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const params = new URLSearchParams(query);
+  const formId = useId();
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -95,15 +96,22 @@ function LdapSignInDialog({ provider, query, onClose }: { provider: SignInProvid
   };
 
   return (
-    <Dialog open title={t('auth.ldapTitle', { provider: provider.displayName })} onClose={onClose}>
-      <form className="flex flex-col gap-4" onSubmit={(event) => void submit(event)}>
+    <Dialog
+      open
+      title={t('auth.ldapTitle', { provider: provider.displayName })}
+      onClose={onClose}
+      footer={
+        // The footer sits outside the form, so the submit button names it.
+        <div className="flex justify-end gap-2">
+          <Button kind="ghost" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button type="submit" form={formId} disabled={busy || !userName.trim() || !password}>{t('auth.ldapSignIn')}</Button>
+        </div>
+      }
+    >
+      <form id={formId} className="flex flex-col gap-4" onSubmit={(event) => void submit(event)}>
         <FormError message={error} />
         <TextField label={t('auth.userName')} autoComplete="username" autoFocus required value={userName} onChange={(event) => setUserName(event.target.value)} />
         <TextField label={t('auth.password')} type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} />
-        <div className="flex justify-end gap-2">
-          <Button kind="ghost" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button type="submit" disabled={busy || !userName.trim() || !password}>{t('auth.ldapSignIn')}</Button>
-        </div>
       </form>
     </Dialog>
   );

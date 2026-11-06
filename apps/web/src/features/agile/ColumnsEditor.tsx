@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Eye, EyeOff, GripVertical, Trash2, TriangleAlert } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { DialogActions } from '../../components/Dialog';
 import { useTranslation } from 'react-i18next';
 import { apiClient, unwrap } from '../../api';
 import { Badge } from '../../components/Badge';
@@ -252,10 +253,12 @@ export function ColumnsEditor({ space, canManage, onDone }: { space: Space; canM
         </div>
       )}
       {columns && canManage && (
-        <div className="flex justify-end gap-2">
-          {onDone && <Button kind="ghost" onClick={onDone}>{t('common.cancel')}</Button>}
-          <Button disabled={save.isPending || columns.some((column) => !column.name.trim())} onClick={() => save.mutate()}>{t('agile.saveChanges')}</Button>
-        </div>
+        <DialogActions>
+          <div className="flex justify-end gap-2">
+            {onDone && <Button kind="ghost" onClick={onDone}>{t('common.cancel')}</Button>}
+            <Button disabled={save.isPending || columns.some((column) => !column.name.trim())} onClick={() => save.mutate()}>{t('agile.saveChanges')}</Button>
+          </div>
+        </DialogActions>
       )}
     </div>
   );
