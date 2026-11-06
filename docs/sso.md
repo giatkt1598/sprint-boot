@@ -9,12 +9,14 @@ they hold an invitation.
 | --- | --- | --- |
 | OpenID Connect | Redirect to the provider | Only when it sends `email_verified=true` |
 | Google, GitHub | Redirect to the provider | Only when the provider says so |
-| SAML 2.0 | Redirect to the provider | Always |
-| LDAP / Active Directory | Username and password on the Sprint Boot sign-in page | Always |
+| SAML 2.0 | Redirect to the provider | When **Trust email** is on (the default) |
+| LDAP / Active Directory | Username and password on the Sprint Boot sign-in page | When **Trust email** is on (the default) |
 
-> **Trusted email.** SAML and LDAP carry no "verified" flag, so Sprint Boot trusts the email they send and
-> links it to an existing account with the same address. Only connect an IdP or a directory whose people
+> **Trust email.** SAML and LDAP carry no "verified" flag, so each such provider has a **Trust email**
+> switch. On, Sprint Boot links the email they send to an existing account with the same address, and
+> accepts it for invitations and self-registration. Leave it on only for an IdP or a directory whose people
 > cannot change their own email; otherwise someone could sign in as another person who uses that address.
+> Off, the provider signs in only people who already linked it from their profile.
 
 All addresses below assume Sprint Boot is served at `https://sprint.example.com` and the provider is named
 `corp`. The admin page shows the real values to copy.

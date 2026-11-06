@@ -55,6 +55,21 @@ public static class LdapSettings
     }
 }
 
+/// <summary>SAML and LDAP send no "verified" flag, so an admin decides whether their email proves who someone is.</summary>
+public static class EmailTrust
+{
+    public const string Property = "TrustEmail";
+
+    public static bool Applies(ExternalProviderType type) => type is ExternalProviderType.Saml2 or ExternalProviderType.Ldap;
+
+    /// <summary>On unless an admin turned it off.</summary>
+    public static bool IsTrusted(ExternalProviderConfig provider) =>
+        Applies(provider.Type) && provider.GetProperty(Property, true);
+
+    public static void Set(ExternalProviderConfig provider, bool? trusted) =>
+        provider.SetProperty(Property, Applies(provider.Type) ? trusted ?? true : null);
+}
+
 public record LdapServer(string Address, string BindDn, string? BindPassword);
 
 /// <summary>Checks a username and password against a directory, through a service account that finds the person.</summary>
@@ -105,8 +120,7 @@ public class LdapAuthenticator(ILogger<LdapAuthenticator> logger) : ITransientDe
                     provider.DisplayName,
                     Subject(entry),
                     Read(entry, emailAttribute),
-                    // Directory accounts are created by the organization, so their email is taken as verified.
-                    EmailVerified: true,
+                    EmailVerified: EmailTrust.IsTrusted(provider),
                     Read(entry, nameAttribute) ?? Read(entry, "cn"));
             }
             catch (LdapException failure) when (failure.ErrorCode == InvalidCredentials)

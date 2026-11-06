@@ -119,8 +119,8 @@ public class ExternalAuthController(
             types.Where(type => !string.IsNullOrEmpty(type)).Select(type => principal.FindFirst(type!)?.Value).FirstOrDefault(value => !string.IsNullOrEmpty(value));
 
         var subject = Claim("sub", ClaimTypes.NameIdentifier) ?? throw new BusinessException(SsoErrors.ExternalFailed);
-        // SAML has no email_verified claim; the IdP is the organization's own, so its email is taken as verified.
-        var verified = provider.Type == ExternalProviderType.Saml2
+        // SAML has no email_verified claim; the admin decides whether its email is trusted.
+        var verified = EmailTrust.IsTrusted(provider)
             || string.Equals(Claim("email_verified"), "true", StringComparison.OrdinalIgnoreCase);
         return new ExternalIdentity(
             provider.Name,

@@ -70,7 +70,19 @@ const toInput = (provider: Provider): SaveProvider => ({
   buttonColor: provider.buttonColor,
   searchBase: provider.searchBase,
   userFilter: provider.userFilter,
+  trustEmail: provider.trustEmail,
 });
+
+/** SAML and LDAP send no "verified" flag, so the admin decides whether their email links accounts. */
+function TrustEmailToggle({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col gap-1">
+      <Toggle label={t('sso.trustEmail')} checked={checked} onChange={(event) => onChange(event.target.checked)} />
+      <Typography variant="body2" color="textSecondary">{t(checked ? 'sso.trustEmailOn' : 'sso.trustEmailOff')}</Typography>
+    </div>
+  );
+}
 
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
 const DEFAULT_PICKER_COLOR = '#2563EB';
@@ -292,6 +304,7 @@ function AddProviderDialog({ onClose }: { onClose: () => void }) {
   const [clientSecret, setClientSecret] = useState('');
   const [searchBase, setSearchBase] = useState('');
   const [userFilter, setUserFilter] = useState('');
+  const [trustEmail, setTrustEmail] = useState(true);
   const shownName = DISPLAY_NAMES[type ?? OIDC] ?? displayName;
   const labels = FIELD_LABELS[type ?? OIDC]!;
   const name = toProviderName(shownName);
@@ -314,6 +327,7 @@ function AddProviderDialog({ onClose }: { onClose: () => void }) {
             nameClaim: DEFAULT_MAPPING[type ?? OIDC]?.name,
             searchBase: type === LDAP ? searchBase : null,
             userFilter: type === LDAP ? userFilter || null : null,
+            trustEmail: type === SAML || type === LDAP ? trustEmail : null,
             isEnabled: true,
           },
         }),
@@ -362,6 +376,7 @@ function AddProviderDialog({ onClose }: { onClose: () => void }) {
         <TextField label={t(labels.secret)} type="password" autoComplete="off" placeholder={type === LDAP ? undefined : t('sso.secretPlaceholder')} value={clientSecret} onChange={(event) => setClientSecret(event.target.value)} />
       )}
       {type === LDAP && <LdapFields searchBase={searchBase} userFilter={userFilter} onSearchBase={setSearchBase} onUserFilter={setUserFilter} />}
+      {(type === SAML || type === LDAP) && <TrustEmailToggle checked={trustEmail} onChange={setTrustEmail} />}
       {add.isError && <Typography role="alert" color="error" variant="body2">{toMessage(add.error)}</Typography>}
     </Dialog>
   );
@@ -451,6 +466,7 @@ function ProviderForm({ provider }: { provider: Provider }) {
   const [buttonColor, setButtonColor] = useState(provider.buttonColor ?? '');
   const [searchBase, setSearchBase] = useState(provider.searchBase ?? '');
   const [userFilter, setUserFilter] = useState(provider.userFilter ?? '');
+  const [trustEmail, setTrustEmail] = useState(provider.trustEmail ?? true);
   const isOidc = provider.type === OIDC;
   const type = provider.type ?? OIDC;
   const labels = FIELD_LABELS[type]!;
@@ -484,6 +500,7 @@ function ProviderForm({ provider }: { provider: Provider }) {
         scopes,
         searchBase: type === LDAP ? searchBase : null,
         userFilter: type === LDAP ? userFilter || null : null,
+        trustEmail: directory ? trustEmail : null,
         emailClaim: claims.email,
         nameClaim: claims.name,
         buttonColor: isOidc && HEX_COLOR.test(buttonColor) ? buttonColor : null,
@@ -523,7 +540,7 @@ function ProviderForm({ provider }: { provider: Provider }) {
         {(isOidc || directory) && (
           <TextField label={t(directory ? 'sso.attributeMapping' : 'sso.claimMapping')} value={mapping} onChange={(event) => setMapping(event.target.value)} />
         )}
-        {directory && <Typography variant="body2" color="textSecondary">{t('sso.directoryEmailTrusted')}</Typography>}
+        {directory && <TrustEmailToggle checked={trustEmail} onChange={setTrustEmail} />}
         <div className="flex justify-end gap-2">
           <Button kind="ghost" onClick={() => setDeleting(true)}>{t('sso.delete')}</Button>
           {(isOidc || directory) && <Button kind="secondary" disabled={test.isPending} onClick={() => test.mutate()}>{t('sso.test')}</Button>}

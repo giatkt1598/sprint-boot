@@ -174,6 +174,7 @@ public class SsoAdminAppService(
 
         provider.DisplayName = input.DisplayName;
         provider.Type = input.Type;
+        EmailTrust.Set(provider, input.TrustEmail);
         ProviderLogos.SetColor(provider, input.ButtonColor);
         provider.DiscoveryUrl = input.DiscoveryUrl;
         provider.ClientId = input.ClientId;
@@ -204,6 +205,7 @@ public class SsoAdminAppService(
         ButtonColor = ProviderLogos.Color(provider),
         SearchBase = LdapSettings.SearchBase(provider),
         UserFilter = provider.Type == ExternalProviderType.Ldap ? LdapSettings.UserFilter(provider) : null,
+        TrustEmail = EmailTrust.IsTrusted(provider),
     };
 
     private static AuthPolicyDto ToDto(AuthPolicy policy) => new()

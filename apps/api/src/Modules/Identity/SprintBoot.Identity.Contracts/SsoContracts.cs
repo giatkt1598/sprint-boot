@@ -58,6 +58,12 @@ public class ExternalProviderDto
 
     /// <summary>LDAP only: the filter that finds one person, with {0} for what they typed.</summary>
     public string? UserFilter { get; set; }
+
+    /// <summary>
+    /// SAML and LDAP only: their email counts as verified, so it links to an existing account with that address.
+    /// Off, only people who linked the provider from their profile sign in with it.
+    /// </summary>
+    public bool TrustEmail { get; set; }
 }
 
 public class SaveProviderInput
@@ -100,6 +106,9 @@ public class SaveProviderInput
 
     [StringLength(256)]
     public string? UserFilter { get; set; }
+
+    /// <summary>SAML and LDAP only; left out, the email is trusted.</summary>
+    public bool? TrustEmail { get; set; }
 
     public bool IsEnabled { get; set; }
 }

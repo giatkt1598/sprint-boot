@@ -82,7 +82,7 @@ public class LdapSignInTests(ApiFixture fixture, LdapServerFixture ldap) : IClas
         return admin;
     }
 
-    private async Task<string> CreateProviderAsync(AuthClient admin, string? searchBase = null)
+    private async Task<string> CreateProviderAsync(AuthClient admin, string? searchBase = null, bool? trustEmail = null)
     {
         var name = $"ldap-{Random.Shared.Next(100000, 999999)}";
         var response = await admin.Http.PostAsJsonAsync("/api/v1/sso-admin/provider", new
@@ -95,6 +95,7 @@ public class LdapSignInTests(ApiFixture fixture, LdapServerFixture ldap) : IClas
             clientSecret = LdapServerFixture.AdminPassword,
             searchBase = searchBase ?? $"ou=people,{LdapServerFixture.BaseDn}",
             isEnabled = true,
+            trustEmail,
         }, Token);
         response.StatusCode.ShouldBe(HttpStatusCode.OK, await response.Content.ReadAsStringAsync(Token));
         return name;
@@ -137,6 +138,24 @@ public class LdapSignInTests(ApiFixture fixture, LdapServerFixture ldap) : IClas
         (await LoginAsync(again, provider, mail, "Directory123!")).StatusCode.ShouldBe(HttpStatusCode.NoContent);
         await again.AuthorizeAsync(Token);
         (await again.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!.Id.ShouldBe(me.Id);
+    }
+
+    [Fact]
+    public async Task An_untrusted_directory_email_never_takes_over_an_existing_account()
+    {
+        var admin = await AdminAsync();
+        var trusted = await CreateProviderAsync(admin);
+        var untrusted = await CreateProviderAsync(admin, trustEmail: false);
+        var providers = (await admin.Http.GetFromJsonAsync<List<ExternalProviderDto>>("/api/v1/sso-admin/providers", Token))!;
+        providers.Single(item => item.Name == trusted).TrustEmail.ShouldBeTrue();
+        providers.Single(item => item.Name == untrusted).TrustEmail.ShouldBeFalse();
+
+        // Someone the directory lets claim the admin's address.
+        var uid = $"m{Random.Shared.Next(100000, 999999)}";
+        ldap.AddPerson(uid, "Directory123!", ApiFixture.AdminEmail, "Mallory");
+
+        var login = await LoginAsync(new AuthClient(fixture), untrusted, uid, "Directory123!");
+        (await login.Content.ReadAsStringAsync(Token)).ShouldContain(SsoErrors.EmailNotVerified);
     }
 
     [Fact]
