@@ -45,8 +45,9 @@ export function AdminLayout() {
   const canManageEmail = useCan('SprintBoot.Email.Manage');
   const canManageLinkTypes = useCan('SprintBoot.IssueLinkTypes.Manage');
   const canManageTemplates = useCan('SprintBoot.IssueTemplates.Manage');
+  const canManageAi = useCan('SprintBoot.Ai.Manage');
 
-  if (!canManageTemplates && !canManageLinkTypes && !canManageEmail && !canManageUsers && !canRestore && !canManageWorkflows && !canManageSchemes && !canManageInvitations && !canManageSso) {
+  if (!canManageAi && !canManageTemplates && !canManageLinkTypes && !canManageEmail && !canManageUsers && !canRestore && !canManageWorkflows && !canManageSchemes && !canManageInvitations && !canManageSso) {
     return <main className="p-8"><Typography role="alert">{t('errors.forbidden')}</Typography></main>;
   }
 
@@ -61,6 +62,7 @@ export function AdminLayout() {
           {canManageInvitations && <SettingsMenuItem to="invitations" label={t('invitations.title')} />}
           {canManageSso && <SettingsMenuItem to="sso" label={t('sso.title')} />}
           {canManageEmail && <SettingsMenuItem to="email" label={t('email.title')} />}
+          {canManageAi && <SettingsMenuItem to="ai" label={t('assistantAdmin.title')} />}
           {canManageWorkflows && <SettingsMenuItem to="workflows" label={t('workflows.title')} />}
           {canManageLinkTypes && <SettingsMenuItem to="issue-link-types" label={t('linkTypes.title')} />}
           {canManageTemplates && <SettingsMenuItem to="issue-templates" label={t('globalTemplates.title')} />}

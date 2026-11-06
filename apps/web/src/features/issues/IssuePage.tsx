@@ -7,7 +7,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { DevelopmentPanel } from './DevelopmentPanel';
-import { Ellipsis, Eye, Link2, Plus, Trash2, Upload } from 'lucide-react';
+import { Ellipsis, Eye, Link2, Plus, Sparkles, Trash2, Upload } from 'lucide-react';
 import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router';
@@ -39,6 +39,7 @@ import { QuickAssignee, QuickStatus, QuickTitle, TitleEditor } from './QuickFiel
 import { TransitionControl } from './TransitionControl';
 import { EpicProgress } from '../agile/EpicProgress';
 import { backlogKey, useBacklog } from '../agile/api';
+import { useAssistant } from '../assistant/AssistantPanel';
 import { RichTextEditor, RichTextView } from './RichTextEditor';
 import { priorityLevel, uploadAttachment, useEpics, useIssueTypes, useLabels, usePriorities, type Issue } from './api';
 import { DatePicker } from '../../components/DatePicker';
@@ -228,6 +229,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
             </Typography>
           )}
         </div>
+        <AskAssistant issue={issue} />
         <WatchControl issueId={issue.id!} />
         <IconButton size="small" aria-label={t('issues.more')} onClick={(event) => setMenuAnchor(event.currentTarget)}>
           <Ellipsis size={16} strokeWidth={1.5} aria-hidden />
@@ -591,6 +593,21 @@ function SprintField({ issue, canEdit, onError }: { issue: Issue; canEdit: boole
       onChange={(event) => move.mutate(event.target.value)}
       options={[{ value: '', label: t('common.none') }, ...options]}
     />
+  );
+}
+
+/** Opens the assistant on this issue, with its content as context. */
+function AskAssistant({ issue }: { issue: Issue }) {
+  const { t } = useTranslation();
+  const assistant = useAssistant();
+  if (!assistant.available) {
+    return null;
+  }
+
+  return (
+    <Button kind="secondary" startIcon={<Sparkles size={16} strokeWidth={1.5} aria-hidden />} onClick={() => assistant.open({ id: issue.id!, key: issue.key! })}>
+      {t('assistant.ask')}
+    </Button>
   );
 }
 

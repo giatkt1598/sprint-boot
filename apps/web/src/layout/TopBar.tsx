@@ -10,6 +10,7 @@ import { signOut } from '../auth/oidc';
 import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
 import { MenuItem } from '../components/Menu';
+import { AssistantButton } from '../features/assistant/AssistantPanel';
 import { CreateIssueDialog } from '../features/issues/CreateIssueDialog';
 import { QuickSearch } from '../features/issues/QuickSearch';
 import { NotificationBell } from '../features/notifications/NotificationBell';
@@ -48,6 +49,7 @@ export function TopBar() {
       <div className="flex-1" />
       <QuickSearch />
       <Button onClick={() => setCreating(true)}>{t('topBar.create')}</Button>
+      <AssistantButton />
       <NotificationBell />
       <IconButton size="small" sx={{ padding: 0.5 }} onClick={(event) => setMenuAnchor(event.currentTarget)}>
         <Avatar name={user.name ?? ''} src={user.avatarUrl} />

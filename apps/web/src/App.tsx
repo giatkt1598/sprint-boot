@@ -26,6 +26,8 @@ import { SpaceBoardPage } from './features/spaces/SpaceBoardPage';
 import { SpacesPage } from './features/spaces/SpacesPage';
 import { SpaceWorkflowsPage } from './features/spaces/SpaceWorkflowsPage';
 import { SpaceIssueTemplatesPage } from './features/spaces/IssueTemplatesPage';
+import { AssistantSettingsPage } from './features/admin/AssistantSettingsPage';
+import { AssistantPage } from './features/assistant/AssistantPage';
 import { AppShell, BareShell } from './layout/AppShell';
 import { DevUiPage } from './pages/DevUiPage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -63,6 +65,7 @@ export function App() {
               <Route path="sso" element={<SsoPage />} />
               <Route path="sso/:providerId" element={<SsoProviderPage />} />
               <Route path="email" element={<EmailSettingsPage />} />
+              <Route path="ai" element={<AssistantSettingsPage />} />
               <Route path="workflows" element={<WorkflowsPage />} />
               <Route path="issue-link-types" element={<IssueLinkTypesPage />} />
               <Route path="issue-templates" element={<GlobalIssueTemplatesPage />} />
@@ -93,6 +96,8 @@ export function App() {
             <Route path="issues/:issueKey" element={<IssuePage />} />
             <Route path="search" element={<IssuesListPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="assistant" element={<AssistantPage />} />
+            <Route path="assistant/:conversationId" element={<AssistantPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
