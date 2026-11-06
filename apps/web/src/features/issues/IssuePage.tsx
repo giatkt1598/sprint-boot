@@ -556,7 +556,8 @@ function SprintField({ issue, canEdit, onError }: { issue: Issue; canEdit: boole
   const backlog = useBacklog(issue.projectId);
   const current = useQuery({
     queryKey: ['issues', issue.id, 'sprint'],
-    queryFn: () => unwrap(apiClient.GET('/api/v1/sprint/for-issue/{issueId}', { params: { path: { issueId: issue.id! } } })),
+    // No sprint comes back as 204 with no body; React Query keeps the old data when a query yields undefined.
+    queryFn: async () => (await unwrap(apiClient.GET('/api/v1/sprint/for-issue/{issueId}', { params: { path: { issueId: issue.id! } } }))) ?? null,
   });
 
   const move = useMutation({
