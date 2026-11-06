@@ -767,6 +767,11 @@
     "deleteBody": "Các issue đã tạo từ template này vẫn giữ nguyên mô tả."
   },
   "git": {
+    "repositoryAccess": "Repository space này dùng",
+    "accessAll": "Tất cả repository",
+    "accessSelected": "Chỉ repository được chọn",
+    "accessAllHint": "Mọi repository mà kết nối thấy được đều liên kết với issue của space này, kể cả repository thêm sau.",
+    "accessSelectedHint": "Chỉ repository được đánh dấu mới liên kết với issue của space này. Repository thêm sau sẽ chưa được dùng cho đến khi bạn đánh dấu.",
     "title": "Kết nối Git",
     "subtitle": "Mọi repository mà kết nối truy cập được đều tự liên kết với issue.",
     "add": "Thêm kết nối",

@@ -10,6 +10,7 @@ import { apiClient, unwrap } from '../../api';
 import { useCan } from '../../auth/AuthProvider';
 import { Badge, type BadgeTone } from '../../components/Badge';
 import { Button } from '../../components/Button';
+import { Checkbox } from '../../components/Checkbox';
 import { CopyField } from '../../components/CopyField';
 import { Dialog, DialogConfirm } from '../../components/Dialog';
 import { SearchInput } from '../../components/SearchInput';
@@ -54,6 +55,9 @@ function Banner({ children }: { children: string }) {
     </div>
   );
 }
+
+/** GitRepositoryAccess.Selected: only the ticked repositories reach the space. */
+const SELECTED_REPOSITORIES = 1;
 
 const useRefresh = () => {
   const queryClient = useQueryClient();
@@ -340,7 +344,20 @@ export function GitRepositoriesPage() {
     onSuccess: () => refresh(),
     onError: (failure) => toast('error', toMessage(failure)),
   });
+  const access = useMutation({
+    mutationFn: (repositoryAccess: 0 | 1) =>
+      unwrap(apiClient.POST('/api/v1/git-connection/{id}/set-repository-access', { params: { path: { id } }, body: { repositoryAccess } })),
+    onSuccess: () => refresh(),
+    onError: (failure) => toast('error', toMessage(failure)),
+  });
+  const select = useMutation({
+    mutationFn: ({ repositoryId, isSelected }: { repositoryId: string; isSelected: boolean }) =>
+      unwrap(apiClient.POST('/api/v1/git-connection/set-repository-selected/{repositoryId}', { params: { path: { repositoryId } }, body: { isSelected } })),
+    onSuccess: () => refresh(),
+    onError: (failure) => toast('error', toMessage(failure)),
+  });
   const problems = connection.data?.webhookProblemCount ?? 0;
+  const selectedOnly = connection.data?.repositoryAccess === SELECTED_REPOSITORIES;
 
   return (
     <div className="flex flex-col gap-6">
@@ -353,6 +370,21 @@ export function GitRepositoriesPage() {
         <Button kind="secondary" disabled={sync.isPending} onClick={() => sync.mutate()}>{t('git.syncNow')}</Button>
       </div>
       {problems > 0 && <Banner>{t('git.webhookProblems', { count: problems })}</Banner>}
+      {connection.data && (
+        <div className="flex max-w-md flex-col gap-1">
+          <SelectField
+            label={t('git.repositoryAccess')}
+            value={String(connection.data.repositoryAccess ?? 0)}
+            disabled={access.isPending}
+            onChange={(event) => access.mutate(Number(event.target.value) as 0 | 1)}
+            options={[
+              { value: '0', label: t('git.accessAll') },
+              { value: String(SELECTED_REPOSITORIES), label: t('git.accessSelected') },
+            ]}
+          />
+          <Typography variant="caption" color="textSecondary">{t(selectedOnly ? 'git.accessSelectedHint' : 'git.accessAllHint')}</Typography>
+        </div>
+      )}
       {repositories.isPending && <LoadingState />}
       {repositories.isError && <ErrorState onRetry={() => void repositories.refetch()} />}
       {repositories.data?.length === 0 && <EmptyState title={t('git.noRepositories')} />}
@@ -362,7 +394,21 @@ export function GitRepositoriesPage() {
           rows={repositories.data ?? []}
           rowKey={(item) => item.id!}
           columns={[
-            { key: 'name', header: t('git.repository'), render: (item) => item.fullName },
+            {
+              key: 'name',
+              header: t('git.repository'),
+              render: (item) =>
+                selectedOnly ? (
+                  <Checkbox
+                    label={item.fullName ?? ''}
+                    checked={item.isSelected ?? false}
+                    disabled={select.isPending}
+                    onChange={(event) => select.mutate({ repositoryId: item.id!, isSelected: event.target.checked })}
+                  />
+                ) : (
+                  item.fullName
+                ),
+            },
             { key: 'visibility', header: t('git.visibility'), render: (item) => t(item.isPrivate ? 'git.private' : 'git.public') },
             { key: 'branch', header: t('git.defaultBranch'), render: (item) => item.defaultBranch },
             {

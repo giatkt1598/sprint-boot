@@ -419,6 +419,9 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.Property<int>("ProviderType")
                         .HasColumnType("integer");
 
+                    b.Property<int>("RepositoryAccess")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -504,6 +507,9 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsPrivate")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsSelected")
                         .HasColumnType("boolean");
 
                     b.Property<DateTime?>("LastEventAt")

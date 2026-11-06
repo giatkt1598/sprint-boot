@@ -306,6 +306,42 @@ public class GitIntegrationTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task A_space_can_limit_a_connection_to_selected_repositories()
+    {
+        var (client, project, issue) = await IssueAsync();
+        var harness = await ConnectAsync(client, project, GitProviderType.Gitea);
+        harness.Connection.RepositoryAccess.ShouldBe(GitRepositoryAccess.All);
+        harness.Repository.IsSelected.ShouldBeTrue();
+        var connection = $"/api/v1/git-connection/{harness.Connection.Id}";
+
+        // Switching keeps the existing ticks, so nothing changes until a repository is left out.
+        var selected = await client.Http.PostAsJsonAsync($"{connection}/set-repository-access", new { repositoryAccess = GitRepositoryAccess.Selected }, Token);
+        selected.StatusCode.ShouldBe(HttpStatusCode.OK, await selected.Content.ReadAsStringAsync(Token));
+        (await selected.Content.ReadFromJsonAsync<GitConnectionDto>(Token))!.RepositoryCount.ShouldBe(1);
+
+        var left = await client.Http.PostAsJsonAsync($"/api/v1/git-connection/set-repository-selected/{harness.Repository.Id}", new { isSelected = false }, Token);
+        (await left.Content.ReadFromJsonAsync<GitRepositoryDto>(Token))!.IsSelected.ShouldBeFalse();
+        (await client.Http.GetFromJsonAsync<GitConnectionDto>(connection, Token))!.RepositoryCount.ShouldBe(0);
+
+        (await client.Http.GetFromJsonAsync<BranchOptionsDto>($"/api/v1/git-issue/branch-options/{issue.Id}", Token))!.Repositories.ShouldBeEmpty();
+        var refused = await client.Http.PostAsJsonAsync($"/api/v1/git-issue/branch/{issue.Id}", CreateBranchBody(harness.Repository, $"feature/{Guid.NewGuid():N}"), Token);
+        (await refused.Content.ReadAsStringAsync(Token)).ShouldContain(GitErrors.InvalidConnection);
+
+        (await SendAsync(harness, "push", Push("main", Guid.NewGuid().ToString("N"), $"{issue.Key} ignored"))).EnsureSuccessStatusCode();
+        await Task.Delay(3000, Token);
+        (await DevelopmentAsync(client, issue))!.Commits.ShouldBeEmpty();
+
+        // Back to every repository: the one left out is offered again.
+        (await client.Http.PostAsJsonAsync($"{connection}/set-repository-access", new { repositoryAccess = GitRepositoryAccess.All }, Token)).EnsureSuccessStatusCode();
+        (await client.Http.GetFromJsonAsync<BranchOptionsDto>($"/api/v1/git-issue/branch-options/{issue.Id}", Token))!.Repositories.ShouldHaveSingleItem();
+
+        var member = await fixture.CreateUserClientAsync(Token);
+        (await client.Http.PostAsJsonAsync($"/api/v1/project/{project.Id}/member", new { userId = member.UserId, role = ProjectRoleNames.Member }, Token)).EnsureSuccessStatusCode();
+        (await member.Http.PostAsJsonAsync($"/api/v1/git-connection/set-repository-selected/{harness.Repository.Id}", new { isSelected = false }, Token))
+            .IsSuccessStatusCode.ShouldBeFalse();
+    }
+
+    [Fact]
     public async Task An_organization_address_limits_the_connection_to_that_organization()
     {
         var (client, project, _) = await IssueAsync();

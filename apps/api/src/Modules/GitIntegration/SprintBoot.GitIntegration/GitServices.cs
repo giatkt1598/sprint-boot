@@ -236,6 +236,7 @@ public class GitSyncService(
                 {
                     repository = new GitRepository(guids.Create(), connection.Id, info.ExternalId);
                     Apply(repository, info);
+                    connection.Place(repository);
                     await repositories.InsertAsync(repository, autoSave: true);
                 }
                 else
@@ -484,7 +485,7 @@ public class GitPoller(
     {
         var repository = await repositories.FindAsync(repositoryId);
         var connection = repository is null ? null : await connections.FindAsync(repository.ConnectionId);
-        if (repository is not { IsAccessible: true } || connection?.ProjectId is not { } projectId || !connection.Covers(repository.FullName))
+        if (repository is null || connection?.ProjectId is not { } projectId || !connection.Uses(repository))
         {
             return;
         }
@@ -580,7 +581,13 @@ public class GitEventProcessor(
             return;
         }
 
-        var repository = await RepositoryAsync(connectionId, gitEvent.Repository, fromWebhook);
+        var repository = await RepositoryAsync(connection, gitEvent.Repository, fromWebhook);
+
+        // Repositories the space left out are still tracked, but nothing they do reaches its issues.
+        if (!connection.Uses(repository))
+        {
+            return;
+        }
 
         // A connection serves its own space, so other spaces' keys are just text.
         List<string> projectKeys = [(await projects.GetRefAsync(projectId)).Key];
@@ -604,13 +611,14 @@ public class GitEventProcessor(
         }
     }
 
-    private async Task<GitRepository> RepositoryAsync(Guid connectionId, GitRepoInfo info, bool fromWebhook)
+    private async Task<GitRepository> RepositoryAsync(GitConnection connection, GitRepoInfo info, bool fromWebhook)
     {
-        var repository = await repositories.FirstOrDefaultAsync(item => item.ConnectionId == connectionId && item.ExternalId == info.ExternalId);
+        var repository = await repositories.FirstOrDefaultAsync(item => item.ConnectionId == connection.Id && item.ExternalId == info.ExternalId);
         if (repository is null)
         {
-            repository = new GitRepository(guids.Create(), connectionId, info.ExternalId);
+            repository = new GitRepository(guids.Create(), connection.Id, info.ExternalId);
             GitSyncService.Apply(repository, info);
+            connection.Place(repository);
             if (fromWebhook)
             {
                 repository.WebhookState = GitWebhookState.Active;

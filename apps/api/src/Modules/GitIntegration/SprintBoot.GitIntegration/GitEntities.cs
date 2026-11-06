@@ -34,6 +34,9 @@ public class GitConnection : AuditedAggregateRoot<Guid>, IMultiTenant
 
     public DateTime? LastSyncAt { get; set; }
 
+    /// <summary>Whether the space uses every repository the credential sees, or only those ticked.</summary>
+    public GitRepositoryAccess RepositoryAccess { get; set; }
+
     protected GitConnection()
     {
     }
@@ -53,6 +56,14 @@ public class GitConnection : AuditedAggregateRoot<Guid>, IMultiTenant
 
     public bool Covers(string fullName) =>
         Owner is null || fullName.StartsWith($"{Owner}/", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Whether its space may use the repository: branches, polling and events all ask this.</summary>
+    public bool Uses(GitRepository repository) =>
+        repository.IsAccessible && Covers(repository.FullName)
+        && (RepositoryAccess == GitRepositoryAccess.All || repository.IsSelected);
+
+    /// <summary>A repository seen for the first time is in when the space takes them all, out otherwise.</summary>
+    public void Place(GitRepository repository) => repository.IsSelected = RepositoryAccess == GitRepositoryAccess.All;
 }
 
 public class GitRepository : Entity<Guid>
@@ -70,6 +81,9 @@ public class GitRepository : Entity<Guid>
     public bool IsPrivate { get; set; }
 
     public bool IsAccessible { get; set; } = true;
+
+    /// <summary>Ticked for the space. Only matters while the connection uses selected repositories.</summary>
+    public bool IsSelected { get; set; } = true;
 
     public string? EncryptedWebhookSecret { get; set; }
 

@@ -31,6 +31,12 @@ public enum GitConnectionProblem
     Unreachable = 2,
 }
 
+public enum GitRepositoryAccess
+{
+    All = 0,
+    Selected = 1,
+}
+
 public enum GitWebhookState
 {
     NotRegistered = 0,
@@ -79,9 +85,22 @@ public class GitConnectionDto
 
     public required DateTime? LastSyncAt { get; set; }
 
+    /// <summary>Repositories the space uses: all accessible ones, or only the selected ones.</summary>
     public required int RepositoryCount { get; set; }
 
     public required int WebhookProblemCount { get; set; }
+
+    public required GitRepositoryAccess RepositoryAccess { get; set; }
+}
+
+public class SetRepositoryAccessInput
+{
+    public required GitRepositoryAccess RepositoryAccess { get; set; }
+}
+
+public class SetRepositorySelectedInput
+{
+    public required bool IsSelected { get; set; }
 }
 
 public class SaveGitConnectionInput
@@ -157,6 +176,8 @@ public class GitRepositoryDto
     public required DateTime? LastEventAt { get; set; }
 
     public required bool IsAccessible { get; set; }
+
+    public required bool IsSelected { get; set; }
 }
 
 public class GitWebhookSetupDto
@@ -194,6 +215,11 @@ public interface IGitConnectionAppService : IApplicationService
     Task<GitConnectionDto> SyncAsync(Guid id);
 
     Task<GitWebhookSetupDto> GetWebhookSetupAsync(Guid repositoryId);
+
+    /// <summary>Switching to selected keeps the ticks from before, so every repository starts out ticked.</summary>
+    Task<GitConnectionDto> SetRepositoryAccessAsync(Guid id, SetRepositoryAccessInput input);
+
+    Task<GitRepositoryDto> SetRepositorySelectedAsync(Guid repositoryId, SetRepositorySelectedInput input);
 }
 
 public class GitBranchRowDto

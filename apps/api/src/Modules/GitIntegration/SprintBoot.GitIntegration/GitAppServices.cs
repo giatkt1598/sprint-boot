@@ -232,8 +232,41 @@ public class GitConnectionAppService(
                     WebhookState = item.WebhookState,
                     LastEventAt = item.LastEventAt,
                     IsAccessible = item.IsAccessible,
+                    IsSelected = item.IsSelected,
                 }),
         ];
+    }
+
+    public async Task<GitConnectionDto> SetRepositoryAccessAsync(Guid id, SetRepositoryAccessInput input)
+    {
+        var connection = await LoadAsync(id);
+        if (!Enum.IsDefined(input.RepositoryAccess))
+        {
+            throw new BusinessException(GitErrors.InvalidConnection);
+        }
+
+        connection.RepositoryAccess = input.RepositoryAccess;
+        await connections.UpdateAsync(connection, autoSave: true);
+        return await ToDtoAsync(connection);
+    }
+
+    public async Task<GitRepositoryDto> SetRepositorySelectedAsync(Guid repositoryId, SetRepositorySelectedInput input)
+    {
+        var repository = await repositories.GetAsync(repositoryId);
+        await LoadAsync(repository.ConnectionId);
+        repository.IsSelected = input.IsSelected;
+        await repositories.UpdateAsync(repository, autoSave: true);
+        return new GitRepositoryDto
+        {
+            Id = repository.Id,
+            FullName = repository.FullName,
+            IsPrivate = repository.IsPrivate,
+            DefaultBranch = repository.DefaultBranch,
+            WebhookState = repository.WebhookState,
+            LastEventAt = repository.LastEventAt,
+            IsAccessible = repository.IsAccessible,
+            IsSelected = repository.IsSelected,
+        };
     }
 
     public async Task<GitConnectionDto> SyncAsync(Guid id)
@@ -295,7 +328,8 @@ public class GitConnectionAppService(
             Status = connection.Status,
             Problem = connection.Problem,
             LastSyncAt = connection.LastSyncAt,
-            RepositoryCount = own.Count,
+            RepositoryCount = own.Count(connection.Uses),
+            RepositoryAccess = connection.RepositoryAccess,
             WebhookProblemCount = connection.ProviderType == GitProviderType.GitHub ? 0 : own.Count(item => item.WebhookState != GitWebhookState.Active),
         };
     }
@@ -446,8 +480,11 @@ public class GitIssueAppService(
         await projects.CheckAsync(projectId, ProjectPermissions.ViewIssues);
 
         var usable = (await connections.GetListAsync(item => item.ProjectId == projectId && item.Status == GitConnectionStatus.Connected))
-            .Select(item => item.Id).ToList();
-        var repos = await repositories.GetListAsync(item => item.IsAccessible && usable.Contains(item.ConnectionId));
+            .ToDictionary(item => item.Id);
+        var ids = usable.Keys.ToList();
+        var repos = (await repositories.GetListAsync(item => item.IsAccessible && ids.Contains(item.ConnectionId)))
+            .Where(item => usable[item.ConnectionId].Uses(item))
+            .ToList();
         var linked = await RepositoriesOfIssueAsync(issueId);
         var cutoff = Clock.Now.AddSeconds(-configuration.GetValue("Git:Polling:IntervalSeconds", DefaultPollSeconds));
         var due = repos
@@ -500,15 +537,17 @@ public class GitIssueAppService(
 
     private async Task<List<GitRepository>> UsableRepositoriesAsync(Guid projectId)
     {
-        var ids = (await connections.GetListAsync(item => item.ProjectId == projectId)).Select(item => item.Id).ToList();
-        return await repositories.GetListAsync(item => item.IsAccessible && ids.Contains(item.ConnectionId));
+        var own = (await connections.GetListAsync(item => item.ProjectId == projectId)).ToDictionary(item => item.Id);
+        var ids = own.Keys.ToList();
+        return [.. (await repositories.GetListAsync(item => item.IsAccessible && ids.Contains(item.ConnectionId)))
+            .Where(item => own[item.ConnectionId].Uses(item))];
     }
 
     private async Task<(GitRepository Repository, GitConnection Connection)> TargetAsync(Guid repositoryId, Guid projectId)
     {
         var repository = await repositories.GetAsync(repositoryId);
         var connection = await connections.GetAsync(repository.ConnectionId);
-        return connection.ProjectId == projectId
+        return connection.ProjectId == projectId && connection.Uses(repository)
             ? (repository, connection)
             : throw new BusinessException(GitErrors.InvalidConnection);
     }

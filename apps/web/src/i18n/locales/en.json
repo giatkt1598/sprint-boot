@@ -767,6 +767,11 @@
     "deleteBody": "Issues already created from it keep their description."
   },
   "git": {
+    "repositoryAccess": "Repositories this space uses",
+    "accessAll": "All repositories",
+    "accessSelected": "Only selected repositories",
+    "accessAllHint": "Every repository the connection can see links to this space's issues, including ones added later.",
+    "accessSelectedHint": "Only ticked repositories link to this space's issues. Repositories added later stay out until you tick them.",
     "title": "Git connections",
     "subtitle": "Every repository a connection can access links to issues automatically.",
     "add": "Add connection",
