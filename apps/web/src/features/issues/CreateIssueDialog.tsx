@@ -19,7 +19,7 @@ import { useErrorMessage } from '../../lib/errors';
 import { useMembers, useSpaces } from '../spaces/api';
 import { useBacklog } from '../agile/api';
 import { useCurrentUser } from '../../auth/AuthProvider';
-import { priorityLevel, uploadAttachment, useEpics, useLabels, usePriorities, useIssueTypes } from './api';
+import { priorityLevel, uploadAttachment, useEpics, useIssueTemplates, useLabels, usePriorities, useIssueTypes } from './api';
 import { RichTextEditor } from './RichTextEditor';
 
 
@@ -45,6 +45,9 @@ export function CreateIssueDialog({ onClose, epic }: CreateIssueDialogProps) {
   const [submitted, setSubmitted] = useState(false);
   const [description, setDescription] = useState('');
   const [editorKey, setEditorKey] = useState(0);
+  // The description restarts from a template whenever the type changes, until the person edits it.
+  const [template, setTemplate] = useState({ content: '', revision: 0 });
+  const descriptionEdited = useRef(false);
   const [priorityId, setPriorityId] = useState('');
   const [assignee, setAssignee] = useState<PickerUser | null>(null);
   const me = useCurrentUser();
@@ -70,6 +73,7 @@ export function CreateIssueDialog({ onClose, epic }: CreateIssueDialogProps) {
   const epics = useEpics(projectId || undefined);
   const backlog = useBacklog(projectId || undefined);
   const knownLabels = useLabels(projectId || undefined);
+  const templates = useIssueTemplates(projectId || undefined);
   const allowedTypes = (types.data ?? []).filter((type) => type.hierarchy !== 0 && (!epic || type.hierarchy === 2));
   const [sprintId, setSprintId] = useState('');
   const canHaveEpic = allowedTypes.find((type) => type.id === typeId)?.hierarchy === 1;
@@ -88,6 +92,18 @@ export function CreateIssueDialog({ onClose, epic }: CreateIssueDialogProps) {
       setTypeId(allowedTypes.find((type) => type.name === 'Task')?.id ?? allowedTypes[0]!.id!);
     }
   }, [allowedTypes, typeId]);
+
+  const defaultTemplate = templates.data?.find((item) => item.issueTypeId === typeId && item.isDefault)?.content ?? '';
+  useEffect(() => {
+    if (descriptionEdited.current && description) {
+      return;
+    }
+    if (defaultTemplate !== template.content) {
+      descriptionEdited.current = false;
+      setDescription(defaultTemplate);
+      setTemplate((current) => ({ content: defaultTemplate, revision: current.revision + 1 }));
+    }
+  }, [defaultTemplate, description, template.content]);
 
   const create = useMutation({
     mutationFn: () =>
@@ -124,7 +140,8 @@ export function CreateIssueDialog({ onClose, epic }: CreateIssueDialogProps) {
       if (another) {
         setTitle('');
         setSubmitted(false);
-        setDescription('');
+        setDescription(template.content);
+        descriptionEdited.current = false;
         setFiles([]);
         setEditorKey((value) => value + 1);
       } else {
@@ -193,7 +210,18 @@ export function CreateIssueDialog({ onClose, epic }: CreateIssueDialogProps) {
         validate={validateTitle}
         onCommit={setTitle}
       />
-      <RichTextEditor key={editorKey} label={t('issues.description')} showLabel people={people} projectId={projectId || undefined} onChange={setDescription} />
+      <RichTextEditor
+        key={`${editorKey}-${template.revision}`}
+        label={t('issues.description')}
+        showLabel
+        people={people}
+        projectId={projectId || undefined}
+        initialValue={template.content}
+        onEdit={() => {
+          descriptionEdited.current = true;
+        }}
+        onChange={setDescription}
+      />
       <div className="grid grid-cols-2 gap-4">
         <UserPicker label={t(epic ? 'agile.lead' : 'issues.assignee')} options={people} value={assignee} emptyLabel={t('common.unassigned')} onChange={setAssignee} />
         <SelectField

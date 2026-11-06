@@ -39,6 +39,17 @@ export const useLabels = (projectId: string | undefined) =>
     queryFn: () => unwrap(apiClient.GET('/api/v1/issue/labels/{projectId}', { params: { path: { projectId: projectId! } } })),
   });
 
+export type IssueTemplate = components['schemas']['IssueTemplateDto'];
+
+export const issueTemplatesKey = (projectId: string | undefined) => ['issue-templates', projectId];
+
+export const useIssueTemplates = (projectId: string | undefined) =>
+  useQuery({
+    queryKey: issueTemplatesKey(projectId),
+    enabled: Boolean(projectId),
+    queryFn: () => unwrap(apiClient.GET('/api/v1/issue-template', { params: { query: { projectId: projectId! } } })),
+  });
+
 export const uploadRichTextFile = (projectId: string, file: File) =>
   unwrap(
     apiClient.POST('/api/v1/rich-text-file/upload/{projectId}', {

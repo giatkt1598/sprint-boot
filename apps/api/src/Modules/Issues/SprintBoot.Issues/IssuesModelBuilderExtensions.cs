@@ -42,6 +42,15 @@ public static class IssuesModelBuilderExtensions
                 .HasMethod("GIN");
         });
 
+        builder.Entity<IssueTemplate>(b =>
+        {
+            b.ToTable("issue_templates", Schema);
+            b.ConfigureByConvention();
+            b.Property(template => template.Name).HasMaxLength(IssueTemplateConsts.MaxNameLength).IsRequired();
+            b.Property(template => template.Content).IsRequired();
+            b.HasIndex(template => new { template.ProjectId, template.IssueTypeId });
+        });
+
         builder.Entity<Label>(b =>
         {
             b.ToTable("labels", Schema);

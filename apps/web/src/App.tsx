@@ -23,6 +23,7 @@ import { SpaceGeneralPage, SpaceMembersPage, SpaceSettingsIndex, SpaceSettingsLa
 import { SpaceBoardPage } from './features/spaces/SpaceBoardPage';
 import { SpacesPage } from './features/spaces/SpacesPage';
 import { SpaceWorkflowsPage } from './features/spaces/SpaceWorkflowsPage';
+import { SpaceIssueTemplatesPage } from './features/spaces/IssueTemplatesPage';
 import { AppShell, BareShell } from './layout/AppShell';
 import { DevUiPage } from './pages/DevUiPage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -72,6 +73,7 @@ export function App() {
               <Route path="members" element={<SpaceMembersPage />} />
               <Route path="board" element={<SpaceBoardPage />} />
               <Route path="workflows" element={<SpaceWorkflowsPage />} />
+              <Route path="issue-templates" element={<SpaceIssueTemplatesPage />} />
               <Route path="git" element={<GitConnectionsPage />} />
               <Route path="git/:connectionId" element={<GitRepositoriesPage />} />
             </Route>

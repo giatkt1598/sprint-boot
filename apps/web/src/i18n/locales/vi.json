@@ -151,6 +151,8 @@
     "InvalidIssueHierarchy": "Thay đổi này làm sai phân cấp issue.",
     "DueDateBeforeStartDate": "Hạn không được trước ngày bắt đầu.",
     "InvalidIssueSorting": "Không thể sắp xếp danh sách theo cách này.",
+    "IssueTemplateSubtaskType": "Subtask không dùng được template.",
+    "IssueTemplateNameRequired": "Template cần có tên.",
     "IssueTitleRequired": "Tiêu đề là bắt buộc.",
     "AttachmentTooLarge": "File vượt quá dung lượng cho phép.",
     "LoginAlreadyLinked": "Tài khoản này đã được liên kết.",
@@ -739,6 +741,22 @@
     "redirectUrl": "Redirect URL",
     "copyRedirect": "Sao chép redirect URL",
     "redirectCopied": "Đã sao chép redirect URL"
+  },
+  "templates": {
+    "title": "Template issue",
+    "subtitle": "Issue mới của một loại sẽ dùng template mặc định của loại đó làm mô tả, cho đến khi có người sửa.",
+    "add": "Thêm template",
+    "addFor": "Thêm template cho {{type}}",
+    "none": "Chưa có template cho {{type}}. Issue {{type}} mới sẽ có mô tả trống.",
+    "default": "Mặc định",
+    "name": "Tên",
+    "content": "Mô tả",
+    "makeDefault": "Dùng làm mặc định cho issue mới thuộc loại này",
+    "createTitle": "Template {{type}} mới",
+    "editTitle": "Sửa template {{type}}",
+    "saved": "Đã lưu template.",
+    "deleteTitle": "Xoá {{name}}?",
+    "deleteBody": "Các issue đã tạo từ template này vẫn giữ nguyên mô tả."
   },
   "git": {
     "title": "Kết nối Git",

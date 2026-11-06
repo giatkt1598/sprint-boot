@@ -29,6 +29,8 @@ interface RichTextEditorProps {
   /** The space files go to. Without one the editor offers no uploads. */
   projectId?: string;
   onChange: (html: string) => void;
+  /** Called on every change the person makes, before the text is handed over. */
+  onEdit?: () => void;
 }
 
 const COMMIT_DELAY_MILLISECONDS = 200;
@@ -128,7 +130,7 @@ function ImageDialog({ onClose, onInsert }: { onClose: () => void; onInsert: (ur
   );
 }
 
-export function RichTextEditor({ label, initialValue = '', people, autoFocus, showLabel, projectId, onChange }: RichTextEditorProps) {
+export function RichTextEditor({ label, initialValue = '', people, autoFocus, showLabel, projectId, onChange, onEdit }: RichTextEditorProps) {
   const { t } = useTranslation();
   const [mentionPopup, setMentionPopup] = useState<PopupState<MentionUser> | null>(null);
   const [slashPopup, setSlashPopup] = useState<PopupState<SlashCommand> | null>(null);
@@ -142,9 +144,9 @@ export function RichTextEditor({ label, initialValue = '', people, autoFocus, sh
   // Parents rebuild `people` on every render. Rebuilding the editor with it wiped the text after each
   // keystroke, so the editor is created once and reads the latest values from here.
   const upload = useRef<(files: File[], at?: number) => void>(() => undefined);
-  const latest = useRef({ people, t, onChange, projectId });
+  const latest = useRef({ people, t, onChange, onEdit, projectId });
   useLayoutEffect(() => {
-    latest.current = { people, t, onChange, projectId };
+    latest.current = { people, t, onChange, onEdit, projectId };
   });
 
   // A parent form re-renders on each commit, so typing hands over the text only in pauses and on blur.
@@ -222,6 +224,7 @@ export function RichTextEditor({ label, initialValue = '', people, autoFocus, sh
       },
     },
     onUpdate: ({ editor: current }) => {
+      latest.current.onEdit?.();
       clearTimeout(pending.current);
       pending.current = setTimeout(() => commit(current), COMMIT_DELAY_MILLISECONDS);
     },

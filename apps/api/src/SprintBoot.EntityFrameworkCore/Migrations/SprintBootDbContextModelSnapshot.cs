@@ -1160,6 +1160,36 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.ToTable("issue_labels", "issues");
                 });
 
+            modelBuilder.Entity("SprintBoot.Issues.IssueTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("IssueTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId", "IssueTypeId");
+
+                    b.ToTable("issue_templates", "issues");
+                });
+
             modelBuilder.Entity("SprintBoot.Issues.IssueType", b =>
                 {
                     b.Property<Guid>("Id")
