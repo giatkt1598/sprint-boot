@@ -149,6 +149,7 @@
     "SubtaskParentRequired": "A subtask needs a parent issue.",
     "InvalidIssueHierarchy": "This change breaks the issue hierarchy.",
     "DueDateBeforeStartDate": "Due date cannot be before start date.",
+    "InvalidIssueSorting": "This list cannot be sorted that way.",
     "IssueTitleRequired": "Title is required.",
     "AttachmentTooLarge": "This file is larger than the allowed size.",
     "LoginAlreadyLinked": "This account is already linked.",

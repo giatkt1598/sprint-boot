@@ -38,7 +38,8 @@ public partial class IssueAppService(
     IssueMapper mapper,
     WatcherStore watcherStore,
     RichTextSanitizer sanitizer,
-    RichTextFileStore richTextFiles)
+    RichTextFileStore richTextFiles,
+    IssueSorting sorting)
     : ApplicationService, IIssueAppService
 {
     [GeneratedRegex("^([A-Z][A-Z0-9]{1,9})-([0-9]+)$")]
@@ -230,9 +231,7 @@ public partial class IssueAppService(
         }
 
         var total = await query.LongCountAsync();
-        var page = await query
-            .OrderByDescending(issue => issue.LastModificationTime ?? issue.CreationTime)
-            .ThenBy(issue => issue.Id)
+        var page = await (await sorting.ApplyAsync(query, input.Sorting))
             .Skip(input.SkipCount)
             .Take(input.MaxResultCount)
             .ToListAsync();

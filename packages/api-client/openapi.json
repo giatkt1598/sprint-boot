@@ -6723,6 +6723,13 @@
         ],
         "parameters": [
           {
+            "name": "Sorting",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "ProjectId",
             "in": "query",
             "schema": {

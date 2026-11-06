@@ -177,6 +177,43 @@ public class TicketTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task Search_sorts_by_the_requested_column_in_either_direction()
+    {
+        var client = await fixture.CreateUserClientAsync(Token);
+        var project = await CreateProjectAsync(client);
+        var banana = await CreateIssueAsync(client, project, "Banana");
+        await CreateIssueAsync(client, project, "apple");
+        var cherry = await CreateIssueAsync(client, project, "Cherry");
+
+        var priorities = (await client.Http.GetFromJsonAsync<List<PriorityDto>>("/api/v1/issue/priorities", Token))!
+            .OrderBy(priority => priority.Order).ToList();
+        (await PatchAsync(client, cherry, new { priority = priorities[0].Id })).EnsureSuccessStatusCode();
+        (await PatchAsync(client, banana, new { priority = priorities[^1].Id, assignee = client.UserId })).EnsureSuccessStatusCode();
+
+        async Task<List<string>> TitlesAsync(string sorting)
+        {
+            var result = await client.Http.GetFromJsonAsync<IssueSearchResultDto>(
+                $"/api/v1/issue/search?projectId={project.Id}&sorting={Uri.EscapeDataString(sorting)}", Token);
+            return [.. result!.Items.Select(item => item.Title)];
+        }
+
+        (await TitlesAsync("title")).ShouldBe(["apple", "Banana", "Cherry"]);
+        (await TitlesAsync("title desc")).ShouldBe(["Cherry", "Banana", "apple"]);
+        (await TitlesAsync("key")).ShouldBe(["Banana", "apple", "Cherry"]);
+        (await TitlesAsync("key desc")).ShouldBe(["Cherry", "apple", "Banana"]);
+        (await TitlesAsync("priority"))[0].ShouldBe("Cherry");
+        (await TitlesAsync("priority desc"))[0].ShouldBe("Banana");
+        // Nobody assigned sorts after everyone.
+        (await TitlesAsync("assignee"))[0].ShouldBe("Banana");
+        (await TitlesAsync("assignee desc"))[0].ShouldBe("Banana");
+        (await TitlesAsync("created desc")).ShouldBe(["Cherry", "apple", "Banana"]);
+
+        var invalid = await client.Http.GetAsync($"/api/v1/issue/search?projectId={project.Id}&sorting=description", Token);
+        invalid.IsSuccessStatusCode.ShouldBeFalse();
+        (await invalid.Content.ReadAsStringAsync(Token)).ShouldContain(IssueErrors.InvalidSorting);
+    }
+
+    [Fact]
     public async Task Oversized_attachment_is_rejected_with_a_clear_error()
     {
         var client = await fixture.CreateUserClientAsync(Token);

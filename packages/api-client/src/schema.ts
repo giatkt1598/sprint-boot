@@ -5322,6 +5322,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
+                    Sorting?: string;
                     ProjectId?: string;
                     Text?: string;
                     TypeIds?: string[];

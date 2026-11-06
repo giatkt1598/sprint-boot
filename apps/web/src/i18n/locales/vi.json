@@ -149,6 +149,7 @@
     "SubtaskParentRequired": "Subtask phải có issue cha.",
     "InvalidIssueHierarchy": "Thay đổi này làm sai phân cấp issue.",
     "DueDateBeforeStartDate": "Hạn không được trước ngày bắt đầu.",
+    "InvalidIssueSorting": "Không thể sắp xếp danh sách theo cách này.",
     "IssueTitleRequired": "Tiêu đề là bắt buộc.",
     "AttachmentTooLarge": "File vượt quá dung lượng cho phép.",
     "LoginAlreadyLinked": "Tài khoản này đã được liên kết.",

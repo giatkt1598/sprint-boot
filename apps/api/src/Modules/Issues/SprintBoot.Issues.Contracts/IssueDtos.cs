@@ -171,8 +171,14 @@ public class UpdateIssueInput
     public required Dictionary<string, JsonElement> Fields { get; set; }
 }
 
-public class IssueSearchInput : PagedResultRequestDto
+public class IssueSearchInput : PagedResultRequestDto, ISortedResultRequest
 {
+    /// <summary>
+    /// A column and an optional direction, such as "priority desc": key, title, status, priority, assignee,
+    /// reporter, created or updated. Empty means most recently updated first.
+    /// </summary>
+    public string? Sorting { get; set; }
+
     public Guid? ProjectId { get; set; }
 
     public string? Text { get; set; }
@@ -369,4 +375,5 @@ public static class IssueErrors
     public const string WorkLogInvalidTime = "SprintBoot:WorkLogInvalidTime";
     public const string ReplyDepth = "SprintBoot:CommentReplyDepth";
     public const string CommentEmpty = "SprintBoot:CommentEmpty";
+    public const string InvalidSorting = "SprintBoot:InvalidIssueSorting";
 }
