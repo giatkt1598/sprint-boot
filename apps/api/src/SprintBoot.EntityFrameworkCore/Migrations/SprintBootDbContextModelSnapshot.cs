@@ -1166,6 +1166,70 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.ToTable("issue_labels", "issues");
                 });
 
+            modelBuilder.Entity("SprintBoot.Issues.IssueLink", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid>("LinkTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SourceIssueId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TargetIssueId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id")
+                        .HasName("PK_issue_links1");
+
+                    b.HasIndex("LinkTypeId");
+
+                    b.HasIndex("TargetIssueId");
+
+                    b.HasIndex("SourceIssueId", "TargetIssueId", "LinkTypeId")
+                        .IsUnique();
+
+                    b.ToTable("issue_links", "issues");
+                });
+
+            modelBuilder.Entity("SprintBoot.Issues.IssueLinkType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Inward")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Outward")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("issue_link_types", "issues");
+                });
+
             modelBuilder.Entity("SprintBoot.Issues.IssueTemplate", b =>
                 {
                     b.Property<Guid>("Id")

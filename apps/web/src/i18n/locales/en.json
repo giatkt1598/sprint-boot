@@ -153,6 +153,10 @@
     "InvalidIssueSorting": "This list cannot be sorted that way.",
     "IssueTemplateSubtaskType": "Subtasks cannot have templates.",
     "IssueTemplateNameRequired": "A template needs a name.",
+    "IssueLinkSelf": "An issue cannot link to itself.",
+    "IssueLinkDuplicate": "These issues are already linked this way.",
+    "IssueLinkTypeInUse": "Links still use this type, so it cannot be deleted.",
+    "IssueLinkTypeNameTaken": "Another link type already has this name.",
     "IssueTitleRequired": "Title is required.",
     "AttachmentTooLarge": "This file is larger than the allowed size.",
     "LoginAlreadyLinked": "This account is already linked.",
@@ -439,6 +443,7 @@
     "to": "To",
     "moreAssignees": "{{count}} more people",
     "field": {
+      "link": "Link",
       "title": "Title",
       "description": "Description",
       "type": "Type",
@@ -765,6 +770,32 @@
     "saved": "Template saved.",
     "deleteTitle": "Delete {{name}}?",
     "deleteBody": "Issues already created from it keep their description."
+  },
+  "links": {
+    "title": "Linked issues",
+    "add": "Link issue",
+    "relationship": "This issue",
+    "issue": "Issue",
+    "link": "Link",
+    "empty": "No linked issues.",
+    "restricted": "An issue you cannot open",
+    "remove": "Remove link to {{key}}"
+  },
+  "linkTypes": {
+    "title": "Issue link types",
+    "subtitle": "The relationships people can set between issues, the same in every space. Each type reads one way from each issue.",
+    "add": "Add link type",
+    "name": "Name",
+    "outward": "From the first issue",
+    "inward": "From the other issue",
+    "used": "In use",
+    "linkCount_one": "{{count}} link",
+    "linkCount_other": "{{count}} links",
+    "createTitle": "New link type",
+    "editTitle": "Edit link type",
+    "preview": "Reads as: SB-1 {{outward}} SB-2, and SB-2 {{inward}} SB-1.",
+    "deleteTitle": "Delete {{name}}?",
+    "deleteBody": "Nobody uses this link type, so nothing else changes."
   },
   "git": {
     "repositoryAccess": "Repositories this space uses",

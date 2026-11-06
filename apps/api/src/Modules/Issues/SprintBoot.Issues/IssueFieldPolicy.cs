@@ -34,4 +34,5 @@ public static class IssueFieldKeys
     public const string Status = "status";
     public const string WorkLog = "workLog";
     public const string Attachment = "attachment";
+    public const string Link = "link";
 }

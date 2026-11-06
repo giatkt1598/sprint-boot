@@ -42,6 +42,24 @@ public static class IssuesModelBuilderExtensions
                 .HasMethod("GIN");
         });
 
+        builder.Entity<IssueLinkType>(b =>
+        {
+            b.ToTable("issue_link_types", Schema);
+            b.ConfigureByConvention();
+            b.Property(type => type.Name).HasMaxLength(IssueLinkConsts.MaxNameLength).IsRequired();
+            b.Property(type => type.Outward).HasMaxLength(IssueLinkConsts.MaxNameLength).IsRequired();
+            b.Property(type => type.Inward).HasMaxLength(IssueLinkConsts.MaxNameLength).IsRequired();
+        });
+
+        builder.Entity<IssueLink>(b =>
+        {
+            b.ToTable("issue_links", Schema);
+            b.ConfigureByConvention();
+            b.HasIndex(link => new { link.SourceIssueId, link.TargetIssueId, link.LinkTypeId }).IsUnique();
+            b.HasIndex(link => link.TargetIssueId);
+            b.HasIndex(link => link.LinkTypeId);
+        });
+
         builder.Entity<IssueTemplate>(b =>
         {
             b.ToTable("issue_templates", Schema);

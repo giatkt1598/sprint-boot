@@ -153,6 +153,10 @@
     "InvalidIssueSorting": "Không thể sắp xếp danh sách theo cách này.",
     "IssueTemplateSubtaskType": "Subtask không dùng được template.",
     "IssueTemplateNameRequired": "Template cần có tên.",
+    "IssueLinkSelf": "Issue không thể liên kết với chính nó.",
+    "IssueLinkDuplicate": "Hai issue này đã được liên kết theo cách này.",
+    "IssueLinkTypeInUse": "Vẫn còn liên kết dùng loại này nên không xoá được.",
+    "IssueLinkTypeNameTaken": "Đã có loại liên kết khác dùng tên này.",
     "IssueTitleRequired": "Tiêu đề là bắt buộc.",
     "AttachmentTooLarge": "File vượt quá dung lượng cho phép.",
     "LoginAlreadyLinked": "Tài khoản này đã được liên kết.",
@@ -439,6 +443,7 @@
     "to": "Đến",
     "moreAssignees": "{{count}} người khác",
     "field": {
+      "link": "Liên kết",
       "title": "Tiêu đề",
       "description": "Mô tả",
       "type": "Loại",
@@ -765,6 +770,32 @@
     "saved": "Đã lưu template.",
     "deleteTitle": "Xoá {{name}}?",
     "deleteBody": "Các issue đã tạo từ template này vẫn giữ nguyên mô tả."
+  },
+  "links": {
+    "title": "Issue liên kết",
+    "add": "Liên kết issue",
+    "relationship": "Issue này",
+    "issue": "Issue",
+    "link": "Liên kết",
+    "empty": "Chưa có issue liên kết.",
+    "restricted": "Một issue bạn không có quyền mở",
+    "remove": "Gỡ liên kết tới {{key}}"
+  },
+  "linkTypes": {
+    "title": "Loại liên kết issue",
+    "subtitle": "Các quan hệ có thể đặt giữa các issue, giống nhau ở mọi space. Mỗi loại đọc theo một cách từ mỗi issue.",
+    "add": "Thêm loại liên kết",
+    "name": "Tên",
+    "outward": "Từ issue thứ nhất",
+    "inward": "Từ issue còn lại",
+    "used": "Đang dùng",
+    "linkCount_one": "{{count}} liên kết",
+    "linkCount_other": "{{count}} liên kết",
+    "createTitle": "Loại liên kết mới",
+    "editTitle": "Sửa loại liên kết",
+    "preview": "Đọc là: SB-1 {{outward}} SB-2, và SB-2 {{inward}} SB-1.",
+    "deleteTitle": "Xoá {{name}}?",
+    "deleteBody": "Chưa có liên kết nào dùng loại này nên không có gì khác thay đổi."
   },
   "git": {
     "repositoryAccess": "Repository space này dùng",

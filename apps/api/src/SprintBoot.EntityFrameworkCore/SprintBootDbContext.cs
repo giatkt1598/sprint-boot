@@ -81,6 +81,10 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
     public DbSet<Label> Labels { get; set; } = null!;
 
     public DbSet<IssueTemplate> IssueTemplates { get; set; } = null!;
+
+    public DbSet<IssueLinkType> IssueLinkTypes { get; set; } = null!;
+
+    public DbSet<IssueLink> IssueLinks { get; set; } = null!;
     public DbSet<IssueWatcher> IssueWatchers { get; set; } = null!;
     public DbSet<IssueLabel> IssueLabels { get; set; } = null!;
     public DbSet<Comment> Comments { get; set; } = null!;

@@ -67,6 +67,7 @@ public class IssueTools(
     ICommentAppService comments,
     ITransitionAppService transitions,
     ISprintAppService sprints,
+    IIssueLinkAppService links,
     IAbpDistributedLock locks,
     IDistributedCache<IdempotentCreation> created,
     ICurrentUser currentUser)
@@ -183,7 +184,7 @@ public class IssueTools(
     });
 
     [McpServerTool(Name = "get_issue", ReadOnly = true), Description(
-        "Reads one issue with every field, its description as Markdown, its children and, by default, its comments.")]
+        "Reads one issue with every field, its description as Markdown, its children, its linked issues and, by default, its comments.")]
     public Task<string> GetIssue(
         [Description("Issue key, such as BANK-12.")] string key,
         [Description("markdown (default) or html, for the description and comments.")] string format = "markdown",
@@ -193,6 +194,7 @@ public class IssueTools(
         var issue = await resolver.IssueAsync(key);
         var sprint = await sprints.GetForIssueAsync(issue.Id);
         var thread = includeComments ? await comments.GetListAsync(issue.Id) : null;
+        var linked = await links.GetListAsync(issue.Id);
         return new
         {
             issue.Key,
@@ -206,6 +208,8 @@ public class IssueTools(
             Reporter = McpViews.Person(issue.Reporter),
             Parent = issue.Parent is null ? null : McpViews.Ref(issue.Parent),
             Children = issue.Children.Count == 0 ? null : issue.Children.Select(McpViews.Ref),
+            // Each reads from this issue: "blocks BANK-4". An issue the caller cannot open shows no key.
+            Links = linked.Count == 0 ? null : linked.Select(link => new { Relationship = link.Phrase, Issue = link.Issue is null ? null : McpViews.Ref(link.Issue) }),
             issue.Labels,
             issue.StoryPoints,
             issue.StartDate,

@@ -12,6 +12,7 @@ import { WorkflowDesignerPage } from './features/workflows/WorkflowDesignerPage'
 import { HomePage } from './features/spaces/HomePage';
 import { InvitationsPage } from './features/admin/InvitationPages';
 import { SsoPage, SsoProviderPage } from './features/admin/SsoPages';
+import { IssueLinkTypesPage } from './features/admin/IssueLinkTypesPage';
 import { StatusesPage, WorkflowsPage } from './features/admin/WorkflowPages';
 import { BacklogPage } from './features/agile/BacklogPage';
 import { BoardPage } from './features/agile/BoardPage';
@@ -62,6 +63,7 @@ export function App() {
               <Route path="sso/:providerId" element={<SsoProviderPage />} />
               <Route path="email" element={<EmailSettingsPage />} />
               <Route path="workflows" element={<WorkflowsPage />} />
+              <Route path="issue-link-types" element={<IssueLinkTypesPage />} />
               <Route path="notification-schemes" element={<NotificationSchemesPage />} />
               <Route path="notification-schemes/:schemeId" element={<EditSchemePage />} />
               <Route path="statuses" element={<StatusesPage />} />

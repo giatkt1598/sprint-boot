@@ -14,6 +14,7 @@ import { Link as RouterLink, useNavigate, useParams } from 'react-router';
 import { ApiError, apiClient, unwrap } from '../../api';
 import { useCurrentUser } from '../../auth/AuthProvider';
 import { Resizer, usePersistentWidth } from '../../components/Resizer';
+import { LinkedIssues } from './LinkedIssues';
 import { Avatar, UnassignedAvatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
 import { CollapseHeading } from '../../components/CollapseHeading';
@@ -313,6 +314,8 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
               {addingSubtask && <SubtaskRow issue={issue} onClose={() => setAddingSubtask(false)} />}
             </section>
           )}
+
+          <LinkedIssues issue={issue} canEdit={canEdit} />
 
           <Attachments issue={issue} canEdit={canEdit} />
 
