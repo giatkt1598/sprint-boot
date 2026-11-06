@@ -8,7 +8,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, ChevronRight, Ellipsis, Pencil, Trash2 } from 'lucide-react';
-import { createContext, memo, use, useMemo, useState, type ReactNode } from 'react';
+import { createContext, memo, use, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useParams } from 'react-router';
 import { apiClient, unwrap } from '../../api';
@@ -144,6 +144,13 @@ function SectionCard({ children }: { children: ReactNode }) {
 function DraggableRow({ card, onOpen, actions, canDrag }: IssueRowProps & { canDrag: boolean }) {
   const { listeners, setNodeRef: dragRef, transform, isDragging } = useDraggable({ id: card.id!, disabled: !canDrag });
   const { setNodeRef: dropRef, isOver } = useDroppable({ id: `row:${card.id}` });
+  // The browser still sends a click when a drag ends over the key link or the title, which would open the issue.
+  const dragged = useRef(false);
+  useEffect(() => {
+    if (isDragging) {
+      dragged.current = true;
+    }
+  }, [isDragging]);
 
   return (
     <Box
@@ -154,6 +161,16 @@ function DraggableRow({ card, onOpen, actions, canDrag }: IssueRowProps & { canD
       }}
       data-testid={`row-${card.key}`}
       {...listeners}
+      onPointerDownCapture={() => {
+        dragged.current = false;
+      }}
+      onClickCapture={(event: MouseEvent) => {
+        if (dragged.current) {
+          dragged.current = false;
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }}
       sx={[rowStyles, { '& td': { boxShadow: isOver ? `inset 0 2px 0 ${sem('border-focus')}` : undefined } }]}
       style={{
         opacity: isDragging ? 0.5 : 1,
