@@ -85,7 +85,10 @@ export function EpicsPage() {
               key: 'key', sortable: true,
               header: t('issues.key'),
               render: (epic) => (
-                <span className="flex items-center gap-2"><IssueTypeIcon type="epic" />{epic.key}</span>
+                <span className="flex items-center gap-2">
+                  <IssueTypeIcon type="epic" />
+                  <Link component={RouterLink} to={`/issues/${epic.key}`} color="inherit">{epic.key}</Link>
+                </span>
               ),
             },
             { key: 'title', sortable: true, header: t('issues.titleField'), render: (epic) => <Link component={RouterLink} to={`/issues/${epic.key}`} color="inherit">{epic.title}</Link> },
