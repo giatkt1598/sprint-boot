@@ -32,6 +32,7 @@ import { MenuItem } from '../../components/Menu';
 import { SearchInput } from '../../components/SearchInput';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
 import { useToast } from '../../components/ToastHost';
+import { swallowClickAfterDrag } from '../../lib/drag';
 import { useErrorMessage } from '../../lib/errors';
 import { font, radius, sem, shadow } from '../../theme/tokens';
 import { FilterChips, FilterControls, useIssueFilters } from '../issues/IssueFilters';
@@ -315,7 +316,18 @@ export function BoardPage() {
       )}
       {board.data && (!scrum || sprint) && (
         <CardFieldsContext value={board.data.cardFields ?? []}>
-        <DndContext sensors={sensors} onDragStart={(event) => void onDragStart(event)} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
+        <DndContext
+          sensors={sensors}
+          onDragStart={(event) => void onDragStart(event)}
+          onDragEnd={(event) => {
+            swallowClickAfterDrag();
+            onDragEnd(event);
+          }}
+          onDragCancel={() => {
+            swallowClickAfterDrag();
+            setDragging(null);
+          }}
+        >
           <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto">
             {(board.data.columns ?? []).filter((column) => !column.isHidden).map((column) => (
               <ColumnView
