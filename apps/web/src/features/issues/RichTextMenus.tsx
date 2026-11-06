@@ -165,7 +165,7 @@ function EditorToolbar({ editor, onImage, onAttach }: { editor: Editor; onImage:
         value={state.block}
         onChange={(event) => setBlock(event.target.value)}
         className="cursor-pointer bg-transparent p-1"
-        style={{ fontSize: font.size.md, color: sem('text-primary') }}
+        style={{ fontSize: font.size.md, color: sem('text-primary'), border: 'none' }}
       >
         <option value="p">{t('editor.text')}</option>
         <option value="h1">{t('editor.heading1')}</option>
@@ -242,7 +242,7 @@ function TextMenu({ editor, container }: { editor: Editor; container: HTMLElemen
           value={state.block}
           onChange={(event) => setBlock(event.target.value)}
           className="cursor-pointer bg-transparent p-1"
-          style={{ fontSize: font.size.md, color: sem('text-primary') }}
+          style={{ fontSize: font.size.md, color: sem('text-primary'), border: 'none' }}
         >
           <option value="p">{t('editor.text')}</option>
           <option value="h1">{t('editor.heading1')}</option>
