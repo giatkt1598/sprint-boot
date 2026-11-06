@@ -82,6 +82,8 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
 
     public DbSet<IssueTemplate> IssueTemplates { get; set; } = null!;
 
+    public DbSet<GlobalIssueTemplate> GlobalIssueTemplates { get; set; } = null!;
+
     public DbSet<IssueLinkType> IssueLinkTypes { get; set; } = null!;
 
     public DbSet<IssueLink> IssueLinks { get; set; } = null!;

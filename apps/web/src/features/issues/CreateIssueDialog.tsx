@@ -19,7 +19,7 @@ import { useErrorMessage } from '../../lib/errors';
 import { useMembers, useSpaces } from '../spaces/api';
 import { useBacklog } from '../agile/api';
 import { useCurrentUser } from '../../auth/AuthProvider';
-import { priorityLevel, uploadAttachment, useEpics, useIssueTemplates, useLabels, usePriorities, useIssueTypes } from './api';
+import { priorityLevel, TemplateMode, uploadAttachment, useEpics, useIssueTemplates, useLabels, usePriorities, useIssueTypes } from './api';
 import { RichTextEditor } from './RichTextEditor';
 
 
@@ -46,7 +46,7 @@ export function CreateIssueDialog({ onClose, epic }: CreateIssueDialogProps) {
   const [description, setDescription] = useState('');
   const [editorKey, setEditorKey] = useState(0);
   // The description restarts from a template whenever the type changes, until the person edits it.
-  const [template, setTemplate] = useState({ content: '', revision: 0 });
+  const [template, setTemplate] = useState({ content: '', ghost: '', revision: 0 });
   const descriptionEdited = useRef(false);
   const [priorityId, setPriorityId] = useState('');
   const [assignee, setAssignee] = useState<PickerUser | null>(null);
@@ -93,17 +93,21 @@ export function CreateIssueDialog({ onClose, epic }: CreateIssueDialogProps) {
     }
   }, [allowedTypes, typeId]);
 
-  const defaultTemplate = templates.data?.find((item) => item.issueTypeId === typeId && item.isDefault)?.content ?? '';
+  // A fill template becomes the description; a placeholder one only shows while the description is empty.
+  const defaultTemplate = templates.data?.find((item) => item.issueTypeId === typeId && item.isDefault);
+  const asPlaceholder = defaultTemplate?.mode === TemplateMode.placeholder;
+  const fill = asPlaceholder ? '' : (defaultTemplate?.content ?? '');
+  const ghost = asPlaceholder ? (defaultTemplate.content ?? '') : '';
   useEffect(() => {
     if (descriptionEdited.current && description) {
       return;
     }
-    if (defaultTemplate !== template.content) {
+    if (fill !== template.content || ghost !== template.ghost) {
       descriptionEdited.current = false;
-      setDescription(defaultTemplate);
-      setTemplate((current) => ({ content: defaultTemplate, revision: current.revision + 1 }));
+      setDescription(fill);
+      setTemplate((current) => ({ content: fill, ghost, revision: current.revision + 1 }));
     }
-  }, [defaultTemplate, description, template.content]);
+  }, [fill, ghost, description, template.content, template.ghost]);
 
   const create = useMutation({
     mutationFn: () =>
@@ -217,6 +221,7 @@ export function CreateIssueDialog({ onClose, epic }: CreateIssueDialogProps) {
         people={people}
         projectId={projectId || undefined}
         initialValue={template.content}
+        ghost={template.ghost}
         onEdit={() => {
           descriptionEdited.current = true;
         }}

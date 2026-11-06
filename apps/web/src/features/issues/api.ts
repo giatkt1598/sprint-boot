@@ -50,6 +50,21 @@ export const useIssueTemplates = (projectId: string | undefined) =>
     queryFn: () => unwrap(apiClient.GET('/api/v1/issue-template', { params: { query: { projectId: projectId! } } })),
   });
 
+export type GlobalIssueTemplate = components['schemas']['GlobalIssueTemplateDto'];
+export type TemplateModeValue = NonNullable<IssueTemplate['mode']>;
+
+/** How the create form shows a template, as the API numbers it. */
+export const TemplateMode = { fill: 0, placeholder: 1 } as const satisfies Record<string, TemplateModeValue>;
+
+export const globalIssueTemplatesKey = ['global-issue-templates'];
+
+export const useGlobalIssueTemplates = (enabled = true) =>
+  useQuery({
+    queryKey: globalIssueTemplatesKey,
+    enabled,
+    queryFn: () => unwrap(apiClient.GET('/api/v1/global-issue-template')),
+  });
+
 export const uploadRichTextFile = (projectId: string, file: File) =>
   unwrap(
     apiClient.POST('/api/v1/rich-text-file/upload/{projectId}', {

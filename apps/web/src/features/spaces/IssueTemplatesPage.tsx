@@ -12,12 +12,22 @@ import { Checkbox } from '../../components/Checkbox';
 import { Dialog, DialogConfirm, DialogFooter } from '../../components/Dialog';
 import { IssueTypeIcon, type IssueType as IconType } from '../../components/IssueIcons';
 import { ErrorState, LoadingState } from '../../components/StateViews';
-import { TextField } from '../../components/TextField';
+import { SelectField, TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { radius, sem } from '../../theme/tokens';
-import { issueTemplatesKey, useIssueTemplates, useIssueTypes, type IssueTemplate, type IssueType } from '../issues/api';
-import { RichTextEditor } from '../issues/RichTextEditor';
+import {
+  issueTemplatesKey,
+  TemplateMode,
+  useGlobalIssueTemplates,
+  useIssueTemplates,
+  useIssueTypes,
+  type IssueTemplate,
+  type IssueType,
+  type TemplateModeValue,
+} from '../issues/api';
+import { RichTextEditor, RichTextView } from '../issues/RichTextEditor';
+import { TemplateModeField } from '../issues/TemplateModeField';
 import { SpacePermission, type Space } from './api';
 
 /** Epic first, then the standard types; subtasks have no templates. */
@@ -28,8 +38,13 @@ interface Draft {
   issueTypeId: string;
   name: string;
   content: string;
+  mode: TemplateModeValue;
+  /** Empty for a template written for this space. */
+  globalTemplateId: string;
   isDefault: boolean;
 }
+
+const OWN = '';
 
 function TemplateDialog({ draft, types, projectId, onClose }: { draft: Draft; types: IssueType[]; projectId: string; onClose: () => void }) {
   const { t } = useTranslation();
@@ -37,10 +52,14 @@ function TemplateDialog({ draft, types, projectId, onClose }: { draft: Draft; ty
   const toMessage = useErrorMessage();
   const queryClient = useQueryClient();
   const [value, setValue] = useState(draft);
+  const globals = useGlobalIssueTemplates();
+  const reused = globals.data?.find((item) => item.id === value.globalTemplateId);
 
   const save = useMutation({
     mutationFn: () => {
-      const body = { issueTypeId: value.issueTypeId, name: value.name, content: value.content || null, isDefault: value.isDefault };
+      const body = value.globalTemplateId
+        ? { issueTypeId: value.issueTypeId, globalTemplateId: value.globalTemplateId, isDefault: value.isDefault }
+        : { issueTypeId: value.issueTypeId, name: value.name, content: value.content || null, mode: value.mode, isDefault: value.isDefault };
       return value.id
         ? unwrap(apiClient.PUT('/api/v1/issue-template/{id}', { params: { path: { id: value.id } }, body }))
         : unwrap(apiClient.POST('/api/v1/issue-template', { params: { query: { projectId } }, body }));
@@ -64,21 +83,48 @@ function TemplateDialog({ draft, types, projectId, onClose }: { draft: Draft; ty
       footer={
         <DialogFooter
           confirmLabel={t('common.save')}
-          confirmDisabled={!value.name.trim() || save.isPending}
+          confirmDisabled={(value.globalTemplateId ? !reused : !value.name.trim()) || save.isPending}
           onCancel={onClose}
           onConfirm={() => save.mutate()}
         />
       }
     >
-      <TextField label={t('templates.name')} value={value.name} autoFocus onChange={(event) => setValue({ ...value, name: event.target.value })} />
-      {/* No space is given, so a template holds no uploaded files an issue could later lose. */}
-      <RichTextEditor
-        label={t('templates.content')}
-        showLabel
-        people={[]}
-        initialValue={draft.content}
-        onChange={(content) => setValue((current) => ({ ...current, content }))}
-      />
+      {(globals.data?.length ?? 0) > 0 && (
+        <SelectField
+          label={t('templates.source')}
+          value={value.globalTemplateId}
+          onChange={(event) => setValue({ ...value, globalTemplateId: event.target.value })}
+          options={[
+            { value: OWN, label: t('templates.ownSource') },
+            ...(globals.data ?? []).map((item) => ({ value: item.id!, label: item.name! })),
+          ]}
+        />
+      )}
+      {value.globalTemplateId ? (
+        reused && (
+          <div className="flex flex-col gap-2">
+            <Typography variant="body2" color="textSecondary">
+              {t('templates.reusedHint', { mode: t(reused.mode === TemplateMode.placeholder ? 'templates.mode.placeholder' : 'templates.mode.fill') })}
+            </Typography>
+            <div className="px-3 py-2" style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}>
+              <RichTextView html={reused.content ?? ''} />
+            </div>
+          </div>
+        )
+      ) : (
+        <>
+          <TextField label={t('templates.name')} value={value.name} autoFocus onChange={(event) => setValue({ ...value, name: event.target.value })} />
+          <TemplateModeField value={value.mode} onChange={(mode) => setValue({ ...value, mode })} />
+          {/* No space is given, so a template holds no uploaded files an issue could later lose. */}
+          <RichTextEditor
+            label={t('templates.content')}
+            showLabel
+            people={[]}
+            initialValue={draft.content}
+            onChange={(content) => setValue((current) => ({ ...current, content }))}
+          />
+        </>
+      )}
       <Checkbox
         label={t('templates.makeDefault')}
         checked={value.isDefault}
@@ -133,7 +179,9 @@ export function SpaceIssueTemplatesPage() {
                   kind="ghost"
                   startIcon={<Plus size={16} strokeWidth={1.5} aria-hidden />}
                   aria-label={t('templates.addFor', { type: typeName })}
-                  onClick={() => setDraft({ issueTypeId: type.id!, name: '', content: '', isDefault: own.length === 0 })}
+                  onClick={() =>
+                    setDraft({ issueTypeId: type.id!, name: '', content: '', mode: TemplateMode.fill, globalTemplateId: OWN, isDefault: own.length === 0 })
+                  }
                 >
                   {t('templates.add')}
                 </Button>
@@ -147,6 +195,8 @@ export function SpaceIssueTemplatesPage() {
                 style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}
               >
                 <Typography variant="body2" className="min-w-0 flex-1 truncate">{template.name}</Typography>
+                {template.mode === TemplateMode.placeholder && <Badge tone="subtle">{t('templates.mode.placeholder')}</Badge>}
+                {template.globalTemplateId && <Badge tone="subtle">{t('templates.workspace')}</Badge>}
                 {template.isDefault && <Badge tone="info">{t('templates.default')}</Badge>}
                 {canManage && (
                   <span className="flex gap-3">
@@ -154,7 +204,17 @@ export function SpaceIssueTemplatesPage() {
                       component="button"
                       variant="body2"
                       aria-label={`${t('common.edit')} ${template.name}`}
-                      onClick={() => setDraft({ id: template.id!, issueTypeId: template.issueTypeId!, name: template.name ?? '', content: template.content ?? '', isDefault: template.isDefault ?? false })}
+                      onClick={() =>
+                        setDraft({
+                          id: template.id!,
+                          issueTypeId: template.issueTypeId!,
+                          name: template.name ?? '',
+                          content: template.content ?? '',
+                          mode: template.mode ?? TemplateMode.fill,
+                          globalTemplateId: template.globalTemplateId ?? OWN,
+                          isDefault: template.isDefault ?? false,
+                        })
+                      }
                     >
                       {t('common.edit')}
                     </Link>

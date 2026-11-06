@@ -49,6 +49,39 @@
   pointer-events: none;
 }
 
+/* A placeholder template: drawn over the empty editor, in the editor's own cell so it can be taller. */
+.rich-text-stack {
+  display: grid;
+}
+
+.rich-text-stack > * {
+  grid-area: 1 / 1;
+}
+
+.rich-text-stack > :first-child {
+  display: flex;
+  flex-direction: column;
+}
+
+.rich-text-stack > :first-child > .ProseMirror {
+  flex: 1 1 auto;
+}
+
+.rich-text.rich-text-ghost {
+  padding: 12px 12px 12px 48px;
+  color: var(--sb-text-secondary);
+  pointer-events: none;
+  user-select: none;
+}
+
+.rich-text-ghost * {
+  color: inherit;
+}
+
+.has-ghost .rich-text .is-empty::before {
+  content: none;
+}
+
 .rich-text p {
   margin: 0 0 8px;
 }

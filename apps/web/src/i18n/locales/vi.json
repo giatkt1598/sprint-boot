@@ -719,7 +719,6 @@
     "ldapUserFilter": "Bộ lọc người dùng",
     "ldapUserFilterHint": "{0} là những gì người dùng nhập. Để trống sẽ khớp uid, sAMAccountName hoặc mail.",
     "attributeMapping": "Ánh xạ thuộc tính",
-    "directoryEmailTrusted": "Email từ provider này được coi là đã xác minh, nên tài khoản Sprint Boot trùng email sẽ được liên kết với nó. Chỉ kết nối thư mục mà người dùng không tự đổi được email.",
     "buttonLook": "Nút đăng nhập",
     "buttonLookHint": "Cách provider này hiển thị trên trang đăng nhập. Logo được lưu ngay; màu được lưu cùng form phía trên.",
     "logo": "Logo",
@@ -774,11 +773,14 @@
     "deleteBody": "Mọi người sẽ không thể đăng nhập bằng {{provider}} nữa.",
     "redirectUrl": "Redirect URL",
     "copyRedirect": "Sao chép redirect URL",
-    "redirectCopied": "Đã sao chép redirect URL"
+    "redirectCopied": "Đã sao chép redirect URL",
+    "trustEmail": "Tin email",
+    "trustEmailOn": "Email từ provider này được coi là đã xác minh: tài khoản Sprint Boot có cùng email sẽ được liên kết với nó. Chỉ bật khi người dùng không tự đổi được email ở provider.",
+    "trustEmailOff": "Chỉ người đã liên kết provider này trong trang cá nhân mới đăng nhập được. Email của nó không bao giờ liên kết tài khoản sẵn có, nhận lời mời hay tạo tài khoản mới."
   },
   "templates": {
     "title": "Template issue",
-    "subtitle": "Issue mới của một loại sẽ dùng template mặc định của loại đó làm mô tả, cho đến khi có người sửa.",
+    "subtitle": "Issue mới của một loại sẽ bắt đầu bằng template mặc định của loại đó, cho đến khi có người sửa mô tả. Space có thể tự viết template hoặc dùng lại template của workspace.",
     "add": "Thêm template",
     "addFor": "Thêm template cho {{type}}",
     "none": "Chưa có template cho {{type}}. Issue {{type}} mới sẽ có mô tả trống.",
@@ -790,7 +792,18 @@
     "editTitle": "Sửa template {{type}}",
     "saved": "Đã lưu template.",
     "deleteTitle": "Xoá {{name}}?",
-    "deleteBody": "Các issue đã tạo từ template này vẫn giữ nguyên mô tả."
+    "deleteBody": "Các issue đã tạo từ template này vẫn giữ nguyên mô tả.",
+    "source": "Template",
+    "ownSource": "Viết riêng cho space này",
+    "reusedHint": "Dùng lại từ template của workspace nên sẽ cập nhật theo. Hiển thị dạng: {{mode}}.",
+    "workspace": "Workspace",
+    "mode": {
+      "label": "Hiển thị dạng",
+      "fill": "Điền sẵn vào mô tả",
+      "fillHint": "Nội dung template được điền vào mô tả, sửa tiếp được ngay.",
+      "placeholder": "Placeholder",
+      "placeholderHint": "Template hiện mờ trong ô mô tả còn trống và không được lưu vào issue."
+    }
   },
   "links": {
     "title": "Issue liên kết",
@@ -1197,5 +1210,17 @@
     },
     "securityTitle": "Bảo mật",
     "securityBody": "Token hoạt động dưới tên bạn nên rule workflow và quyền Space vẫn được áp dụng. Không để token trong tệp dùng chung, mỗi client một token, và thu hồi ngay khi không cần nữa."
+  },
+  "globalTemplates": {
+    "title": "Template issue",
+    "subtitle": "Template mà mọi space có thể dùng lại cho các loại issue của mình. Sửa ở đây sẽ áp dụng cho mọi space đang dùng template.",
+    "empty": "Chưa có template nào của workspace.",
+    "createTitle": "Template workspace mới",
+    "editTitle": "Sửa template workspace",
+    "used": "Đang dùng",
+    "spaceCount_one": "{{count}} template của space",
+    "spaceCount_other": "{{count}} template của space",
+    "deleteUsed_one": "Có {{count}} template của space đang dùng lại template này và cũng sẽ bị xoá. Các issue đã tạo vẫn giữ nguyên mô tả.",
+    "deleteUsed_other": "Có {{count}} template của space đang dùng lại template này và cũng sẽ bị xoá. Các issue đã tạo vẫn giữ nguyên mô tả."
   }
 }

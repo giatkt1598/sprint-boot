@@ -44,8 +44,9 @@ export function AdminLayout() {
   const canManageSso = useCan('SprintBoot.Sso.Manage');
   const canManageEmail = useCan('SprintBoot.Email.Manage');
   const canManageLinkTypes = useCan('SprintBoot.IssueLinkTypes.Manage');
+  const canManageTemplates = useCan('SprintBoot.IssueTemplates.Manage');
 
-  if (!canManageLinkTypes && !canManageEmail && !canManageUsers && !canRestore && !canManageWorkflows && !canManageSchemes && !canManageInvitations && !canManageSso) {
+  if (!canManageTemplates && !canManageLinkTypes && !canManageEmail && !canManageUsers && !canRestore && !canManageWorkflows && !canManageSchemes && !canManageInvitations && !canManageSso) {
     return <main className="p-8"><Typography role="alert">{t('errors.forbidden')}</Typography></main>;
   }
 
@@ -62,6 +63,7 @@ export function AdminLayout() {
           {canManageEmail && <SettingsMenuItem to="email" label={t('email.title')} />}
           {canManageWorkflows && <SettingsMenuItem to="workflows" label={t('workflows.title')} />}
           {canManageLinkTypes && <SettingsMenuItem to="issue-link-types" label={t('linkTypes.title')} />}
+          {canManageTemplates && <SettingsMenuItem to="issue-templates" label={t('globalTemplates.title')} />}
           {canManageSchemes && <SettingsMenuItem to="notification-schemes" label={t('topBar.notifications')} />}
           {canRestore && <SettingsMenuItem to="deleted-issues" label={t('admin.deletedIssues')} />}
         </>

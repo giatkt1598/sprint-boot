@@ -719,7 +719,6 @@
     "ldapUserFilter": "User filter",
     "ldapUserFilterHint": "{0} stands for what the person types. Leave empty to match uid, sAMAccountName or mail.",
     "attributeMapping": "Attribute mapping",
-    "directoryEmailTrusted": "Emails from this provider are treated as verified, so a matching Sprint Boot account is linked to it. Only connect a directory whose people cannot change their own email.",
     "buttonLook": "Sign-in button",
     "buttonLookHint": "How this provider looks on the sign-in page. The logo saves at once; the color saves with the form above.",
     "logo": "Logo",
@@ -774,11 +773,14 @@
     "deleteBody": "People can no longer sign in with {{provider}}.",
     "redirectUrl": "Redirect URL",
     "copyRedirect": "Copy redirect URL",
-    "redirectCopied": "Redirect URL copied"
+    "redirectCopied": "Redirect URL copied",
+    "trustEmail": "Trust email",
+    "trustEmailOn": "Emails from this provider count as verified: a Sprint Boot account with the same email is linked to it. Keep this on only when people cannot change their own email at the provider.",
+    "trustEmailOff": "Only people who linked this provider from their profile can sign in with it. Its email never links an existing account, accepts an invitation or creates an account."
   },
   "templates": {
     "title": "Issue templates",
-    "subtitle": "New issues of a type start with its default template as their description, until someone edits it.",
+    "subtitle": "New issues of a type start with its default template, until someone edits the description. A space can write its own templates or reuse the workspace ones.",
     "add": "Add template",
     "addFor": "Add template for {{type}}",
     "none": "No template for {{type}} yet. New {{type}} issues start with an empty description.",
@@ -790,7 +792,18 @@
     "editTitle": "Edit {{type}} template",
     "saved": "Template saved.",
     "deleteTitle": "Delete {{name}}?",
-    "deleteBody": "Issues already created from it keep their description."
+    "deleteBody": "Issues already created from it keep their description.",
+    "source": "Template",
+    "ownSource": "Write one for this space",
+    "reusedHint": "Reused from the workspace templates, so it follows their changes. Shown as: {{mode}}.",
+    "workspace": "Workspace",
+    "mode": {
+      "label": "Show as",
+      "fill": "Fill the description",
+      "fillHint": "The template becomes the description, ready to edit.",
+      "placeholder": "Placeholder",
+      "placeholderHint": "The template shows greyed out in the empty description and is not saved with the issue."
+    }
   },
   "links": {
     "title": "Linked issues",
@@ -1197,5 +1210,17 @@
     },
     "securityTitle": "Security",
     "securityBody": "A token acts as you, so workflow rules and space permissions still apply. Keep tokens out of shared files, give each client its own, and revoke one as soon as it is no longer needed."
+  },
+  "globalTemplates": {
+    "title": "Issue templates",
+    "subtitle": "Templates every space can reuse for its own issue types. A change here reaches every space that uses the template.",
+    "empty": "No workspace templates yet.",
+    "createTitle": "New workspace template",
+    "editTitle": "Edit workspace template",
+    "used": "Used by",
+    "spaceCount_one": "{{count}} space template",
+    "spaceCount_other": "{{count}} space templates",
+    "deleteUsed_one": "{{count}} space template reuses it and will be deleted too. Issues already created from it keep their description.",
+    "deleteUsed_other": "{{count}} space templates reuse it and will be deleted too. Issues already created from them keep their description."
   }
 }

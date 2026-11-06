@@ -971,6 +971,28 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.ToTable("comment_reactions", "issues");
                 });
 
+            modelBuilder.Entity("SprintBoot.Issues.GlobalIssueTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Mode")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("global_issue_templates", "issues");
+                });
+
             modelBuilder.Entity("SprintBoot.Issues.Issue", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1239,11 +1261,17 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("GlobalTemplateId")
+                        .HasColumnType("uuid");
+
                     b.Property<bool>("IsDefault")
                         .HasColumnType("boolean");
 
                     b.Property<Guid>("IssueTypeId")
                         .HasColumnType("uuid");
+
+                    b.Property<int>("Mode")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -1254,6 +1282,8 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GlobalTemplateId");
 
                     b.HasIndex("ProjectId", "IssueTypeId");
 

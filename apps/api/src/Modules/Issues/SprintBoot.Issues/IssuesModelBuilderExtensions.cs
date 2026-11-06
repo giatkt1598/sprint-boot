@@ -67,6 +67,15 @@ public static class IssuesModelBuilderExtensions
             b.Property(template => template.Name).HasMaxLength(IssueTemplateConsts.MaxNameLength).IsRequired();
             b.Property(template => template.Content).IsRequired();
             b.HasIndex(template => new { template.ProjectId, template.IssueTypeId });
+            b.HasIndex(template => template.GlobalTemplateId);
+        });
+
+        builder.Entity<GlobalIssueTemplate>(b =>
+        {
+            b.ToTable("global_issue_templates", Schema);
+            b.ConfigureByConvention();
+            b.Property(template => template.Name).HasMaxLength(IssueTemplateConsts.MaxNameLength).IsRequired();
+            b.Property(template => template.Content).IsRequired();
         });
 
         builder.Entity<Label>(b =>

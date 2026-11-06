@@ -1,4 +1,4 @@
-import { EditorContent, useEditor, type Editor } from '@tiptap/react';
+import { EditorContent, useEditor, useEditorState, type Editor } from '@tiptap/react';
 import hljs from 'highlight.js/lib/common';
 import {
   AtSign, Code2, Heading1, Heading2, Heading3, ImageIcon, Lightbulb, List, ListChecks, ListOrdered, Minus, Paperclip, Quote, Table, Type,
@@ -31,6 +31,8 @@ interface RichTextEditorProps {
   onChange: (html: string) => void;
   /** Called on every change the person makes, before the text is handed over. */
   onEdit?: () => void;
+  /** Sanitized HTML shown as a hint while the description is empty; never part of the value. */
+  ghost?: string;
 }
 
 const COMMIT_DELAY_MILLISECONDS = 200;
@@ -130,7 +132,7 @@ function ImageDialog({ onClose, onInsert }: { onClose: () => void; onInsert: (ur
   );
 }
 
-export function RichTextEditor({ label, initialValue = '', people, autoFocus, showLabel, projectId, onChange, onEdit }: RichTextEditorProps) {
+export function RichTextEditor({ label, initialValue = '', people, autoFocus, showLabel, projectId, onChange, onEdit, ghost }: RichTextEditorProps) {
   const { t } = useTranslation();
   const [mentionPopup, setMentionPopup] = useState<PopupState<MentionUser> | null>(null);
   const [slashPopup, setSlashPopup] = useState<PopupState<SlashCommand> | null>(null);
@@ -231,6 +233,8 @@ export function RichTextEditor({ label, initialValue = '', people, autoFocus, sh
     onBlur: ({ editor: current }) => commit(current),
   });
 
+  const empty = useEditorState({ editor, selector: ({ editor: current }) => current?.isEmpty ?? true });
+
   upload.current = (files, at) => {
     for (const file of files) {
       setUploading((count) => count + 1);
@@ -256,7 +260,7 @@ export function RichTextEditor({ label, initialValue = '', people, autoFocus, sh
     {showLabel && (
       <span aria-hidden style={{ fontSize: font.size.xs, fontWeight: font.weight.medium, color: sem('text-secondary') }}>{label}</span>
     )}
-    <div ref={setContainer} className="rich-text-editor">
+    <div ref={setContainer} className={ghost ? 'rich-text-editor has-ghost' : 'rich-text-editor'}>
       {editor && <EditorToolbar editor={editor} onImage={() => setImageOpen(true)} onAttach={projectId ? () => filePicker.current?.click() : undefined} />}
       {projectId && (
         <input
@@ -271,7 +275,14 @@ export function RichTextEditor({ label, initialValue = '', people, autoFocus, sh
           }}
         />
       )}
-      <EditorContent editor={editor} />
+      {ghost ? (
+        <div className="rich-text-stack">
+          <EditorContent editor={editor} />
+          {empty && <div className="rich-text rich-text-ghost" dangerouslySetInnerHTML={{ __html: ghost }} />}
+        </div>
+      ) : (
+        <EditorContent editor={editor} />
+      )}
       {uploading > 0 && <Typography role="status" variant="body2" color="textSecondary" className="px-3 pb-2">{t('editor.uploading', { count: uploading })}</Typography>}
       {editor && <EditorMenus editor={editor} container={container} />}
       {slashPopup && (

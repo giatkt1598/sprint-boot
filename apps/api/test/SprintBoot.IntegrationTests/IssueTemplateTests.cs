@@ -89,6 +89,58 @@ public class IssueTemplateTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task Spaces_reuse_workspace_templates_and_follow_their_changes()
+    {
+        var admin = new AuthClient(fixture);
+        await admin.SignInAsync(ApiFixture.AdminEmail, ApiFixture.AdminPassword, Token);
+        var name = $"Bug report {Guid.NewGuid():N}";
+        var created = await admin.Http.PostAsJsonAsync("/api/v1/global-issue-template", new { name, content = "<p>Steps</p>", mode = 1 }, Token);
+        created.StatusCode.ShouldBe(HttpStatusCode.OK, await created.Content.ReadAsStringAsync(Token));
+        var global = (await created.Content.ReadFromJsonAsync<GlobalIssueTemplateDto>(Token))!;
+        global.Mode.ShouldBe(IssueTemplateMode.Placeholder);
+
+        var owner = await fixture.CreateUserClientAsync(Token);
+        (await owner.Http.PostAsJsonAsync("/api/v1/global-issue-template", new { name = "Mine", content = "", mode = 0 }, Token))
+            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await owner.Http.GetFromJsonAsync<List<GlobalIssueTemplateDto>>("/api/v1/global-issue-template", Token))!
+            .ShouldContain(item => item.Id == global.Id);
+
+        var project = await CreateProjectAsync(owner);
+        var bug = await TypeIdAsync(owner, project.Id, "Bug");
+        var reused = await CreateTemplateAsync(owner, project.Id, new { issueTypeId = bug, globalTemplateId = global.Id, isDefault = true });
+        reused.Name.ShouldBe(name);
+        reused.Content.ShouldBe("<p>Steps</p>");
+        reused.Mode.ShouldBe(IssueTemplateMode.Placeholder);
+        reused.GlobalTemplateId.ShouldBe(global.Id);
+
+        (await admin.Http.PutAsJsonAsync($"/api/v1/global-issue-template/{global.Id}", new { name, content = "<p>Steps to reproduce</p>", mode = 0 }, Token))
+            .EnsureSuccessStatusCode();
+        var followed = (await ListAsync(owner, project.Id)).ShouldHaveSingleItem();
+        followed.Content.ShouldBe("<p>Steps to reproduce</p>");
+        followed.Mode.ShouldBe(IssueTemplateMode.Fill);
+        (await admin.Http.GetFromJsonAsync<List<GlobalIssueTemplateDto>>("/api/v1/global-issue-template", Token))!
+            .Single(item => item.Id == global.Id).UsageCount.ShouldBe(1);
+
+        (await admin.Http.DeleteAsync($"/api/v1/global-issue-template/{global.Id}", Token)).EnsureSuccessStatusCode();
+        (await ListAsync(owner, project.Id)).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Space_templates_keep_their_mode()
+    {
+        var owner = await fixture.CreateUserClientAsync(Token);
+        var project = await CreateProjectAsync(owner);
+        var task = await TypeIdAsync(owner, project.Id, "Task");
+
+        var hint = await CreateTemplateAsync(owner, project.Id, new { issueTypeId = task, name = "Hint", content = "<p>Done when</p>", mode = 1, isDefault = true });
+        hint.Mode.ShouldBe(IssueTemplateMode.Placeholder);
+        hint.GlobalTemplateId.ShouldBeNull();
+
+        var invalid = await CreateAsync(owner, project.Id, new { issueTypeId = task, name = "Odd", content = "", mode = 7 });
+        (await invalid.Content.ReadAsStringAsync(Token)).ShouldContain(IssueTemplateErrors.InvalidMode);
+    }
+
+    [Fact]
     public async Task Subtasks_and_other_spaces_types_are_refused()
     {
         var owner = await fixture.CreateUserClientAsync(Token);

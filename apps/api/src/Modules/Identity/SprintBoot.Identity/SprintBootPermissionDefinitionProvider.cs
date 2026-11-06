@@ -17,6 +17,7 @@ public class SprintBootPermissionDefinitionProvider : PermissionDefinitionProvid
         group.AddPermission(SprintBootPermissions.ManageGit, new FixedLocalizableString("Manage Git connections"));
         group.AddPermission(SprintBootPermissions.ManageWorkflows, new FixedLocalizableString("Manage workflows"));
         group.AddPermission(SprintBootPermissions.ManageIssueLinkTypes, new FixedLocalizableString("Manage issue link types"));
+        group.AddPermission(SprintBootPermissions.ManageIssueTemplates, new FixedLocalizableString("Manage workspace issue templates"));
         group.AddPermission(SprintBootPermissions.AccessAllProjects, new FixedLocalizableString("Access all projects"));
     }
 }
