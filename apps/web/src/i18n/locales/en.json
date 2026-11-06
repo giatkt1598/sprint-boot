@@ -13,6 +13,7 @@
     "administration": "Administration"
   },
   "nav": {
+    "resizeSidebar": "Resize sidebar",
     "label": "Space navigation",
     "backlog": "Backlog",
     "board": "Board",

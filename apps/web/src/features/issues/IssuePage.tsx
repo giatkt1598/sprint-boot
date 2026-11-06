@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router';
 import { ApiError, apiClient, unwrap } from '../../api';
 import { useCurrentUser } from '../../auth/AuthProvider';
+import { Resizer, usePersistentWidth } from '../../components/Resizer';
 import { Avatar, UnassignedAvatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
 import { CollapseHeading } from '../../components/CollapseHeading';
@@ -83,69 +84,8 @@ export function IssueContent({ issueKey, compact }: { issueKey: string | undefin
   return <IssueView key={issue.data.id} issue={issue.data} compact={compact} />;
 }
 
-const SIDEBAR_WIDTH_KEY = 'sprint-boot.issue-sidebar-width';
 // Wide enough that the assignee and reporter pickers show a full name next to the label column.
-const SIDEBAR_MIN = 320;
-const SIDEBAR_MAX = 560;
-const SIDEBAR_STEP = 16;
-
-const clampSidebar = (width: number) => Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, width));
-
-function useSidebarWidth() {
-  const [width, setWidth] = useState(() => clampSidebar(Number(localStorage.getItem(SIDEBAR_WIDTH_KEY)) || 360));
-  const change = (next: number) => {
-    const clamped = clampSidebar(next);
-    setWidth(clamped);
-    localStorage.setItem(SIDEBAR_WIDTH_KEY, String(clamped));
-  };
-  return [width, change] as const;
-}
-
-/** The line only shows on hover or focus; dragging left widens the details. */
-function SidebarResizer({ width, onChange }: { width: number; onChange: (width: number) => void }) {
-  const { t } = useTranslation();
-
-  const startDrag = (event: React.PointerEvent<HTMLDivElement>) => {
-    const startX = event.clientX;
-    const startWidth = width;
-    const handle = event.currentTarget;
-    handle.setPointerCapture(event.pointerId);
-    const move = (next: PointerEvent) => onChange(startWidth + startX - next.clientX);
-    const stop = () => {
-      handle.removeEventListener('pointermove', move);
-      handle.removeEventListener('pointerup', stop);
-      handle.removeEventListener('pointercancel', stop);
-    };
-    handle.addEventListener('pointermove', move);
-    handle.addEventListener('pointerup', stop);
-    handle.addEventListener('pointercancel', stop);
-  };
-
-  return (
-    <Box
-      role="separator"
-      aria-orientation="vertical"
-      aria-label={t('issues.resizeSidebar')}
-      aria-valuemin={SIDEBAR_MIN}
-      aria-valuemax={SIDEBAR_MAX}
-      aria-valuenow={width}
-      tabIndex={0}
-      className="flex w-2 shrink-0 cursor-col-resize justify-center"
-      onPointerDown={startDrag}
-      onKeyDown={(event) => {
-        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-          event.preventDefault();
-          onChange(width + (event.key === 'ArrowLeft' ? SIDEBAR_STEP : -SIDEBAR_STEP));
-        }
-      }}
-      sx={{
-        touchAction: 'none',
-        '&::after': { content: '""', width: '2px', backgroundColor: 'transparent' },
-        '&:hover::after, &:focus-visible::after, &:active::after': { backgroundColor: sem('border-focus') },
-      }}
-    />
-  );
-}
+const DETAILS_WIDTH = { min: 320, max: 560, initial: 360 };
 
 function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
   const { t, i18n } = useTranslation();
@@ -171,7 +111,8 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [addingSubtask, setAddingSubtask] = useState(false);
   const [tab, setTab] = useState('comments');
-  const [sidebarWidth, setSidebarWidth] = useSidebarWidth();
+  const details = usePersistentWidth('sprint-boot.issue-sidebar-width', DETAILS_WIDTH);
+  const sidebarWidth = details.width;
   const [fieldError, setFieldError] = useState<string | null>(null);
 
   const update = useMutation({
@@ -391,7 +332,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
           </section>
         </div>
 
-        {!compact && <SidebarResizer width={sidebarWidth} onChange={setSidebarWidth} />}
+        {!compact && <Resizer edge="start" label={t('issues.resizeSidebar')} {...details} onChange={details.change} />}
         <div className={compact ? 'flex shrink-0 flex-col gap-4' : 'flex shrink-0 flex-col gap-4 overflow-y-auto'} style={{ width: compact ? '100%' : sidebarWidth }}>
         <aside
           className="flex shrink-0 flex-col gap-1 p-3"

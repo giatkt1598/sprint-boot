@@ -13,6 +13,7 @@
     "administration": "Quản trị"
   },
   "nav": {
+    "resizeSidebar": "Đổi độ rộng thanh bên",
     "label": "Điều hướng Space",
     "backlog": "Backlog",
     "board": "Board",
