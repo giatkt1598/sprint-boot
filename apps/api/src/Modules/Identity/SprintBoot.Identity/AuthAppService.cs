@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Volo.Abp;
@@ -32,6 +33,8 @@ public class AuthAppService(
     : ApplicationService, IAuthAppService
 {
     public const string LanguageProperty = "Language";
+
+    public const string HomePageProperty = "HomePage";
 
     /// <summary>Reports failures as a value: throwing would roll back the failed-attempt counter.</summary>
     [AllowAnonymous]
@@ -181,6 +184,46 @@ public class AuthAppService(
         return await ToDtoAsync(user);
     }
 
+    [Authorize]
+    public async Task<CurrentUserDto> UpdateHomePageAsync(HomePageDto input)
+    {
+        var home = input.Kind switch
+        {
+            HomePageKind.Space when input.ProjectId is { } projectId => new HomePageDto
+            {
+                Kind = HomePageKind.Space,
+                ProjectId = projectId,
+                View = input.View is { } view && Enum.IsDefined(view) ? view : SpaceView.Backlog,
+            },
+            HomePageKind.LastSpace or HomePageKind.Search or HomePageKind.Notifications => new HomePageDto { Kind = input.Kind },
+            _ => throw new BusinessException(AuthErrors.InvalidHomePage),
+        };
+        if (home.ProjectId is { } space)
+        {
+            await projectAccess.CheckAsync(space, ProjectPermissions.ViewIssues);
+        }
+
+        var user = await userManager.GetByIdAsync(CurrentUser.GetId());
+        user.SetProperty(HomePageProperty, JsonSerializer.Serialize(home));
+        (await userManager.UpdateAsync(user)).CheckErrors();
+        return await ToDtoAsync(user);
+    }
+
+    /// <summary>Anything unreadable, such as a value an older version wrote, means the default.</summary>
+    private static HomePageDto ReadHomePage(IdentityUser user)
+    {
+        try
+        {
+            return user.GetProperty<string>(HomePageProperty) is { Length: > 0 } json
+                ? JsonSerializer.Deserialize<HomePageDto>(json) ?? new HomePageDto()
+                : new HomePageDto();
+        }
+        catch (JsonException)
+        {
+            return new HomePageDto();
+        }
+    }
+
     public async Task<CurrentUserDto> UploadAvatarAsync(IRemoteStreamContent file)
     {
         var user = await userManager.GetByIdAsync(CurrentUser.GetId());
@@ -235,6 +278,7 @@ public class AuthAppService(
             Language = user.GetProperty(LanguageProperty, "en")!,
             Permissions = [.. permissions],
             AvatarUrl = UserAvatars.Url(user),
+            HomePage = ReadHomePage(user),
         };
     }
 }

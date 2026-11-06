@@ -12,4 +12,5 @@ public static class AuthErrors
     public const string AvatarInvalid = "SprintBoot:AvatarInvalid";
     public const string CannotDeleteSelf = "SprintBoot:CannotDeleteSelf";
     public const string LastSystemAdmin = "SprintBoot:LastSystemAdmin";
+    public const string InvalidHomePage = "SprintBoot:InvalidHomePage";
 }

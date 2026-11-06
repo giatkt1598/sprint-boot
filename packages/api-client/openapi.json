@@ -867,6 +867,49 @@
         }
       }
     },
+    "/api/v1/auth/home-page": {
+      "put": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HomePageDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HomePageDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/HomePageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/avatar": {
       "post": {
         "tags": [
@@ -20185,6 +20228,7 @@
       "CurrentUserDto": {
         "required": [
           "email",
+          "homePage",
           "id",
           "language",
           "name",
@@ -20218,6 +20262,9 @@
           "avatarUrl": {
             "type": "string",
             "nullable": true
+          },
+          "homePage": {
+            "$ref": "#/components/schemas/HomePageDto"
           }
         },
         "additionalProperties": false
@@ -20868,6 +20915,33 @@
           0,
           1,
           2
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "HomePageDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/HomePageKind"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "view": {
+            "$ref": "#/components/schemas/SpaceView"
+          }
+        },
+        "additionalProperties": false
+      },
+      "HomePageKind": {
+        "enum": [
+          0,
+          1,
+          2,
+          3
         ],
         "type": "integer",
         "format": "int32"
@@ -22893,6 +22967,16 @@
           }
         },
         "additionalProperties": false
+      },
+      "SpaceView": {
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "type": "integer",
+        "format": "int32"
       },
       "SprintDefaultsDto": {
         "required": [

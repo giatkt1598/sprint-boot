@@ -833,6 +833,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/home-page": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["HomePageDto"];
+                    "text/json": components["schemas"]["HomePageDto"];
+                    "application/*+json": components["schemas"]["HomePageDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CurrentUserDto"];
+                        "text/json": components["schemas"]["CurrentUserDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/avatar": {
         parameters: {
             query?: never;
@@ -14924,6 +14966,7 @@ export interface components {
             language: string | null;
             permissions: string[] | null;
             avatarUrl?: string | null;
+            homePage: components["schemas"]["HomePageDto"];
         };
         DeletedIssueDto: {
             /** Format: uuid */
@@ -15112,6 +15155,17 @@ export interface components {
          * @enum {integer}
          */
         GitWebhookState: 0 | 1 | 2;
+        HomePageDto: {
+            kind?: components["schemas"]["HomePageKind"];
+            /** Format: uuid */
+            projectId?: string | null;
+            view?: components["schemas"]["SpaceView"];
+        };
+        /**
+         * Format: int32
+         * @enum {integer}
+         */
+        HomePageKind: 0 | 1 | 2 | 3;
         InvitationDto: {
             /** Format: uuid */
             id: string;
@@ -15674,6 +15728,11 @@ export interface components {
             logoUrl?: string | null;
             buttonColor?: string | null;
         };
+        /**
+         * Format: int32
+         * @enum {integer}
+         */
+        SpaceView: 0 | 1 | 2 | 3;
         SprintDefaultsDto: {
             name: string | null;
             /** Format: date */

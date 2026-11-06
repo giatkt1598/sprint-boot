@@ -79,6 +79,11 @@ public class AuthController(IAuthAppService authAppService, IAbpAntiForgeryManag
     public Task<CurrentUserDto> UpdateProfileAsync([FromBody] UpdateProfileInput input) =>
         authAppService.UpdateProfileAsync(input);
 
+    [HttpPut("home-page")]
+    [Authorize]
+    public Task<CurrentUserDto> UpdateHomePageAsync([FromBody] HomePageDto input) =>
+        authAppService.UpdateHomePageAsync(input);
+
     [HttpPost("avatar")]
     [Authorize]
     public Task<CurrentUserDto> UploadAvatarAsync(IRemoteStreamContent file) => authAppService.UploadAvatarAsync(file);

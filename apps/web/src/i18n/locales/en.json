@@ -238,6 +238,14 @@
     "adminPassword": "Admins can sign in with a password"
   },
   "account": {
+    "homePage": "Home page",
+    "homePageHint": "The page Sprint Boot opens when you sign in or select the logo.",
+    "homePageOpens": "Open",
+    "homeLastSpace": "The space I used last",
+    "homeSpace": "A space I choose",
+    "homeSearch": "Issue search",
+    "homeNotifications": "Notifications",
+    "homeView": "View",
     "title": "Account",
     "profile": "Profile",
     "security": "Security",

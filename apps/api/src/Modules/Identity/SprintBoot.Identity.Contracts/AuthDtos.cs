@@ -61,6 +61,36 @@ public class CurrentUserDto
 
     /// <summary>Null until the user uploads a picture.</summary>
     public string? AvatarUrl { get; set; }
+
+    /// <summary>Where the app opens; clients fall back to the last space when it is no longer available.</summary>
+    public required HomePageDto HomePage { get; set; }
+}
+
+public enum HomePageKind
+{
+    /// <summary>The space the person used last, as before anyone chooses.</summary>
+    LastSpace = 0,
+    Space = 1,
+    Search = 2,
+    Notifications = 3,
+}
+
+public enum SpaceView
+{
+    Backlog = 0,
+    Board = 1,
+    Issues = 2,
+    Epics = 3,
+}
+
+public class HomePageDto
+{
+    public HomePageKind Kind { get; set; }
+
+    /// <summary>Set only for <see cref="HomePageKind.Space"/>.</summary>
+    public Guid? ProjectId { get; set; }
+
+    public SpaceView? View { get; set; }
 }
 
 public class ForgotPasswordInput

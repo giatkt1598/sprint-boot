@@ -27,6 +27,9 @@ public interface IAuthAppService : IApplicationService
 
     Task<CurrentUserDto> UpdateProfileAsync(UpdateProfileInput input);
 
+    /// <summary>A space must be one the caller can open now.</summary>
+    Task<CurrentUserDto> UpdateHomePageAsync(HomePageDto input);
+
     /// <summary>PNG, JPEG, WebP or GIF up to 2 MB; replaces the previous picture.</summary>
     Task<CurrentUserDto> UploadAvatarAsync(IRemoteStreamContent file);
 

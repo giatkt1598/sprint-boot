@@ -12,7 +12,15 @@ const storageKey = (userId: string | undefined) => `sb.lastSpace.${userId}`;
 
 export const rememberSpace = (userId: string | undefined, spaceKey: string) => localStorage.setItem(storageKey(userId), spaceKey);
 
-/** Home is the backlog of the last space opened on this browser, or of the first one. */
+/** Matches the server's SpaceView values, in order. */
+export const SPACE_VIEWS = ['backlog', 'board', 'issues', 'epics'] as const;
+
+export const HomePageKind = { lastSpace: 0, space: 1, search: 2, notifications: 3 } as const;
+
+/**
+ * Home is the page the person chose in their profile. A chosen space they can no longer open, or none
+ * chosen, means the backlog of the last space opened on this browser, or of the first one.
+ */
 export function HomePage() {
   const { t } = useTranslation();
   const me = useCurrentUser();
@@ -24,6 +32,18 @@ export function HomePage() {
   }
   if (spaces.isError) {
     return <ErrorState onRetry={() => void spaces.refetch()} />;
+  }
+
+  const home = me.homePage;
+  if (home?.kind === HomePageKind.search) {
+    return <Navigate to="/search" replace />;
+  }
+  if (home?.kind === HomePageKind.notifications) {
+    return <Navigate to="/notifications" replace />;
+  }
+  const chosen = home?.kind === HomePageKind.space ? spaces.data.find((space) => space.id === home.projectId) : undefined;
+  if (chosen) {
+    return <Navigate to={`/spaces/${chosen.key}/${SPACE_VIEWS[home?.view ?? 0] ?? 'backlog'}`} replace />;
   }
 
   const last = localStorage.getItem(storageKey(me.id));

@@ -20,6 +20,8 @@ import { SelectField, TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { SettingsFrame, SettingsMenuItem } from '../spaces/SpaceSettings';
+import { HomePageKind, SPACE_VIEWS } from '../spaces/HomePage';
+import { useSpaces } from '../spaces/api';
 
 export function AccountLayout() {
   const { t } = useTranslation();
@@ -288,6 +290,93 @@ function MySpaces() {
   );
 }
 
+type HomePage = components['schemas']['HomePageDto'];
+type HomeKind = NonNullable<HomePage['kind']>;
+type HomeView = NonNullable<HomePage['view']>;
+
+const VIEW_LABELS: Record<(typeof SPACE_VIEWS)[number], string> = {
+  backlog: 'nav.backlog',
+  board: 'nav.board',
+  issues: 'nav.issues',
+  epics: 'nav.epics',
+};
+
+/** Saved on its own: where the app opens has nothing to do with the name and language above. */
+function HomePageSection() {
+  const { t } = useTranslation();
+  const user = useCurrentUser();
+  const spaces = useSpaces();
+  const toMessage = useErrorMessage();
+  const toast = useToast();
+  const queryClient = useQueryClient();
+  const saved = user.homePage;
+  const [kind, setKind] = useState<HomeKind>(saved?.kind ?? HomePageKind.lastSpace);
+  const [projectId, setProjectId] = useState(saved?.projectId ?? '');
+  const [view, setView] = useState<HomeView>(saved?.view ?? 0);
+
+  const options = spaces.data ?? [];
+  // A space the person can no longer open is not offered; saving then needs another choice.
+  const spaceId = options.some((space) => space.id === projectId) ? projectId : (options[0]?.id ?? '');
+
+  const save = useMutation({
+    mutationFn: () =>
+      unwrap(
+        apiClient.PUT('/api/v1/auth/home-page', {
+          body: kind === HomePageKind.space ? { kind, projectId: spaceId, view } : { kind },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+      toast('success', t('account.saved'));
+    },
+    onError: (failure) => toast('error', toMessage(failure)),
+  });
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    save.mutate();
+  };
+
+  return (
+    <form aria-labelledby="home-page" className="flex max-w-md flex-col gap-4" onSubmit={submit}>
+      <div>
+        <Typography id="home-page" variant="h2">{t('account.homePage')}</Typography>
+        <Typography variant="body2" color="textSecondary">{t('account.homePageHint')}</Typography>
+      </div>
+      <SelectField
+        label={t('account.homePageOpens')}
+        value={String(kind)}
+        onChange={(event) => setKind(Number(event.target.value) as HomeKind)}
+        options={[
+          { value: String(HomePageKind.lastSpace), label: t('account.homeLastSpace') },
+          ...(options.length > 0 ? [{ value: String(HomePageKind.space), label: t('account.homeSpace') }] : []),
+          { value: String(HomePageKind.search), label: t('account.homeSearch') },
+          { value: String(HomePageKind.notifications), label: t('account.homeNotifications') },
+        ]}
+      />
+      {kind === HomePageKind.space && options.length > 0 && (
+        <>
+          <SelectField
+            label={t('issues.space')}
+            value={spaceId}
+            onChange={(event) => setProjectId(event.target.value)}
+            options={options.map((space) => ({ value: space.id!, label: space.name! }))}
+          />
+          <SelectField
+            label={t('account.homeView')}
+            value={String(view)}
+            onChange={(event) => setView(Number(event.target.value) as HomeView)}
+            options={SPACE_VIEWS.map((item, index) => ({ value: String(index), label: t(VIEW_LABELS[item]) }))}
+          />
+        </>
+      )}
+      <div>
+        <Button type="submit" disabled={save.isPending || (kind === HomePageKind.space && !spaceId)}>{t('common.save')}</Button>
+      </div>
+    </form>
+  );
+}
+
 export function ProfilePage() {
   const { t, i18n } = useTranslation();
   const user = useCurrentUser();
@@ -332,6 +421,7 @@ export function ProfilePage() {
         <Button type="submit" disabled={!name.trim() || save.isPending}>{t('common.save')}</Button>
       </div>
     </form>
+    <HomePageSection />
     <LinkedAccounts />
     <MySpaces />
     </div>

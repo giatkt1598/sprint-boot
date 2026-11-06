@@ -95,6 +95,32 @@ public class AuthTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task People_choose_a_home_page_and_only_a_space_they_can_open()
+    {
+        var owner = await fixture.CreateUserClientAsync(Token);
+        var key = $"H{Random.Shared.Next(100000, 999999)}";
+        var space = (await (await owner.Http.PostAsJsonAsync("/api/v1/project", new { name = "Home", key, type = 0 }, Token)).Content.ReadFromJsonAsync<ProjectDto>(Token))!;
+
+        (await owner.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!.HomePage.Kind.ShouldBe(HomePageKind.LastSpace);
+
+        var saved = await owner.Http.PutAsJsonAsync("/api/v1/auth/home-page", new { kind = HomePageKind.Space, projectId = space.Id, view = SpaceView.Board }, Token);
+        saved.StatusCode.ShouldBe(HttpStatusCode.OK, await saved.Content.ReadAsStringAsync(Token));
+        var home = (await owner.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!.HomePage;
+        home.Kind.ShouldBe(HomePageKind.Space);
+        home.ProjectId.ShouldBe(space.Id);
+        home.View.ShouldBe(SpaceView.Board);
+
+        (await owner.Http.PutAsJsonAsync("/api/v1/auth/home-page", new { kind = HomePageKind.Notifications, projectId = space.Id }, Token)).EnsureSuccessStatusCode();
+        home = (await owner.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!.HomePage;
+        home.Kind.ShouldBe(HomePageKind.Notifications);
+        home.ProjectId.ShouldBeNull();
+
+        var stranger = await fixture.CreateUserClientAsync(Token);
+        (await stranger.Http.PutAsJsonAsync("/api/v1/auth/home-page", new { kind = HomePageKind.Space, projectId = space.Id }, Token)).IsSuccessStatusCode.ShouldBeFalse();
+        (await stranger.Http.PutAsJsonAsync("/api/v1/auth/home-page", new { kind = HomePageKind.Space }, Token)).IsSuccessStatusCode.ShouldBeFalse();
+    }
+
+    [Fact]
     public async Task Authorization_code_flow_with_pkce_issues_tokens_that_call_the_api()
     {
         var client = new AuthClient(fixture);
