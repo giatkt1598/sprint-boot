@@ -27,6 +27,7 @@ public class IssuesModule : AbpModule
     {
         await context.AddBackgroundWorkerAsync<RankRebalanceWorker>();
         await context.AddBackgroundWorkerAsync<RichTextFileCleanupWorker>();
+        await context.AddBackgroundWorkerAsync<UploadCleanupWorker>();
     }
 
     public override void ConfigureServices(ServiceConfigurationContext context)
@@ -52,5 +53,15 @@ public class IssuesModule : AbpModule
                 container.UseFileSystem(fileSystem => fileSystem.BasePath = Path.GetFullPath(storage.Local.Path));
             }
         }));
+
+        // Large files go up in parts: straight to object storage when there is one, through the API otherwise.
+        if (storage.Provider == "S3")
+        {
+            context.Services.AddTransient<IUploadStorage, S3UploadStorage>();
+        }
+        else
+        {
+            context.Services.AddTransient<IUploadStorage, LocalUploadStorage>();
+        }
     }
 }

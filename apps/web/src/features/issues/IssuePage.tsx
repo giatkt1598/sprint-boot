@@ -835,7 +835,9 @@ function Attachments({ issue, canEdit }: { issue: Issue; canEdit: boolean }) {
   const toast = useToast();
   const queryClient = useQueryClient();
   const input = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState<string | null>(null);
+  const [uploading, setUploading] = useState<{ name: string; percent: number } | null>(null);
+  // Kept after a failure, so the same file can be sent again with one click.
+  const [failed, setFailed] = useState<{ file: File; message: string } | null>(null);
 
   const list = useQuery({
     queryKey: ['issues', issue.id, 'attachments'],
@@ -843,18 +845,24 @@ function Attachments({ issue, canEdit }: { issue: Issue; canEdit: boolean }) {
   });
 
   const upload = useMutation({
-    mutationFn: (file: File) => uploadAttachment(issue.id!, file),
+    mutationFn: (file: File) =>
+      uploadAttachment(issue.id!, file, (loaded, total) => setUploading({ name: file.name, percent: total ? Math.floor((loaded / total) * 100) : 0 })),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['issues', issue.id, 'attachments'] }),
-    onError: (failure) => toast('error', toMessage(failure)),
+    onError: (failure, file) => setFailed({ file, message: toMessage(failure) }),
     onSettled: () => setUploading(null),
   });
+
+  const start = (file: File) => {
+    setFailed(null);
+    setUploading({ name: file.name, percent: 0 });
+    upload.mutate(file);
+  };
 
   const onPick = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (file) {
-      setUploading(file.name);
-      upload.mutate(file);
+      start(file);
     }
   };
 
@@ -887,7 +895,20 @@ function Attachments({ issue, canEdit }: { issue: Issue; canEdit: boolean }) {
           </>
         )}
       </div>
-      {uploading && <Typography role="status" variant="body2" color="textSecondary">{t('issues.uploading', { name: uploading })}</Typography>}
+      {uploading && (
+        <Typography role="status" variant="body2" color="textSecondary">
+          {t('issues.uploadingPercent', { name: uploading.name, percent: uploading.percent })}
+        </Typography>
+      )}
+      {failed && (
+        <div role="alert" className="flex items-center gap-2">
+          <Typography variant="body2" className="min-w-0 flex-1" sx={{ color: sem('feedback-danger-text') }}>
+            {t('issues.uploadFailed', { name: failed.file.name, message: failed.message })}
+          </Typography>
+          <Button kind="secondary" onClick={() => start(failed.file)}>{t('common.retry')}</Button>
+          <Button kind="ghost" onClick={() => setFailed(null)}>{t('common.dismiss')}</Button>
+        </div>
+      )}
       {list.data?.length === 0 && !uploading && <Typography variant="body2" color="textSecondary">{t('issues.noAttachments')}</Typography>}
       <div className="flex flex-wrap gap-2">
         {(list.data ?? []).map((attachment) => (

@@ -186,17 +186,11 @@ public class RichTextFileAppService(
     IClock clock)
     : ApplicationService, IRichTextFileAppService
 {
-    private const int DefaultMaxFileSizeMb = 25;
-
     public async Task<RichTextFileDto> UploadAsync(Guid projectId, IRemoteStreamContent file)
     {
         await projectAccess.CheckAsync(projectId, ProjectPermissions.EditIssues);
 
-        var maxMb = configuration.GetValue("Issues:Attachments:MaxFileSizeMb", DefaultMaxFileSizeMb);
-        if (file.ContentLength is null or 0 || file.ContentLength > maxMb * 1024L * 1024L)
-        {
-            throw new BusinessException(IssueErrors.AttachmentTooLarge).WithData("maxMb", maxMb);
-        }
+        AttachmentRecorder.CheckSize(file.ContentLength, configuration);
 
         var stored = new RichTextFile(
             GuidGenerator.Create(), projectId, Path.GetFileName(file.FileName ?? "file"), file.ContentType ?? "application/octet-stream", file.ContentLength.Value, clock.Now);

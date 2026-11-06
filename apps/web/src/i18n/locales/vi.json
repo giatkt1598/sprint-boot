@@ -54,7 +54,8 @@
     "showing": "{{from}}–{{to}} trên {{total}}",
     "previousMonth": "Tháng trước",
     "nextMonth": "Tháng sau",
-    "clearDate": "Xóa ngày"
+    "clearDate": "Xóa ngày",
+    "dismiss": "Bỏ qua"
   },
   "issue": {
     "status": {
@@ -217,7 +218,11 @@
     "WorkflowOutOfScope": "Workflow hoặc status này thuộc phạm vi khác.",
     "StatusInUse": "Cần chọn status thay thế khi issue hoặc workflow đã publish còn dùng status này.",
     "WorkflowMigrationRunning": "Issue vẫn đang chuyển sang phiên bản workflow mới. Hãy thử lại khi xong.",
-    "EmailTestFailed": "Không gửi được email thử. Hãy kiểm tra cấu hình rồi thử lại."
+    "EmailTestFailed": "Không gửi được email thử. Hãy kiểm tra cấu hình rồi thử lại.",
+    "UploadTargetMissing": "Hãy chọn issue hoặc space cho file này.",
+    "UploadExpired": "Lượt tải lên này quá lâu nên đã bị dừng. Hãy thử lại.",
+    "UploadPartInvalid": "Một phần của file bị lỗi khi gửi. Hãy thử lại.",
+    "UploadIncomplete": "File chưa được gửi đủ. Hãy thử lại."
   },
   "auth": {
     "ldapTitle": "Đăng nhập vào {{provider}}",
@@ -484,7 +489,9 @@
     "loadMore": "Tải thêm",
     "searchEpics": "Tìm Epic",
     "searchPeople": "Tìm người",
-    "resizeSidebar": "Đổi độ rộng phần chi tiết issue"
+    "resizeSidebar": "Đổi độ rộng phần chi tiết issue",
+    "uploadingPercent": "Đang tải lên {{name}}… {{percent}}%",
+    "uploadFailed": "Chưa tải lên được {{name}}: {{message}}"
   },
   "workflows": {
     "title": "Workflow",

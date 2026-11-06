@@ -70,6 +70,18 @@ public static class IssuesModelBuilderExtensions
             b.HasIndex(template => template.GlobalTemplateId);
         });
 
+        builder.Entity<UploadSession>(b =>
+        {
+            b.ToTable("upload_sessions", Schema);
+            b.ConfigureByConvention();
+            b.Property(session => session.FileName).HasMaxLength(UploadConsts.MaxFileNameLength).IsRequired();
+            b.Property(session => session.ContentType).HasMaxLength(UploadConsts.MaxContentTypeLength).IsRequired();
+            b.Property(session => session.StorageUploadId).HasMaxLength(1024);
+            b.Ignore(session => session.PartCount);
+            b.Ignore(session => session.StorageKey);
+            b.HasIndex(session => session.ExpiresAt);
+        });
+
         builder.Entity<GlobalIssueTemplate>(b =>
         {
             b.ToTable("global_issue_templates", Schema);

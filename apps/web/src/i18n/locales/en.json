@@ -54,7 +54,8 @@
     "showing": "{{from}}–{{to}} of {{total}}",
     "previousMonth": "Previous month",
     "nextMonth": "Next month",
-    "clearDate": "Clear date"
+    "clearDate": "Clear date",
+    "dismiss": "Dismiss"
   },
   "issue": {
     "status": {
@@ -217,7 +218,11 @@
     "WorkflowOutOfScope": "That workflow or status belongs to another scope.",
     "StatusInUse": "A replacement is needed while issues or a published workflow use this status.",
     "WorkflowMigrationRunning": "Issues are still moving to a new workflow version. Try again when that finishes.",
-    "EmailTestFailed": "The test email could not be sent. Check the settings and try again."
+    "EmailTestFailed": "The test email could not be sent. Check the settings and try again.",
+    "UploadTargetMissing": "Choose the issue or space the file is for.",
+    "UploadExpired": "This upload took too long and was stopped. Try again.",
+    "UploadPartInvalid": "Part of the file arrived damaged. Try again.",
+    "UploadIncomplete": "Not all of the file arrived. Try again."
   },
   "auth": {
     "ldapTitle": "Sign in to {{provider}}",
@@ -484,7 +489,9 @@
     "loadMore": "Load more",
     "searchEpics": "Search epics",
     "searchPeople": "Search people",
-    "resizeSidebar": "Resize issue details"
+    "resizeSidebar": "Resize issue details",
+    "uploadingPercent": "Uploading {{name}}… {{percent}}%",
+    "uploadFailed": "{{name}} was not uploaded: {{message}}"
   },
   "workflows": {
     "title": "Workflows",

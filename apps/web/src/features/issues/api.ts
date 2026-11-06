@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { components } from '@sprint-boot/api-client';
 import { apiClient, unwrap } from '../../api';
+import { uploadFile, type UploadProgress } from './upload';
 
 export type Issue = components['schemas']['IssueDto'];
 export type IssueSummary = components['schemas']['IssueSummaryDto'];
@@ -65,31 +66,12 @@ export const useGlobalIssueTemplates = (enabled = true) =>
     queryFn: () => unwrap(apiClient.GET('/api/v1/global-issue-template')),
   });
 
-export const uploadRichTextFile = (projectId: string, file: File) =>
-  unwrap(
-    apiClient.POST('/api/v1/rich-text-file/upload/{projectId}', {
-      params: { path: { projectId } },
-      body: { file } as never,
-      bodySerializer: () => {
-        const form = new FormData();
-        form.append('file', file);
-        return form;
-      },
-    }),
-  );
+/** Large files go up in parts, past proxies that cap each request; see uploadFile. */
+export const uploadRichTextFile = async (projectId: string, file: File, onProgress?: UploadProgress) =>
+  (await uploadFile({ purpose: 1, projectId }, file, onProgress)).richTextFile!;
 
-export const uploadAttachment = (issueId: string, file: File) =>
-  unwrap(
-    apiClient.POST('/api/v1/attachment/upload/{issueId}', {
-      params: { path: { issueId } },
-      body: { file } as never,
-      bodySerializer: () => {
-        const form = new FormData();
-        form.append('file', file);
-        return form;
-      },
-    }),
-  );
+export const uploadAttachment = async (issueId: string, file: File, onProgress?: UploadProgress) =>
+  (await uploadFile({ purpose: 0, issueId }, file, onProgress)).attachment!;
 
 /** Epics of a project, for the parent pickers. */
 export const useEpics = (projectId: string | undefined) => {

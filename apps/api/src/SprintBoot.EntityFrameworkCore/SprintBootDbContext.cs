@@ -84,6 +84,8 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
 
     public DbSet<GlobalIssueTemplate> GlobalIssueTemplates { get; set; } = null!;
 
+    public DbSet<UploadSession> UploadSessions { get; set; } = null!;
+
     public DbSet<IssueLinkType> IssueLinkTypes { get; set; } = null!;
 
     public DbSet<IssueLink> IssueLinks { get; set; } = null!;

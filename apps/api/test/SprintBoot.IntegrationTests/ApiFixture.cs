@@ -28,6 +28,9 @@ public sealed class ApiFixture : IAsyncLifetime
     public const string AdminEmail = "admin@test.local";
     public const string AdminPassword = "Admin123!test";
 
+    /// <summary>Small parts, so a file within the 1 MB test limit still goes up in several.</summary>
+    public const int UploadPartSizeKb = 256;
+
     private const string RabbitUser = "test";
     private const string RabbitPassword = "test";
 
@@ -61,6 +64,7 @@ public sealed class ApiFixture : IAsyncLifetime
         Environment.SetEnvironmentVariable("Workflows__Webhooks__PollMilliseconds", "300");
         Environment.SetEnvironmentVariable("Workflows__Webhooks__BackoffSeconds", "1");
         Environment.SetEnvironmentVariable("Issues__Attachments__MaxFileSizeMb", "1");
+        Environment.SetEnvironmentVariable("Issues__Uploads__PartSizeKb", UploadPartSizeKb.ToString());
         Environment.SetEnvironmentVariable("Storage__Local__Path", Path.Combine(Path.GetTempPath(), $"sb-test-{Guid.NewGuid():N}"));
         using (var rsa = System.Security.Cryptography.RSA.Create(2048))
         {
