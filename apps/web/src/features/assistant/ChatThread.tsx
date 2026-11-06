@@ -1,6 +1,6 @@
 import Typography from '@mui/material/Typography';
 import { useQueryClient } from '@tanstack/react-query';
-import { Bot, Check, LoaderCircle, Send, Square, Wrench, X } from 'lucide-react';
+import { Bot, Check, LoaderCircle, Square, Wrench, X } from 'lucide-react';
 import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useNavigate } from 'react-router';
@@ -166,7 +166,9 @@ export function ChatThread({ conversationId, issueId, onConversation }: {
   const bottom = useRef<HTMLDivElement>(null);
 
   useEffect(() => () => abort.current?.abort(), []);
-  useEffect(() => bottom.current?.scrollIntoView({ block: 'end' }), [detail.data, live]);
+  useEffect(() => {
+    bottom.current?.scrollIntoView({ block: 'end' });
+  }, [detail.data, live]);
 
   const describe = (event: AssistantEvent) => {
     const key = `errors.${event.code?.split(':')[1]}`;
@@ -301,11 +303,7 @@ export function ChatThread({ conversationId, issueId, onConversation }: {
           <Button kind="secondary" startIcon={<Square size={16} strokeWidth={1.5} aria-hidden />} onClick={() => abort.current?.abort()}>
             {t('assistant.stop')}
           </Button>
-        ) : (
-          <Button disabled={!draft.trim()} startIcon={<Send size={16} strokeWidth={1.5} aria-hidden />} onClick={() => void send()}>
-            {t('assistant.send')}
-          </Button>
-        )}
+        ) : null}
       </div>
     </div>
   );

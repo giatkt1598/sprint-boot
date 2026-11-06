@@ -83,7 +83,7 @@ function ConnectionDialog({ draft, onClose }: { draft: Draft; onClose: () => voi
       onClose={onClose}
       footer={<DialogFooter confirmLabel={t('common.save')} confirmDisabled={!ready || save.isPending} onCancel={onClose} onConfirm={() => save.mutate()} />}
     >
-      <TextField label={t('assistantAdmin.name')} autoFocus value={value.name} onChange={(event) => setValue({ ...value, name: event.target.value })} />
+      <TextField autoComplete="off" label={t('assistantAdmin.name')} autoFocus value={value.name} onChange={(event) => setValue({ ...value, name: event.target.value })} />
       <SelectField
         label={t('assistantAdmin.provider')}
         value={String(value.provider)}
@@ -94,6 +94,7 @@ function ConnectionDialog({ draft, onClose }: { draft: Draft; onClose: () => voi
         ]}
       />
       <TextField
+        autoComplete="off"
         label={t(anthropic ? 'assistantAdmin.baseUrlOptional' : 'assistantAdmin.baseUrl')}
         placeholder={anthropic ? 'https://api.anthropic.com' : 'https://api.openai.com/v1'}
         value={value.baseUrl}
@@ -103,12 +104,13 @@ function ConnectionDialog({ draft, onClose }: { draft: Draft; onClose: () => voi
       <TextField
         label={t('assistantAdmin.apiKey')}
         type="password"
-        autoComplete="off"
+        autoComplete="new-password"
         placeholder={value.hasApiKey ? '••••••••••••' : anthropic ? undefined : t('assistantAdmin.apiKeyOptional')}
         value={value.apiKey}
         onChange={(event) => setValue({ ...value, apiKey: event.target.value })}
       />
       <TextField
+        autoComplete="off"
         label={t('assistantAdmin.model')}
         placeholder={anthropic ? ANTHROPIC_MODEL : 'gpt-5.1, llama3.3, …'}
         value={value.model}
@@ -116,6 +118,7 @@ function ConnectionDialog({ draft, onClose }: { draft: Draft; onClose: () => voi
       />
       <div className="grid grid-cols-2 gap-4">
         <TextField
+          autoComplete="off"
           label={t('assistantAdmin.maxOutputTokens')}
           type="number"
           placeholder={anthropic ? '16000' : undefined}
