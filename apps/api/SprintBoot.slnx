@@ -1,6 +1,8 @@
 <Solution>
   <Project Path="src/Modules/Agile/SprintBoot.Agile.Contracts/SprintBoot.Agile.Contracts.csproj" />
   <Project Path="src/Modules/Agile/SprintBoot.Agile/SprintBoot.Agile.csproj" />
+  <Project Path="src/Modules/Assistant/SprintBoot.Assistant.Contracts/SprintBoot.Assistant.Contracts.csproj" />
+  <Project Path="src/Modules/Assistant/SprintBoot.Assistant/SprintBoot.Assistant.csproj" />
   <Project Path="src/Modules/DocsIntegration/SprintBoot.DocsIntegration.Contracts/SprintBoot.DocsIntegration.Contracts.csproj" />
   <Project Path="src/Modules/DocsIntegration/SprintBoot.DocsIntegration/SprintBoot.DocsIntegration.csproj" />
   <Project Path="src/Modules/GitIntegration/SprintBoot.GitIntegration.Contracts/SprintBoot.GitIntegration.Contracts.csproj" />

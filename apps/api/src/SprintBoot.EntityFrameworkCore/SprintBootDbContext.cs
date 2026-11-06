@@ -3,6 +3,7 @@ using SprintBoot.Agile;
 using SprintBoot.GitIntegration;
 using SprintBoot.Identity;
 using SprintBoot.Issues;
+using SprintBoot.Assistant;
 using SprintBoot.Notifications;
 using SprintBoot.Platform;
 using SprintBoot.Projects;
@@ -86,6 +87,14 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
 
     public DbSet<UploadSession> UploadSessions { get; set; } = null!;
 
+    public DbSet<AiConnection> AiConnections { get; set; } = null!;
+
+    public DbSet<Conversation> AssistantConversations { get; set; } = null!;
+
+    public DbSet<ConversationMessage> AssistantMessages { get; set; } = null!;
+
+    public DbSet<AssistantAction> AssistantActions { get; set; } = null!;
+
     public DbSet<IssueLinkType> IssueLinkTypes { get; set; } = null!;
 
     public DbSet<IssueLink> IssueLinks { get; set; } = null!;
@@ -133,5 +142,6 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
         builder.ConfigureAgile();
         builder.ConfigureNotifications();
         builder.ConfigureGitIntegration();
+        builder.ConfigureAssistant();
     }
 }

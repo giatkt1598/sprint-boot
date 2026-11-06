@@ -23,7 +23,7 @@ public class ArchitectureTests
     [Fact]
     public void Module_projects_are_discovered()
     {
-        ProjectFiles().Count().ShouldBe(18);
+        ProjectFiles().Count().ShouldBe(20);
     }
 
     [Fact]

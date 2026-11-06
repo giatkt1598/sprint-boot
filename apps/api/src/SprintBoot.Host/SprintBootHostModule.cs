@@ -10,6 +10,7 @@ using SprintBoot.EntityFrameworkCore;
 using SprintBoot.Identity;
 using SprintBoot.GitIntegration;
 using SprintBoot.Issues;
+using SprintBoot.Assistant;
 using SprintBoot.Notifications;
 using SprintBoot.Projects;
 using SprintBoot.Workflows;
@@ -56,6 +57,7 @@ public class SprintBootHostModule : AbpModule
         typeof(AgileModule).Assembly,
         typeof(NotificationsModule).Assembly,
         typeof(GitIntegrationModule).Assembly,
+        typeof(AssistantModule).Assembly,
     ];
 
     public override void ConfigureServices(ServiceConfigurationContext context)

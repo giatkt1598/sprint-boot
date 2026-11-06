@@ -35,6 +35,8 @@
     <PackageVersion Include="Volo.Abp.Swashbuckle" Version="$(AbpVersion)" />
     <PackageVersion Include="DistributedLock.Redis" Version="1.1.1" />
     <PackageVersion Include="HtmlSanitizer" Version="9.2.1039" />
+    <PackageVersion Include="Anthropic" Version="13.6.0" />
+    <PackageVersion Include="OpenAI" Version="2.15.0" />
     <PackageVersion Include="Markdig" Version="1.5.1" />
     <!-- Transitive pins: 10.0.11 has known security advisories. -->
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />

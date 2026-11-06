@@ -1,0 +1,161 @@
+using System.Collections.Concurrent;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+
+namespace SprintBoot.IntegrationTests;
+
+/// <summary>A scripted turn: text, then tool calls, as the model would stream them.</summary>
+public record FakeAiReply(string Text, params (string Name, object Arguments)[] ToolCalls)
+{
+    /// <summary>Anthropic only: a signed thinking block before the text.</summary>
+    public string? Thinking { get; init; }
+}
+
+/// <summary>
+/// Streams scripted answers in the OpenAI chat completions and Anthropic Messages formats, and keeps every request body so
+/// tests can check what the assistant sent.
+/// </summary>
+public sealed class FakeAiServer : HttpMessageHandler
+{
+    public const string OpenAiUrl = "http://ai.fake/v1";
+    public const string AnthropicUrl = "http://anthropic.fake";
+
+    public static readonly FakeAiServer Instance = new();
+
+    private readonly ConcurrentQueue<FakeAiReply> _replies = new();
+
+    public ConcurrentQueue<(string Path, JsonObject Body, HttpRequestHeaders Headers)> Requests { get; } = new();
+
+    public void Script(params FakeAiReply[] replies)
+    {
+        _replies.Clear();
+        Requests.Clear();
+        foreach (var reply in replies)
+        {
+            _replies.Enqueue(reply);
+        }
+    }
+
+    public List<JsonObject> Bodies => [.. Requests.Select(request => request.Body)];
+
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        var body = JsonNode.Parse(await request.Content!.ReadAsStringAsync(cancellationToken))!.AsObject();
+        Requests.Enqueue((request.RequestUri!.AbsolutePath, body, request.Headers));
+        if (!_replies.TryDequeue(out var reply))
+        {
+            return new HttpResponseMessage(HttpStatusCode.InternalServerError) { Content = new StringContent("{\"error\":{\"message\":\"No scripted reply\"}}") };
+        }
+
+        var stream = request.RequestUri.AbsolutePath.EndsWith("/v1/messages", StringComparison.Ordinal) ? Anthropic(reply) : OpenAi(reply);
+        return new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(stream, Encoding.UTF8, "text/event-stream"),
+        };
+    }
+
+    private static string Data(object value) => $"data: {JsonSerializer.Serialize(value)}\n\n";
+
+    private static string OpenAi(FakeAiReply reply)
+    {
+        var chunks = new StringBuilder();
+        object Chunk(object delta, string? finish, object? usage = null) => new
+        {
+            id = "chatcmpl-1",
+            @object = "chat.completion.chunk",
+            created = 1,
+            model = "fake",
+            choices = new[] { new { index = 0, delta, finish_reason = finish } },
+            usage,
+        };
+
+        // Two parts, so the client really joins a streamed text.
+        foreach (var part in Split(reply.Text))
+        {
+            chunks.Append(Data(Chunk(new { role = "assistant", content = part }, null)));
+        }
+
+        for (var index = 0; index < reply.ToolCalls.Length; index++)
+        {
+            var (name, arguments) = reply.ToolCalls[index];
+            chunks.Append(Data(Chunk(new
+            {
+                tool_calls = new[]
+                {
+                    new { index, id = $"call_{index}", type = "function", function = new { name, arguments = JsonSerializer.Serialize(arguments) } },
+                },
+            }, null)));
+        }
+
+        chunks.Append(Data(Chunk(new { }, reply.ToolCalls.Length > 0 ? "tool_calls" : "stop", new { prompt_tokens = 10, completion_tokens = 5, total_tokens = 15 })));
+        chunks.Append("data: [DONE]\n\n");
+        return chunks.ToString();
+    }
+
+    private static string Anthropic(FakeAiReply reply)
+    {
+        var events = new StringBuilder();
+        void Event(string type, object data) => events.Append($"event: {type}\n").Append(Data(data));
+
+        Event("message_start", new
+        {
+            type = "message_start",
+            message = new
+            {
+                id = "msg_1",
+                type = "message",
+                role = "assistant",
+                model = "claude-opus-5-5",
+                content = Array.Empty<object>(),
+                stop_reason = (string?)null,
+                stop_sequence = (string?)null,
+                usage = new { input_tokens = 10, output_tokens = 1, cache_read_input_tokens = 4, cache_creation_input_tokens = 0 },
+            },
+        });
+
+        var index = 0;
+        if (reply.Thinking is { } thinking)
+        {
+            Event("content_block_start", new { type = "content_block_start", index, content_block = new { type = "thinking", thinking = "", signature = "" } });
+            Event("content_block_delta", new { type = "content_block_delta", index, delta = new { type = "thinking_delta", thinking } });
+            Event("content_block_delta", new { type = "content_block_delta", index, delta = new { type = "signature_delta", signature = "sig-" + thinking } });
+            Event("content_block_stop", new { type = "content_block_stop", index });
+            index++;
+        }
+
+        if (reply.Text.Length > 0)
+        {
+            Event("content_block_start", new { type = "content_block_start", index, content_block = new { type = "text", text = "" } });
+            foreach (var part in Split(reply.Text))
+            {
+                Event("content_block_delta", new { type = "content_block_delta", index, delta = new { type = "text_delta", text = part } });
+            }
+
+            Event("content_block_stop", new { type = "content_block_stop", index });
+            index++;
+        }
+
+        foreach (var (name, arguments) in reply.ToolCalls)
+        {
+            Event("content_block_start", new { type = "content_block_start", index, content_block = new { type = "tool_use", id = $"toolu_{index}", name, input = new { } } });
+            Event("content_block_delta", new { type = "content_block_delta", index, delta = new { type = "input_json_delta", partial_json = JsonSerializer.Serialize(arguments) } });
+            Event("content_block_stop", new { type = "content_block_stop", index });
+            index++;
+        }
+
+        Event("message_delta", new
+        {
+            type = "message_delta",
+            delta = new { stop_reason = reply.ToolCalls.Length > 0 ? "tool_use" : "end_turn", stop_sequence = (string?)null },
+            usage = new { output_tokens = 5 },
+        });
+        Event("message_stop", new { type = "message_stop" });
+        return events.ToString();
+    }
+
+    private static IEnumerable<string> Split(string text) =>
+        text.Length < 2 ? (text.Length == 0 ? [] : [text]) : [text[..(text.Length / 2)], text[(text.Length / 2)..]];
+}

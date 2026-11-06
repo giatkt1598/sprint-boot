@@ -4,6 +4,7 @@ using SprintBoot.DocsIntegration;
 using SprintBoot.GitIntegration;
 using SprintBoot.Identity;
 using SprintBoot.Issues;
+using SprintBoot.Assistant;
 using SprintBoot.Notifications;
 using SprintBoot.Platform;
 using SprintBoot.Projects;
@@ -37,6 +38,7 @@ namespace SprintBoot.EntityFrameworkCore;
     typeof(AgileModule),
     typeof(GitIntegrationModule),
     typeof(NotificationsModule),
+    typeof(AssistantModule),
     typeof(DocsIntegrationModule))]
 public class SprintBootEntityFrameworkCoreModule : AbpModule
 {

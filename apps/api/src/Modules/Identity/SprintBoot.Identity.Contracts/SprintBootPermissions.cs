@@ -14,5 +14,6 @@ public static class SprintBootPermissions
     public const string ManageWorkflows = Group + ".Workflows.Manage";
     public const string ManageIssueLinkTypes = Group + ".IssueLinkTypes.Manage";
     public const string ManageIssueTemplates = Group + ".IssueTemplates.Manage";
+    public const string ManageAi = Group + ".Ai.Manage";
     public const string AccessAllProjects = Group + ".Projects.AccessAll";
 }

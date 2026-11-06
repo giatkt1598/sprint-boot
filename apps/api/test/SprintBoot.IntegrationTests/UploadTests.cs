@@ -161,7 +161,7 @@ public class UploadTests(ApiFixture fixture)
             await UploadCleanupWorker.CleanAsync(scope.ServiceProvider, DateTime.UtcNow.AddDays(2));
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>();
             using var uow = unitOfWork.Begin();
-            (await scope.ServiceProvider.GetRequiredService<IRepository<UploadSession, Guid>>().FindAsync(session.Id)).ShouldBeNull();
+            (await scope.ServiceProvider.GetRequiredService<IRepository<UploadSession, Guid>>().FindAsync(session.Id, cancellationToken: Token)).ShouldBeNull();
         }
 
         (await PartAsync(client, session.Id, 1, Bytes(10))).StatusCode.ShouldBe(HttpStatusCode.NotFound);

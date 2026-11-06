@@ -8,6 +8,7 @@
     <ProjectReference Include="..\Modules\Agile\SprintBoot.Agile\SprintBoot.Agile.csproj" />
     <ProjectReference Include="..\Modules\GitIntegration\SprintBoot.GitIntegration\SprintBoot.GitIntegration.csproj" />
     <ProjectReference Include="..\Modules\Notifications\SprintBoot.Notifications\SprintBoot.Notifications.csproj" />
+    <ProjectReference Include="..\Modules\Assistant\SprintBoot.Assistant\SprintBoot.Assistant.csproj" />
     <ProjectReference Include="..\Modules\DocsIntegration\SprintBoot.DocsIntegration\SprintBoot.DocsIntegration.csproj" />
   </ItemGroup>
   <ItemGroup>
