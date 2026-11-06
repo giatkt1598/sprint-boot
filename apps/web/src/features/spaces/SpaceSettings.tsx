@@ -17,6 +17,7 @@ import { SelectField, TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { formatDate } from '../../lib/format';
+import { appLocationOr } from '../../lib/returnTo';
 import { font, radius, sem, size } from '../../theme/tokens';
 import { SpaceSchemeField } from '../notifications/NotificationPages';
 import { InviteMemberDialog, SpaceInvitations } from '../admin/InvitationPages';
@@ -99,12 +100,13 @@ export function SettingsFrame({ title, backTo, menu, context }: { title: string;
   );
 }
 
+/** Back to the page opened before settings; `backTo` serves a settings page opened directly. */
 function BackHeader({ title, backTo }: { title: string; backTo: string }) {
   const { t } = useTranslation();
 
   return (
     <div className="flex items-center gap-2 pb-2">
-      <IconButton component={Link} to={backTo} size="small" aria-label={t('spaces.back')}>
+      <IconButton component={Link} to={appLocationOr(backTo)} size="small" aria-label={t('spaces.back')}>
         <ArrowLeft size={16} strokeWidth={1.5} aria-hidden />
       </IconButton>
       <Typography variant="h3">{title}</Typography>

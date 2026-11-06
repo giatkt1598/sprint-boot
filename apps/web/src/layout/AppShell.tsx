@@ -1,9 +1,15 @@
-import { Outlet } from 'react-router';
+import { useEffect } from 'react';
+import { Outlet, useLocation } from 'react-router';
+import { rememberAppLocation } from '../lib/returnTo';
 import { sem } from '../theme/tokens';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 
 export function AppShell() {
+  const location = useLocation();
+  // Settings pages live outside this shell, so this is where their back arrow returns to.
+  useEffect(() => rememberAppLocation(location.pathname + location.search), [location.pathname, location.search]);
+
   return (
     <div className="flex h-screen flex-col">
       <TopBar />
