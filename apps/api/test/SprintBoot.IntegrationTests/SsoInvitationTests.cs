@@ -250,7 +250,25 @@ public class SsoInvitationTests(ApiFixture fixture)
 
         var members = await admin.Http.GetFromJsonAsync<List<ProjectMemberDto>>($"/api/v1/project/{project.Id}/members", Token);
         members!.Single(member => member.User.Email == email).Role.ShouldBe(ProjectRoleNames.Member);
-        (await admin.Http.GetFromJsonAsync<List<InvitationDto>>($"/api/v1/invitation/for-project/{project.Id}", Token))!.ShouldHaveSingleItem().Status.ShouldBe(InvitationStatus.Accepted);
+        // The accepted person is a member now, so the invitation leaves the space's list.
+        (await admin.Http.GetFromJsonAsync<List<InvitationDto>>($"/api/v1/invitation/for-project/{project.Id}", Token))!.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task A_space_lists_only_its_open_invitations()
+    {
+        var admin = await AdminAsync();
+        var project = await ProjectAsync(admin);
+        var grant = new[] { new { projectId = project.Id, role = ProjectRoleNames.Member } };
+
+        var open = await InviteAsync(admin, new { email = NewEmail(), projects = grant });
+        var accepted = await InviteAsync(admin, new { email = NewEmail(), projects = grant });
+        (await AcceptAsync(TokenOf(accepted.Link!))).EnsureSuccessStatusCode();
+        var revoked = await InviteAsync(admin, new { email = NewEmail(), projects = grant });
+        (await admin.Http.PostAsync($"/api/v1/invitation/{revoked.Invitation!.Id}/revoke", null, Token)).EnsureSuccessStatusCode();
+
+        var listed = (await admin.Http.GetFromJsonAsync<List<InvitationDto>>($"/api/v1/invitation/for-project/{project.Id}", Token))!;
+        listed.ShouldHaveSingleItem().Id.ShouldBe(open.Invitation!.Id);
     }
 
     [Fact]

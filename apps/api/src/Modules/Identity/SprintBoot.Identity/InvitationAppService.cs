@@ -62,7 +62,11 @@ public class InvitationAppService(
         await projectAccess.CheckAsync(projectId, ProjectPermissions.ManageMembers);
         var links = await invitationProjects.GetListAsync(item => item.ProjectId == projectId);
         var ids = links.Select(item => item.InvitationId).ToList();
-        var list = (await invitations.GetListAsync(item => ids.Contains(item.Id))).OrderByDescending(item => item.CreationTime).ToList();
+        // Accepted people show up as members and revoked invitations are done with, so only open ones are listed.
+        // Expired invitations are still pending underneath and stay, so they can be sent again.
+        var list = (await invitations.GetListAsync(item => ids.Contains(item.Id) && item.Status == InvitationStatus.Pending))
+            .OrderByDescending(item => item.CreationTime)
+            .ToList();
 
         // Only this space is shown: its admins have no business with the other places an invitation opens.
         var people = await userDirectory.GetByIdsAsync(list.Select(item => item.InvitedById));

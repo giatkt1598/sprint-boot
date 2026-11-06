@@ -294,7 +294,7 @@ export function InvitationsPage() {
   );
 }
 
-/** Every invitation into one space, for its admins: they manage them whoever sent them. */
+/** Every open invitation into one space, for its admins: they manage them whoever sent them. */
 export function SpaceInvitations({ spaceId }: { spaceId: string }) {
   const { t, i18n } = useTranslation();
   const toast = useToast();
