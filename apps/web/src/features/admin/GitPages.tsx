@@ -306,7 +306,6 @@ export function GitConnectionsPage() {
         </div>
         <Button onClick={() => setAdding(true)}>{t('git.add')}</Button>
       </div>
-      <BranchTemplateSection space={space} />
       {canAssign && unassigned.data?.map((item) => (
         <div key={item.id} role="status" className="flex items-center gap-2 p-3" style={{ backgroundColor: sem('feedback-warning-bg'), color: sem('feedback-warning-text'), borderRadius: radius.card }}>
           <Typography variant="body2" className="flex-1" sx={{ color: 'inherit' }}>{t('git.unassigned', { name: item.name })}</Typography>
@@ -352,6 +351,7 @@ export function GitConnectionsPage() {
           ]}
         />
       )}
+      <BranchTemplateSection space={space} />
       {adding && <ConnectionDialog projectId={space.id!} connection={null} onClose={() => setAdding(false)} />}
       {editing && <ConnectionDialog projectId={space.id!} connection={editing} onClose={() => setEditing(null)} />}
     </div>
