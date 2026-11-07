@@ -228,7 +228,8 @@
     "AssistantInvalidEffort": "Hãy chọn mức effort mà model hỗ trợ.",
     "AssistantBusy": "Trợ lý vẫn đang trả lời trong cuộc trò chuyện này.",
     "AssistantActionNotPending": "Thay đổi này đã được quyết định rồi.",
-    "AssistantProviderFailed": "Provider AI không phản hồi. Hãy thử lại."
+    "AssistantProviderFailed": "Provider AI không phản hồi. Hãy thử lại.",
+    "AssistantModelsUnavailable": "Không tải được danh sách model. Hãy kiểm tra Base URL và API key."
   },
   "auth": {
     "ldapTitle": "Đăng nhập vào {{provider}}",
@@ -1311,6 +1312,13 @@
     "test": "Kiểm tra",
     "testPassed": "Kết nối hoạt động: {{message}}",
     "testFailed": "Kết nối thất bại: {{message}}",
+    "testConnection": "Kiểm tra kết nối",
+    "testing": "Đang kiểm tra…",
+    "loadModels": "Tải danh sách model",
+    "loadingModels": "Đang tải…",
+    "modelsLoaded_one": "Đã tải {{count}} model. Chọn một model ở ô Model.",
+    "modelsLoaded_other": "Đã tải {{count}} model. Chọn một model ở ô Model.",
+    "noModels": "Provider không trả về model nào. Hãy nhập tên model.",
     "deleteTitle": "Xoá {{name}}?",
     "deleteBody": "Nếu đây là kết nối mặc định, một kết nối khác sẽ được chọn làm mặc định.",
     "privacy": "Câu hỏi và các issue mà trợ lý đọc để trả lời sẽ được gửi tới provider của kết nối mặc định."

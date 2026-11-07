@@ -250,6 +250,46 @@ public class AssistantTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task Admins_load_models_and_test_settings_before_saving()
+    {
+        var admin = await AdminAsync();
+        Ai.Script();
+
+        var openAi = await admin.Http.PostAsJsonAsync("/api/v1/assistant-admin/list-models",
+            new { provider = AiProvider.OpenAiCompatible, baseUrl = FakeAiServer.OpenAiUrl, apiKey = "typed-key" }, Token);
+        openAi.StatusCode.ShouldBe(HttpStatusCode.OK, await openAi.Content.ReadAsStringAsync(Token));
+        (await openAi.Content.ReadFromJsonAsync<List<AiModelDto>>(Token))!.Select(model => model.Id).ShouldBe(["gpt-fake", "llama3.3"]);
+        Ai.Requests.Single().Headers.Authorization!.Parameter.ShouldBe("typed-key");
+
+        // Editing: a blank key field uses the stored key.
+        var saved = await UseAsync(AiProvider.Anthropic);
+        Ai.Script();
+        var claude = await admin.Http.PostAsJsonAsync("/api/v1/assistant-admin/list-models",
+            new { provider = AiProvider.Anthropic, baseUrl = FakeAiServer.AnthropicUrl, connectionId = saved.Id }, Token);
+        claude.StatusCode.ShouldBe(HttpStatusCode.OK, await claude.Content.ReadAsStringAsync(Token));
+        var models = (await claude.Content.ReadFromJsonAsync<List<AiModelDto>>(Token))!;
+        models.Single(model => model.Id == "claude-opus-5-5").Name.ShouldBe("Claude Opus 5.5");
+        Ai.Requests.Single().Headers.Authorization!.Parameter.ShouldBe("secret-key");
+
+        Ai.Script(new FakeAiReply("Hello!"));
+        var passed = await admin.Http.PostAsJsonAsync("/api/v1/assistant-admin/test-settings",
+            new { provider = AiProvider.OpenAiCompatible, baseUrl = FakeAiServer.OpenAiUrl, model = "llama3.3" }, Token);
+        var result = (await passed.Content.ReadFromJsonAsync<TestAiConnectionResultDto>(Token))!;
+        result.Succeeded.ShouldBeTrue();
+        result.Message.ShouldBe("Hello!");
+        Ai.Bodies.Single()["model"]!.GetValue<string>().ShouldBe("llama3.3");
+
+        Ai.Script();
+        var failed = await admin.Http.PostAsJsonAsync("/api/v1/assistant-admin/test-settings",
+            new { provider = AiProvider.OpenAiCompatible, baseUrl = FakeAiServer.OpenAiUrl, model = "missing" }, Token);
+        (await failed.Content.ReadFromJsonAsync<TestAiConnectionResultDto>(Token))!.Succeeded.ShouldBeFalse();
+
+        var member = await fixture.CreateUserClientAsync(Token);
+        (await member.Http.PostAsJsonAsync("/api/v1/assistant-admin/list-models", new { provider = AiProvider.OpenAiCompatible, baseUrl = FakeAiServer.OpenAiUrl }, Token))
+            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
     public async Task Without_the_switch_the_assistant_is_unavailable_and_only_admins_configure_it()
     {
         await UseAsync(AiProvider.OpenAiCompatible);

@@ -92,8 +92,45 @@ public class TestAiConnectionResultDto
     public required string Message { get; set; }
 }
 
+/// <summary>The form as it is, so models load before the connection is saved.</summary>
+public class ListAiModelsInput
+{
+    public AiProvider Provider { get; set; }
+
+    [StringLength(512)]
+    public string? BaseUrl { get; set; }
+
+    /// <summary>Blank uses the key stored for <see cref="ConnectionId"/>.</summary>
+    [StringLength(1024)]
+    public string? ApiKey { get; set; }
+
+    public Guid? ConnectionId { get; set; }
+}
+
+/// <summary>The form as it is, to test it before saving.</summary>
+public class TestAiSettingsInput : ListAiModelsInput
+{
+    [Required]
+    [StringLength(128)]
+    public required string Model { get; set; }
+
+    [StringLength(16)]
+    public string? Effort { get; set; }
+}
+
+public class AiModelDto
+{
+    public required string Id { get; set; }
+
+    /// <summary>A friendlier name, when the provider has one.</summary>
+    public string? Name { get; set; }
+}
+
 public interface IAssistantAdminAppService : IApplicationService
 {
+    /// <summary>The models the provider offers with these settings.</summary>
+    Task<List<AiModelDto>> ListModelsAsync(ListAiModelsInput input);
+
     Task<AssistantSettingsDto> GetAsync();
 
     Task<AssistantSettingsDto> UpdateAsync(UpdateAssistantSettingsInput input);
@@ -106,6 +143,9 @@ public interface IAssistantAdminAppService : IApplicationService
 
     /// <summary>Sends one short prompt through the connection.</summary>
     Task<TestAiConnectionResultDto> TestConnectionAsync(Guid id);
+
+    /// <summary>Sends one short prompt with unsaved settings; a blank key uses the stored one.</summary>
+    Task<TestAiConnectionResultDto> TestSettingsAsync(TestAiSettingsInput input);
 }
 
 public class ConversationDto
@@ -257,6 +297,7 @@ public static class AssistantErrors
     public const string Busy = "SprintBoot:AssistantBusy";
     public const string ActionNotPending = "SprintBoot:AssistantActionNotPending";
     public const string ProviderFailed = "SprintBoot:AssistantProviderFailed";
+    public const string ModelsUnavailable = "SprintBoot:AssistantModelsUnavailable";
 }
 
 /// <summary>A tool the assistant may call; the host supplies them, with the caller's own permissions.</summary>

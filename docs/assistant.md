@@ -9,7 +9,10 @@ explains them, links every issue it mentions, and, when asked, proposes changes.
 Under **Administration → AI assistant** (permission `SprintBoot.Ai.Manage`):
 
 1. Add a connection. The first one becomes the default; the assistant always uses the default connection.
-2. **Test** sends one short prompt and shows the answer or the provider's error.
+   In the form, **Load models** fetches the provider's model list (`GET /models`) so the Model field offers it, and
+   **Test connection** tries the values as typed, before saving. When editing, a blank API key field means the
+   stored key.
+2. **Test** in the list sends one short prompt through a saved connection and shows the answer or the provider's error.
 3. Turn on **Turn on the assistant**. Everyone signed in can then use it.
 
 | Provider | Base URL | API key | Model |

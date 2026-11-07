@@ -63,14 +63,43 @@ public class AssistantAdminAppService(
         }
     }
 
-    public async Task<TestAiConnectionResultDto> TestConnectionAsync(Guid id)
+    public async Task<List<AiModelDto>> ListModelsAsync(ListAiModelsInput input)
     {
-        var connection = await connections.GetAsync(id);
+        var connection = await FromFormAsync(input, string.Empty, null);
+        try
+        {
+            var models = await providers.For(input.Provider).ListModelsAsync(connection, CancellationToken.None);
+            return [.. models.DistinctBy(model => model.Id).OrderBy(model => model.Id, StringComparer.OrdinalIgnoreCase)];
+        }
+        catch (Exception failure) when (failure is not BusinessException and not OperationCanceledException)
+        {
+            Logger.LogWarning(failure, "Listing models of {Provider} failed", input.Provider);
+            throw new BusinessException(AssistantErrors.ModelsUnavailable).WithData("reason", failure.Message);
+        }
+    }
+
+    public async Task<TestAiConnectionResultDto> TestConnectionAsync(Guid id) =>
+        await ProbeAsync(ToChat(await connections.GetAsync(id), encryption));
+
+    public async Task<TestAiConnectionResultDto> TestSettingsAsync(TestAiSettingsInput input)
+    {
+        var effort = string.IsNullOrWhiteSpace(input.Effort) ? null : input.Effort.Trim().ToLowerInvariant();
+        if (effort is not null && (input.Provider != AiProvider.Anthropic || !Efforts.Contains(effort)))
+        {
+            throw new BusinessException(AssistantErrors.InvalidEffort);
+        }
+
+        return await ProbeAsync(await FromFormAsync(input, input.Model.Trim(), effort));
+    }
+
+    /// <summary>One short prompt; the answer, or what the provider said went wrong.</summary>
+    private async Task<TestAiConnectionResultDto> ProbeAsync(ChatConnection connection)
+    {
         var request = new ChatRequest("You check that a connection works. Answer in a few words.", [new UserTurn("Say hello.")], []);
         var reply = new StringBuilder();
         try
         {
-            await foreach (var item in providers.For(connection.Provider).StreamAsync(ToChat(connection, encryption), request, CancellationToken.None))
+            await foreach (var item in providers.For(connection.Provider).StreamAsync(connection, request, CancellationToken.None))
             {
                 if (item is ChatTextDelta delta)
                 {
@@ -82,9 +111,27 @@ public class AssistantAdminAppService(
         }
         catch (Exception failure) when (failure is not OperationCanceledException)
         {
-            Logger.LogWarning(failure, "Testing AI connection {ConnectionId} failed", id);
+            Logger.LogWarning(failure, "Testing AI connection to {Provider} failed", connection.Provider);
             return new TestAiConnectionResultDto { Succeeded = false, Message = failure.Message };
         }
+    }
+
+    /// <summary>Settings typed in the form. Editing leaves the key field blank; the stored key is used then.</summary>
+    private async Task<ChatConnection> FromFormAsync(ListAiModelsInput input, string model, string? effort)
+    {
+        var baseUrl = string.IsNullOrWhiteSpace(input.BaseUrl) ? null : input.BaseUrl.Trim();
+        if (input.Provider == AiProvider.OpenAiCompatible && (baseUrl is null || !Uri.TryCreate(baseUrl, UriKind.Absolute, out _)))
+        {
+            throw new BusinessException(AssistantErrors.BaseUrlRequired);
+        }
+
+        var apiKey = string.IsNullOrWhiteSpace(input.ApiKey) ? null : input.ApiKey.Trim();
+        if (apiKey is null && input.ConnectionId is { } id && (await connections.GetAsync(id)).EncryptedApiKey is { } stored)
+        {
+            apiKey = encryption.Decrypt(stored);
+        }
+
+        return new ChatConnection(input.Provider, baseUrl, apiKey, model, null, effort);
     }
 
     internal static ChatConnection ToChat(AiConnection connection, IStringEncryptionService encryption) => new(

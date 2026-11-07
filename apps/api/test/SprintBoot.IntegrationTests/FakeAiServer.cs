@@ -43,6 +43,26 @@ public sealed class FakeAiServer : HttpMessageHandler
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
+        if (request.Method == HttpMethod.Get && request.RequestUri!.AbsolutePath.EndsWith("/models", StringComparison.Ordinal))
+        {
+            Requests.Enqueue((request.RequestUri.AbsolutePath, new JsonObject(), request.Headers));
+            var anthropic = request.RequestUri.Host == new Uri(AnthropicUrl).Host;
+            object models = anthropic
+                ? new
+                {
+                    data = new[]
+                    {
+                        new { type = "model", id = "claude-opus-5-5", display_name = "Claude Opus 5.5", created_at = "2026-09-01T00:00:00Z" },
+                        new { type = "model", id = "claude-haiku-5-5", display_name = "Claude Haiku 5.5", created_at = "2026-09-01T00:00:00Z" },
+                    },
+                    has_more = false,
+                    first_id = "claude-opus-5-5",
+                    last_id = "claude-haiku-5-5",
+                }
+                : new { @object = "list", data = new[] { new { id = "llama3.3", @object = "model", created = 1, owned_by = "fake" }, new { id = "gpt-fake", @object = "model", created = 1, owned_by = "fake" } } };
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(JsonSerializer.Serialize(models), Encoding.UTF8, "application/json") };
+        }
+
         var body = JsonNode.Parse(await request.Content!.ReadAsStringAsync(cancellationToken))!.AsObject();
         Requests.Enqueue((request.RequestUri!.AbsolutePath, body, request.Headers));
         if (!_replies.TryDequeue(out var reply))

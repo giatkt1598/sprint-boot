@@ -47,6 +47,8 @@ public interface IChatProvider
     AiProvider Provider { get; }
 
     IAsyncEnumerable<ChatStreamEvent> StreamAsync(ChatConnection connection, ChatRequest request, CancellationToken cancellationToken);
+
+    Task<List<AiModelDto>> ListModelsAsync(ChatConnection connection, CancellationToken cancellationToken);
 }
 
 /// <summary>Picks the provider of a connection. HTTP goes through the named client, which tests replace.</summary>
@@ -74,14 +76,7 @@ public class AnthropicChatProvider(IHttpClientFactory http) : IChatProvider, ITr
     public async IAsyncEnumerable<ChatStreamEvent> StreamAsync(
         ChatConnection connection, ChatRequest request, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var client = string.IsNullOrWhiteSpace(connection.BaseUrl)
-            ? new AnthropicClient { ApiKey = connection.ApiKey ?? string.Empty, HttpClient = http.CreateClient(ChatProviders.HttpClientName) }
-            : new AnthropicClient
-            {
-                ApiKey = connection.ApiKey ?? string.Empty,
-                HttpClient = http.CreateClient(ChatProviders.HttpClientName),
-                BaseUrl = connection.BaseUrl.TrimEnd('/'),
-            };
+        var client = Client(connection);
 
         var parameters = new MessageCreateParams
         {
@@ -177,6 +172,31 @@ public class AnthropicChatProvider(IHttpClientFactory http) : IChatProvider, ITr
             Normalize(stopReason),
             new ChatUsage(input, output, cacheRead));
     }
+
+    public async Task<List<AiModelDto>> ListModelsAsync(ChatConnection connection, CancellationToken cancellationToken)
+    {
+        var models = new List<AiModelDto>();
+        var page = await Client(connection).Models.List(new Anthropic.Models.Models.ModelListParams(), cancellationToken);
+        while (true)
+        {
+            models.AddRange(page.Items.Select(model => new AiModelDto { Id = model.ID, Name = model.DisplayName }));
+            if (!page.HasNext())
+            {
+                return models;
+            }
+
+            page = await page.Next(cancellationToken);
+        }
+    }
+
+    private AnthropicClient Client(ChatConnection connection) => string.IsNullOrWhiteSpace(connection.BaseUrl)
+        ? new AnthropicClient { ApiKey = connection.ApiKey ?? string.Empty, HttpClient = http.CreateClient(ChatProviders.HttpClientName) }
+        : new AnthropicClient
+        {
+            ApiKey = connection.ApiKey ?? string.Empty,
+            HttpClient = http.CreateClient(ChatProviders.HttpClientName),
+            BaseUrl = connection.BaseUrl.TrimEnd('/'),
+        };
 
     private static string? Normalize(string? stopReason) => stopReason switch
     {
@@ -288,13 +308,7 @@ public class OpenAiChatProvider(IHttpClientFactory http) : IChatProvider, ITrans
     public async IAsyncEnumerable<ChatStreamEvent> StreamAsync(
         ChatConnection connection, ChatRequest request, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var options = new OpenAIClientOptions
-        {
-            Endpoint = new Uri(connection.BaseUrl!),
-            Transport = new HttpClientPipelineTransport(http.CreateClient(ChatProviders.HttpClientName)),
-        };
-        // Local servers such as Ollama take no key, but the client wants one.
-        var client = new ChatClient(connection.Model, new ApiKeyCredential(string.IsNullOrEmpty(connection.ApiKey) ? "none" : connection.ApiKey), options);
+        var client = new ChatClient(connection.Model, Credential(connection), Options(connection));
 
         var completion = new ChatCompletionOptions();
         if (connection.MaxOutputTokens is { } max)
@@ -365,6 +379,23 @@ public class OpenAiChatProvider(IHttpClientFactory http) : IChatProvider, ITrans
             .ToList();
         yield return new ChatCompleted(new AssistantTurn(text.ToString(), toolCalls, null, AiProvider.OpenAiCompatible), finish, usage);
     }
+
+    public async Task<List<AiModelDto>> ListModelsAsync(ChatConnection connection, CancellationToken cancellationToken)
+    {
+        var client = new OpenAI.Models.OpenAIModelClient(Credential(connection), Options(connection));
+        var models = await client.GetModelsAsync(cancellationToken);
+        return [.. models.Value.Select(model => new AiModelDto { Id = model.Id })];
+    }
+
+    // Local servers such as Ollama take no key, but the client wants one.
+    private static ApiKeyCredential Credential(ChatConnection connection) =>
+        new(string.IsNullOrEmpty(connection.ApiKey) ? "none" : connection.ApiKey);
+
+    private OpenAIClientOptions Options(ChatConnection connection) => new()
+    {
+        Endpoint = new Uri(connection.BaseUrl!),
+        Transport = new HttpClientPipelineTransport(http.CreateClient(ChatProviders.HttpClientName)),
+    };
 
     private static List<ChatMessage> ToMessages(ChatRequest request)
     {
