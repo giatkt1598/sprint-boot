@@ -153,7 +153,7 @@ function UserBubble({ text }: { text: string }) {
  * One conversation: what was said, the answer as it streams, and the changes waiting for confirmation. With no conversation
  * yet, the first question starts one, tied to the issue when there is one.
  */
-export function ChatThread({ conversationId, issueId, onConversation, intro, onBusyChange }: {
+export function ChatThread({ conversationId, issueId, onConversation, intro, onBusyChange, active = true }: {
   conversationId: string | null;
   /** The issue on screen: a new conversation is tied to it, and it goes with every question. */
   issueId?: string;
@@ -162,6 +162,8 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
   intro?: (ask: (text: string) => void) => ReactNode;
   /** Told when an answer starts and ends, for a minimized panel to show it. */
   onBusyChange?: (busy: boolean) => void;
+  /** False while hidden, such as in a minimized panel; becoming true puts the cursor in the question box. */
+  active?: boolean;
 }) {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
@@ -177,10 +179,13 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
   useEffect(() => () => abort.current?.abort(), []);
   useEffect(() => onBusyChange?.(busy), [busy, onBusyChange]);
   useEffect(() => {
-    // After the drawer has taken focus for itself, so the question can be typed straight away.
+    if (!active) {
+      return undefined;
+    }
+    // Once the drawer is visible again, so the question can be typed straight away.
     const frame = requestAnimationFrame(() => input.current?.focus());
     return () => cancelAnimationFrame(frame);
-  }, []);
+  }, [active]);
   useEffect(() => {
     bottom.current?.scrollIntoView({ block: 'end' });
   }, [detail.data, live]);

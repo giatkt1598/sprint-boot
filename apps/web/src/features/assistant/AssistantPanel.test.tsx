@@ -101,10 +101,12 @@ describe('AssistantPanel', () => {
     expect(screen.getByRole('textbox', { name: 'Ask the assistant' })).toHaveProperty('value', 'Draft question');
 
     // Minimized, it waits in the corner with the conversation as it was.
+    screen.getByRole('button', { name: 'On the page' }).focus();
     fireEvent.click(screen.getByRole('button', { name: 'Minimize' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Open New conversation again' }));
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Open New conversation again' })).toBeNull());
     expect(screen.getByRole('textbox', { name: 'Ask the assistant' })).toHaveProperty('value', 'Draft question');
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Ask the assistant' })));
 
     fireEvent.click(screen.getByRole('button', { name: /open the assistant/i }));
     await waitFor(() => expect(screen.queryByRole('textbox', { name: 'Ask the assistant' })).toBeNull());

@@ -202,6 +202,7 @@ function Panel({ issue, minimized, onMinimize, onRestore, onClose }: {
         issueId={issue?.id}
         onConversation={setConversationId}
         onBusyChange={setBusy}
+        active={!minimized}
         intro={(ask) => (
           <div className="flex flex-col gap-4">
             <RecentConversations issueId={issue?.id} onPick={setConversationId} />
