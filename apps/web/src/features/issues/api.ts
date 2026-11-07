@@ -61,6 +61,9 @@ export const TemplateMode = { fill: 0, placeholder: 1 } as const satisfies Recor
 export const TemplateTypeKeys = ['epic', 'story', 'task', 'bug'] as const;
 export type TemplateTypeKey = (typeof TemplateTypeKeys)[number];
 
+/** As long as the API takes a template name. */
+export const TEMPLATE_NAME_MAX = 128;
+
 export const globalIssueTemplatesKey = ['global-issue-templates'];
 
 export const useGlobalIssueTemplates = (enabled = true) =>

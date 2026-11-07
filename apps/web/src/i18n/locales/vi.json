@@ -136,6 +136,7 @@
     "CannotDeleteSelf": "Bạn không thể xóa tài khoản của chính mình.",
     "LastSystemAdmin": "Đây là quản trị hệ thống cuối cùng. Hãy cấp quyền admin cho người khác trước.",
     "generic": "Đã có lỗi xảy ra. Vui lòng thử lại.",
+    "validation": "Có trường chưa hợp lệ, ví dụ quá dài. Hãy kiểm tra rồi thử lại.",
     "loadFailed": "Không tải được trang này.",
     "forbidden": "Bạn không có quyền thực hiện thao tác này.",
     "conflict": "Người khác vừa thay đổi. Hãy tải lại để xem bản mới nhất.",

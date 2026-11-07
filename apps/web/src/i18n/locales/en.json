@@ -136,6 +136,7 @@
     "CannotDeleteSelf": "You cannot delete your own account.",
     "LastSystemAdmin": "This is the last system admin. Make someone else an admin first.",
     "generic": "Something went wrong. Please try again.",
+    "validation": "Some fields are not valid, for example too long. Check them and try again.",
     "loadFailed": "Could not load this page.",
     "forbidden": "You do not have permission to do this.",
     "conflict": "Someone else changed this. Reload to see the latest version.",

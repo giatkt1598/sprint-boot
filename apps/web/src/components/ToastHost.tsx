@@ -1,3 +1,4 @@
+import Box from '@mui/material/Box';
 import { createContext, use, useCallback, useMemo, useState, type ReactNode } from 'react';
 import { Toast, type ToastKind } from './Toast';
 
@@ -27,11 +28,12 @@ export function ToastHost({ children }: { children: ReactNode }) {
   return (
     <ToastContext value={value}>
       {children}
-      <div className="fixed bottom-6 left-6 z-50 flex flex-col gap-2">
+      {/* Above dialogs, so a failure while one is open shows. */}
+      <Box className="fixed bottom-6 left-6 flex flex-col gap-2" sx={{ zIndex: (theme) => theme.zIndex.snackbar }}>
         {items.map((item) => (
           <Toast key={item.id} kind={item.kind} message={item.message} />
         ))}
-      </div>
+      </Box>
     </ToastContext>
   );
 }

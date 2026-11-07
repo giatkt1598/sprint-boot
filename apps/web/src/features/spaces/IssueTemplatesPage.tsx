@@ -20,6 +20,7 @@ import { radius, sem } from '../../theme/tokens';
 import {
   globalIssueTemplatesKey,
   issueTemplatesKey,
+  TEMPLATE_NAME_MAX,
   TemplateMode,
   useGlobalIssueTemplates,
   useIssueTemplates,
@@ -119,7 +120,7 @@ function TemplateDialog({ draft, types, projectId, onClose }: { draft: Draft; ty
         )
       ) : (
         <>
-          <TextField label={t('templates.name')} value={value.name} autoFocus onChange={(event) => setValue({ ...value, name: event.target.value })} />
+          <TextField label={t('templates.name')} value={value.name} autoFocus inputProps={{ maxLength: TEMPLATE_NAME_MAX }} onChange={(event) => setValue({ ...value, name: event.target.value })} />
           {/* No space is given, so a template holds no uploaded files an issue could later lose. */}
           <RichTextEditor
             label={t('templates.content')}
@@ -235,7 +236,7 @@ export function SpaceIssueTemplatesPage() {
               return (
                 <Box
                   key={`${row.kind}-${template.id}`}
-                  className="flex items-center gap-3 px-3 py-2"
+                  className="flex min-h-[42px] items-center gap-3 px-3 py-2"
                   sx={{
                     border: `1px ${row.kind === 'available' ? 'dashed' : 'solid'} ${sem('border-default')}`,
                     borderRadius: radius.card,

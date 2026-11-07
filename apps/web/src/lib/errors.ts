@@ -13,6 +13,9 @@ export function useErrorMessage() {
         if (failure.code && i18n.exists(key)) {
           return t(key);
         }
+        if (failure.status === 400) {
+          return t('errors.validation');
+        }
         if (failure.status === 403) {
           return t('errors.forbidden');
         }

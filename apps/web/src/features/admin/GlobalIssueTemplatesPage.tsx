@@ -16,6 +16,7 @@ import { useErrorMessage } from '../../lib/errors';
 import { radius, sem } from '../../theme/tokens';
 import {
   globalIssueTemplatesKey,
+  TEMPLATE_NAME_MAX,
   TemplateMode,
   TemplateTypeKeys,
   useGlobalIssueTemplates,
@@ -70,7 +71,7 @@ function GlobalTemplateDialog({ draft, onClose }: { draft: Draft; onClose: () =>
         <DialogFooter confirmLabel={t('common.save')} confirmDisabled={!value.name.trim() || save.isPending} onCancel={onClose} onConfirm={() => save.mutate()} />
       }
     >
-      <TextField label={t('templates.name')} value={value.name} autoFocus onChange={(event) => setValue({ ...value, name: event.target.value })} />
+      <TextField label={t('templates.name')} value={value.name} autoFocus inputProps={{ maxLength: TEMPLATE_NAME_MAX }} onChange={(event) => setValue({ ...value, name: event.target.value })} />
       <div className="flex flex-col gap-1">
         <SelectField
           label={t('globalTemplates.issueType')}
@@ -146,7 +147,7 @@ export function GlobalIssueTemplatesPage() {
             {list.map((template) => (
               <div
                 key={template.id}
-                className="flex items-center gap-3 px-3 py-2"
+                className="flex min-h-[42px] items-center gap-3 px-3 py-2"
                 style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}
               >
                 <Typography variant="body2" className="min-w-0 flex-1 truncate">{template.name}</Typography>
