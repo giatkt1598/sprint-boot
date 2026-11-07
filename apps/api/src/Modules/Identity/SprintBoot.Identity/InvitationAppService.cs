@@ -138,20 +138,37 @@ public class InvitationAppService(
         else
         {
             pending.TokenHash = hash;
-            pending.SystemRole = input.SystemRole;
+            // Inviting again only adds: a lower or missing system role never takes away one already offered.
+            pending.SystemRole = HigherSystemRole(pending.SystemRole, input.SystemRole);
             pending.InvitedById = CurrentUser.GetId();
             pending.ExpiresAt = expires;
             pending.EmailStatus = InvitationEmailStatus.Queued;
             await invitations.UpdateAsync(pending, autoSave: true);
-            await invitationProjects.DeleteAsync(item => item.InvitationId == pending.Id, autoSave: true);
         }
 
-        await invitationProjects.InsertManyAsync(
-            input.Projects.Select(project => new InvitationProject(GuidGenerator.Create(), pending.Id, project.ProjectId, project.Role)),
-            autoSave: true);
+        // Spaces from earlier invitations stay; a space invited to again takes the latest role.
+        var links = await invitationProjects.GetListAsync(item => item.InvitationId == pending.Id);
+        var added = new List<InvitationProject>();
+        foreach (var project in input.Projects)
+        {
+            var link = links.FirstOrDefault(item => item.ProjectId == project.ProjectId);
+            if (link is null)
+            {
+                added.Add(new InvitationProject(GuidGenerator.Create(), pending.Id, project.ProjectId, project.Role));
+            }
+            else if (link.ProjectRole != project.Role)
+            {
+                link.ChangeRole(project.Role);
+                await invitationProjects.UpdateAsync(link, autoSave: true);
+            }
+        }
 
+        await invitationProjects.InsertManyAsync(added, autoSave: true);
         return await LinkAsync(pending, token, sendEmail: true);
     }
+
+    private static string? HigherSystemRole(string? current, string? next) =>
+        current == SystemRoles.Admin || next == SystemRoles.Admin ? SystemRoles.Admin : next ?? current;
 
     public async Task<InvitationLinkDto> ResendAsync(Guid id)
     {
@@ -192,7 +209,7 @@ public class InvitationAppService(
                 useOutbox: true);
         }
 
-        var projects = await invitationProjects.GetListAsync(item => item.InvitationId == invitation.Id);
+        var projects = await VisibleLinksAsync(await invitationProjects.GetListAsync(item => item.InvitationId == invitation.Id));
         var people = await userDirectory.GetByIdsAsync([invitation.InvitedById]);
         return new InvitationLinkDto
         {
@@ -200,6 +217,26 @@ public class InvitationAppService(
             Link = InvitationLinks.Build(configuration, token),
             AddedDirectly = false,
         };
+    }
+
+    /// <summary>A space admin sees only the spaces they manage, not the other places the invitation opens.</summary>
+    private async Task<List<InvitationProject>> VisibleLinksAsync(List<InvitationProject> links)
+    {
+        if (await CanManageAllAsync())
+        {
+            return links;
+        }
+
+        var visible = new List<InvitationProject>();
+        foreach (var link in links)
+        {
+            if (await projectAccess.IsGrantedAsync(link.ProjectId, ProjectPermissions.ManageMembers))
+            {
+                visible.Add(link);
+            }
+        }
+
+        return visible;
     }
 
     /// <summary>Accepted and revoked invitations stay closed. An expired one may be renewed.</summary>

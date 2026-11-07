@@ -439,6 +439,38 @@ public class SsoInvitationTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task Inviting_a_pending_email_again_adds_spaces_and_keeps_the_earlier_ones()
+    {
+        var admin = await AdminAsync();
+        var ownerA = await fixture.CreateUserClientAsync(Token);
+        var ownerB = await fixture.CreateUserClientAsync(Token);
+        var spaceA = await ProjectAsync(ownerA);
+        var spaceB = await ProjectAsync(ownerB);
+        var email = NewEmail();
+
+        var first = await InviteAsync(admin, new { email, systemRole = "admin", projects = new[] { new { projectId = spaceA.Id, role = ProjectRoleNames.Member } } });
+        var second = await InviteAsync(ownerB, new { email, projects = new[] { new { projectId = spaceB.Id, role = ProjectRoleNames.Member } } });
+        var third = await InviteAsync(ownerA, new { email, projects = new[] { new { projectId = spaceA.Id, role = ProjectRoleNames.Viewer } } });
+
+        // One invitation keeps every space, and each space admin sees only their own.
+        second.Invitation!.Id.ShouldBe(first.Invitation!.Id);
+        second.Invitation.Projects.ShouldHaveSingleItem().ProjectId.ShouldBe(spaceB.Id);
+        third.Invitation!.Projects.ShouldHaveSingleItem().Role.ShouldBe(ProjectRoleNames.Viewer);
+        var all = (await admin.Http.GetFromJsonAsync<PagedResultDto<InvitationDto>>("/api/v1/invitation?MaxResultCount=1000", Token))!.Items;
+        var merged = all.Single(item => item.Id == first.Invitation.Id);
+        merged.SystemRole.ShouldBe("admin");
+        merged.Projects.Select(item => (item.ProjectId, item.Role)).ShouldBe(
+            [(spaceA.Id, ProjectRoleNames.Viewer), (spaceB.Id, ProjectRoleNames.Member)], ignoreOrder: true);
+
+        (await AcceptAsync(TokenOf(first.Link!))).IsSuccessStatusCode.ShouldBeFalse();
+        (await AcceptAsync(TokenOf(third.Link!))).EnsureSuccessStatusCode();
+        var membersA = (await ownerA.Http.GetFromJsonAsync<List<ProjectMemberDto>>($"/api/v1/project/{spaceA.Id}/members", Token))!;
+        var membersB = (await ownerB.Http.GetFromJsonAsync<List<ProjectMemberDto>>($"/api/v1/project/{spaceB.Id}/members", Token))!;
+        membersA.Single(member => member.User.Email == email).Role.ShouldBe(ProjectRoleNames.Viewer);
+        membersB.Single(member => member.User.Email == email).Role.ShouldBe(ProjectRoleNames.Member);
+    }
+
+    [Fact]
     public async Task Project_admin_is_limited_to_own_projects_and_own_role()
     {
         var admin = await AdminAsync();
