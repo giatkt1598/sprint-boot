@@ -5,6 +5,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastHost } from './components/ToastHost';
 import { McpDocsPage, TokensPage } from './features/account/TokenPages';
 import { AccountIndex, AccountLayout, ProfilePage, SecurityPage } from './features/account/AccountPages';
+import { PreferencesPage } from './features/account/PreferencesPage';
 import { AdminIndex, AdminLayout, DeletedIssuesPage, ManageUserPage, UsersPage } from './features/admin/AdminPages';
 import { GitConnectionsPage, GitRepositoriesPage } from './features/admin/GitPages';
 import { EmailSettingsPage } from './features/admin/EmailSettingsPage';
@@ -57,6 +58,7 @@ export function App() {
               <Route path="account" element={<AccountLayout />}>
                 <Route index element={<AccountIndex />} />
                 <Route path="profile" element={<ProfilePage />} />
+                <Route path="preferences" element={<PreferencesPage />} />
                 <Route path="security" element={<SecurityPage />} />
                 <Route path="tokens" element={<TokensPage />} />
                 <Route path="mcp-docs" element={<McpDocsPage />} />

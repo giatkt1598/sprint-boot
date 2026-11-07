@@ -243,7 +243,9 @@
     "AssistantProviderFailed": "The AI provider did not answer. Try again.",
     "AssistantModelsUnavailable": "The models could not be loaded. Check the base URL and API key.",
     "AssistantRequestTooLarge": "The conversation is too long for the AI provider. Start a new conversation, or set a max request size on the connection.",
-    "InvalidTimeZone": "That time zone is not known."
+    "InvalidTimeZone": "That time zone is not known.",
+    "BackgroundInvalid": "Use a PNG, JPEG, WebP or GIF image up to 4 MB.",
+    "InvalidPreferences": "Those preferences are not valid."
   },
   "auth": {
     "ldapTitle": "Sign in to {{provider}}",
@@ -316,7 +318,35 @@
     "passwordChanged": "Password changed",
     "jobTitle": "Job title",
     "timeZone": "Time zone",
-    "timeZoneBrowser": "Browser default ({{zone}})"
+    "timeZoneBrowser": "Browser default ({{zone}})",
+    "preferences": {
+      "title": "Preferences",
+      "colorMode": "Color mode",
+      "mode": {
+        "system": "Same as device",
+        "light": "Light",
+        "dark": "Dark"
+      },
+      "accent": "Theme color",
+      "accentName": {
+        "blue": "Blue",
+        "green": "Green",
+        "violet": "Violet"
+      },
+      "fontFamily": "Font",
+      "font": {
+        "poppins": "SVN-Poppins",
+        "system": "System font"
+      },
+      "fontScale": "Text size",
+      "background": "Background image",
+      "uploadBackground": "Upload image",
+      "changeBackground": "Change image",
+      "removeBackground": "Remove",
+      "backgroundHint": "PNG, JPEG, WebP or GIF up to 4 MB. It shows behind the page content.",
+      "backgroundOpacity": "Image strength"
+    },
+    "preferencesMenu": "Preferences"
   },
   "admin": {
     "deleteAccount": "Delete account",

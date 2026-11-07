@@ -88,6 +88,56 @@ public class AuthTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task People_choose_how_the_app_looks_and_keep_a_background_image()
+    {
+        var client = await fixture.CreateUserClientAsync(Token);
+        var me = (await client.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!;
+        me.Preferences.ColorMode.ShouldBe("system");
+        me.Preferences.Accent.ShouldBe("blue");
+        me.Preferences.FontScale.ShouldBe(100);
+        me.BackgroundUrl.ShouldBeNull();
+
+        var saved = await client.Http.PutAsJsonAsync("/api/v1/auth/preferences", new { colorMode = "dark", accent = "green", fontFamily = "system", fontScale = 110, backgroundOpacity = 45 }, Token);
+        saved.StatusCode.ShouldBe(HttpStatusCode.OK, await saved.Content.ReadAsStringAsync(Token));
+        var preferences = (await client.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!.Preferences;
+        (preferences.ColorMode, preferences.Accent, preferences.FontFamily, preferences.FontScale, preferences.BackgroundOpacity)
+            .ShouldBe(("dark", "green", "system", 110, 45));
+
+        // Only the offered values are kept.
+        foreach (var body in new object[]
+        {
+            new { colorMode = "sepia", accent = "blue", fontFamily = "poppins", fontScale = 100, backgroundOpacity = 30 },
+            new { colorMode = "light", accent = "pink", fontFamily = "poppins", fontScale = 100, backgroundOpacity = 30 },
+            new { colorMode = "light", accent = "blue", fontFamily = "comic", fontScale = 100, backgroundOpacity = 30 },
+            new { colorMode = "light", accent = "blue", fontFamily = "poppins", fontScale = 105, backgroundOpacity = 30 },
+            new { colorMode = "light", accent = "blue", fontFamily = "poppins", fontScale = 100, backgroundOpacity = 150 },
+        })
+        {
+            (await client.Http.PutAsJsonAsync("/api/v1/auth/preferences", body, Token)).IsSuccessStatusCode.ShouldBeFalse();
+        }
+
+        (await client.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!.Preferences.ColorMode.ShouldBe("dark");
+
+        byte[] png = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0];
+        using var refused = new MultipartFormDataContent { { new ByteArrayContent("<svg/>"u8.ToArray()), "file", "a.svg" } };
+        var rejected = await client.Http.PostAsync("/api/v1/auth/background", refused, Token);
+        rejected.IsSuccessStatusCode.ShouldBeFalse();
+        (await rejected.Content.ReadAsStringAsync(Token)).ShouldContain(AuthErrors.BackgroundInvalid);
+
+        using var form = new MultipartFormDataContent { { new ByteArrayContent(png), "file", "a.png" } };
+        var uploaded = await client.Http.PostAsync("/api/v1/auth/background", form, Token);
+        uploaded.StatusCode.ShouldBe(HttpStatusCode.OK, await uploaded.Content.ReadAsStringAsync(Token));
+        var url = (await uploaded.Content.ReadFromJsonAsync<CurrentUserDto>(Token))!.BackgroundUrl!;
+        var served = await fixture.Factory.CreateClient().GetAsync(url, Token);
+        served.StatusCode.ShouldBe(HttpStatusCode.OK);
+        served.Content.Headers.ContentType!.MediaType.ShouldBe("image/png");
+
+        (await client.Http.DeleteAsync("/api/v1/auth/background", Token)).EnsureSuccessStatusCode();
+        (await fixture.Factory.CreateClient().GetAsync(url, Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await client.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!.BackgroundUrl.ShouldBeNull();
+    }
+
+    [Fact]
     public async Task Login_without_csrf_token_is_rejected()
     {
         var client = new AuthClient(fixture);

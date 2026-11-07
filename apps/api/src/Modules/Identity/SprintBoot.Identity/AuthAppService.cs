@@ -30,6 +30,7 @@ public class AuthAppService(
     IProjectAccess projectAccess,
     IUserDirectory userDirectory,
     AvatarStore avatars,
+    BackgroundStore backgrounds,
     LinkedLoginService linkedLogins,
     ExternalAccountLinker linker,
     LdapAuthenticator ldap,
@@ -39,6 +40,10 @@ public class AuthAppService(
     public const string LanguageProperty = "Language";
 
     public const string HomePageProperty = "HomePage";
+
+    public const string PreferencesProperty = "Preferences";
+
+    private static readonly int[] FontScales = [90, 100, 110, 125];
 
     public const string TitleProperty = "Title";
 
@@ -263,6 +268,51 @@ public class AuthAppService(
         return await ToDtoAsync(user);
     }
 
+    [Authorize]
+    public async Task<CurrentUserDto> UpdatePreferencesAsync(PreferencesDto input)
+    {
+        if (!FontScales.Contains(input.FontScale))
+        {
+            throw new BusinessException(AuthErrors.InvalidPreferences);
+        }
+
+        var user = await userManager.GetByIdAsync(CurrentUser.GetId());
+        user.SetProperty(PreferencesProperty, JsonSerializer.Serialize(input));
+        (await userManager.UpdateAsync(user)).CheckErrors();
+        return await ToDtoAsync(user);
+    }
+
+    [Authorize]
+    public async Task<CurrentUserDto> UploadBackgroundAsync(IRemoteStreamContent file)
+    {
+        var user = await userManager.GetByIdAsync(CurrentUser.GetId());
+        await backgrounds.SaveAsync(user, file);
+        return await ToDtoAsync(user);
+    }
+
+    [Authorize]
+    public async Task<CurrentUserDto> DeleteBackgroundAsync()
+    {
+        var user = await userManager.GetByIdAsync(CurrentUser.GetId());
+        await backgrounds.RemoveAsync(user);
+        return await ToDtoAsync(user);
+    }
+
+    /// <summary>Anything unreadable, such as a value an older version wrote, means the defaults.</summary>
+    private static PreferencesDto ReadPreferences(IdentityUser user)
+    {
+        try
+        {
+            return user.GetProperty<string>(PreferencesProperty) is { Length: > 0 } json
+                ? JsonSerializer.Deserialize<PreferencesDto>(json) ?? new PreferencesDto()
+                : new PreferencesDto();
+        }
+        catch (JsonException)
+        {
+            return new PreferencesDto();
+        }
+    }
+
     /// <summary>Anything unreadable, such as a value an older version wrote, means the default.</summary>
     private static HomePageDto ReadHomePage(IdentityUser user)
     {
@@ -334,6 +384,8 @@ public class AuthAppService(
             AvatarUrl = UserAvatars.Url(user),
             Title = user.GetProperty<string?>(TitleProperty),
             TimeZone = user.GetProperty<string?>(TimeZoneProperty),
+            Preferences = ReadPreferences(user),
+            BackgroundUrl = UserBackgrounds.Url(user),
             HomePage = ReadHomePage(user),
         };
     }

@@ -14,4 +14,6 @@ public static class AuthErrors
     public const string LastSystemAdmin = "SprintBoot:LastSystemAdmin";
     public const string InvalidHomePage = "SprintBoot:InvalidHomePage";
     public const string InvalidTimeZone = "SprintBoot:InvalidTimeZone";
+    public const string BackgroundInvalid = "SprintBoot:BackgroundInvalid";
+    public const string InvalidPreferences = "SprintBoot:InvalidPreferences";
 }

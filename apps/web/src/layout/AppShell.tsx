@@ -19,7 +19,7 @@ export function AppShell() {
       <TopBar />
       <div className="flex min-h-0 flex-1">
         {!wide && <Sidebar />}
-        <main className="min-w-0 flex-1 overflow-auto p-8" style={{ backgroundColor: sem('bg-surface') }}>
+        <main className="sb-content min-w-0 flex-1 overflow-auto p-8" style={{ backgroundColor: sem('bg-surface') }}>
           <Outlet />
         </main>
       </div>

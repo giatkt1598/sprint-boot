@@ -2798,6 +2798,115 @@
         }
       }
     },
+    "/api/v1/auth/preferences": {
+      "put": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferencesDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferencesDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferencesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/background": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/logins": {
       "get": {
         "tags": [
@@ -25138,7 +25247,8 @@
           "id",
           "language",
           "name",
-          "permissions"
+          "permissions",
+          "preferences"
         ],
         "type": "object",
         "properties": {
@@ -25174,6 +25284,13 @@
             "nullable": true
           },
           "timeZone": {
+            "type": "string",
+            "nullable": true
+          },
+          "preferences": {
+            "$ref": "#/components/schemas/PreferencesDto"
+          },
+          "backgroundUrl": {
             "type": "string",
             "nullable": true
           },
@@ -27552,6 +27669,39 @@
         ],
         "type": "integer",
         "format": "int32"
+      },
+      "PreferencesDto": {
+        "type": "object",
+        "properties": {
+          "colorMode": {
+            "pattern": "^(system|light|dark)$",
+            "type": "string",
+            "nullable": true
+          },
+          "accent": {
+            "pattern": "^(blue|green|violet)$",
+            "type": "string",
+            "nullable": true
+          },
+          "fontFamily": {
+            "pattern": "^(poppins|system)$",
+            "type": "string",
+            "nullable": true
+          },
+          "fontScale": {
+            "maximum": 125,
+            "minimum": 90,
+            "type": "integer",
+            "format": "int32"
+          },
+          "backgroundOpacity": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
       },
       "PriorityDto": {
         "required": [

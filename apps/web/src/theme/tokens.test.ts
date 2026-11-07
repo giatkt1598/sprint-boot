@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { primitive, semanticLight } from './tokens';
+import { accents, primitive, semanticDark, semanticLight, type Accent, type ColorMode } from './tokens';
 
 const luminance = (hex: string) => {
   const channels = [1, 3, 5].map((start) => {
@@ -16,8 +16,13 @@ const contrast = (a: string, b: string) => {
 
 describe('tokens', () => {
   it('match the Penpot token counts', () => {
-    expect(Object.keys(primitive)).toHaveLength(25);
-    expect(Object.keys(semanticLight)).toHaveLength(35);
+    // 25 and 35 in Penpot, plus green50, violet50, violet700, bar-done and feedback-danger-solid that the accents and dark mode brought.
+    expect(Object.keys(primitive)).toHaveLength(28);
+    expect(Object.keys(semanticLight)).toHaveLength(37);
+  });
+
+  it('keep the dark set in step with the light one', () => {
+    expect(Object.keys(semanticDark).sort()).toEqual(Object.keys(semanticLight).sort());
   });
 
   it.each([
@@ -35,5 +40,34 @@ describe('tokens', () => {
     ['feedback-danger-text', 'feedback-danger-bg'],
   ] as const)('%s on %s meets 4.5:1', (text, background) => {
     expect(contrast(semanticLight[text], semanticLight[background])).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+const PAIRS = [
+  ['text-primary', 'bg-page'],
+  ['text-primary', 'bg-surface'],
+  ['text-secondary', 'bg-surface'],
+  ['text-tertiary', 'bg-surface'],
+  ['text-primary', 'bg-hover'],
+  ['text-on-accent', 'accent-default'],
+  ['text-accent', 'bg-selected'],
+  ['text-accent', 'bg-surface'],
+  ['status-todo-text', 'status-todo-bg'],
+  ['status-progress-text', 'status-progress-bg'],
+  ['status-done-text', 'status-done-bg'],
+  ['status-merged-text', 'status-merged-bg'],
+  ['feedback-warning-text', 'feedback-warning-bg'],
+  ['feedback-danger-text', 'feedback-danger-bg'],
+  ['text-on-accent', 'bar-done'],
+  ['text-on-accent', 'feedback-danger-solid'],
+  ['text-on-accent', 'feedback-danger-hover'],
+] as const;
+
+describe.each(['light', 'dark'] as ColorMode[])('%s mode with every accent', (mode) => {
+  it.each(['blue', 'green', 'violet'] as Accent[])('keeps text readable with the %s accent', (accent) => {
+    const colors = { ...(mode === 'dark' ? semanticDark : semanticLight), ...accents[accent][mode] };
+    for (const [text, background] of PAIRS) {
+      expect(contrast(colors[text], colors[background]), `${text} on ${background}`).toBeGreaterThanOrEqual(4.5);
+    }
   });
 });

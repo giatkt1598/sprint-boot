@@ -28,10 +28,10 @@ const kindStyles = {
     '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
   },
   danger: {
-    backgroundColor: sem('feedback-danger-text'),
+    backgroundColor: sem('feedback-danger-solid'),
     color: sem('text-on-accent'),
     '&:hover': { backgroundColor: sem('feedback-danger-hover') },
-    '&.Mui-disabled': { backgroundColor: sem('feedback-danger-text'), color: sem('text-on-accent') },
+    '&.Mui-disabled': { backgroundColor: sem('feedback-danger-solid'), color: sem('text-on-accent') },
   },
 } as const;
 

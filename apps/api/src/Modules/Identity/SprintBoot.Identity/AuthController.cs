@@ -103,6 +103,19 @@ public class AuthController(IAuthAppService authAppService, IAbpAntiForgeryManag
     [Authorize]
     public Task<CurrentUserDto> DeleteAvatarAsync() => authAppService.DeleteAvatarAsync();
 
+    [HttpPut("preferences")]
+    [Authorize]
+    public Task<CurrentUserDto> UpdatePreferencesAsync([FromBody] PreferencesDto input) =>
+        authAppService.UpdatePreferencesAsync(input);
+
+    [HttpPost("background")]
+    [Authorize]
+    public Task<CurrentUserDto> UploadBackgroundAsync(IRemoteStreamContent file) => authAppService.UploadBackgroundAsync(file);
+
+    [HttpDelete("background")]
+    [Authorize]
+    public Task<CurrentUserDto> DeleteBackgroundAsync() => authAppService.DeleteBackgroundAsync();
+
     [HttpGet("logins")]
     [Authorize]
     public Task<List<LinkedLoginDto>> GetLoginsAsync() => authAppService.GetLoginsAsync();

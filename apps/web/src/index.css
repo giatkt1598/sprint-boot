@@ -127,15 +127,15 @@
 }
 
 .rich-text h1 {
-  font-size: 20px;
+  font-size: calc(20px * var(--sb-font-scale, 1));
 }
 
 .rich-text h2 {
-  font-size: 16px;
+  font-size: calc(16px * var(--sb-font-scale, 1));
 }
 
 .rich-text h3 {
-  font-size: 14px;
+  font-size: calc(14px * var(--sb-font-scale, 1));
 }
 
 .rich-text ul,
@@ -194,7 +194,7 @@
   border: 1px solid var(--sb-border-strong);
   border-radius: 4px;
   color: var(--sb-text-on-accent);
-  font-size: 12px;
+  font-size: calc(12px * var(--sb-font-scale, 1));
   line-height: 1;
 }
 
@@ -415,3 +415,31 @@
   background-color: var(--sb-accent-default);
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / contain no-repeat;
 }
+
+/* A background image shows through the page: the page colour covers it by --sb-bg-cover, set from the person's preferences. */
+:root[data-background] .sb-content {
+  background:
+    linear-gradient(color-mix(in srgb, var(--sb-bg-surface) var(--sb-bg-cover), transparent), color-mix(in srgb, var(--sb-bg-surface) var(--sb-bg-cover), transparent)),
+    var(--sb-bg-image) center / cover fixed;
+}
+
+/*
+ * Colours picked in the editor are stored as plain values made for a light page. On a dark one they swap to lighter
+ * versions of the same hue, so old content stays readable. Match tokens.ts editorColors.
+ */
+:root[data-theme='dark'] .rich-text [style*='#B91C1C' i],
+:root[data-theme='dark'] .rich-text [style*='rgb(185, 28, 28)'] { color: #fca5a5 !important; }
+:root[data-theme='dark'] .rich-text [style*='#92400E' i],
+:root[data-theme='dark'] .rich-text [style*='rgb(146, 64, 14)'] { color: #fcd34d !important; }
+:root[data-theme='dark'] .rich-text [style*='#166534' i],
+:root[data-theme='dark'] .rich-text [style*='rgb(22, 101, 52)'] { color: #86efac !important; }
+:root[data-theme='dark'] .rich-text [style*='#1D4ED8' i],
+:root[data-theme='dark'] .rich-text [style*='rgb(29, 78, 216)'] { color: #93bbfd !important; }
+:root[data-theme='dark'] .rich-text mark[style*='#FEE2E2' i],
+:root[data-theme='dark'] .rich-text mark[style*='rgb(254, 226, 226)'] { background-color: #5b2323 !important; color: var(--sb-text-primary) !important; }
+:root[data-theme='dark'] .rich-text mark[style*='#FEF3C7' i],
+:root[data-theme='dark'] .rich-text mark[style*='rgb(254, 243, 199)'] { background-color: #4d3a14 !important; color: var(--sb-text-primary) !important; }
+:root[data-theme='dark'] .rich-text mark[style*='#DCFCE7' i],
+:root[data-theme='dark'] .rich-text mark[style*='rgb(220, 252, 231)'] { background-color: #194a35 !important; color: var(--sb-text-primary) !important; }
+:root[data-theme='dark'] .rich-text mark[style*='#DBEAFE' i],
+:root[data-theme='dark'] .rich-text mark[style*='rgb(219, 234, 254)'] { background-color: #1f3c70 !important; color: var(--sb-text-primary) !important; }

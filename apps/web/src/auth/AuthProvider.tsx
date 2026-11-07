@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router';
 import type { components } from '@sprint-boot/api-client';
 import { apiClient, unwrap } from '../api';
 import { setDisplayTimeZone } from '../lib/format';
+import { setAppearance, type Appearance } from '../theme/appearance';
 import { userManager } from './oidc';
 
 export type CurrentUser = components['schemas']['CurrentUserDto'];
@@ -66,6 +67,12 @@ export function RequireAuth({ children }: { children: ReactNode }) {
       void i18n.changeLanguage(me.data.language ?? undefined);
     }
   }, [me.data, i18n]);
+
+  useEffect(() => {
+    if (me.data) {
+      setAppearance({ ...me.data.preferences, backgroundUrl: me.data.backgroundUrl ?? null } as Partial<Appearance>);
+    }
+  }, [me.data]);
 
   // Set while rendering, so the first screen already formats times in the person's zone.
   setDisplayTimeZone(me.data?.timeZone);

@@ -41,7 +41,7 @@ const DAY_MS = 86_400_000;
 const KNOWN_TYPES = ['story', 'task', 'bug', 'subtask', 'epic'];
 
 /** A bar takes the colour of its status group: To Do, In progress, Done. */
-const STATUS_BARS: SemanticToken[] = ['border-strong', 'accent-default', 'status-done-text'];
+const STATUS_BARS: SemanticToken[] = ['border-strong', 'accent-default', 'bar-done'];
 
 /** Dates are plain calendar days; arithmetic happens on UTC midnights so time zones never shift a bar. */
 const toDay = (iso: string) => Date.parse(`${iso}T00:00:00Z`) / DAY_MS;

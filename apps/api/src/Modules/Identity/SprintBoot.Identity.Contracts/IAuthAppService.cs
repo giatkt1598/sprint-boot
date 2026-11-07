@@ -38,6 +38,13 @@ public interface IAuthAppService : IApplicationService
 
     Task<CurrentUserDto> DeleteAvatarAsync();
 
+    Task<CurrentUserDto> UpdatePreferencesAsync(PreferencesDto input);
+
+    /// <summary>PNG, JPEG, WebP or GIF up to 4 MB; replaces the previous background.</summary>
+    Task<CurrentUserDto> UploadBackgroundAsync(IRemoteStreamContent file);
+
+    Task<CurrentUserDto> DeleteBackgroundAsync();
+
     Task<List<LinkedLoginDto>> GetLoginsAsync();
 
     Task<LinkStartDto> StartLinkAsync(string provider);

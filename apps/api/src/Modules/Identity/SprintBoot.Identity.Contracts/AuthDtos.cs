@@ -68,8 +68,36 @@ public class CurrentUserDto
     /// <summary>An IANA time zone such as Asia/Ho_Chi_Minh; null means the browser's own.</summary>
     public string? TimeZone { get; set; }
 
+    /// <summary>Colours, type and background; defaults until the person chooses.</summary>
+    public required PreferencesDto Preferences { get; set; }
+
+    /// <summary>Null until the person uploads a background image.</summary>
+    public string? BackgroundUrl { get; set; }
+
     /// <summary>Where the app opens; clients fall back to the last space when it is no longer available.</summary>
     public required HomePageDto HomePage { get; set; }
+}
+
+/// <summary>How the app looks for this person. Values are short names so the client maps them to tokens.</summary>
+public class PreferencesDto
+{
+    /// <summary>system follows the device.</summary>
+    [RegularExpression("^(system|light|dark)$")]
+    public string ColorMode { get; set; } = "system";
+
+    [RegularExpression("^(blue|green|violet)$")]
+    public string Accent { get; set; } = "blue";
+
+    [RegularExpression("^(poppins|system)$")]
+    public string FontFamily { get; set; } = "poppins";
+
+    /// <summary>Percent of the normal text size: 90, 100, 110 or 125.</summary>
+    [Range(90, 125)]
+    public int FontScale { get; set; } = 100;
+
+    /// <summary>How strongly the background image shows through the page, 0 to 100.</summary>
+    [Range(0, 100)]
+    public int BackgroundOpacity { get; set; } = 30;
 }
 
 public enum HomePageKind

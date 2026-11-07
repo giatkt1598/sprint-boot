@@ -96,7 +96,7 @@ export function SettingsFrame({ title, backTo, menu, context }: { title: string;
         <BackHeader title={title} backTo={backTo} />
         {menu}
       </aside>
-      <main className="min-w-0 flex-1 overflow-auto p-8" style={{ backgroundColor: sem('bg-surface') }}>
+      <main className="sb-content min-w-0 flex-1 overflow-auto p-8" style={{ backgroundColor: sem('bg-surface') }}>
         <div className="max-w-4xl">
           <Outlet context={context} />
         </div>

@@ -32,6 +32,7 @@ export function AccountLayout() {
       menu={
         <>
           <SettingsMenuItem to="profile" label={t('account.profile')} />
+          <SettingsMenuItem to="preferences" label={t('account.preferencesMenu')} />
           <SettingsMenuItem to="security" label={t('account.security')} />
           <SettingsMenuItem to="tokens" label={t('tokens.title')} />
           <SettingsMenuItem to="notifications" label={t('topBar.notifications')} />

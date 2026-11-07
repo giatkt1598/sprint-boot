@@ -243,7 +243,9 @@
     "AssistantProviderFailed": "Provider AI không phản hồi. Hãy thử lại.",
     "AssistantModelsUnavailable": "Không tải được danh sách model. Hãy kiểm tra Base URL và API key.",
     "AssistantRequestTooLarge": "Cuộc trò chuyện quá dài so với giới hạn của provider AI. Hãy bắt đầu cuộc trò chuyện mới, hoặc đặt kích thước request tối đa cho connection.",
-    "InvalidTimeZone": "Múi giờ này không hợp lệ."
+    "InvalidTimeZone": "Múi giờ này không hợp lệ.",
+    "BackgroundInvalid": "Dùng ảnh PNG, JPEG, WebP hoặc GIF tối đa 4 MB.",
+    "InvalidPreferences": "Tùy chọn không hợp lệ."
   },
   "auth": {
     "ldapTitle": "Đăng nhập vào {{provider}}",
@@ -316,7 +318,35 @@
     "passwordChanged": "Đã đổi mật khẩu",
     "jobTitle": "Chức danh",
     "timeZone": "Múi giờ",
-    "timeZoneBrowser": "Mặc định của trình duyệt ({{zone}})"
+    "timeZoneBrowser": "Mặc định của trình duyệt ({{zone}})",
+    "preferences": {
+      "title": "Tùy chọn",
+      "colorMode": "Chế độ màu",
+      "mode": {
+        "system": "Theo thiết bị",
+        "light": "Sáng",
+        "dark": "Tối"
+      },
+      "accent": "Màu chủ đạo",
+      "accentName": {
+        "blue": "Xanh dương",
+        "green": "Xanh lá",
+        "violet": "Tím"
+      },
+      "fontFamily": "Phông chữ",
+      "font": {
+        "poppins": "SVN-Poppins",
+        "system": "Phông chữ hệ thống"
+      },
+      "fontScale": "Cỡ chữ",
+      "background": "Hình nền",
+      "uploadBackground": "Tải ảnh lên",
+      "changeBackground": "Đổi ảnh",
+      "removeBackground": "Xóa",
+      "backgroundHint": "PNG, JPEG, WebP hoặc GIF tối đa 4 MB. Ảnh hiển thị phía sau nội dung trang.",
+      "backgroundOpacity": "Độ đậm của ảnh"
+    },
+    "preferencesMenu": "Tùy chọn"
   },
   "admin": {
     "deleteAccount": "Xóa tài khoản",
