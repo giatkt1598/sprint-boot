@@ -56,6 +56,7 @@ describe('AssistantPanel', () => {
     renderHost(<OnIssue />);
     fireEvent.click(await screen.findByRole('button', { name: /assistant/i }));
 
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Ask the assistant' })));
     const recent = await screen.findByRole('region', { name: 'Recent conversations' });
     await within(recent).findByText('About the bug');
     expect(within(recent).getAllByRole('button').map((item) => item.textContent)).toEqual([
@@ -68,6 +69,7 @@ describe('AssistantPanel', () => {
     fireEvent.click(within(recent).getByRole('button', { name: 'View all (2 more)' }));
     const history = await screen.findByRole('dialog', { name: 'History' });
     within(history).getByText('About this issue');
+    await waitFor(() => expect(document.activeElement).toBe(within(history).getByRole('textbox', { name: 'Search conversations' })));
     fireEvent.change(within(history).getByRole('textbox', { name: 'Search conversations' }), { target: { value: 'old' } });
     expect(within(history).getAllByRole('button').map((item) => item.textContent)).toEqual([expect.stringMatching(/^Older[^s]/), expect.stringMatching(/^Oldest/)]);
     fireEvent.keyDown(history, { key: 'Escape' });

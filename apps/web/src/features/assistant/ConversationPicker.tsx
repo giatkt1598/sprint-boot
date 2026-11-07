@@ -1,6 +1,6 @@
 import ButtonBase from '@mui/material/ButtonBase';
 import Typography from '@mui/material/Typography';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '../../components/Badge';
 import { Popover } from '../../components/Popover';
@@ -56,6 +56,7 @@ export function ConversationPicker({ anchor, issueId, selectedId, onClose, onPic
   const { t } = useTranslation();
   const conversations = useRankedConversations(issueId);
   const [search, setSearch] = useState('');
+  const input = useRef<HTMLInputElement>(null);
   const text = search.trim().toLowerCase();
   const found = conversations.ranked.filter((item) => matches(item, text));
   const groups = issueId
@@ -70,13 +71,15 @@ export function ConversationPicker({ anchor, issueId, selectedId, onClose, onPic
       open={anchor !== null}
       anchorEl={anchor}
       width={360}
+      // Focus once the popover has opened; autoFocus loses to the popover's own focus handling.
+      slotProps={{ transition: { onEntered: () => input.current?.focus() } }}
       onClose={() => {
         setSearch('');
         onClose();
       }}
     >
       <div className="flex flex-col gap-2 p-2" role="dialog" aria-label={t('assistant.history')}>
-        <SearchInput label={t('assistant.searchConversations')} width={344} autoFocus value={search} onChange={(event) => setSearch(event.target.value)} />
+        <SearchInput label={t('assistant.searchConversations')} width="100%" inputRef={input} value={search} onChange={(event) => setSearch(event.target.value)} />
         <div className="flex max-h-96 flex-col gap-2 overflow-y-auto">
           {conversations.isPending && <LoadingState />}
           {conversations.data && found.length === 0 && (
@@ -151,7 +154,7 @@ export function QuickPrompts({ onAsk }: { onAsk: (text: string) => void }) {
       <Typography id="assistant-prompts" variant="body2" color="textSecondary" className="px-2" sx={{ fontSize: font.size.xs, fontWeight: font.weight.medium }}>
         {t('assistant.suggestions')}
       </Typography>
-      <div className="flex flex-wrap gap-2 px-2">
+      <div className="flex flex-col items-start gap-2 px-2">
         {PROMPTS.map((prompt) => (
           <ButtonBase
             key={prompt}

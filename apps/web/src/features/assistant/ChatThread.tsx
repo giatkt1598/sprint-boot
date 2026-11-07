@@ -170,8 +170,14 @@ export function ChatThread({ conversationId, issueId, onConversation, intro }: {
   const [error, setError] = useState<string | null>(null);
   const abort = useRef<AbortController | null>(null);
   const bottom = useRef<HTMLDivElement>(null);
+  const input = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => () => abort.current?.abort(), []);
+  useEffect(() => {
+    // After the drawer has taken focus for itself, so the question can be typed straight away.
+    const frame = requestAnimationFrame(() => input.current?.focus());
+    return () => cancelAnimationFrame(frame);
+  }, []);
   useEffect(() => {
     bottom.current?.scrollIntoView({ block: 'end' });
   }, [detail.data, live]);
@@ -324,6 +330,7 @@ export function ChatThread({ conversationId, issueId, onConversation, intro }: {
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={onKeyDown}
+            inputRef={input}
             inputProps={{ 'aria-label': t('assistant.question') }}
             sx={{ padding: 0, fontSize: font.size.md, lineHeight: 1.5, '& textarea': { overflowY: 'auto' } }}
           />
