@@ -3,7 +3,7 @@ import fire404 from './art/fire-404.svg';
 import fire500 from './art/fire-500.svg';
 import glass404 from './art/glass-404.svg';
 import glass500 from './art/glass-500.svg';
-import glassSprouts from './art/glass-sprouts.svg';
+import glassSeedling from './art/glass-seedling.svg';
 import water404 from './art/water-404.svg';
 import water500 from './art/water-500.svg';
 import wood404 from './art/wood-404.svg';
@@ -55,7 +55,7 @@ export const glass = {
     popover: glassLift(24, 0.35),
     dialog: glassLift(48, 0.45),
   },
-  page: `url("${glassSprouts}") center / cover, #16301B`,
+  page: `url("${glassSeedling}") center / cover, #4E6534`,
   content: 'transparent',
   surfaceFilter: 'blur(6px) saturate(140%)',
   surfaces: {
