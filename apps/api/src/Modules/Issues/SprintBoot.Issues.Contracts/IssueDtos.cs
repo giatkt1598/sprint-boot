@@ -119,6 +119,13 @@ public class IssueSummaryDto
 
     public required string? SprintName { get; set; }
 
+    /// <summary>The epic of a standard issue, or the issue a subtask belongs to.</summary>
+    public Guid? ParentId { get; set; }
+
+    public DateOnly? StartDate { get; set; }
+
+    public DateOnly? DueDate { get; set; }
+
     public required DateTime CreatedAt { get; set; }
 
     public required DateTime UpdatedAt { get; set; }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Menu from '@mui/material/Menu';
-import { List, Settings, SquareCheck, SquareKanban, Zap } from 'lucide-react';
+import { LayoutDashboard, List, Settings, SquareCheck, SquareKanban, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import { useCan, useCurrentUser } from '../auth/AuthProvider';
@@ -70,6 +70,7 @@ export function Sidebar() {
         {creating && <CreateSpaceDialog open onClose={() => setCreating(false)} />}
         {spaceKey && (
           <nav aria-label={t('nav.label')} className="flex flex-col gap-1">
+            <SidebarItem to={`/spaces/${spaceKey}/overview`} label={t('nav.overview')} icon={LayoutDashboard} />
             <SidebarItem to={`/spaces/${spaceKey}/backlog`} label={t('nav.backlog')} icon={List} />
             <SidebarItem to={`/spaces/${spaceKey}/board`} label={t('nav.board')} icon={SquareKanban} />
             <SidebarItem to={`/spaces/${spaceKey}/epics`} label={t('nav.epics')} icon={Zap} />

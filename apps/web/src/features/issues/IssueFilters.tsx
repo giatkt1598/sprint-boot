@@ -56,9 +56,10 @@ function rangeToQuery({ preset, from, to }: DateRange): { from?: string; to?: st
 const inRange = (value: string | undefined, range: { from?: string; to?: string }) =>
   (!range.from || (value ?? '') >= range.from) && (!range.to || (value ?? '') <= range.to);
 
-export function useIssueFilters(projectId: string | undefined, sprints?: { value: string; label: string }[]) {
+/** `initial` preselects values, such as those a link to the issue list carries. */
+export function useIssueFilters(projectId: string | undefined, sprints?: { value: string; label: string }[], initial?: Partial<Record<ValueFilter, string[]>>) {
   const { t } = useTranslation();
-  const [values, setValues] = useState(NO_VALUES);
+  const [values, setValues] = useState(() => ({ ...NO_VALUES, ...initial }));
   const [created, setCreated] = useState(ANY_TIME);
   const [updated, setUpdated] = useState(ANY_TIME);
 

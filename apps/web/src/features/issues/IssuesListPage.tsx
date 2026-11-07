@@ -29,7 +29,9 @@ export function IssuesListPage() {
   const [params] = useSearchParams();
   const space = useSpace(spaceKey);
   const projectId = space.data?.id;
-  const filters = useIssueFilters(projectId);
+  // The overview links here with the types or statuses a figure counted.
+  const [initialFilters] = useState(() => ({ type: params.getAll('type'), status: params.getAll('status') }));
+  const filters = useIssueFilters(projectId, undefined, initialFilters);
   const members = useMembers(projectId);
   const people = (members.data ?? []).map((member) => member.user!);
   // Search across spaces has no single space to check, so its rows stay read-only.

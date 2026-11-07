@@ -22,6 +22,7 @@ import { EpicsPage } from './features/agile/EpicsPage';
 import { IssuePage } from './features/issues/IssuePage';
 import { EditSchemePage, NotificationPreferencesPage, NotificationSchemesPage, NotificationsPage } from './features/notifications/NotificationPages';
 import { IssuesListPage } from './features/issues/IssuesListPage';
+import { OverviewPage } from './features/overview/OverviewPage';
 import { SpaceGeneralPage, SpaceMembersPage, SpaceSettingsIndex, SpaceSettingsLayout } from './features/spaces/SpaceSettings';
 import { SpaceBoardPage } from './features/spaces/SpaceBoardPage';
 import { SpacesPage } from './features/spaces/SpacesPage';
@@ -97,7 +98,8 @@ export function App() {
               <Route index element={<HomePage />} />
               <Route path="spaces" element={<Navigate to="/" replace />} />
               <Route path="spaces/:spaceKey" element={<SpaceGuard />}>
-                <Route index element={<Navigate to="issues" replace />} />
+                <Route index element={<Navigate to="overview" replace />} />
+                <Route path="overview" element={<OverviewPage />} />
                 <Route path="backlog" element={<BacklogPage />} />
                 <Route path="board" element={<BoardPage />} />
                 <Route path="epics" element={<EpicsPage />} />

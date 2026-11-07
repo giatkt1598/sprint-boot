@@ -26694,6 +26694,21 @@
             "type": "string",
             "nullable": true
           },
+          "parentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"

@@ -18923,6 +18923,12 @@ export interface components {
             assignee: components["schemas"]["UserRefDto"];
             reporter: components["schemas"]["UserRefDto"];
             sprintName: string | null;
+            /** Format: uuid */
+            parentId?: string | null;
+            /** Format: date */
+            startDate?: string | null;
+            /** Format: date */
+            dueDate?: string | null;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
