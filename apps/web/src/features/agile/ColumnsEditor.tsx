@@ -52,12 +52,12 @@ function ColumnRow({ column, canManage, free, nameOf, onChange, onRemove }: Colu
     <div
       ref={setNodeRef}
       data-testid={`column-row-${column.name}`}
-      className="flex items-start gap-2 p-2"
+      className="sb-card flex items-start gap-2 p-2"
       style={{
         transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
         transition,
         opacity: isDragging ? 0.6 : column.isHidden ? 0.7 : 1,
-        backgroundColor: sem('bg-surface'),
+        backgroundColor: 'var(--sb-card-bg)',
         border: `1px solid ${sem('border-default')}`,
         borderRadius: radius.control,
       }}

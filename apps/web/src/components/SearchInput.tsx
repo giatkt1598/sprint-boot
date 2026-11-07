@@ -19,7 +19,7 @@ export function SearchInput({ label, width = 200, ...props }: SearchInputProps) 
         gap: 2,
         paddingInline: 2,
         borderRadius: `${radius.control}px`,
-        backgroundColor: sem('bg-subtle'),
+        backgroundColor: 'var(--sb-subtle-field-bg)',
         color: sem('text-primary'),
         '& input::placeholder': { color: sem('text-tertiary'), opacity: 1 },
         '&.Mui-focused': { outline: `2px solid ${sem('border-focus')}` },

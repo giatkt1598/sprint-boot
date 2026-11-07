@@ -35,6 +35,10 @@ export interface SurfaceSet {
   sheen: string;
   /** Box shadow of the top bar and sidebar, such as a bright glass edge. Hovered blocks wear it too. */
   edge: string;
+  /** Background of text fields and selects. Defaults to bg-surface. */
+  input: string;
+  /** Background of search boxes and disabled fields. Defaults to bg-subtle. */
+  subtleField: string;
   /** Background of a block of content while hovered, such as the description waiting for a click. Defaults to bg-page. */
   hover: string;
   /** Box shadow of board cards. None by default, where cards sit flat on their column. */

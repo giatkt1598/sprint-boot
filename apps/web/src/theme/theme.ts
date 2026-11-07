@@ -33,6 +33,8 @@ const themeVariables = (theme: ThemeDefinition) => ({
   '--sb-surface-sheen': theme.surfaces?.sheen ?? 'none',
   '--sb-surface-edge': theme.surfaces?.edge ?? 'none',
   '--sb-hover-bg': theme.surfaces?.hover ?? 'var(--sb-bg-page)',
+  '--sb-input-bg': theme.surfaces?.input ?? 'var(--sb-bg-surface)',
+  '--sb-subtle-field-bg': theme.surfaces?.subtleField ?? 'var(--sb-bg-subtle)',
   '--sb-board-card-shadow': theme.surfaces?.cardShadow ?? 'none',
 });
 
@@ -134,7 +136,7 @@ export function createAppTheme(themeId: string, accent: Accent) {
         styleOverrides: {
           root: {
             minHeight: size.input,
-            backgroundColor: sem('bg-surface'),
+            backgroundColor: 'var(--sb-input-bg)',
             '& .MuiOutlinedInput-notchedOutline': { borderColor: sem('border-strong') },
             '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: sem('border-strong') },
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: sem('border-focus'), borderWidth: 2 },

@@ -68,7 +68,7 @@ function FieldFrame({ label, hint, htmlFor, labelId, helperId, error, quiet, chi
 }
 
 const disabledStyles = {
-  '&.Mui-disabled': { backgroundColor: sem('bg-subtle') },
+  '&.Mui-disabled': { backgroundColor: 'var(--sb-subtle-field-bg)' },
   '&.Mui-disabled .MuiOutlinedInput-notchedOutline': { border: 'none' },
 };
 
