@@ -46,6 +46,9 @@ import { boardKey, useBacklog, useBoard, useBoardLive, type BoardView, type Card
 
 type Column = NonNullable<BoardView['columns']>[number];
 
+/** A card keeps this height; longer content scrolls inside it. */
+const CARD_MAX_HEIGHT = 160;
+
 /** Small enough for five columns beside the sidebar on a 1920px screen. */
 const COLUMN_MIN_WIDTH = 200;
 
@@ -57,11 +60,11 @@ function CardBody({ card }: { card: Card }) {
   const has = (field: string) => fields.includes(field);
 
   return (
-    <div className="flex flex-col gap-1 p-2 text-left">
+    <div className="flex min-w-0 flex-col gap-1 overflow-y-auto [&>*]:shrink-0 overflow-x-hidden p-2 text-left" style={{ maxHeight: CARD_MAX_HEIGHT, overflowWrap: 'anywhere' }}>
       <span className="line-clamp-3" style={{ fontSize: font.size.md }}>{card.title}</span>
-      {has('epic') && card.epicTitle && <span className="self-start"><Badge tone="epic">{card.epicTitle}</Badge></span>}
+      {has('epic') && card.epicTitle && <span className="min-w-0 max-w-full self-start"><Badge tone="epic">{card.epicTitle}</Badge></span>}
       {has('labels') && (card.labels?.length ?? 0) > 0 && (
-        <span className="truncate" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>{card.labels?.join(', ')}</span>
+        <span style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>{card.labels?.join(', ')}</span>
       )}
       <span className="flex items-center gap-2">
         {has('type') && <IssueTypeIcon type={card.type?.icon as IconType} />}
@@ -89,8 +92,8 @@ const BoardCard = memo(function BoardCard({ card, canDrag, onOpen }: { card: Car
         role="button"
         data-testid={`card-${card.key}`}
         onClick={() => onOpen(card.key!)}
-        className="w-full"
-        sx={{ ...cardStyle, display: 'block', opacity: isDragging ? 0.4 : 1, '&:hover': { backgroundColor: sem('bg-hover') } }}
+        className="w-full min-w-0"
+        sx={{ ...cardStyle, display: 'block', overflow: 'hidden', opacity: isDragging ? 0.4 : 1, '&:hover': { backgroundColor: sem('bg-hover') } }}
       >
         <CardBody card={card} />
       </ButtonBase>
@@ -344,7 +347,7 @@ export function BoardPage() {
           </div>
           <DragOverlay>
             {dragging && (
-              <div style={{ ...cardStyle, boxShadow: shadow.popover }}>
+              <div className="min-w-0 overflow-hidden" style={{ ...cardStyle, boxShadow: shadow.popover }}>
                 <CardBody card={dragging} />
               </div>
             )}
