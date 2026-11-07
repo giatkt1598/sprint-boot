@@ -25,7 +25,7 @@ const DAY_WIDTH: Record<View, number> = { sprint: 60, week: 120, month: 40, quar
 const LABEL_WIDTH = 320;
 const HEADER_HEIGHT = 40;
 const ROW_HEIGHT = 41;
-const BAR_HEIGHT = 20;
+const BAR_HEIGHT = 24;
 const MAX_ISSUES = 500;
 const DAY_MS = 86_400_000;
 
@@ -94,7 +94,8 @@ export function TimelineTab({ space }: { space: Space }) {
   const today = todayDay();
 
   const rows = useMemo(() => {
-    const visible = (issues.data?.items ?? []).filter((issue) => filters.matches({ ...issue, epicId: issue.parentId }));
+    // Subtasks stay off the timeline: their parent's bar already covers the work.
+    const visible = (issues.data?.items ?? []).filter((issue) => issue.type?.hierarchy !== 0 && filters.matches({ ...issue, epicId: issue.parentId }));
     const dated = visible
       .filter((issue) => issue.startDate && issue.dueDate && toDay(issue.startDate) <= range.to && toDay(issue.dueDate) >= range.from)
       .sort((a, b) => toDay(a.startDate!) - toDay(b.startDate!) || toDay(a.dueDate!) - toDay(b.dueDate!));
@@ -132,7 +133,10 @@ export function TimelineTab({ space }: { space: Space }) {
       className="sticky left-0 z-10 flex h-full shrink-0 items-center gap-2 px-4"
       sx={{ width: LABEL_WIDTH, boxSizing: 'border-box', justifyContent: 'flex-start', backgroundColor: sem('bg-surface'), opacity: faded ? 0.5 : 1, fontSize: font.size.md, textAlign: 'left' }}
     >
-      <IssueTypeIcon type={issue.type?.icon as IconType} />
+      {/* Its own box, so a long title never squeezes the icon away. */}
+      <span className="flex size-4 shrink-0 items-center justify-center">
+        {issue.type?.icon && issue.type.icon in TYPE_BARS ? <IssueTypeIcon type={issue.type.icon as IconType} /> : null}
+      </span>
       <span className="shrink-0" style={{ color: sem('text-secondary') }}>{issue.key}</span>
       <span className="min-w-0 truncate" style={{ color: sem('text-primary') }}>{issue.title}</span>
     </ButtonBase>
@@ -150,8 +154,12 @@ export function TimelineTab({ space }: { space: Space }) {
       <ButtonBase
         onClick={() => setOpenIssue(issue.key!)}
         aria-label={`${issue.key} ${issue.title}`}
-        className="absolute"
+        className="absolute flex items-center overflow-hidden px-2"
         sx={{
+          justifyContent: 'flex-start',
+          color: sem('text-on-accent'),
+          fontSize: font.size.xs,
+          fontWeight: font.weight.medium,
           left: (from - range.from) * dayWidth + (start < range.from ? 0 : 4),
           width: Math.max((to - from + 1) * dayWidth - (start < range.from ? 0 : 4) - (end > range.to ? 0 : 4), 6),
           top: (ROW_HEIGHT - BAR_HEIGHT) / 2,
@@ -159,7 +167,9 @@ export function TimelineTab({ space }: { space: Space }) {
           backgroundColor: sem(TYPE_BARS[issue.type?.icon ?? ''] ?? 'accent-default'),
           borderRadius: `${left}px ${right}px ${right}px ${left}px`,
         }}
-      />
+      >
+        <span className="min-w-0 truncate">{issue.title}</span>
+      </ButtonBase>
     );
   };
 
