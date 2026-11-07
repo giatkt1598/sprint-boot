@@ -1,7 +1,7 @@
 # AI assistant
 
 People chat with an AI model about their work: on its own from the **Assistant** button in the top bar or the
-`/assistant` page, or about one issue with **Ask AI** on the issue page. The assistant finds issues, summarizes them,
+`/assistant` page, or about the issue on screen, which the assistant picks up when it is opened from an issue page. The assistant finds issues, summarizes them,
 explains them, links every issue it mentions, and, when asked, proposes changes.
 
 ## Turning it on

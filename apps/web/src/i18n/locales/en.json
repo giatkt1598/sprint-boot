@@ -1264,7 +1264,6 @@
     "title": "Assistant",
     "titleIssue": "Assistant · {{key}}",
     "open": "Open the assistant",
-    "ask": "Ask AI",
     "new": "New",
     "newConversation": "New conversation",
     "openPage": "Open in full page",
