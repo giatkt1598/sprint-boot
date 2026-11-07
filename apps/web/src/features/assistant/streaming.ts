@@ -1,0 +1,184 @@
+import DOMPurify from 'dompurify';
+import { marked } from 'marked';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const FENCE = /^\s*(```|~~~)/;
+
+/** Closes what the end of a half-streamed answer leaves open, so the preview renders as the finished text will. */
+export function closeOpenMarkdown(text: string): string {
+  const lines = text.split('\n');
+  const fences = lines.filter((line) => FENCE.test(line)).length;
+  if (fences % 2 === 1) {
+    return `${text}\n\`\`\``;
+  }
+
+  // A table row still being written would render as a broken row.
+  const last = lines[lines.length - 1];
+  if (last.trimStart().startsWith('|') && !last.trimEnd().endsWith('|')) {
+    lines.pop();
+  }
+
+  let closed = lines.join('\n');
+  // Inline marks only span the current paragraph.
+  const paragraph = closed.slice(closed.lastIndexOf('\n\n') + 1);
+  const count = (mark: string) => paragraph.split(mark).length - 1;
+  if (count('`') % 2 === 1) {
+    closed += '`';
+  } else {
+    if (count('**') % 2 === 1) {
+      closed += '**';
+    }
+    if (count('~~') % 2 === 1) {
+      closed += '~~';
+    }
+  }
+  return closed;
+}
+
+/** The answer so far as safe HTML, rendered like the server renders the finished one (GFM, single newlines break). */
+export function renderStreamingMarkdown(text: string): string {
+  if (!text.trim()) {
+    return '';
+  }
+  const html = marked.parse(closeOpenMarkdown(text), { gfm: true, breaks: true, async: false });
+  // Model output: never trusted as HTML.
+  return DOMPurify.sanitize(html);
+}
+
+/** Where the word that starts at or after `from` ends, or -1 when the text runs out first. */
+const wordEnd = (text: string, from: number) => {
+  const space = /\s/g;
+  space.lastIndex = from;
+  return space.exec(text)?.index ?? -1;
+};
+
+/** After the last whole word, so a word still arriving never shows cut in half. */
+const safeEnd = (text: string) => {
+  const match = /\s(?=\S*$)/.exec(text);
+  return match ? match.index + 1 : 0;
+};
+
+/**
+ * Reveals `target` a few words per frame instead of in the bursts the network delivers. The pace follows what is left:
+ * steady while the model writes, quick to catch up after a burst, and done in a moment once `finished`. Reduced motion
+ * or `skip` shows everything at once.
+ */
+export function useSmoothText(target: string, finished: boolean, skip = false) {
+  const instant = skip || prefersReducedMotion();
+  const [length, setLength] = useState(0);
+  const current = useRef(0);
+  const shownLength = instant ? target.length : Math.min(length, target.length);
+
+  useEffect(() => {
+    if (instant) {
+      return undefined;
+    }
+    let frame = 0;
+    const tick = () => {
+      const from = Math.min(current.current, target.length);
+      const backlog = target.length - from;
+      if (backlog === 0) {
+        return;
+      }
+      const step = Math.max(2, Math.ceil(backlog / (finished ? 4 : 10)));
+      let next = Math.min(target.length, from + step);
+      if (next < target.length) {
+        const end = wordEnd(target, next);
+        next = end !== -1 ? end : finished ? target.length : safeEnd(target);
+      } else if (!finished) {
+        next = safeEnd(target);
+      }
+      next = Math.max(from, next);
+      current.current = next;
+      setLength(next);
+      // While the model writes, the last word waits for the space after it.
+      if (next < (finished ? target.length : safeEnd(target))) {
+        frame = requestAnimationFrame(tick);
+      }
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [target, finished, instant]);
+
+  return { shown: target.slice(0, shownLength), caughtUp: finished && shownLength >= target.length };
+}
+
+/** How close to the bottom still counts as reading the latest. */
+const STICK_DISTANCE = 64;
+
+/**
+ * Keeps a scrolling area at its bottom while its content grows, gliding there instead of jumping. It lets go as soon as
+ * the person scrolls up, and takes hold again when they scroll back down or call `stick`.
+ */
+export function useStickToBottom<Scroll extends HTMLElement, Content extends HTMLElement>() {
+  const scroll = useRef<Scroll>(null);
+  const content = useRef<Content>(null);
+  const stuck = useRef(true);
+  const lastTop = useRef(0);
+  const frame = useRef(0);
+
+  const glide = useCallback(() => {
+    cancelAnimationFrame(frame.current);
+    const reduced = prefersReducedMotion();
+    const step = () => {
+      const element = scroll.current;
+      if (!element || !stuck.current) {
+        return;
+      }
+      const target = element.scrollHeight - element.clientHeight;
+      const gap = target - element.scrollTop;
+      if (gap <= 1 || reduced) {
+        element.scrollTop = target;
+        lastTop.current = element.scrollTop;
+        return;
+      }
+      element.scrollTop += Math.max(1, gap * 0.25);
+      lastTop.current = element.scrollTop;
+      frame.current = requestAnimationFrame(step);
+    };
+    frame.current = requestAnimationFrame(step);
+  }, []);
+
+  /** Back to the bottom at once, such as after sending a question or opening a conversation. */
+  const stick = useCallback(() => {
+    stuck.current = true;
+    const element = scroll.current;
+    if (element) {
+      element.scrollTop = element.scrollHeight;
+      lastTop.current = element.scrollTop;
+    }
+  }, []);
+
+  const onScroll = useCallback(() => {
+    const element = scroll.current;
+    if (!element) {
+      return;
+    }
+    const gap = element.scrollHeight - element.clientHeight - element.scrollTop;
+    // Only the person scrolls up; the glide only ever moves down.
+    if (element.scrollTop < lastTop.current - 1 && gap > STICK_DISTANCE) {
+      stuck.current = false;
+    } else if (gap <= STICK_DISTANCE) {
+      stuck.current = true;
+    }
+    lastTop.current = element.scrollTop;
+  }, []);
+
+  useEffect(() => {
+    const element = content.current;
+    if (!element || typeof ResizeObserver === 'undefined') {
+      return undefined;
+    }
+    const observer = new ResizeObserver(glide);
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame.current);
+    };
+  }, [glide]);
+
+  return { scroll, content, onScroll, stick, glide };
+}

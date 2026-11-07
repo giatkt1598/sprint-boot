@@ -1,0 +1,69 @@
+import { act, renderHook } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { closeOpenMarkdown, renderStreamingMarkdown, useSmoothText } from './streaming';
+
+describe('closeOpenMarkdown', () => {
+  it('closes an open code fence', () => {
+    expect(closeOpenMarkdown('Run:\n```ts\nconst a = 1;')).toBe('Run:\n```ts\nconst a = 1;\n```');
+  });
+
+  it('closes bold, strikethrough and inline code left open in the last paragraph', () => {
+    expect(closeOpenMarkdown('Done.\n\nThis is **bold')).toBe('Done.\n\nThis is **bold**');
+    expect(closeOpenMarkdown('Old ~~text')).toBe('Old ~~text~~');
+    expect(closeOpenMarkdown('Call `get_issue')).toBe('Call `get_issue`');
+    expect(closeOpenMarkdown('**Done** already')).toBe('**Done** already');
+  });
+
+  it('holds back a table row still being written', () => {
+    expect(closeOpenMarkdown('| Key | Title |\n| --- | --- |\n| SB-1 | Pay')).toBe('| Key | Title |\n| --- | --- |');
+  });
+});
+
+describe('renderStreamingMarkdown', () => {
+  it('renders GFM with single newlines as breaks', () => {
+    const html = renderStreamingMarkdown('**Bold**\nnext\n\n| A |\n| - |\n| 1 |');
+    expect(html).toContain('<strong>Bold</strong><br>');
+    expect(html).toContain('<table>');
+  });
+
+  it('strips scripts and event handlers from model output', () => {
+    const html = renderStreamingMarkdown('Hi <script>alert(1)</script><img src=x onerror="alert(1)">');
+    expect(html).not.toContain('<script');
+    expect(html).not.toContain('onerror');
+  });
+});
+
+describe('useSmoothText', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('reveals whole words over several frames and finishes once the text is complete', () => {
+    vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame'] });
+    const text = 'one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen';
+    const { result, rerender } = renderHook(({ target, finished }) => useSmoothText(target, finished), {
+      initialProps: { target: text, finished: false },
+    });
+    expect(result.current.shown).toBe('');
+
+    act(() => vi.advanceTimersToNextFrame());
+    const first = result.current.shown;
+    expect(first.length).toBeGreaterThan(0);
+    expect(first.length).toBeLessThan(text.length);
+    expect(text.startsWith(first)).toBe(true);
+    expect(text[first.length]).toMatch(/\s/);
+
+    // The last word may still grow, so it waits until the answer is finished.
+    act(() => vi.advanceTimersByTime(2000));
+    expect(result.current.shown).toBe(text.slice(0, text.lastIndexOf(' ') + 1));
+    expect(result.current.caughtUp).toBe(false);
+
+    rerender({ target: text, finished: true });
+    act(() => vi.advanceTimersByTime(2000));
+    expect(result.current.shown).toBe(text);
+    expect(result.current.caughtUp).toBe(true);
+  });
+
+  it('shows everything at once when skipped', () => {
+    const { result } = renderHook(() => useSmoothText('all of it', true, true));
+    expect(result.current).toEqual({ shown: 'all of it', caughtUp: true });
+  });
+});

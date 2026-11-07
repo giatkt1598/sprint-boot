@@ -82,7 +82,7 @@ describe('ChatThread', () => {
       signal = init.signal ?? undefined;
       const body = new ReadableStream<Uint8Array>({
         start(controller) {
-          controller.enqueue(event({ type: 'delta', text: 'Hello' }));
+          controller.enqueue(event({ type: 'delta', text: 'Hello ' }));
           release = () => {
             controller.enqueue(event({ type: 'message', message: { id: 'm1', role: 'assistant', text: 'Hello there', html: '<p>Hello there</p>', tools: [], actions: [], sources: [] } }));
             controller.enqueue(event({ type: 'done' }));
@@ -117,6 +117,50 @@ describe('ChatThread', () => {
     await act(async () => release());
     await screen.findByText('Hello there');
     expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders Markdown while the answer streams, then shows the saved message', async () => {
+    post.mockResolvedValue({ id: 'c4' });
+    get.mockResolvedValue({ conversation: { id: 'c4', title: 'Hi' }, messages: [] });
+    let release: () => void = () => undefined;
+    const encoder = new TextEncoder();
+    const event = (data: object) => encoder.encode(`data: ${JSON.stringify(data)}
+
+`);
+    vi.stubGlobal('fetch', vi.fn(() => {
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(event({ type: 'delta', text: '**Payment' }));
+          controller.enqueue(event({ type: 'delta', text: ' fails** on ' }));
+          release = () => {
+            controller.enqueue(event({ type: 'delta', text: 'retry.' }));
+            controller.enqueue(event({ type: 'message', message: { id: 'm9', role: 'assistant', text: '**Payment fails** on retry.', html: '<p><strong>Payment fails</strong> on retry. (saved)</p>', tools: [], actions: [], sources: [] } }));
+            controller.enqueue(event({ type: 'done' }));
+            controller.close();
+          };
+        },
+      });
+      return Promise.resolve(new Response(body, { headers: { 'content-type': 'text/event-stream' } }));
+    }));
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <Host />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    const box = screen.getByRole('textbox');
+    fireEvent.change(box, { target: { value: 'Why?' } });
+    await act(async () => {
+      fireEvent.keyDown(box, { key: 'Enter' });
+    });
+
+    // Still streaming, yet already bold.
+    expect((await screen.findByText('Payment fails')).tagName).toBe('STRONG');
+    await act(async () => release());
+    await screen.findByText(/\(saved\)/);
+    expect(screen.getAllByText('Payment fails')).toHaveLength(1);
   });
 
   it('keeps answering in the panel when the first question creates the conversation', async () => {

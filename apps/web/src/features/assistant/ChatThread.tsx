@@ -4,7 +4,7 @@ import InputBase from '@mui/material/InputBase';
 import Typography from '@mui/material/Typography';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowUp, Bot, Check, LoaderCircle, Square, Wrench, X } from 'lucide-react';
-import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useNavigate } from 'react-router';
 import { Badge, type BadgeTone } from '../../components/Badge';
@@ -12,6 +12,7 @@ import { Button } from '../../components/Button';
 import { ErrorState, LoadingState } from '../../components/StateViews';
 import { font, radius, sem } from '../../theme/tokens';
 import { RichTextView } from '../issues/RichTextEditor';
+import { renderStreamingMarkdown, useSmoothText, useStickToBottom } from './streaming';
 import {
   ActionState,
   assistantKeys,
@@ -24,14 +25,25 @@ import {
   type AssistantMessage,
 } from './api';
 
-interface Live {
-  question: string | null;
+/** One step of the model: the text as it streams, then the saved message once the step ends. */
+interface Segment {
   text: string;
-  tools: { name: string; state: string }[];
-  messages: AssistantMessage[];
+  message?: AssistantMessage;
 }
 
-const EMPTY_LIVE: Live = { question: null, text: '', tools: [], messages: [] };
+interface Live {
+  question: string | null;
+  tools: { name: string; state: string }[];
+  segments: Segment[];
+}
+
+const EMPTY_LIVE: Live = { question: null, tools: [], segments: [] };
+
+/** What the stream ended with, kept until the last words have shown. */
+interface Ending {
+  id: string;
+  done?: () => Promise<void>;
+}
 
 const actionTones: Record<number, BadgeTone> = {
   [ActionState.proposed]: 'warning',
@@ -94,17 +106,7 @@ function ActionCard({ action, busy, onDecide }: { action: AssistantAction; busy:
 
 function AssistantBubble({ message, busy, onDecide }: { message: AssistantMessage; busy: boolean; onDecide: (action: AssistantAction, confirm: boolean) => void }) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-
-  // Issue links in the answer open inside the app instead of reloading it.
-  const followLink = (event: MouseEvent<HTMLDivElement>) => {
-    const link = (event.target as HTMLElement).closest('a');
-    const href = link?.getAttribute('href');
-    if (href?.startsWith('/')) {
-      event.preventDefault();
-      void navigate(href);
-    }
-  };
+  const followLink = useFollowLink();
 
   return (
     <div className="flex flex-col gap-2">
@@ -134,6 +136,46 @@ function AssistantBubble({ message, busy, onDecide }: { message: AssistantMessag
       )}
     </div>
   );
+}
+
+/** Issue links in an answer open inside the app instead of reloading it. */
+function useFollowLink() {
+  const navigate = useNavigate();
+  return (event: MouseEvent<HTMLDivElement>) => {
+    const link = (event.target as HTMLElement).closest('a');
+    const href = link?.getAttribute('href');
+    if (href?.startsWith('/')) {
+      event.preventDefault();
+      void navigate(href);
+    }
+  };
+}
+
+/**
+ * The step being written: Markdown rendered as it arrives, revealed a few words per frame. Once the step is saved and
+ * every word has shown, the server's rendering of it takes over.
+ */
+function StreamingAnswer({ segment, finished, skip, busy, onDecide, onCaughtUp }: {
+  segment: Segment;
+  finished: boolean;
+  skip: boolean;
+  busy: boolean;
+  onDecide: (action: AssistantAction, confirm: boolean) => void;
+  onCaughtUp: (caughtUp: boolean) => void;
+}) {
+  const followLink = useFollowLink();
+  const { shown, caughtUp } = useSmoothText(segment.text, finished || Boolean(segment.message), skip);
+  const html = useMemo(() => renderStreamingMarkdown(shown), [shown]);
+  useEffect(() => onCaughtUp(caughtUp), [caughtUp, onCaughtUp]);
+
+  if (segment.message && caughtUp) {
+    return <AssistantBubble message={segment.message} busy={busy} onDecide={onDecide} />;
+  }
+  return html ? (
+    <div onClick={followLink}>
+      <RichTextView html={html} />
+    </div>
+  ) : null;
 }
 
 function UserBubble({ text }: { text: string }) {
@@ -172,9 +214,12 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
   const [live, setLive] = useState<Live>(EMPTY_LIVE);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ending, setEnding] = useState<Ending | null>(null);
+  const [revealed, setRevealed] = useState(true);
+  const [skip, setSkip] = useState(false);
   const abort = useRef<AbortController | null>(null);
-  const bottom = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
+  const scroller = useStickToBottom<HTMLDivElement, HTMLDivElement>();
 
   useEffect(() => () => abort.current?.abort(), []);
   useEffect(() => onBusyChange?.(busy), [busy, onBusyChange]);
@@ -186,27 +231,56 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
     const frame = requestAnimationFrame(() => input.current?.focus());
     return () => cancelAnimationFrame(frame);
   }, [active]);
+  // An opened conversation starts at its latest message.
+  const loaded = detail.isSuccess;
+  const { stick } = scroller;
   useEffect(() => {
-    bottom.current?.scrollIntoView({ block: 'end' });
-  }, [detail.data, live]);
+    if (loaded) {
+      stick();
+    }
+  }, [loaded, stick]);
+
+  // Once the stream has ended and its last words have shown, the saved conversation replaces the live copy.
+  useEffect(() => {
+    if (!ending || !revealed) {
+      return;
+    }
+    setEnding(null);
+    void (async () => {
+      await queryClient.invalidateQueries({ queryKey: assistantKeys.detail(ending.id) });
+      await queryClient.invalidateQueries({ queryKey: ['assistant', 'conversations'] });
+      await ending.done?.();
+      setLive(EMPTY_LIVE);
+      setSkip(false);
+      setBusy(false);
+    })();
+  }, [ending, revealed, queryClient]);
 
   const describe = (event: AssistantEvent) => {
     const key = `errors.${event.code?.split(':')[1]}`;
     return event.code && i18n.exists(key) ? t(key) : event.text || t('errors.generic');
   };
 
-  /** Streams one answer; `done` runs once it is saved, before the live copy is cleared. */
+  /** Streams one answer; `done` runs once it is saved and shown, before the live copy is cleared. */
   const run = async (id: string, path: string, body: unknown, question: string | null, done?: () => Promise<void>) => {
     abort.current = new AbortController();
     setBusy(true);
     setError(null);
     setLive({ ...EMPTY_LIVE, question });
+    setRevealed(true);
+    scroller.stick();
     try {
       await streamAssistant(path, body, (event) => {
         setLive((current) => {
+          const last = current.segments[current.segments.length - 1];
           switch (event.type) {
             case 'delta':
-              return { ...current, text: current.text + (event.text ?? '') };
+              return {
+                ...current,
+                segments: last && !last.message
+                  ? [...current.segments.slice(0, -1), { text: last.text + (event.text ?? '') }]
+                  : [...current.segments, { text: event.text ?? '' }],
+              };
             case 'tool':
               return {
                 ...current,
@@ -215,8 +289,13 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
                   : current.tools.map((tool, index, all) => (index === all.length - 1 ? { ...tool, state: event.state ?? 'done' } : tool)),
               };
             case 'message':
-              // The finished text now shows inside the message; what streams next belongs to the following step.
-              return { ...current, text: '', messages: [...current.messages, event.message!] };
+              // The step is saved; what streams next belongs to the following step.
+              return {
+                ...current,
+                segments: last && !last.message
+                  ? [...current.segments.slice(0, -1), { ...last, message: event.message! }]
+                  : [...current.segments, { text: '', message: event.message! }],
+              };
             default:
               return current;
           }
@@ -230,11 +309,8 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
         setError(t('errors.generic'));
       }
     } finally {
-      setBusy(false);
-      await queryClient.invalidateQueries({ queryKey: assistantKeys.detail(id) });
-      await queryClient.invalidateQueries({ queryKey: ['assistant', 'conversations'] });
-      await done?.();
-      setLive(EMPTY_LIVE);
+      // Still busy until the last words have shown; see the ending effect.
+      setEnding({ id, done });
     }
   };
 
@@ -277,10 +353,14 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
   };
 
   const messages = detail.data?.messages ?? [];
+  // Earlier steps are done; only the latest one is still being revealed.
+  const earlier = live.segments.slice(0, -1);
+  const current = live.segments[live.segments.length - 1];
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4" aria-live="polite">
+      <div ref={scroller.scroll} onScroll={scroller.onScroll} className="min-h-0 flex-1 overflow-y-auto" aria-live="polite">
+      <div ref={scroller.content} className="flex flex-col gap-4 p-4">
         {conversationId && detail.isPending && <LoadingState />}
         {detail.isError && <ErrorState onRetry={() => void detail.refetch()} />}
         {!conversationId && !live.question && (
@@ -298,7 +378,11 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
             : <AssistantBubble key={message.id} message={message} busy={busy} onDecide={decide} />,
         )}
         {live.question && <UserBubble text={live.question} />}
-        {live.messages.map((message) => <AssistantBubble key={message.id} message={message} busy={busy} onDecide={decide} />)}
+        {earlier.map((segment, index) => (
+          segment.message
+            ? <AssistantBubble key={segment.message.id ?? index} message={segment.message} busy={busy} onDecide={decide} />
+            : null
+        ))}
         {live.tools.length > 0 && busy && (
           <div className="flex flex-wrap gap-1">
             {live.tools.map((tool, index) => (
@@ -308,8 +392,18 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
             ))}
           </div>
         )}
-        {live.text && <div style={{ whiteSpace: 'pre-wrap', fontSize: font.size.md }}>{live.text}</div>}
-        {busy && !live.text && (
+        {current && (
+          <StreamingAnswer
+            key={live.segments.length}
+            segment={current}
+            finished={ending !== null}
+            skip={skip}
+            busy={busy}
+            onDecide={decide}
+            onCaughtUp={setRevealed}
+          />
+        )}
+        {busy && !ending && !current?.text && (
           <div className="flex items-center gap-2" role="status">
             <LoaderCircle size={16} strokeWidth={1.5} className="animate-spin" aria-hidden />
             <Typography variant="body2" color="textSecondary">{t('assistant.thinking')}</Typography>
@@ -318,7 +412,7 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
         {error && (
           <Typography role="alert" variant="body2" sx={{ color: sem('feedback-danger-text') }}>{error}</Typography>
         )}
-        <div ref={bottom} />
+      </div>
       </div>
       <div className="px-3 pb-3 pt-1">
         <Box
@@ -347,7 +441,11 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
               <IconButton
                 size="small"
                 aria-label={t('assistant.stop')}
-                onClick={() => abort.current?.abort()}
+                onClick={() => {
+                  // Stopping also shows at once whatever had arrived.
+                  setSkip(true);
+                  abort.current?.abort();
+                }}
                 sx={{ width: 28, height: 28, backgroundColor: sem('text-primary'), color: sem('bg-surface'), '&:hover': { backgroundColor: sem('text-primary') } }}
               >
                 <Square size={12} strokeWidth={1.5} fill="currentColor" aria-hidden />
