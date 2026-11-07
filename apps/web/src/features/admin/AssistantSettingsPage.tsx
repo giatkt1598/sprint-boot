@@ -15,7 +15,7 @@ import { Table } from '../../components/Table';
 import { SelectField, TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
-import { font, sem } from '../../theme/tokens';
+import { font, sem, size } from '../../theme/tokens';
 import { assistantKeys, Provider, type AiConnection } from '../assistant/api';
 
 const KEY = ['admin', 'assistant'];
@@ -93,7 +93,12 @@ function ModelField({ label, placeholder, value, models, onChange }: {
           </li>
         )}
         renderInput={(params) => (
-          <MuiTextField {...params} placeholder={placeholder} autoComplete="off" />
+          <MuiTextField
+            {...params}
+            placeholder={placeholder}
+            autoComplete="off"
+            sx={{ '& .MuiOutlinedInput-root': { height: size.input, paddingBlock: 0 } }}
+          />
         )}
       />
     </div>
@@ -231,7 +236,8 @@ function ConnectionDialog({ draft, onClose }: { draft: Draft; onClose: () => voi
           models={models}
           onChange={(model) => update({ model })}
         />
-        <Button kind="secondary" disabled={!reachable || loadModels.isPending} onClick={() => loadModels.mutate()}>
+        {/* As tall as the Model field beside it. */}
+        <Button kind="secondary" sx={{ height: size.input, flexShrink: 0 }} disabled={!reachable || loadModels.isPending} onClick={() => loadModels.mutate()}>
           {t(loadModels.isPending ? 'assistantAdmin.loadingModels' : 'assistantAdmin.loadModels')}
         </Button>
       </div>
