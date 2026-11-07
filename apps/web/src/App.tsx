@@ -24,6 +24,7 @@ import { IssuesListPage } from './features/issues/IssuesListPage';
 import { SpaceGeneralPage, SpaceMembersPage, SpaceSettingsIndex, SpaceSettingsLayout } from './features/spaces/SpaceSettings';
 import { SpaceBoardPage } from './features/spaces/SpaceBoardPage';
 import { SpacesPage } from './features/spaces/SpacesPage';
+import { SpaceGuard } from './features/spaces/SpaceGuard';
 import { SpaceWorkflowsPage } from './features/spaces/SpaceWorkflowsPage';
 import { SpaceIssueTemplatesPage } from './features/spaces/IssueTemplatesPage';
 import { AssistantSettingsPage } from './features/admin/AssistantSettingsPage';
@@ -76,6 +77,7 @@ export function App() {
                 <Route path="notification-schemes/:schemeId" element={<EditSchemePage />} />
                 <Route path="statuses" element={<StatusesPage />} />
                 <Route path="deleted-issues" element={<DeletedIssuesPage />} />
+                <Route path="*" element={<NotFoundPage />} />
               </Route>
               <Route path="spaces/:spaceKey/settings" element={<SpaceSettingsLayout />}>
                 <Route index element={<SpaceSettingsIndex />} />
@@ -86,16 +88,21 @@ export function App() {
                 <Route path="issue-templates" element={<SpaceIssueTemplatesPage />} />
                 <Route path="git" element={<GitConnectionsPage />} />
                 <Route path="git/:connectionId" element={<GitRepositoriesPage />} />
+                <Route path="*" element={<NotFoundPage />} />
               </Route>
             </Route>
 
             <Route element={<AppShell />}>
               <Route index element={<HomePage />} />
               <Route path="spaces" element={<Navigate to="/" replace />} />
-              <Route path="spaces/:spaceKey/backlog" element={<BacklogPage />} />
-              <Route path="spaces/:spaceKey/board" element={<BoardPage />} />
-              <Route path="spaces/:spaceKey/epics" element={<EpicsPage />} />
-              <Route path="spaces/:spaceKey/issues" element={<IssuesListPage />} />
+              <Route path="spaces/:spaceKey" element={<SpaceGuard />}>
+                <Route index element={<Navigate to="issues" replace />} />
+                <Route path="backlog" element={<BacklogPage />} />
+                <Route path="board" element={<BoardPage />} />
+                <Route path="epics" element={<EpicsPage />} />
+                <Route path="issues" element={<IssuesListPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Route>
               <Route path="issues/:issueKey" element={<IssuePage />} />
               <Route path="search" element={<IssuesListPage />} />
               <Route path="notifications" element={<NotificationsPage />} />

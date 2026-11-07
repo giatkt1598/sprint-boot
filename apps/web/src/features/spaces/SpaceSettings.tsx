@@ -15,7 +15,8 @@ import { ErrorState, LoadingState } from '../../components/StateViews';
 import { Table } from '../../components/Table';
 import { SelectField, TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
-import { useErrorMessage } from '../../lib/errors';
+import { isNotFound, useErrorMessage } from '../../lib/errors';
+import { NotFoundPage } from '../../pages/NotFoundPage';
 import { formatDate } from '../../lib/format';
 import { appLocationOr } from '../../lib/returnTo';
 import { font, radius, sem, size } from '../../theme/tokens';
@@ -59,7 +60,11 @@ export function SpaceSettingsLayout() {
     return <LoadingState />;
   }
   if (space.isError) {
-    return <ErrorState onRetry={() => void space.refetch()} />;
+    return isNotFound(space.error) ? (
+      <NotFoundPage title={t('notFound.spaceTitle')} description={t('notFound.spaceDescription')} />
+    ) : (
+      <ErrorState onRetry={() => void space.refetch()} />
+    );
   }
 
   return (

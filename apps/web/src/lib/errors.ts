@@ -28,3 +28,6 @@ export function useErrorMessage() {
     [t, i18n],
   );
 }
+
+/** Missing and forbidden both come back as not found, so the UI never tells whether something exists. */
+export const isNotFound = (failure: unknown) => failure instanceof ApiError && (failure.status === 404 || failure.status === 403);

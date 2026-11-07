@@ -33,7 +33,14 @@
   "notFound": {
     "title": "Không tìm thấy trang",
     "description": "Trang bạn mở không tồn tại hoặc đã được chuyển đi.",
-    "back": "Về trang chủ"
+    "back": "Về trang chủ",
+    "code": "Lỗi 404",
+    "goBack": "Quay lại",
+    "spaceTitle": "Không tìm thấy space",
+    "spaceDescription": "Space không tồn tại hoặc bạn không phải thành viên.",
+    "issueTitle": "Không tìm thấy issue",
+    "sprintTitle": "Không tìm thấy sprint",
+    "sprintDescription": "Sprint đã đóng không tồn tại hoặc bạn không có quyền xem."
   },
   "common": {
     "deactivatedUser": "Người dùng đã ngừng hoạt động",

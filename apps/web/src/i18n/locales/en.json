@@ -33,7 +33,14 @@
   "notFound": {
     "title": "Page not found",
     "description": "The page you opened does not exist or has moved.",
-    "back": "Back to home"
+    "back": "Back to home",
+    "code": "Error 404",
+    "goBack": "Go back",
+    "spaceTitle": "Space not found",
+    "spaceDescription": "This space does not exist or you are not a member of it.",
+    "issueTitle": "Issue not found",
+    "sprintTitle": "Sprint not found",
+    "sprintDescription": "This closed sprint does not exist or you cannot view it."
   },
   "common": {
     "deactivatedUser": "Deactivated User",

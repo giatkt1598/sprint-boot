@@ -30,6 +30,7 @@ import { SelectField, TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { UserPicker } from '../../components/UserPicker';
 import { useErrorMessage } from '../../lib/errors';
+import { NotFoundPage } from '../../pages/NotFoundPage';
 import { hasSelectedText } from '../../lib/selection';
 import { formatDateTime, formatRelative, formatSize } from '../../lib/format';
 import { font, radius, sem } from '../../theme/tokens';
@@ -83,7 +84,7 @@ export function IssueContent({ issueKey, compact, panelHeader }: { issueKey: str
     const state = issue.isPending ? (
       <LoadingState />
     ) : issue.error instanceof ApiError && issue.error.status < 500 ? (
-      <Typography role="alert">{t('issues.notFound')}</Typography>
+      <NotFoundPage title={t('notFound.issueTitle')} description={t('issues.notFound')} />
     ) : (
       <ErrorState onRetry={() => void issue.refetch()} />
     );
