@@ -11,6 +11,7 @@ import { apiClient, unwrap } from '../../api';
 import { Button } from '../../components/Button';
 import { IssueTypeIcon, type IssueType as IconType } from '../../components/IssueIcons';
 import { MenuItem } from '../../components/Menu';
+import { TruncatedText } from '../../components/TruncatedText';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
 import { font, radius, sem, shadow, type SemanticToken } from '../../theme/tokens';
 import { IssuePanel } from '../agile/IssuePanel';
@@ -138,7 +139,7 @@ export function TimelineTab({ space }: { space: Space }) {
         {issue.type?.icon && issue.type.icon in TYPE_BARS ? <IssueTypeIcon type={issue.type.icon as IconType} /> : null}
       </span>
       <span className="shrink-0" style={{ color: sem('text-secondary') }}>{issue.key}</span>
-      <span className="min-w-0 truncate" style={{ color: sem('text-primary') }}>{issue.title}</span>
+      <TruncatedText text={issue.title ?? ''} style={{ color: sem('text-primary') }} />
     </ButtonBase>
   );
 
@@ -168,7 +169,7 @@ export function TimelineTab({ space }: { space: Space }) {
           borderRadius: `${left}px ${right}px ${right}px ${left}px`,
         }}
       >
-        <span className="min-w-0 truncate">{issue.title}</span>
+        <TruncatedText text={issue.title ?? ''} />
       </ButtonBase>
     );
   };
