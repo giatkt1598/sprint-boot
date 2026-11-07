@@ -41,7 +41,7 @@ const DAY_MS = 86_400_000;
 const KNOWN_TYPES = ['story', 'task', 'bug', 'subtask', 'epic'];
 
 /** A bar takes the colour of its status group: To Do, In progress, Done. */
-const STATUS_BARS: SemanticToken[] = ['status-todo-text', 'accent-default', 'status-done-text'];
+const STATUS_BARS: SemanticToken[] = ['border-strong', 'accent-default', 'status-done-text'];
 
 /** Dates are plain calendar days; arithmetic happens on UTC midnights so time zones never shift a bar. */
 const toDay = (iso: string) => Date.parse(`${iso}T00:00:00Z`) / DAY_MS;
@@ -175,7 +175,8 @@ export function TimelineTab({ space }: { space: Space }) {
         className="absolute flex items-center overflow-hidden px-2"
         sx={{
           justifyContent: 'flex-start',
-          color: sem('text-on-accent'),
+          // A light To Do bar takes dark text; the other two are dark enough for white.
+          color: sem(issue.status?.category ? 'text-on-accent' : 'text-primary'),
           fontSize: font.size.xs,
           fontWeight: font.weight.medium,
           left: (from - range.from) * dayWidth + (start < range.from ? 0 : 4),
