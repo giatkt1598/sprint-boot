@@ -37,7 +37,8 @@ export const aurora = {
   content: 'transparent',
   surfaceFilter: 'blur(24px)',
   surfaces: {
-    chrome: alpha('#0F172A', 0.62),
+    // Top bar and sidebar: night glass with a cast of the aurora's teal, see-through enough to show the ribbons.
+    chrome: alpha('#0B2230', 0.5),
     card: alpha('#0F172A', 0.82),
     column: alpha('#0F172A', 0.35),
     overlay: alpha('#0F172A', 0.97),
@@ -86,7 +87,8 @@ export const sunset = {
   content: 'transparent',
   surfaceFilter: 'blur(20px)',
   surfaces: {
-    chrome: alpha('#FFFFFF', 0.74),
+    // Top bar and sidebar: frosted glass tinted peach by the evening sky.
+    chrome: alpha('#FFE9DC', 0.55),
     card: alpha('#FFFFFF', 0.9),
     column: alpha('#FFFFFF', 0.32),
     overlay: alpha('#FFFFFF', 0.98),

@@ -111,8 +111,11 @@ export const wood = {
   },
   page: `url("${woodPlanks}") center / cover, #B9844F`,
   content: 'transparent',
+  // Frosts the thin paper of the top bar and sidebar, so the grain behind them stays soft.
+  surfaceFilter: 'blur(8px)',
   surfaces: {
-    chrome: alpha('#FFFBF3', 0.96),
+    // Top bar and sidebar: thin cream paper the grain shows through.
+    chrome: alpha('#FFF4E2', 0.8),
     card: '#FFFBF3',
     column: alpha('#FFF8EC', 0.4),
     overlay: '#FFFBF3',
@@ -161,7 +164,8 @@ export const water = {
   content: 'transparent',
   surfaceFilter: 'blur(16px)',
   surfaces: {
-    chrome: alpha('#FFFFFF', 0.78),
+    // Top bar and sidebar: frosted glass tinted by the water.
+    chrome: alpha('#E3F5FD', 0.6),
     card: alpha('#FFFFFF', 0.92),
     column: alpha('#FFFFFF', 0.4),
     overlay: alpha('#FFFFFF', 0.97),
@@ -207,7 +211,8 @@ export const fire = {
   content: 'transparent',
   surfaceFilter: 'blur(16px)',
   surfaces: {
-    chrome: alpha('#1C1210', 0.84),
+    // Top bar and sidebar: smoked glass warmed by the embers.
+    chrome: alpha('#2A140D', 0.66),
     card: alpha('#1C1210', 0.92),
     column: alpha('#1C1210', 0.32),
     overlay: alpha('#1C1210', 0.98),
