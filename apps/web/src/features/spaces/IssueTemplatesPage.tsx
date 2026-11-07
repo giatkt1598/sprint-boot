@@ -1,3 +1,4 @@
+import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -232,14 +233,19 @@ export function SpaceIssueTemplatesPage() {
               const isGlobal = row.kind === 'available' || Boolean(row.item.globalTemplateId);
               const used = row.kind === 'own' && row.item.isDefault;
               return (
-                <div
+                <Box
                   key={`${row.kind}-${template.id}`}
                   className="flex items-center gap-3 px-3 py-2"
-                  style={{ border: `1px ${row.kind === 'available' ? 'dashed' : 'solid'} ${sem('border-default')}`, borderRadius: radius.card }}
+                  sx={{
+                    border: `1px ${row.kind === 'available' ? 'dashed' : 'solid'} ${sem('border-default')}`,
+                    borderRadius: radius.card,
+                    '&:hover': { backgroundColor: sem('bg-hover') },
+                  }}
                 >
-                  <Typography variant="body2" className="min-w-0 flex-1 truncate">{template.name}</Typography>
-                  {template.mode === TemplateMode.placeholder && <Badge tone="subtle">{t('templates.mode.placeholder')}</Badge>}
-                  {isGlobal && <Badge tone="subtle">{t('templates.global')}</Badge>}
+                  <Typography variant="body2" className="min-w-0 flex-1 truncate">
+                    {template.name}
+                    {isGlobal && <em className="ml-2">({t('templates.global')})</em>}
+                  </Typography>
                   {used && <Badge tone="info">{t('templates.inUse')}</Badge>}
                   {canManage && !used && (
                     <Link
@@ -283,7 +289,7 @@ export function SpaceIssueTemplatesPage() {
                       </Link>
                     </span>
                   )}
-                </div>
+                </Box>
               );
             })}
           </section>

@@ -46,7 +46,7 @@ describe('SpaceIssueTemplatesPage', () => {
     );
 
     const bugs = await screen.findByRole('region', { name: 'Bug' });
-    within(bugs).getByText('Global');
+    within(bugs).getByText('(Global)');
     expect(within(screen.getByRole('region', { name: 'Task' })).queryByText('Bug report')).toBeNull();
 
     fireEvent.click(within(bugs).getByRole('button', { name: 'Use Bug report' }));
@@ -56,7 +56,7 @@ describe('SpaceIssueTemplatesPage', () => {
     }));
     // Used: it becomes the space's own, still marked Global, and is offered no more.
     await within(bugs).findByText('Used');
-    within(bugs).getByText('Global');
+    within(bugs).getByText('(Global)');
     expect(within(bugs).queryByRole('button', { name: 'Use Bug report' })).toBeNull();
   });
 
@@ -78,8 +78,8 @@ describe('SpaceIssueTemplatesPage', () => {
 
     const tasks = await screen.findByRole('region', { name: 'Task' });
     await within(tasks).findByText('Our task');
-    const names = within(tasks).getAllByText(/task$/).map((item) => item.textContent);
-    expect(names).toEqual(['Workspace task', 'Our task']);
+    const names = within(tasks).getAllByText(/^(Workspace|Our) task/).map((item) => item.textContent);
+    expect(names).toEqual(['Workspace task(Global)', 'Our task']);
     expect(within(tasks).queryByRole('button', { name: 'Use Our task' })).toBeNull();
     within(tasks).getByText('Used');
 
