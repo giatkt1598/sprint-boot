@@ -16,6 +16,9 @@ public class UserSummaryDto
 
     public required string Email { get; set; }
 
+    /// <summary>Null until the user uploads a picture; clients then show initials.</summary>
+    public string? AvatarUrl { get; set; }
+
     public required string SystemRole { get; set; }
 
     public required bool IsLocked { get; set; }

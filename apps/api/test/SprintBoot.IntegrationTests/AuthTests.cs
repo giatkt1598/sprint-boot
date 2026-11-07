@@ -79,6 +79,9 @@ public class AuthTests(ApiFixture fixture)
         served.Content.Headers.ContentType!.MediaType.ShouldBe("image/png");
         (await client.Http.GetFromJsonAsync<List<UserRefDto>>("/api/v1/user-directory/search?search=" + Uri.EscapeDataString((await client.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!.Email), Token))!
             .ShouldHaveSingleItem().AvatarUrl.ShouldBe(url);
+        var admin = new AuthClient(fixture);
+        await admin.SignInAsync(ApiFixture.AdminEmail, ApiFixture.AdminPassword, Token);
+        (await admin.Http.GetFromJsonAsync<UserSummaryDto>($"/api/v1/user-admin/{client.UserId}", Token))!.AvatarUrl.ShouldBe(url);
 
         (await client.Http.DeleteAsync("/api/v1/auth/avatar", Token)).EnsureSuccessStatusCode();
         (await fixture.Factory.CreateClient().GetAsync(url, Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);

@@ -19283,6 +19283,7 @@ export interface components {
             id: string;
             name: string | null;
             email: string | null;
+            avatarUrl?: string | null;
             systemRole: string | null;
             isLocked: boolean;
             /** Format: date-time */

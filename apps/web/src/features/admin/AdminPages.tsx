@@ -163,7 +163,7 @@ export function UsersPage() {
                 key: 'name',
                 header: t('account.name'),
                 render: (user) => (
-                  <span className="flex items-center gap-2"><Avatar name={user.name ?? ''} />{user.name}</span>
+                  <span className="flex items-center gap-2"><Avatar name={user.name ?? ''} src={user.avatarUrl} />{user.name}</span>
                 ),
               },
               { key: 'email', header: t('auth.email'), render: (user) => user.email },
