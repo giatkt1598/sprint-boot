@@ -68,28 +68,34 @@ export function IssuePage() {
   return <IssueContent issueKey={issueKey} />;
 }
 
+/** What a side panel pins above the issue: its close control, and whether the panel has scrolled. */
+export interface PanelHeader {
+  close: ReactNode;
+  scrolled: boolean;
+}
+
 /** Same content on the full page and in the board panel; compact stacks the details. */
-export function IssueContent({ issueKey, compact }: { issueKey: string | undefined; compact?: boolean }) {
+export function IssueContent({ issueKey, compact, panelHeader }: { issueKey: string | undefined; compact?: boolean; panelHeader?: PanelHeader }) {
   const { t } = useTranslation();
   const issue = useIssue(issueKey);
 
-  if (issue.isPending) {
-    return <LoadingState />;
-  }
-  if (issue.isError) {
-    return issue.error instanceof ApiError && issue.error.status < 500 ? (
+  if (issue.isPending || issue.isError) {
+    const state = issue.isPending ? (
+      <LoadingState />
+    ) : issue.error instanceof ApiError && issue.error.status < 500 ? (
       <Typography role="alert">{t('issues.notFound')}</Typography>
     ) : (
       <ErrorState onRetry={() => void issue.refetch()} />
     );
+    return panelHeader ? <div className="flex flex-col gap-4 pt-6">{panelHeader.close}{state}</div> : state;
   }
-  return <IssueView key={issue.data.id} issue={issue.data} compact={compact} />;
+  return <IssueView key={issue.data.id} issue={issue.data} compact={compact} panelHeader={panelHeader} />;
 }
 
 // Wide enough that the assignee and reporter pickers show a full name next to the label column.
 const DETAILS_WIDTH = { min: 320, max: 560, initial: 360 };
 
-function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
+function IssueView({ issue, compact, panelHeader }: { issue: Issue; compact?: boolean; panelHeader?: PanelHeader }) {
   const { t, i18n } = useTranslation();
   const toMessage = useErrorMessage();
   const toast = useToast();
@@ -172,74 +178,79 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
 
   return (
     <div className={compact ? 'flex flex-col gap-4' : 'flex h-full min-h-0 flex-col gap-4'}>
-      {conflict && (
-        <div
-          role="alert"
-          className="flex items-center gap-2 px-3 py-2"
-          style={{ backgroundColor: sem('feedback-warning-bg'), color: sem('feedback-warning-text'), borderRadius: radius.control }}
-        >
-          <span className="flex-1">{t('issues.conflictBanner')}</span>
-          <Button kind="secondary" onClick={() => { setConflict(false); void queryClient.invalidateQueries({ queryKey: ['issues', issue.key] }); }}>
-            {t('common.reload')}
-          </Button>
-        </div>
-      )}
-
-      <nav aria-label="breadcrumb" className="flex items-center gap-1" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>
-        <Link component={RouterLink} to={`/spaces/${issue.projectKey}/backlog`} color="inherit">{issue.projectName}</Link>
-        <span aria-hidden>/</span>
-        {issue.parent && (
-          <>
-            <Link component={RouterLink} to={`/issues/${issue.parent.key}`} color="inherit" className="flex items-center gap-1">
-              <IssueTypeIcon type={issue.parent.typeIcon as IconType} />
-              {issue.parent.key}
-            </Link>
-            <span aria-hidden>/</span>
-          </>
+      {/* In a panel everything down to the title stays pinned while the rest scrolls under it. */}
+      <StickyHeader panel={panelHeader}>
+        {conflict && (
+          <div
+            role="alert"
+            className="flex items-center gap-2 px-3 py-2"
+            style={{ backgroundColor: sem('feedback-warning-bg'), color: sem('feedback-warning-text'), borderRadius: radius.control }}
+          >
+            <span className="flex-1">{t('issues.conflictBanner')}</span>
+            <Button kind="secondary" onClick={() => { setConflict(false); void queryClient.invalidateQueries({ queryKey: ['issues', issue.key] }); }}>
+              {t('common.reload')}
+            </Button>
+          </div>
         )}
-        <Box
-          className="flex items-center gap-1"
-          sx={{
-            color: sem('text-primary'),
-            '& .copy-link': { opacity: 0 },
-            '&:hover .copy-link, & .copy-link:focus-visible': { opacity: 1 },
-          }}
-        >
-          <TypeField issue={issue} canEdit={canEdit} onPick={(typeId) => update.mutate({ type: typeId })} />
-          {issue.key}
-          <Tooltip title={t('issues.copyLink')}>
-            <IconButton className="copy-link" size="small" aria-label={t('issues.copyLink')} onClick={() => void copyLink()}>
-              <Link2 size={16} strokeWidth={1.5} aria-hidden />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      </nav>
 
-      <div className="flex items-center gap-2">
-        <div className="min-w-0 flex-1">
-          {editingTitle ? (
-            <TitleEditor label={t('issues.titleField')} initial={issue.title ?? ''} onSave={saveTitle} onCancel={() => setEditingTitle(false)} />
-          ) : (
-            <Typography
-              variant="h1"
-              tabIndex={canEdit ? 0 : undefined}
-              onClick={() => canEdit && !hasSelectedText() && setEditingTitle(true)}
-              onKeyDown={(event) => event.key === 'Enter' && canEdit && setEditingTitle(true)}
-            >
-              {issue.title}
-            </Typography>
+        <nav aria-label="breadcrumb" className="flex items-center gap-1" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>
+          <Link component={RouterLink} to={`/spaces/${issue.projectKey}/backlog`} color="inherit">{issue.projectName}</Link>
+          <span aria-hidden>/</span>
+          {issue.parent && (
+            <>
+              <Link component={RouterLink} to={`/issues/${issue.parent.key}`} color="inherit" className="flex items-center gap-1">
+                <IssueTypeIcon type={issue.parent.typeIcon as IconType} />
+                {issue.parent.key}
+              </Link>
+              <span aria-hidden>/</span>
+            </>
           )}
+          <Box
+            className="flex items-center gap-1"
+            sx={{
+              color: sem('text-primary'),
+              '& .copy-link': { opacity: 0 },
+              '&:hover .copy-link, & .copy-link:focus-visible': { opacity: 1 },
+            }}
+          >
+            <TypeField issue={issue} canEdit={canEdit} onPick={(typeId) => update.mutate({ type: typeId })} />
+            {issue.key}
+            <Tooltip title={t('issues.copyLink')}>
+              <IconButton className="copy-link" size="small" aria-label={t('issues.copyLink')} onClick={() => void copyLink()}>
+                <Link2 size={16} strokeWidth={1.5} aria-hidden />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        </nav>
+
+        <div className="flex items-center gap-2">
+          <div className="min-w-0 flex-1">
+            {editingTitle ? (
+              <TitleEditor label={t('issues.titleField')} initial={issue.title ?? ''} onSave={saveTitle} onCancel={() => setEditingTitle(false)} />
+            ) : (
+              <Typography
+                variant="h1"
+                title={panelHeader ? issue.title ?? undefined : undefined}
+                sx={panelHeader ? clampedTitle : undefined}
+                tabIndex={canEdit ? 0 : undefined}
+                onClick={() => canEdit && !hasSelectedText() && setEditingTitle(true)}
+                onKeyDown={(event) => event.key === 'Enter' && canEdit && setEditingTitle(true)}
+              >
+                {issue.title}
+              </Typography>
+            )}
+          </div>
+          <AskAssistant />
+          <WatchControl issueId={issue.id!} />
+          <IconButton size="small" aria-label={t('issues.more')} onClick={(event) => setMenuAnchor(event.currentTarget)}>
+            <Ellipsis size={16} strokeWidth={1.5} aria-hidden />
+          </IconButton>
+          <Menu open={Boolean(menuAnchor)} anchorEl={menuAnchor} onClose={() => setMenuAnchor(null)}>
+            <MenuItem icon={Link2} onClick={() => void copyLink()}>{t('issues.copyLink')}</MenuItem>
+            <MenuItem icon={Trash2} danger onClick={() => { setMenuAnchor(null); setConfirmingDelete(true); }}>{t('common.delete')}</MenuItem>
+          </Menu>
         </div>
-        <AskAssistant />
-        <WatchControl issueId={issue.id!} />
-        <IconButton size="small" aria-label={t('issues.more')} onClick={(event) => setMenuAnchor(event.currentTarget)}>
-          <Ellipsis size={16} strokeWidth={1.5} aria-hidden />
-        </IconButton>
-        <Menu open={Boolean(menuAnchor)} anchorEl={menuAnchor} onClose={() => setMenuAnchor(null)}>
-          <MenuItem icon={Link2} onClick={() => void copyLink()}>{t('issues.copyLink')}</MenuItem>
-          <MenuItem icon={Trash2} danger onClick={() => { setMenuAnchor(null); setConfirmingDelete(true); }}>{t('common.delete')}</MenuItem>
-        </Menu>
-      </div>
+      </StickyHeader>
 
       {/* On the full page the content and the sidebar scroll on their own; the panel has one scroll. */}
       <div className={compact ? 'flex flex-col gap-6' : 'flex min-h-0 flex-1 gap-3'}>
@@ -954,5 +965,30 @@ function Attachments({ issue, canEdit }: { issue: Issue; canEdit: boolean }) {
         ))}
       </div>
     </section>
+  );
+}
+
+// A long title in the panel stops at three lines, so the pinned header leaves room to read the issue.
+const clampedTitle = { display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as const;
+
+/** Pins its children to the top of a panel, with a divider once the panel has scrolled; on the full page it adds nothing. */
+function StickyHeader({ panel, children }: { panel?: PanelHeader; children: ReactNode }) {
+  if (!panel) {
+    return <>{children}</>;
+  }
+
+  return (
+    <Box
+      className="sticky top-0 -mx-6 flex flex-col gap-4 px-6 pb-3 pt-6"
+      sx={{
+        zIndex: 2,
+        backgroundColor: sem('bg-surface'),
+        borderBottom: '1px solid',
+        borderColor: panel.scrolled ? sem('border-default') : 'transparent',
+      }}
+    >
+      {panel.close}
+      {children}
+    </Box>
   );
 }
