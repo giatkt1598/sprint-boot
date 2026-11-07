@@ -1,6 +1,6 @@
 import ButtonBase from '@mui/material/ButtonBase';
 import { Check } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '../../components/Badge';
 import { Tabs } from '../../components/Tabs';
@@ -58,29 +58,44 @@ function ThemeCard({ theme, accent, selected, onSelect }: { theme: ThemeDefiniti
       sx={{
         border: `1px solid ${sem('border-default')}`,
         borderRadius: `${radius.card}px`,
-        backgroundColor: sem('bg-surface'),
         boxShadow: selected ? `0 0 0 2px ${sem('border-focus')}` : 'none',
         '&:hover': { borderColor: sem('border-strong') },
       }}
     >
-      <Miniature theme={theme} accent={accent} />
-      <span className="flex flex-col gap-1 p-2" style={{ borderTop: `1px solid ${sem('border-default')}` }}>
-        <span className="flex items-center justify-between gap-2" style={{ fontSize: font.size.md, fontWeight: font.weight.medium, color: sem('text-primary') }}>
-          <span className="truncate">{name}</span>
-          {selected && (
-            <span aria-hidden className="flex size-5 shrink-0 items-center justify-center" style={{ borderRadius: radius.full, backgroundColor: sem('accent-default'), color: sem('text-on-accent') }}>
-              <Check size={12} strokeWidth={2} />
-            </span>
-          )}
+      <Miniature theme={theme} accent={accent}>
+        {/* Name, check and tags sit on the miniature and wear the theme's own colours. */}
+        <span
+          className="absolute left-2 top-2 max-w-[calc(100%-48px)] truncate px-2 py-0.5"
+          style={{
+            zIndex: 1,
+            fontFamily: 'var(--sb-heading-font)',
+            fontSize: font.size.xs,
+            fontWeight: font.weight.semibold,
+            color: sem('text-primary'),
+            backgroundColor: sem('bg-surface'),
+            border: `1px solid ${sem('border-default')}`,
+            borderRadius: radius.control,
+            boxShadow: shadow.popover,
+          }}
+        >
+          {name}
         </span>
+        {selected && (
+          <span
+            className="absolute right-2 top-2 flex size-5 items-center justify-center"
+            style={{ borderRadius: radius.full, backgroundColor: sem('accent-default'), color: sem('text-on-accent'), boxShadow: shadow.popover }}
+          >
+            <Check size={12} strokeWidth={2} />
+          </span>
+        )}
         {tags.length > 0 && (
-          <span className="flex flex-wrap gap-1">
+          <span className="absolute bottom-2 left-2 flex flex-wrap gap-1">
             {tags.map((tag) => (
               <Badge key={tag} tone="subtle">{t(`account.preferences.themeTag.${tag}`)}</Badge>
             ))}
           </span>
         )}
-      </span>
+      </Miniature>
     </ButtonBase>
   );
 }
@@ -94,15 +109,16 @@ const line = (token: Parameters<typeof sem>[0], width: string, height = 4) => ({
 });
 
 /** A top bar, a sidebar with one selected item, and a card with statuses and a button: enough to read a theme. */
-function Miniature({ theme, accent }: { theme: ThemeDefinition; accent: Accent }) {
+function Miniature({ theme, accent, children }: { theme: ThemeDefinition; accent: Accent; children: ReactNode }) {
   return (
     <span
       aria-hidden
       data-app-theme={theme.id}
       data-accent={theme.accents ? accent : undefined}
-      className="flex h-24 flex-col overflow-hidden"
+      className="relative flex h-32 flex-col overflow-hidden"
       style={{ background: 'var(--sb-page-bg)' }}
     >
+      {children}
       <span className="sb-surface flex h-3 shrink-0 items-center px-1.5" style={{ backgroundColor: sem('bg-surface'), borderBottom: `1px solid ${sem('border-default')}` }}>
         <span style={line('text-tertiary', '20%', 3)} />
       </span>
