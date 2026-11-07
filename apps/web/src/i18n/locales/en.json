@@ -504,8 +504,6 @@
     "resizeSidebar": "Resize issue details",
     "uploadingPercent": "Uploading {{name}}… {{percent}}%",
     "uploadFailed": "{{name}} was not uploaded: {{message}}",
-    "reactedWith_one": "{{count}} reacted with {{emoji}}",
-    "reactedWith_other": "{{count}} reacted with {{emoji}}",
     "reactedYou": "You"
   },
   "workflows": {

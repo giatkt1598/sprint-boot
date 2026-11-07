@@ -25,7 +25,6 @@ describe('ReactionUsers', () => {
       />,
     );
 
-    screen.getByText('3 reacted with 👍');
     const lines = within(screen.getByRole('list')).getAllByRole('listitem');
     expect(lines).toHaveLength(3);
     ['Lan Nguyen', 'You', 'Minh Le'].forEach((name, index) => expect(lines[index].textContent).toContain(name));

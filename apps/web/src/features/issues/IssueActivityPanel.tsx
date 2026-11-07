@@ -64,19 +64,14 @@ export function ReactionUsers({ reaction, meId }: { reaction: Reaction; meId: st
   const { t } = useTranslation();
   const users = reaction.users ?? [];
   return (
-    <div className="flex flex-col gap-1 py-1">
-      <span style={{ fontSize: font.size.xs, fontWeight: font.weight.medium }}>
-        {t('issues.reactedWith', { emoji: reaction.emoji, count: reaction.count ?? users.length })}
-      </span>
-      <ul className="m-0 flex list-none flex-col gap-1 p-0">
-        {users.map((user) => (
-          <li key={user.id} className="flex items-center gap-2">
-            <Avatar name={user.name ?? ''} src={user.avatarUrl} size={20} decorative />
-            <span style={{ fontSize: font.size.xs }}>{user.id === meId ? t('issues.reactedYou') : user.name}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <ul className="m-0 flex list-none flex-col gap-1 p-0 py-1">
+      {users.map((user) => (
+        <li key={user.id} className="flex items-center gap-2">
+          <Avatar name={user.name ?? ''} src={user.avatarUrl} size={20} decorative />
+          <span style={{ fontSize: font.size.xs }}>{user.id === meId ? t('issues.reactedYou') : user.name}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
