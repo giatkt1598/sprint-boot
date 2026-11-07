@@ -21,6 +21,20 @@
   white-space: pre-wrap;
 }
 
+/* Words of a streaming assistant answer fade in; streaming.ts sets a negative delay so a rebuilt span keeps its place. */
+.sb-reveal {
+  animation: sb-reveal 400ms ease-out both;
+}
+
+@keyframes sb-reveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .rich-text-editor {
   position: relative;
   border: 1px solid var(--sb-border-default);

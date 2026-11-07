@@ -157,7 +157,7 @@ describe('ChatThread', () => {
     });
 
     // Still streaming, yet already bold.
-    expect((await screen.findByText('Payment fails')).tagName).toBe('STRONG');
+    await waitFor(() => expect(document.querySelector('strong')?.textContent).toBe('Payment fails'));
     await act(async () => release());
     await screen.findByText(/\(saved\)/);
     expect(screen.getAllByText('Payment fails')).toHaveLength(1);

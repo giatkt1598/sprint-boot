@@ -12,7 +12,7 @@ import { Button } from '../../components/Button';
 import { ErrorState, LoadingState } from '../../components/StateViews';
 import { font, radius, sem } from '../../theme/tokens';
 import { RichTextView } from '../issues/RichTextEditor';
-import { renderStreamingMarkdown, useSmoothText, useStickToBottom } from './streaming';
+import { renderStreamingMarkdown, REVEAL_MS, useSmoothText, useStickToBottom } from './streaming';
 import {
   ActionState,
   assistantKeys,
@@ -164,11 +164,26 @@ function StreamingAnswer({ segment, finished, skip, busy, onDecide, onCaughtUp }
   onCaughtUp: (caughtUp: boolean) => void;
 }) {
   const followLink = useFollowLink();
-  const { shown, caughtUp } = useSmoothText(segment.text, finished || Boolean(segment.message), skip);
-  const html = useMemo(() => renderStreamingMarkdown(shown), [shown]);
-  useEffect(() => onCaughtUp(caughtUp), [caughtUp, onCaughtUp]);
+  const { shown, marks, caughtUp } = useSmoothText(segment.text, finished || Boolean(segment.message), skip);
+  const html = useMemo(() => renderStreamingMarkdown(shown, marks), [shown, marks]);
+  // Caught up only once the last words have faded in, so the saved message never cuts a fade short.
+  const fading = marks.length > 0;
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    if (!caughtUp) {
+      setSettled(false);
+      return undefined;
+    }
+    if (!fading) {
+      setSettled(true);
+      return undefined;
+    }
+    const timer = setTimeout(() => setSettled(true), REVEAL_MS);
+    return () => clearTimeout(timer);
+  }, [caughtUp, fading]);
+  useEffect(() => onCaughtUp(settled), [settled, onCaughtUp]);
 
-  if (segment.message && caughtUp) {
+  if (segment.message && settled) {
     return <AssistantBubble message={segment.message} busy={busy} onDecide={onDecide} />;
   }
   return html ? (

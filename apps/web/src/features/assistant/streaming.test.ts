@@ -39,6 +39,16 @@ describe('renderStreamingMarkdown', () => {
     );
   });
 
+  it('wraps newly shown text to fade in, part way through when it appeared earlier', () => {
+    const html = renderStreamingMarkdown('Hello **big** world', [
+      { from: 0, to: 6, at: 1000 },
+      { from: 6, to: 15, at: 1250 },
+    ]);
+    expect(html).toBe(
+      '<p><span class="sb-reveal" style="animation-delay: -250ms;">Hello </span><strong><span class="sb-reveal">big</span></strong><span class="sb-reveal"> world</span></p>',
+    );
+  });
+
   it('strips scripts and event handlers from model output', () => {
     const html = renderStreamingMarkdown('Hi <script>alert(1)</script><img src=x onerror="alert(1)">');
     expect(html).not.toContain('<script');
@@ -77,6 +87,6 @@ describe('useSmoothText', () => {
 
   it('shows everything at once when skipped', () => {
     const { result } = renderHook(() => useSmoothText('all of it', true, true));
-    expect(result.current).toEqual({ shown: 'all of it', caughtUp: true });
+    expect(result.current).toEqual({ shown: 'all of it', marks: [], caughtUp: true });
   });
 });

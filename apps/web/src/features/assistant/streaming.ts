@@ -43,18 +43,83 @@ export function closeOpenMarkdown(text: string): string {
   return closed;
 }
 
-/** The answer so far as safe HTML, rendered like the server renders the finished one (GFM, single newlines break). */
-export function renderStreamingMarkdown(text: string): string {
-  if (!text.trim()) {
-    return '';
-  }
-  const html = marked.parse(closeOpenMarkdown(text), { gfm: true, breaks: true, async: false });
+/** How long newly shown words take to fade in; matches `.sb-reveal` in index.css. */
+export const REVEAL_MS = 400;
+
+/** Text shown at one frame, as offsets into the rendered text, to fade in from `at`. */
+export interface RevealMark {
+  from: number;
+  to: number;
+  at: number;
+}
+
+/** The answer so far as safe DOM, rendered like the server renders the finished one (GFM, single newlines break). */
+function markdownFragment(text: string): DocumentFragment {
+  const html = text.trim() ? marked.parse(closeOpenMarkdown(text), { gfm: true, breaks: true, async: false }) : '';
   // Model output: never trusted as HTML.
   const root = DOMPurify.sanitize(html, { RETURN_DOM_FRAGMENT: true });
   removeLayoutWhitespace(root);
+  return root;
+}
+
+/** How much text the rendered answer shows, the unit reveal marks count in. */
+export const renderedLength = (text: string) => markdownFragment(text).textContent?.length ?? 0;
+
+/**
+ * The answer so far as safe HTML. Text in `marks` is wrapped to fade in; each wrapper starts its animation part way in,
+ * by how long ago its words appeared, so rebuilding the HTML every frame never restarts a fade.
+ */
+export function renderStreamingMarkdown(text: string, marks: RevealMark[] = []): string {
+  const root = markdownFragment(text);
+  if (marks.length > 0) {
+    fadeIn(root, marks);
+  }
   const holder = document.createElement('div');
   holder.append(root);
   return holder.innerHTML;
+}
+
+function fadeIn(root: DocumentFragment, marks: RevealMark[]) {
+  const now = marks[marks.length - 1].at;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const texts: Text[] = [];
+  while (walker.nextNode()) {
+    texts.push(walker.currentNode as Text);
+  }
+  let offset = 0;
+  for (const text of texts) {
+    const start = offset;
+    const end = start + text.data.length;
+    offset = end;
+    const pieces: Node[] = [];
+    let cursor = start;
+    for (const mark of marks) {
+      const from = Math.max(mark.from, cursor);
+      const to = Math.min(mark.to, end);
+      if (from >= to) {
+        continue;
+      }
+      if (from > cursor) {
+        pieces.push(document.createTextNode(text.data.slice(cursor - start, from - start)));
+      }
+      const span = document.createElement('span');
+      span.className = 'sb-reveal';
+      const elapsed = Math.round(now - mark.at);
+      if (elapsed > 0) {
+        span.style.animationDelay = `-${elapsed}ms`;
+      }
+      span.textContent = text.data.slice(from - start, to - start);
+      pieces.push(span);
+      cursor = to;
+    }
+    if (pieces.length === 0) {
+      continue;
+    }
+    if (cursor < end) {
+      pieces.push(document.createTextNode(text.data.slice(cursor - start)));
+    }
+    text.replaceWith(...pieces);
+  }
 }
 
 /** Elements whose whitespace-only text is markup layout, not content. */
@@ -108,7 +173,9 @@ const safeEnd = (text: string) => {
 export function useSmoothText(target: string, finished: boolean, skip = false) {
   const instant = skip || prefersReducedMotion();
   const [length, setLength] = useState(0);
+  const [marks, setMarks] = useState<RevealMark[]>([]);
   const current = useRef(0);
+  const rendered = useRef(0);
   const shownLength = instant ? target.length : Math.min(length, target.length);
 
   useEffect(() => {
@@ -133,6 +200,12 @@ export function useSmoothText(target: string, finished: boolean, skip = false) {
       next = Math.max(from, next);
       current.current = next;
       setLength(next);
+      // The words this frame shows, in rendered text, to fade in; marks whose fade has ended are dropped.
+      const at = performance.now();
+      const shownRendered = renderedLength(target.slice(0, next));
+      const mark = { from: Math.min(rendered.current, shownRendered), to: shownRendered, at };
+      rendered.current = shownRendered;
+      setMarks((list) => [...list.filter((item) => at - item.at < REVEAL_MS), ...(mark.to > mark.from ? [mark] : [])]);
       // While the model writes, the last word waits for the space after it.
       if (next < (finished ? target.length : safeEnd(target))) {
         frame = requestAnimationFrame(tick);
@@ -142,7 +215,11 @@ export function useSmoothText(target: string, finished: boolean, skip = false) {
     return () => cancelAnimationFrame(frame);
   }, [target, finished, instant]);
 
-  return { shown: target.slice(0, shownLength), caughtUp: finished && shownLength >= target.length };
+  return {
+    shown: target.slice(0, shownLength),
+    marks: instant ? [] : marks,
+    caughtUp: finished && shownLength >= target.length,
+  };
 }
 
 /** How close to the bottom still counts as reading the latest. */
