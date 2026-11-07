@@ -12,56 +12,62 @@ import woodPlanks from './art/wood-planks.svg';
 import { alpha, picture } from './kit';
 import type { ThemeDefinition } from './types';
 
-// Liquid Glass: panes of clear glass over drops of water. Light catches the rim of every pane, brightest along the top
-// edge, and a soft sheen runs across it; the backdrop shows through, frosted.
-const glassEdge =
-  'inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 0 rgba(255, 255, 255, 0.35), inset 1px 0 0 rgba(255, 255, 255, 0.55), inset -1px 0 0 rgba(255, 255, 255, 0.55)';
+// Liquid Glass: clear panes over a dim scene with drops of water, white text on top. The panes barely tint or frost
+// what is behind them; their rim catches the light, brightest at the top-left and bottom-right corners, with a soft
+// inner glow and a faint sheen across the face.
+const glassEdge = [
+  'inset 1.5px 1.5px 0 rgba(255, 255, 255, 0.7)',
+  'inset -1.5px -1.5px 0 rgba(255, 255, 255, 0.45)',
+  'inset 0 0 0 1px rgba(255, 255, 255, 0.12)',
+  'inset 0 0 14px rgba(255, 255, 255, 0.1)',
+].join(', ');
 const glassSheen =
-  'linear-gradient(135deg, rgb(255 255 255 / 0.32) 0%, rgb(255 255 255 / 0.08) 30%, rgb(255 255 255 / 0) 55%, rgb(255 255 255 / 0.04) 80%, rgb(255 255 255 / 0.18) 100%)';
-const glassLift = (blur: number, opacity: number) => `${glassEdge}, 0 ${Math.round(blur / 3)}px ${blur}px rgba(30, 27, 75, ${opacity})`;
+  'linear-gradient(135deg, rgb(255 255 255 / 0.16) 0%, rgb(255 255 255 / 0.03) 30%, rgb(255 255 255 / 0) 60%, rgb(255 255 255 / 0.08) 100%)';
+const glassLift = (blur: number, opacity: number) => `${glassEdge}, 0 ${Math.round(blur / 3)}px ${blur}px rgba(0, 0, 0, ${opacity})`;
+const glassTint = '#121626';
 
-/** Clear glass over water drops. The picture is crisp; only the panes frost what is behind them. */
+/** Clear glass over water drops at dusk. The picture is crisp; the panes only just soften what is behind them. */
 export const glass = {
   id: 'glass',
   category: 'element',
-  base: 'light',
+  base: 'dark',
   tokens: {
-    ...semanticLight,
-    'bg-page': '#EEF2FF',
-    'bg-surface': '#FFFFFF',
-    'bg-subtle': '#EEF0FB',
-    'bg-hover': '#E6E9F8',
-    'bg-selected': '#E0E7FF',
-    'text-primary': '#141B3A',
-    'text-secondary': '#3E4668',
-    'text-tertiary': '#5A6285',
+    ...semanticDark,
+    'bg-page': '#141826',
+    'bg-surface': '#1C2133',
+    'bg-subtle': '#262C42',
+    'bg-hover': '#2A3150',
+    'bg-selected': '#2E3466',
+    'text-primary': '#F5F7FF',
+    'text-secondary': '#CDD3E6',
+    'text-tertiary': '#A6AEC8',
     'text-on-accent': '#FFFFFF',
-    'text-accent': '#4338CA',
-    'border-default': '#FFFFFFBF',
-    'border-strong': '#C7CCE8',
-    'border-focus': '#4F46E5',
+    'text-accent': '#B4C0FF',
+    'border-default': '#FFFFFF38',
+    'border-strong': '#FFFFFF5C',
+    'border-focus': '#B4C0FF',
     'accent-default': '#4F46E5',
     'accent-hover': '#4338CA',
   },
   shadows: {
-    drawer: glassLift(48, 0.2),
-    card: glassLift(24, 0.12),
-    popover: glassLift(24, 0.16),
-    dialog: glassLift(48, 0.2),
+    drawer: glassLift(48, 0.4),
+    card: glassLift(24, 0.3),
+    popover: glassLift(24, 0.35),
+    dialog: glassLift(48, 0.45),
   },
-  page: `url("${glassDrops}") center / cover, #E4E9FF`,
+  page: `url("${glassDrops}") center / cover, #151A2C`,
   content: 'transparent',
-  surfaceFilter: 'blur(8px) saturate(170%)',
+  surfaceFilter: 'blur(6px) saturate(140%)',
   surfaces: {
-    chrome: alpha('#FFFFFF', 0.14),
-    card: alpha('#FFFFFF', 0.16),
-    column: alpha('#FFFFFF', 0.06),
-    overlay: alpha('#FFFFFF', 0.4),
-    panel: alpha('#FFFFFF', 0.2),
-    cardFilter: 'blur(6px) saturate(160%)',
+    chrome: alpha(glassTint, 0.2),
+    card: alpha(glassTint, 0.18),
+    column: alpha(glassTint, 0.1),
+    overlay: alpha(glassTint, 0.55),
+    panel: alpha(glassTint, 0.22),
+    cardFilter: 'blur(4px) saturate(140%)',
     sheen: glassSheen,
     edge: glassEdge,
-    cardShadow: glassLift(24, 0.12),
+    cardShadow: glassLift(24, 0.3),
   },
   illustrations: { notFound: picture(glass404), error: picture(glass500) },
 } satisfies ThemeDefinition<'glass'>;

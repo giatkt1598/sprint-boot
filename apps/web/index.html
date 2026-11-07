@@ -12,7 +12,7 @@
       // Applies the saved look before the first paint, so a dark theme never flashes light. Mirrors theme/appearance.ts.
       try {
         // The themes whose base is dark; a test keeps this list in step with theme/themes.
-        var DARK_THEMES = ['dark', 'aurora', 'fire'];
+        var DARK_THEMES = ['dark', 'aurora', 'glass', 'fire'];
         var saved = JSON.parse(localStorage.getItem('sb.appearance') || 'null') || {};
         var root = document.documentElement;
         var theme = saved.theme;
