@@ -48,6 +48,9 @@ interface Draft {
 
 const OWN = '';
 
+/** A row of a type's list: a template of the space, or a workspace one it could use. */
+type Row = { kind: 'own'; item: IssueTemplate } | { kind: 'available'; item: GlobalIssueTemplate };
+
 function TemplateDialog({ draft, types, projectId, onClose }: { draft: Draft; types: IssueType[]; projectId: string; onClose: () => void }) {
   const { t } = useTranslation();
   const toast = useToast();
@@ -159,16 +162,25 @@ export function SpaceIssueTemplatesPage() {
     onError: (failure) => toast('error', toMessage(failure)),
   });
 
+  /** Makes a template the one new issues of its type start with; a workspace one is added to the space first. */
   const use = useMutation({
-    mutationFn: ({ issueTypeId, global, isDefault }: { issueTypeId: string; global: GlobalIssueTemplate; isDefault: boolean }) =>
-      unwrap(apiClient.POST('/api/v1/issue-template', {
-        params: { query: { projectId } },
-        body: { issueTypeId, globalTemplateId: global.id!, isDefault },
-      })),
-    onSuccess: async (_, { global }) => {
+    mutationFn: ({ issueTypeId, template }: { issueTypeId: string; template: Row }) => {
+      if (template.kind === 'available') {
+        return unwrap(apiClient.POST('/api/v1/issue-template', {
+          params: { query: { projectId } },
+          body: { issueTypeId, globalTemplateId: template.item.id!, isDefault: true },
+        }));
+      }
+      const own = template.item;
+      const body = own.globalTemplateId
+        ? { issueTypeId, globalTemplateId: own.globalTemplateId, isDefault: true }
+        : { issueTypeId, name: own.name!, content: own.content || null, mode: own.mode ?? TemplateMode.fill, isDefault: true };
+      return unwrap(apiClient.PUT('/api/v1/issue-template/{id}', { params: { path: { id: own.id! } }, body }));
+    },
+    onSuccess: async (_, { template }) => {
       await queryClient.invalidateQueries({ queryKey: issueTemplatesKey(projectId) });
       await queryClient.invalidateQueries({ queryKey: globalIssueTemplatesKey });
-      toast('success', t('templates.used', { name: global.name }));
+      toast('success', t('templates.used', { name: template.item.name }));
     },
     onError: (failure) => toast('error', toMessage(failure)),
   });
@@ -190,6 +202,12 @@ export function SpaceIssueTemplatesPage() {
         const available = (globals.data ?? []).filter(
           (global) => global.issueTypeKey === type.icon && !own.some((template) => template.globalTemplateId === global.id),
         );
+        // Global ones first: those the space already has, then the rest of the workspace's, then its own.
+        const rows: Row[] = [
+          ...own.filter((template) => template.globalTemplateId).map((item) => ({ kind: 'own' as const, item })),
+          ...available.map((item) => ({ kind: 'available' as const, item })),
+          ...own.filter((template) => !template.globalTemplateId).map((item) => ({ kind: 'own' as const, item })),
+        ];
         return (
           <section key={type.id} aria-labelledby={`templates-${type.id}`} className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
@@ -208,72 +226,66 @@ export function SpaceIssueTemplatesPage() {
                 </Button>
               )}
             </div>
-            {own.length === 0 && available.length === 0 && <Typography variant="body2" color="textSecondary">{t('templates.none', { type: typeName })}</Typography>}
-            {own.map((template) => (
-              <div
-                key={template.id}
-                className="flex items-center gap-3 px-3 py-2"
-                style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}
-              >
-                <Typography variant="body2" className="min-w-0 flex-1 truncate">{template.name}</Typography>
-                {template.mode === TemplateMode.placeholder && <Badge tone="subtle">{t('templates.mode.placeholder')}</Badge>}
-                {template.globalTemplateId && <Badge tone="info">{t('templates.global')}</Badge>}
-                {template.isDefault && <Badge tone="info">{t('templates.default')}</Badge>}
-                {canManage && (
-                  <span className="flex gap-3">
-                    <Link
-                      component="button"
-                      variant="body2"
-                      aria-label={`${t('common.edit')} ${template.name}`}
-                      onClick={() =>
-                        setDraft({
-                          id: template.id!,
-                          issueTypeId: template.issueTypeId!,
-                          name: template.name ?? '',
-                          content: template.content ?? '',
-                          mode: template.mode ?? TemplateMode.fill,
-                          globalTemplateId: template.globalTemplateId ?? OWN,
-                          isDefault: template.isDefault ?? false,
-                        })
-                      }
+            {rows.length === 0 && <Typography variant="body2" color="textSecondary">{t('templates.none', { type: typeName })}</Typography>}
+            {rows.map((row) => {
+              const template = row.item;
+              const isGlobal = row.kind === 'available' || Boolean(row.item.globalTemplateId);
+              const used = row.kind === 'own' && row.item.isDefault;
+              return (
+                <div
+                  key={`${row.kind}-${template.id}`}
+                  className="flex items-center gap-3 px-3 py-2"
+                  style={{ border: `1px ${row.kind === 'available' ? 'dashed' : 'solid'} ${sem('border-default')}`, borderRadius: radius.card }}
+                >
+                  <Typography variant="body2" className="min-w-0 flex-1 truncate">{template.name}</Typography>
+                  {template.mode === TemplateMode.placeholder && <Badge tone="subtle">{t('templates.mode.placeholder')}</Badge>}
+                  {isGlobal && <Badge tone="subtle">{t('templates.global')}</Badge>}
+                  {used && <Badge tone="info">{t('templates.inUse')}</Badge>}
+                  {canManage && !used && (
+                    <Button
+                      kind="secondary"
+                      size="small"
+                      disabled={use.isPending}
+                      aria-label={`${t('templates.use')} ${template.name}`}
+                      onClick={() => use.mutate({ issueTypeId: type.id!, template: row })}
                     >
-                      {t('common.edit')}
-                    </Link>
-                    <Link
-                      component="button"
-                      variant="body2"
-                      aria-label={`${t('common.delete')} ${template.name}`}
-                      sx={{ color: sem('feedback-danger-text') }}
-                      onClick={() => setRemoving(template)}
-                    >
-                      {t('common.delete')}
-                    </Link>
-                  </span>
-                )}
-              </div>
-            ))}
-            {available.map((global) => (
-              <div
-                key={global.id}
-                className="flex items-center gap-3 px-3 py-2"
-                style={{ border: `1px dashed ${sem('border-default')}`, borderRadius: radius.card }}
-              >
-                <Typography variant="body2" className="min-w-0 flex-1 truncate">{global.name}</Typography>
-                {global.mode === TemplateMode.placeholder && <Badge tone="subtle">{t('templates.mode.placeholder')}</Badge>}
-                <Badge tone="info">{t('templates.global')}</Badge>
-                {canManage && (
-                  <Link
-                    component="button"
-                    variant="body2"
-                    disabled={use.isPending}
-                    aria-label={`${t('templates.use')} ${global.name}`}
-                    onClick={() => use.mutate({ issueTypeId: type.id!, global, isDefault: own.length === 0 })}
-                  >
-                    {t('templates.use')}
-                  </Link>
-                )}
-              </div>
-            ))}
+                      {t('templates.use')}
+                    </Button>
+                  )}
+                  {canManage && row.kind === 'own' && (
+                    <span className="flex gap-3">
+                      <Link
+                        component="button"
+                        variant="body2"
+                        aria-label={`${t('common.edit')} ${row.item.name}`}
+                        onClick={() =>
+                          setDraft({
+                            id: row.item.id!,
+                            issueTypeId: row.item.issueTypeId!,
+                            name: row.item.name ?? '',
+                            content: row.item.content ?? '',
+                            mode: row.item.mode ?? TemplateMode.fill,
+                            globalTemplateId: row.item.globalTemplateId ?? OWN,
+                            isDefault: row.item.isDefault ?? false,
+                          })
+                        }
+                      >
+                        {t('common.edit')}
+                      </Link>
+                      <Link
+                        component="button"
+                        variant="body2"
+                        aria-label={`${t('common.delete')} ${row.item.name}`}
+                        sx={{ color: sem('feedback-danger-text') }}
+                        onClick={() => setRemoving(row.item)}
+                      >
+                        {t('common.delete')}
+                      </Link>
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </section>
         );
       })}
