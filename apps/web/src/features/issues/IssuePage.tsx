@@ -286,7 +286,11 @@ function IssueView({ issue, compact, panelHeader }: { issue: Issue; compact?: bo
                   }
                 }}
                 onKeyDown={(event) => event.key === 'Enter' && canEdit && setEditingDescription(true)}
-                sx={{ padding: 1, borderRadius: `${radius.control}px`, '&:hover': { backgroundColor: sem('bg-page') } }}
+                sx={{
+                  padding: 1,
+                  borderRadius: `${radius.control}px`,
+                  '&:hover': { backgroundColor: 'var(--sb-hover-bg)', backgroundImage: 'var(--sb-surface-sheen)', boxShadow: 'var(--sb-surface-edge)' },
+                }}
               >
                 <RichTextView html={issue.description} />
               </Box>

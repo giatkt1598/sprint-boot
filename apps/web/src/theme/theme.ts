@@ -32,6 +32,7 @@ const themeVariables = (theme: ThemeDefinition) => ({
   '--sb-card-filter': theme.surfaces?.cardFilter ?? 'none',
   '--sb-surface-sheen': theme.surfaces?.sheen ?? 'none',
   '--sb-surface-edge': theme.surfaces?.edge ?? 'none',
+  '--sb-hover-bg': theme.surfaces?.hover ?? 'var(--sb-bg-page)',
   '--sb-board-card-shadow': theme.surfaces?.cardShadow ?? 'none',
 });
 
