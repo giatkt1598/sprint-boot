@@ -39,7 +39,7 @@ export interface SurfaceSet {
   input: string;
   /** Background of search boxes and disabled fields. Defaults to bg-subtle. */
   subtleField: string;
-  /** Background of a block of content while hovered, such as the description waiting for a click. Defaults to bg-page. */
+  /** Background of a block of content while hovered, such as the description waiting for a click. Defaults to a faint, see-through wash of text-primary. */
   hover: string;
   /** Box shadow of board cards. None by default, where cards sit flat on their column. */
   cardShadow: string;

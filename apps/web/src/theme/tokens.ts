@@ -186,7 +186,7 @@ export const shadow = {
 } as const;
 
 /**
- * A block of content that edits in place, while hovered: bg-page in most themes, a pane like the cards in a glass one,
+ * A block of content that edits in place, while hovered: a faint wash in most themes, a pane like the cards in a glass one,
  * with the theme's sheen, edge and frost.
  */
 export const hoverPane = {

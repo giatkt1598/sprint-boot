@@ -12,6 +12,8 @@ export const classic = {
   tokens: { ...semanticLight },
   shadows: shadowValues.light,
   accents: accentsFor('light'),
+  // The look the app was designed in: a hovered block turns the page grey.
+  surfaces: { hover: 'var(--sb-bg-page)' },
 } satisfies ThemeDefinition<'classic'>;
 
 /** Classic for dark rooms, with the same accents. */

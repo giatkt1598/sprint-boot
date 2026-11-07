@@ -32,7 +32,8 @@ const themeVariables = (theme: ThemeDefinition) => ({
   '--sb-card-filter': theme.surfaces?.cardFilter ?? 'none',
   '--sb-surface-sheen': theme.surfaces?.sheen ?? 'none',
   '--sb-surface-edge': theme.surfaces?.edge ?? 'none',
-  '--sb-hover-bg': theme.surfaces?.hover ?? 'var(--sb-bg-page)',
+  // A faint wash of the text colour: darker on a light theme, lighter on a dark one, and see-through over any backdrop.
+  '--sb-hover-bg': theme.surfaces?.hover ?? 'color-mix(in srgb, var(--sb-text-primary) 6%, transparent)',
   '--sb-input-bg': theme.surfaces?.input ?? 'var(--sb-bg-surface)',
   '--sb-subtle-field-bg': theme.surfaces?.subtleField ?? 'var(--sb-bg-subtle)',
   '--sb-board-card-shadow': theme.surfaces?.cardShadow ?? 'none',
