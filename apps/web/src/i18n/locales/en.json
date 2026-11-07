@@ -1536,5 +1536,9 @@
     "search": "Search people",
     "person": "Person",
     "none": "Nobody matches your search."
+  },
+  "recents": {
+    "title": "Recent",
+    "empty": "Issues and epics you open will show up here."
   }
 }

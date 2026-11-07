@@ -1536,5 +1536,9 @@
     "search": "Tìm người",
     "person": "Người",
     "none": "Không có ai khớp với tìm kiếm."
+  },
+  "recents": {
+    "title": "Gần đây",
+    "empty": "Các issue và epic bạn mở sẽ hiện ở đây."
   }
 }

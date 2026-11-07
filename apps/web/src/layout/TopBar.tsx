@@ -13,6 +13,7 @@ import { MenuItem } from '../components/Menu';
 import { AssistantButton } from '../features/assistant/AssistantPanel';
 import { CreateIssueDialog } from '../features/issues/CreateIssueDialog';
 import { QuickSearch } from '../features/issues/QuickSearch';
+import { RecentsMenu } from '../features/issues/RecentsMenu';
 import { NotificationBell } from '../features/notifications/NotificationBell';
 import { font, sem, size } from '../theme/tokens';
 
@@ -49,6 +50,7 @@ export function TopBar() {
       <div className="flex-1" />
       <QuickSearch />
       <Button onClick={() => setCreating(true)}>{t('topBar.create')}</Button>
+      <RecentsMenu />
       <AssistantButton />
       <NotificationBell />
       <IconButton size="small" sx={{ padding: 0.5 }} onClick={(event) => setMenuAnchor(event.currentTarget)}>

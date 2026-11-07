@@ -1623,6 +1623,30 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.ToTable("project_introductions", "issues");
                 });
 
+            modelBuilder.Entity("SprintBoot.Issues.RecentIssue", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("IssueId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("ViewedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "IssueId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "ViewedAt");
+
+                    b.ToTable("recent_issues", "issues");
+                });
+
             modelBuilder.Entity("SprintBoot.Issues.RichTextFile", b =>
                 {
                     b.Property<Guid>("Id")

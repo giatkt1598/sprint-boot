@@ -87,6 +87,8 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
 
     public DbSet<ProjectIntroduction> ProjectIntroductions { get; set; } = null!;
 
+    public DbSet<RecentIssue> RecentIssues { get; set; } = null!;
+
     public DbSet<UploadSession> UploadSessions { get; set; } = null!;
 
     public DbSet<AiConnection> AiConnections { get; set; } = null!;

@@ -31,6 +31,7 @@ import { useToast } from '../../components/ToastHost';
 import { UserPicker } from '../../components/UserPicker';
 import { useErrorMessage } from '../../lib/errors';
 import { NotFoundPage } from '../../pages/NotFoundPage';
+import { useRecordVisit } from './RecentsMenu';
 import { hasSelectedText } from '../../lib/selection';
 import { formatDateTime, formatRelative, formatSize } from '../../lib/format';
 import { font, radius, sem } from '../../theme/tokens';
@@ -110,6 +111,7 @@ function IssueView({ issue, compact, panelHeader }: { issue: Issue; compact?: bo
   const me = useCurrentUser();
   const people = (members.data ?? []).map((member) => member.user!);
   useViewingIssue({ id: issue.id!, key: issue.key! });
+  useRecordVisit(issue.id);
 
   const [conflict, setConflict] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);

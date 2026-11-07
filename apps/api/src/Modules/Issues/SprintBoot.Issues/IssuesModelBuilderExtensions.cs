@@ -99,6 +99,14 @@ public static class IssuesModelBuilderExtensions
             b.HasIndex(introduction => introduction.ProjectId).IsUnique();
         });
 
+        builder.Entity<RecentIssue>(b =>
+        {
+            b.ToTable("recent_issues", Schema);
+            b.ConfigureByConvention();
+            b.HasIndex(recent => new { recent.UserId, recent.IssueId }).IsUnique();
+            b.HasIndex(recent => new { recent.UserId, recent.ViewedAt });
+        });
+
         builder.Entity<Label>(b =>
         {
             b.ToTable("labels", Schema);
