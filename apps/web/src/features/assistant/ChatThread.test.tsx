@@ -270,6 +270,59 @@ describe('ChatThread', () => {
     expect(screen.getAllByText('Working on it')).toHaveLength(1);
   });
 
+  it('counts repeated tool runs on one badge, live and once saved', async () => {
+    const answer = { id: 'm3', role: 'assistant', text: 'Found them.', html: '<p>Found them.</p>', tools: ['search_issues'], actions: [], sources: [] };
+    const saved = [
+      { id: 'u1', role: 'user', text: 'Find bugs', tools: [], actions: [], sources: [] },
+      { id: 'm1', role: 'assistant', text: '', tools: ['search_issues', 'search_issues'], actions: [], sources: [] },
+      { id: 'm2', role: 'assistant', text: '', tools: ['search_issues', 'get_issue'], actions: [], sources: [] },
+      answer,
+    ];
+    get.mockResolvedValue({ conversation: { id: 'c7', title: 'Bugs' }, messages: [] });
+    let release: () => void = () => undefined;
+    const encoder = new TextEncoder();
+    const event = (data: object) => encoder.encode(`data: ${JSON.stringify(data)}
+
+`);
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (const tool of ['search_issues', 'search_issues', 'search_issues', 'get_issue']) {
+          controller.enqueue(event({ type: 'tool', tool, state: 'running' }));
+          controller.enqueue(event({ type: 'tool', tool, state: 'done' }));
+        }
+        release = () => {
+          controller.enqueue(event({ type: 'delta', text: 'Found them. ' }));
+          controller.enqueue(event({ type: 'message', message: answer }));
+          controller.enqueue(event({ type: 'done' }));
+          controller.close();
+        };
+      },
+    }), { headers: { 'content-type': 'text/event-stream' } }))));
+    const client = new QueryClient();
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter>
+          <ChatThread conversationId="c7" onConversation={() => undefined} />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    await waitFor(() => expect(get).toHaveBeenCalled());
+    const box = screen.getByRole('textbox', { name: 'Ask the assistant' });
+    fireEvent.change(box, { target: { value: 'Find bugs' } });
+    await act(async () => {
+      fireEvent.keyDown(box, { key: 'Enter' });
+    });
+
+    expect(await screen.findByText('Used search_issues (3)')).toBeTruthy();
+    expect(screen.getByText('Used get_issue')).toBeTruthy();
+
+    get.mockResolvedValue({ conversation: { id: 'c7', title: 'Bugs' }, messages: saved });
+    await act(async () => release());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeTruthy());
+    expect(screen.getAllByText(/Used search_issues/).map((badge) => badge.textContent)).toEqual(['Used search_issues (4)']);
+    expect(screen.getAllByText(/Used get_issue/)).toHaveLength(1);
+  });
+
   it('keeps answering in the panel when the first question creates the conversation', async () => {
     post.mockResolvedValue({ id: 'c2' });
     get.mockImplementation((path: string) =>

@@ -31,13 +31,77 @@ interface Segment {
   message?: AssistantMessage;
 }
 
+interface ToolRun {
+  name: string;
+  state: string;
+}
+
 interface Live {
   question: string | null;
-  tools: { name: string; state: string }[];
+  tools: ToolRun[];
+  /** Tools before this index already show in a saved message. */
+  toolsShown: number;
   segments: Segment[];
 }
 
-const EMPTY_LIVE: Live = { question: null, tools: [], segments: [] };
+const EMPTY_LIVE: Live = { question: null, tools: [], toolsShown: 0, segments: [] };
+
+/** One badge per tool, in the order first used, counting the runs: "Used search_issues (4)". */
+function groupTools(runs: ToolRun[]) {
+  const groups = new Map<string, ToolRun[]>();
+  for (const run of runs) {
+    groups.set(run.name, [...(groups.get(run.name) ?? []), run]);
+  }
+  return [...groups.entries()].map(([name, list]) => ({
+    name,
+    count: list.length,
+    state: list.some((run) => run.state === 'running') ? 'running' : list.some((run) => run.state === 'failed') ? 'failed' : 'done',
+  }));
+}
+
+/**
+ * Steps that only ran tools carry nothing to read; their tools join the next answer's badges, so a search the model
+ * repeated shows once with its count instead of one line per step.
+ */
+const toolsBubble = (id: string, tools: string[]): AssistantMessage => ({
+  id, role: 'assistant', text: '', html: null, tools, actions: [], sources: [], createdAt: '',
+});
+
+function mergeToolSteps(messages: AssistantMessage[]): AssistantMessage[] {
+  const result: AssistantMessage[] = [];
+  let carried: string[] = [];
+  for (const message of messages) {
+    const toolsOnly = message.role !== 'user' && !message.html && !message.stopReason && (message.actions ?? []).length === 0;
+    if (toolsOnly) {
+      carried = [...carried, ...(message.tools ?? [])];
+      continue;
+    }
+    if (message.role === 'user' && carried.length > 0) {
+      result.push(toolsBubble(`${message.id}-tools`, carried));
+      carried = [];
+    }
+    result.push(carried.length > 0 ? { ...message, tools: [...carried, ...(message.tools ?? [])] } : message);
+    carried = [];
+  }
+  if (carried.length > 0) {
+    result.push(toolsBubble('tools-tail', carried));
+  }
+  return result;
+}
+
+function ToolBadges({ runs }: { runs: ToolRun[] }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-wrap gap-1">
+      {groupTools(runs).map((tool) => (
+        <Badge key={tool.name} tone={tool.state === 'failed' ? 'danger' : 'subtle'}>
+          {t(tool.state === 'running' ? 'assistant.runningTool' : 'assistant.usedTool', { tool: tool.name })}
+          {tool.count > 1 && ` (${tool.count})`}
+        </Badge>
+      ))}
+    </div>
+  );
+}
 
 /** What the stream ended with, kept until the last words have shown. */
 interface Ending {
@@ -114,7 +178,7 @@ function AssistantBubble({ message, busy, onDecide }: { message: AssistantMessag
     <div className="flex flex-col gap-2">
       {(message.tools ?? []).length > 0 && (
         <div className="flex flex-wrap gap-1">
-          {[...new Set(message.tools)].map((tool) => <Badge key={tool} tone="subtle">{t('assistant.usedTool', { tool })}</Badge>)}
+          <ToolBadges runs={(message.tools ?? []).map((name) => ({ name, state: 'done' }))} />
         </div>
       )}
       {message.html && (
@@ -315,9 +379,10 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
                   : current.tools.map((tool, index, all) => (index === all.length - 1 ? { ...tool, state: event.state ?? 'done' } : tool)),
               };
             case 'message':
-              // The step is saved; what streams next belongs to the following step.
+              // The step is saved, with the tools it ran; what streams next belongs to the following step.
               return {
                 ...current,
+                toolsShown: current.tools.length,
                 segments: last && !last.message
                   ? [...current.segments.slice(0, -1), { ...last, message: event.message! }]
                   : [...current.segments, { text: '', message: event.message! }],
@@ -387,7 +452,7 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
   const persisted = live.segments.some((segment) => segment.message && saved.has(segment.message.id));
   // A refetch while the answer streams (say, on window focus) already holds the question: the live copy shows it until
   // the answer is saved too, so nothing shows twice.
-  const shownMessages = baseline !== null && !persisted ? messages.slice(0, baseline) : messages;
+  const shownMessages = mergeToolSteps(baseline !== null && !persisted ? messages.slice(0, baseline) : messages);
   // Earlier steps are done; only the latest one is still being revealed.
   const earlier = live.segments.slice(0, -1);
   const current = live.segments[live.segments.length - 1];
@@ -418,15 +483,7 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
             ? <AssistantBubble key={segment.message.id ?? index} message={segment.message} busy={busy} onDecide={decide} />
             : null
         ))}
-        {live.tools.length > 0 && busy && !persisted && (
-          <div className="flex flex-wrap gap-1">
-            {live.tools.map((tool, index) => (
-              <Badge key={index} tone={tool.state === 'failed' ? 'danger' : 'subtle'}>
-                {t(tool.state === 'running' ? 'assistant.runningTool' : 'assistant.usedTool', { tool: tool.name })}
-              </Badge>
-            ))}
-          </div>
-        )}
+        {live.tools.length > live.toolsShown && busy && !persisted && <ToolBadges runs={live.tools.slice(live.toolsShown)} />}
         {current && !persisted && (
           <StreamingAnswer
             key={live.segments.length}
