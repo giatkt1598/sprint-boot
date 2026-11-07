@@ -246,7 +246,10 @@
     "AssistantRequestTooLarge": "The conversation is too long for the AI provider. Start a new conversation, or set a max request size on the connection.",
     "InvalidTimeZone": "That time zone is not known.",
     "BackgroundInvalid": "Use a PNG, JPEG, WebP or GIF image up to 4 MB.",
-    "InvalidPreferences": "Those preferences are not valid."
+    "InvalidPreferences": "Those preferences are not valid.",
+    "GoalDatesInvalid": "The target date cannot be before the start date.",
+    "GoalOwnerNotMember": "The owner must be a member of this space.",
+    "GoalArchived": "An archived goal cannot be changed. Restore it first."
   },
   "auth": {
     "ldapTitle": "Sign in to {{provider}}",
@@ -1418,7 +1421,8 @@
       "summary": "Summary",
       "introduction": "Introduction",
       "docs": "Docs",
-      "timeline": "Timeline"
+      "timeline": "Timeline",
+      "goals": "Goals"
     },
     "period": {
       "currentSprint": "Current sprint",
@@ -1544,5 +1548,41 @@
   "recents": {
     "title": "Recent",
     "empty": "Issues and epics you open will show up here."
+  },
+  "goals": {
+    "title": "Goals",
+    "archived": "Archived goals",
+    "showArchived": "Archived",
+    "showActive": "Active goals",
+    "new": "New goal",
+    "edit": "Edit goal",
+    "none": "No goals yet. Goals say what this space works toward.",
+    "noneArchived": "No archived goals.",
+    "name": "Goal",
+    "description": "Description",
+    "owner": "Owner",
+    "noOwner": "No owner",
+    "start": "Start date",
+    "target": "Target date",
+    "statusLabel": "Status",
+    "progress": "Progress",
+    "status": {
+      "pending": "Pending",
+      "onTrack": "On track",
+      "atRisk": "At risk",
+      "offTrack": "Off track",
+      "paused": "Paused",
+      "done": "Done"
+    },
+    "history": "Updates",
+    "addUpdate": "Add update",
+    "saveUpdate": "Save update",
+    "note": "What changed?",
+    "noUpdates": "Nobody has reported on this goal yet.",
+    "archive": "Archive",
+    "unarchive": "Restore",
+    "archivedBadge": "Archived",
+    "deleteTitle": "Delete goal",
+    "deleteBody": "Delete {{name}} and its updates? This cannot be undone."
   }
 }

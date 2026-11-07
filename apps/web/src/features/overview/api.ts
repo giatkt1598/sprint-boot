@@ -30,3 +30,22 @@ export const useIntroduction = (projectId: string | undefined) =>
     enabled: Boolean(projectId),
     queryFn: () => unwrap(apiClient.GET('/api/v1/project-introduction', { params: { query: { projectId: projectId! } } })),
   });
+
+export type Goal = components['schemas']['GoalDto'];
+
+export const goalsKey = (projectId: string | undefined) => ['goals', projectId];
+
+/** The space's goals, active ones or archived ones. */
+export const useGoals = (projectId: string | undefined, archived: boolean) =>
+  useQuery({
+    queryKey: [...goalsKey(projectId), archived ? 'archived' : 'active'],
+    enabled: Boolean(projectId),
+    queryFn: () => unwrap(apiClient.GET('/api/v1/goal', { params: { query: { projectId: projectId!, archived } } })),
+  });
+
+export const useGoalUpdates = (goalId: string | undefined) =>
+  useQuery({
+    queryKey: ['goals', 'updates', goalId],
+    enabled: Boolean(goalId),
+    queryFn: () => unwrap(apiClient.GET('/api/v1/goal/{id}/updates', { params: { path: { id: goalId! } } })),
+  });

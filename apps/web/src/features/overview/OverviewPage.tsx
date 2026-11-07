@@ -7,11 +7,12 @@ import { LoadingState } from '../../components/StateViews';
 import { Tabs } from '../../components/Tabs';
 import { radius, sem } from '../../theme/tokens';
 import { useSpace } from '../spaces/api';
+import { GoalsTab } from './GoalsTab';
 import { IntroductionTab } from './IntroductionTab';
 import { SummaryTab } from './SummaryTab';
 import { TimelineTab } from './TimelineTab';
 
-const TABS = ['summary', 'introduction', 'docs', 'timeline'] as const;
+const TABS = ['summary', 'introduction', 'goals', 'docs', 'timeline'] as const;
 type Tab = (typeof TABS)[number];
 
 /** A space at a glance. Each tab has its own address, so a tab can be shared and reloaded. */
@@ -40,6 +41,7 @@ export function OverviewPage() {
         <>
           {tab === 'summary' && <SummaryTab space={space.data} />}
           {tab === 'introduction' && <IntroductionTab space={space.data} />}
+          {tab === 'goals' && <GoalsTab space={space.data} />}
           {tab === 'docs' && <DocsTab />}
           {tab === 'timeline' && <TimelineTab space={space.data} />}
         </>

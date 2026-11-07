@@ -99,6 +99,23 @@ public static class IssuesModelBuilderExtensions
             b.HasIndex(introduction => introduction.ProjectId).IsUnique();
         });
 
+        builder.Entity<Goal>(b =>
+        {
+            b.ToTable("goals", Schema);
+            b.ConfigureByConvention();
+            b.Property(goal => goal.Name).HasMaxLength(GoalConsts.MaxNameLength).IsRequired();
+            b.Property(goal => goal.Description).IsRequired();
+            b.HasIndex(goal => new { goal.ProjectId, goal.ArchivedAt });
+        });
+
+        builder.Entity<GoalUpdate>(b =>
+        {
+            b.ToTable("goal_updates", Schema);
+            b.ConfigureByConvention();
+            b.Property(update => update.Note).HasMaxLength(GoalConsts.MaxNoteLength);
+            b.HasIndex(update => new { update.GoalId, update.CreatedAt });
+        });
+
         builder.Entity<RecentIssue>(b =>
         {
             b.ToTable("recent_issues", Schema);

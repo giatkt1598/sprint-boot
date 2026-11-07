@@ -246,7 +246,10 @@
     "AssistantRequestTooLarge": "Cuộc trò chuyện quá dài so với giới hạn của provider AI. Hãy bắt đầu cuộc trò chuyện mới, hoặc đặt kích thước request tối đa cho connection.",
     "InvalidTimeZone": "Múi giờ này không hợp lệ.",
     "BackgroundInvalid": "Dùng ảnh PNG, JPEG, WebP hoặc GIF tối đa 4 MB.",
-    "InvalidPreferences": "Tùy chọn không hợp lệ."
+    "InvalidPreferences": "Tùy chọn không hợp lệ.",
+    "GoalDatesInvalid": "Hạn không được trước ngày bắt đầu.",
+    "GoalOwnerNotMember": "Người phụ trách phải là thành viên của space.",
+    "GoalArchived": "Không sửa được mục tiêu đã lưu trữ. Hãy khôi phục trước."
   },
   "auth": {
     "ldapTitle": "Đăng nhập vào {{provider}}",
@@ -1418,7 +1421,8 @@
       "summary": "Tóm tắt",
       "introduction": "Giới thiệu",
       "docs": "Tài liệu",
-      "timeline": "Dòng thời gian"
+      "timeline": "Dòng thời gian",
+      "goals": "Mục tiêu"
     },
     "period": {
       "currentSprint": "Sprint hiện tại",
@@ -1544,5 +1548,41 @@
   "recents": {
     "title": "Gần đây",
     "empty": "Các issue và epic bạn mở sẽ hiện ở đây."
+  },
+  "goals": {
+    "title": "Mục tiêu",
+    "archived": "Mục tiêu đã lưu trữ",
+    "showArchived": "Đã lưu trữ",
+    "showActive": "Mục tiêu đang chạy",
+    "new": "Mục tiêu mới",
+    "edit": "Sửa mục tiêu",
+    "none": "Chưa có mục tiêu nào. Mục tiêu cho biết space này hướng tới điều gì.",
+    "noneArchived": "Chưa có mục tiêu nào được lưu trữ.",
+    "name": "Mục tiêu",
+    "description": "Mô tả",
+    "owner": "Người phụ trách",
+    "noOwner": "Chưa có người phụ trách",
+    "start": "Ngày bắt đầu",
+    "target": "Hạn",
+    "statusLabel": "Trạng thái",
+    "progress": "Tiến độ",
+    "status": {
+      "pending": "Chưa bắt đầu",
+      "onTrack": "Đúng tiến độ",
+      "atRisk": "Có rủi ro",
+      "offTrack": "Trễ tiến độ",
+      "paused": "Tạm dừng",
+      "done": "Hoàn thành"
+    },
+    "history": "Cập nhật",
+    "addUpdate": "Thêm cập nhật",
+    "saveUpdate": "Lưu cập nhật",
+    "note": "Có gì thay đổi?",
+    "noUpdates": "Chưa ai báo cáo về mục tiêu này.",
+    "archive": "Lưu trữ",
+    "unarchive": "Khôi phục",
+    "archivedBadge": "Đã lưu trữ",
+    "deleteTitle": "Xóa mục tiêu",
+    "deleteBody": "Xóa {{name}} cùng các cập nhật của nó? Không thể hoàn tác."
   }
 }
