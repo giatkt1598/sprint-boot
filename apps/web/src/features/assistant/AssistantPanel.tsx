@@ -123,6 +123,7 @@ function Panel({ issue, minimized, onMinimize, onRestore, onClose }: {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [history, setHistory] = useState<HTMLElement | null>(null);
   const [busy, setBusy] = useState(false);
+  const [minimizeTip, setMinimizeTip] = useState(false);
   const detail = useConversation(conversationId);
   const conversation = detail.data?.conversation;
   const title = conversation?.title || t('assistant.untitled');
@@ -159,8 +160,25 @@ function Panel({ issue, minimized, onMinimize, onRestore, onClose }: {
             <Maximize2 size={16} strokeWidth={1.5} aria-hidden />
           </IconButton>
         </Tooltip>
-        <Tooltip title={t('assistant.minimize')}>
-          <IconButton size="small" aria-label={t('assistant.minimize')} onClick={onMinimize}>
+        {/*
+          The panel slides away under the pointer, so no mouseleave closes this tooltip: left open, it would ride along
+          past the right edge and make the page scroll. It closes on click, and is fixed so it can never overflow.
+        */}
+        <Tooltip
+          title={t('assistant.minimize')}
+          open={minimizeTip}
+          onOpen={() => setMinimizeTip(true)}
+          onClose={() => setMinimizeTip(false)}
+          slotProps={{ popper: { popperOptions: { strategy: 'fixed' } } }}
+        >
+          <IconButton
+            size="small"
+            aria-label={t('assistant.minimize')}
+            onClick={() => {
+              setMinimizeTip(false);
+              onMinimize();
+            }}
+          >
             <Minus size={16} strokeWidth={1.5} aria-hidden />
           </IconButton>
         </Tooltip>
