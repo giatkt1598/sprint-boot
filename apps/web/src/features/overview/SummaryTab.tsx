@@ -1,19 +1,19 @@
 import Link from '@mui/material/Link';
 import Menu from '@mui/material/Menu';
 import Typography from '@mui/material/Typography';
-import { Calendar, ChevronDown, CircleCheck, GitPullRequest, Inbox, ListTodo, Users, type LucideIcon } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { Calendar, Check, ChevronDown, GitPullRequest, Inbox, ListTodo, Users, type LucideIcon } from 'lucide-react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink } from 'react-router';
 import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
 import { MenuItem } from '../../components/Menu';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
-import { formatRelative } from '../../lib/format';
+import { formatMinutes, formatRelative } from '../../lib/format';
 import { font, radius, sem, type SemanticToken } from '../../theme/tokens';
 import { useIssueTypes, useStatuses } from '../issues/api';
 import type { Space } from '../spaces/api';
-import { OverviewPeriods, useOverviewSummary, type OverviewPeriod, type OverviewSummary } from './api';
+import { useOverviewSummary, type OverviewPeriod, type OverviewSummary } from './api';
 
 const TYPE_COLORS: Record<string, SemanticToken> = {
   story: 'type-story',
@@ -22,6 +22,14 @@ const TYPE_COLORS: Record<string, SemanticToken> = {
   subtask: 'type-subtask',
   epic: 'type-epic',
 };
+
+/** The order the type bars keep, whatever their counts. */
+const TYPE_ORDER = ['story', 'task', 'bug', 'subtask', 'epic'];
+
+const PERIOD_GROUPS: { label: string; periods: OverviewPeriod[] }[] = [
+  { label: 'overview.periodGroup.sprints', periods: ['currentSprint', 'lastThreeSprints'] },
+  { label: 'overview.periodGroup.calendar', periods: ['thisMonth', 'thisQuarter', 'thisYear'] },
+];
 
 const CATEGORY_COLORS: SemanticToken[] = ['border-strong', 'accent-default', 'status-done-text'];
 const CATEGORY_LABELS = ['overview.toDo', 'overview.inProgress', 'overview.done'];
@@ -48,11 +56,17 @@ export function SummaryTab({ space }: { space: Space }) {
     value === 'currentSprint' && data?.range.sprintName
       ? t('overview.period.currentSprintNamed', { name: data.range.sprintName })
       : t(`overview.period.${value}`);
-  const inPeriod = summary.data?.range.sprintName && period === 'currentSprint'
-    ? t('overview.inSprint', { name: summary.data.range.sprintName })
-    : t(`overview.inPeriod.${period}`);
+  const sprintName = period === 'currentSprint' ? summary.data?.range.sprintName : undefined;
+  const inPeriod = sprintName ? t('overview.inSprint', { name: sprintName }) : t(`overview.inPeriod.${period}`);
+  // Card headers name the period briefly: the sprint itself when one is running.
+  const periodTag = sprintName ?? t(`overview.period.${period}`);
 
-  const byType = summary.data?.byType ?? [];
+  // Every type of the space shows, in a fixed order, so a zero reads as zero rather than as missing.
+  const counted = summary.data?.byType ?? [];
+  const doneStatuses = new Set((statuses.data ?? []).filter((status) => status.category === 2).map((status) => status.name));
+  const byType = [...(types.data ?? [])]
+    .sort((a, b) => TYPE_ORDER.indexOf(a.icon ?? '') - TYPE_ORDER.indexOf(b.icon ?? ''))
+    .map((type) => ({ icon: type.icon ?? '', name: type.name ?? '', count: counted.find((item) => item.icon === type.icon)?.count ?? 0 }));
   const velocity = summary.data?.velocity ?? [];
   const recent = summary.data?.recent ?? [];
 
@@ -62,11 +76,23 @@ export function SummaryTab({ space }: { space: Space }) {
         <Button kind="secondary" startIcon={<Calendar size={16} strokeWidth={1.5} aria-hidden />} endIcon={<ChevronDown size={16} strokeWidth={1.5} aria-hidden />} aria-haspopup="menu" onClick={(event) => setAnchor(event.currentTarget)}>
           {periodName(period, summary.data)}
         </Button>
-        <Menu open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}>
-          {OverviewPeriods.map((value) => (
-            <MenuItem key={value} selected={value === period} onClick={() => { setPeriod(value); setAnchor(null); }}>
-              {periodName(value, value === 'currentSprint' ? summary.data : undefined)}
-            </MenuItem>
+        <Menu open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)} slotProps={{ paper: { sx: { minWidth: 260 } } }}>
+          {PERIOD_GROUPS.map((group, index) => (
+            <Fragment key={group.label}>
+              {index > 0 && <li role="separator" className="my-1" style={{ borderTop: `1px solid ${sem('border-default')}` }} />}
+              <li role="presentation" className="px-3 pb-1 pt-2" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>{t(group.label)}</li>
+              {group.periods.map((value) => (
+                <MenuItem
+                  key={value}
+                  aria-current={value === period ? 'true' : undefined}
+                  onClick={() => { setPeriod(value); setAnchor(null); }}
+                  sx={value === period ? { color: sem('text-accent'), backgroundColor: sem('bg-selected') } : undefined}
+                >
+                  <span className="flex w-4 shrink-0" aria-hidden>{value === period && <Check size={16} strokeWidth={1.5} />}</span>
+                  {periodName(value, value === 'currentSprint' ? summary.data : undefined)}
+                </MenuItem>
+              ))}
+            </Fragment>
           ))}
         </Menu>
         {summary.data && <Typography variant="body2" color="textSecondary">{rangeText(summary.data, i18n.language, t)}</Typography>}
@@ -77,15 +103,15 @@ export function SummaryTab({ space }: { space: Space }) {
       {summary.data && (
         <>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-            <Kpi icon={Users} label={t('overview.members')} value={summary.data.members} note={t('overview.inThisSpace')} />
+            <Kpi icon={Users} label={t('overview.members')} value={summary.data.members} note={t('overview.membersAdded', { count: summary.data.membersAddedInPeriod, period: inPeriod })} />
             <Kpi icon={ListTodo} label={t('overview.issues')} value={summary.data.issues.total} to={issuesPath} note={t('overview.createdIn', { count: summary.data.issues.createdInPeriod, period: inPeriod })} />
-            <Kpi icon={Inbox} label={t('overview.open')} value={summary.data.issues.toDo + summary.data.issues.inProgress} to={withStatuses([0, 1])} note={t('overview.inProgressCount', { count: summary.data.issues.inProgress })} />
-            <Kpi icon={CircleCheck} label={t('overview.done')} value={summary.data.issues.done} to={withStatuses([2])} note={t('overview.ofAll', { percent: percent(summary.data.issues.done, summary.data.issues.total) })} />
+            <Kpi icon={Inbox} label={t('overview.open')} value={summary.data.issues.toDo + summary.data.issues.inProgress} to={withStatuses([0, 1])} note={inProgressNote(summary.data, t)} />
+            <Kpi icon={Check} label={t('overview.done')} value={summary.data.issues.done} to={withStatuses([2])} note={t('overview.ofAll', { percent: percent(summary.data.issues.done, summary.data.issues.total) })} />
             <Kpi icon={GitPullRequest} label={t('overview.pullRequests')} value={summary.data.pullRequests.total} note={t('overview.pullRequestsNote', { open: summary.data.pullRequests.open, merged: summary.data.pullRequests.merged })} />
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <Card title={t('overview.byStatus')} meta={t('overview.allIssues')}>
+            <Card title={t('overview.byStatus')} meta={periodTag}>
               <StatusDonut summary={summary.data} link={withStatuses} />
             </Card>
             <Card title={t('overview.byType')} meta={t('overview.issueCount', { count: summary.data.issues.total })}>
@@ -96,14 +122,14 @@ export function SummaryTab({ space }: { space: Space }) {
                       key={`${item.icon}-${item.name}`}
                       label={<Link component={RouterLink} to={withType(item.icon ?? '')} color="inherit" underline="hover">{item.name}</Link>}
                       value={item.count}
-                      max={Math.max(...byType.map((row) => row.count))}
+                      max={Math.max(...byType.map((row) => row.count), 1)}
                       color={TYPE_COLORS[item.icon ?? ''] ?? 'accent-default'}
                     />
                   ))}
                 </div>
               )}
             </Card>
-            <Card title={t('overview.issueActivity')} meta={periodName(period, summary.data)}>
+            <Card title={t('overview.issueActivity')} meta={periodTag}>
               <div className="flex flex-col">
                 <ActivityRow label={t('overview.created')} note={summary.data.activity.lastCreatedAt && t('overview.lastCreated', { when: formatRelative(summary.data.activity.lastCreatedAt, i18n.language) })} value={summary.data.activity.created} />
                 <ActivityRow label={t('overview.updated')} note={summary.data.activity.lastUpdatedAt && t('overview.lastUpdated', { when: formatRelative(summary.data.activity.lastUpdatedAt, i18n.language) })} value={summary.data.activity.updated} />
@@ -138,11 +164,9 @@ export function SummaryTab({ space }: { space: Space }) {
                       <Avatar name={item.actor?.name ?? ''} src={item.actor?.avatarUrl} />
                       <span className="min-w-0 flex-1 truncate" style={{ fontSize: font.size.md }}>
                         <span style={{ fontWeight: font.weight.medium }}>{item.actor?.name ?? t('common.deactivatedUser')}</span>{' '}
-                        {eventText(item, t)}{' '}
-                        <Link component={RouterLink} to={`/issues/${item.issueKey}`} underline="hover" title={item.issueTitle ?? undefined}>{item.issueKey}</Link>
-                        {item.kind === 1 && item.field === 'status' && item.newValue ? ` ${t('overview.event.toStatus', { status: item.newValue })}` : ''}
+                        <EventText item={item} doneStatuses={doneStatuses} />
                       </span>
-                      <span className="shrink-0" style={{ fontSize: font.size.xs, color: sem('text-tertiary') }}>{formatRelative(item.at, i18n.language)}</span>
+                      <span className="shrink-0" style={{ fontSize: font.size.xs, color: sem('text-tertiary') }}>{shortAgo(item.at, i18n.language, t)}</span>
                     </li>
                   ))}
                 </ul>
@@ -166,15 +190,50 @@ function rangeText(summary: OverviewSummary, language: string, t: (key: string, 
 
 type Event = NonNullable<OverviewSummary['recent']>[number];
 
-function eventText(item: Event, t: (key: string) => string) {
-  if (item.kind === 0) {
-    return t('overview.event.created');
+/** "moved SB-81 to In Progress", "completed SB-12", "logged 2h on SB-27". */
+function EventText({ item, doneStatuses }: { item: Event; doneStatuses: Set<string | null | undefined> }) {
+  const { t } = useTranslation();
+  const key = <Link component={RouterLink} to={`/issues/${item.issueKey}`} underline="hover" title={item.issueTitle ?? undefined}>{item.issueKey}</Link>;
+  if (item.kind === 0 || item.kind === 2) {
+    return <>{t(item.kind === 0 ? 'overview.event.created' : 'overview.event.commented')} {key}</>;
   }
-  if (item.kind === 2) {
-    return t('overview.event.commented');
+  if (item.field === 'status' && item.newValue) {
+    return doneStatuses.has(item.newValue)
+      ? <>{t('overview.event.completed')} {key}</>
+      : <>{t('overview.event.status')} {key} {t('overview.event.toStatus', { status: item.newValue })}</>;
   }
-  const known = ['status', 'assignee', 'description', 'title', 'priority', 'workLog', 'sprint'];
-  return t(`overview.event.${known.includes(item.field ?? '') ? item.field : 'changed'}`);
+  if (item.field === 'workLog' && item.newValue) {
+    return <>{t('overview.event.logged', { time: formatMinutes(Number(item.newValue)) })} {key}</>;
+  }
+  const known = ['assignee', 'description', 'title', 'priority', 'workLog', 'sprint'];
+  return <>{t(`overview.event.${known.includes(item.field ?? '') ? item.field : 'changed'}`)} {key}</>;
+}
+
+/** "12 in progress, 5 in review", from the statuses the open work sits in. */
+function inProgressNote(summary: OverviewSummary, t: (key: string, options?: Record<string, unknown>) => string) {
+  const parts = (summary.issues.inProgressByStatus ?? []).map((item) => t('overview.inStatus', { count: item.count, status: (item.name ?? '').toLowerCase() }));
+  return parts.length > 0 ? parts.join(', ') : t('overview.inProgressCount', { count: 0 });
+}
+
+const HOUR = 60;
+const DAY = 24 * HOUR;
+
+/** "5m ago", "2h ago", "Yesterday", then the date. */
+function shortAgo(value: string, language: string, t: (key: string, options?: Record<string, unknown>) => string) {
+  const minutes = Math.max(0, Math.round((Date.now() - Date.parse(value)) / 60_000));
+  if (minutes < 1) {
+    return t('overview.ago.now');
+  }
+  if (minutes < HOUR) {
+    return t('overview.ago.minutes', { count: minutes });
+  }
+  if (minutes < DAY) {
+    return t('overview.ago.hours', { count: Math.floor(minutes / HOUR) });
+  }
+  if (minutes < 2 * DAY) {
+    return t('overview.ago.yesterday');
+  }
+  return new Intl.DateTimeFormat(language, { month: 'short', day: 'numeric' }).format(new Date(value));
 }
 
 function Card({ title, meta, action, children }: { title: string; meta?: string; action?: ReactNode; children: ReactNode }) {

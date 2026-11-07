@@ -1,10 +1,11 @@
 import Typography from '@mui/material/Typography';
+import { FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router';
 import { Badge } from '../../components/Badge';
 import { LoadingState } from '../../components/StateViews';
 import { Tabs } from '../../components/Tabs';
-import { sem } from '../../theme/tokens';
+import { radius, sem } from '../../theme/tokens';
 import { useSpace } from '../spaces/api';
 import { IntroductionTab } from './IntroductionTab';
 import { SummaryTab } from './SummaryTab';
@@ -51,10 +52,13 @@ function DocsTab() {
   const { t } = useTranslation();
 
   return (
-    <section className="flex flex-col items-start gap-2 py-8">
+    <section className="flex min-h-[50vh] flex-col items-center justify-center gap-2 px-4 text-center">
+      <span aria-hidden className="mb-2 flex size-12 items-center justify-center" style={{ backgroundColor: sem('bg-subtle'), borderRadius: radius.card, color: sem('text-secondary') }}>
+        <FileText size={24} strokeWidth={1.5} />
+      </span>
       <Badge tone="info">{t('overview.comingSoon')}</Badge>
       <Typography variant="h2">{t('overview.docsTitle')}</Typography>
-      <Typography color="textSecondary" className="max-w-xl">{t('overview.docsDescription')}</Typography>
+      <Typography color="textSecondary" className="max-w-sm">{t('overview.docsDescription')}</Typography>
     </section>
   );
 }

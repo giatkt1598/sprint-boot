@@ -8,10 +8,12 @@ namespace SprintBoot.Issues;
 /// <param name="CompletedAt">When a done issue last changed status, so roughly when it was finished; null while it is open.</param>
 public record IssueOverviewRow(
     Guid Id,
+    Guid? ParentId,
     string TypeName,
     string TypeIcon,
     IssueHierarchy Hierarchy,
     StatusCategory Category,
+    string StatusName,
     Guid? AssigneeId,
     decimal? StoryPoints,
     DateTime CreatedAt,
@@ -27,6 +29,7 @@ public enum IssueEventKind
 
 /// <summary>Something a person did to an issue of the space.</summary>
 /// <param name="Field">The field a change touched, as the issue history names it.</param>
+/// <param name="NewValue">Kept only for a status change (the status name) and for logged work (minutes).</param>
 public record IssueEventRow(Guid ActorId, IssueEventKind Kind, string IssueKey, string IssueTitle, string? Field, string? NewValue, DateTime At);
 
 /// <summary>What the space overview needs from issues, without touching their tables.</summary>

@@ -1446,7 +1446,9 @@
       "priority": "changed the priority of",
       "workLog": "logged work on",
       "sprint": "changed the sprint of",
-      "changed": "updated"
+      "changed": "updated",
+      "completed": "completed",
+      "logged": "logged {{time}} on"
     },
     "introduction": "Introduction",
     "clickToEdit": "Click to edit",
@@ -1456,8 +1458,8 @@
     "noIntroduction": "This space has no introduction yet.",
     "lastEdited": "Last edited by {{name}} · {{when}}",
     "comingSoon": "Coming soon",
-    "docsTitle": "Docs for this space",
-    "docsDescription": "The documents linked to this space will show here, straight from Docmost.",
+    "docsTitle": "Space documents are on the way",
+    "docsDescription": "Soon this tab will link to Docmost and show the document tree connected to this space.",
     "timeline": {
       "view": "View",
       "sprint": "Sprint",
@@ -1471,7 +1473,25 @@
       "noDates": "No dates",
       "empty": "No issue has dates in this period.",
       "moreUndated_one": "{{count}} more issue without dates",
-      "moreUndated_other": "{{count}} more issues without dates"
+      "moreUndated_other": "{{count}} more issues without dates",
+      "noDatesGroup": "No start or due date",
+      "views": "Timeline view",
+      "type": "Type",
+      "assignee": "Assignee",
+      "epic": "Epic",
+      "clear": "Clear"
+    },
+    "periodGroup": {
+      "sprints": "Sprints",
+      "calendar": "Calendar"
+    },
+    "membersAdded": "+{{count}} {{period}}",
+    "inStatus": "{{count}} {{status}}",
+    "ago": {
+      "now": "Just now",
+      "minutes": "{{count}}m ago",
+      "hours": "{{count}}h ago",
+      "yesterday": "Yesterday"
     }
   }
 }

@@ -11,6 +11,10 @@ using Volo.Abp.Timing;
 namespace SprintBoot.Agile;
 
 /// <summary>Gathers the Summary tab from issues, sprints, members and pull requests, each read through its owner.</summary>
+/// <remarks>
+/// For a sprint period the figures count the issues planned in those sprints, with their subtasks; epics are never in a
+/// sprint. For a calendar period they count the issues created or updated in it.
+/// </remarks>
 [Authorize]
 public class ProjectOverviewAppService(
     IRepository<Sprint, Guid> sprints,
@@ -23,8 +27,8 @@ public class ProjectOverviewAppService(
     IClock clock)
     : ApplicationService, IProjectOverviewAppService
 {
-    private const int VelocitySprintCount = 3;
-    private const int RecentCount = 8;
+    private const int SprintCount = 3;
+    private const int RecentCount = 5;
     private const int FallbackDays = 14;
 
     public async Task<OverviewSummaryDto> GetSummaryAsync(Guid projectId, OverviewSummaryInput input)
@@ -32,40 +36,51 @@ public class ProjectOverviewAppService(
         await projectAccess.CheckAsync(projectId, ProjectPermissions.ViewIssues);
         var board = await boards.GetAsync(projectId);
         var boardSprints = await sprints.GetListAsync(sprint => sprint.BoardId == board.Id);
-        var range = RangeOf(input.Period, boardSprints, DateOnly.FromDateTime(clock.Now));
+        var (range, periodSprints) = RangeOf(input.Period, boardSprints, DateOnly.FromDateTime(clock.Now));
 
-        var issues = await issueFacts.GetIssuesAsync(projectId);
+        var all = await issueFacts.GetIssuesAsync(projectId);
         var from = range.From.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
         var to = range.To.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
         bool InRange(DateTime? at) => at >= from && at < to;
 
-        var velocity = await VelocityAsync(issues, boardSprints);
+        var issues = periodSprints.Count > 0
+            ? await InSprintsAsync(all, periodSprints)
+            : [.. all.Where(issue => InRange(issue.CreatedAt) || InRange(issue.UpdatedAt))];
+        var completed = issues.Where(issue => InRange(issue.CompletedAt)).ToList();
+
+        var velocity = await VelocityAsync(all, boardSprints);
         var events = await issueFacts.GetRecentEventsAsync(projectId, RecentCount);
         var people = await userDirectory.GetByIdsAsync([.. velocity.Select(item => item.UserId), .. events.Select(item => item.ActorId)]);
         var pulls = await gitFacts.GetPullRequestCountsAsync(projectId);
+        var joined = await projectAccess.GetMemberJoinTimesAsync(projectId);
 
         return new OverviewSummaryDto
         {
             Range = range,
-            Members = (await projectAccess.GetMemberRolesAsync(projectId)).Count,
+            Members = joined.Count,
+            MembersAddedInPeriod = joined.Values.Count(at => InRange(at)),
             Issues = new OverviewIssueCountsDto
             {
                 Total = issues.Count,
                 CreatedInPeriod = issues.Count(issue => InRange(issue.CreatedAt)),
                 ToDo = issues.Count(issue => issue.Category == StatusCategory.ToDo),
                 InProgress = issues.Count(issue => issue.Category == StatusCategory.InProgress),
+                InProgressByStatus = [.. issues
+                    .Where(issue => issue.Category == StatusCategory.InProgress)
+                    .GroupBy(issue => issue.StatusName)
+                    .Select(group => new OverviewStatusCountDto { Name = group.Key, Count = group.Count() })
+                    .OrderByDescending(item => item.Count)],
                 Done = issues.Count(issue => issue.Category == StatusCategory.Done),
             },
             ByType = [.. issues
                 .GroupBy(issue => (issue.TypeName, issue.TypeIcon, issue.Hierarchy))
                 .Select(group => new OverviewTypeCountDto { Name = group.Key.TypeName, Icon = group.Key.TypeIcon, Hierarchy = group.Key.Hierarchy, Count = group.Count() })
-                .OrderByDescending(item => item.Count)
-                .ThenBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)],
+                .OrderByDescending(item => item.Count)],
             Activity = new OverviewActivityDto
             {
                 Created = issues.Count(issue => InRange(issue.CreatedAt)),
                 Updated = issues.Count(issue => InRange(issue.UpdatedAt)),
-                Completed = issues.Count(issue => InRange(issue.CompletedAt)),
+                Completed = completed.Count,
                 LastCreatedAt = issues.Count == 0 ? null : issues.Max(issue => issue.CreatedAt),
                 LastUpdatedAt = issues.Count == 0 ? null : issues.Max(issue => issue.UpdatedAt),
                 LastCompletedAt = issues.Max(issue => issue.CompletedAt),
@@ -74,7 +89,7 @@ public class ProjectOverviewAppService(
             Velocity = [.. velocity
                 .Where(item => people.ContainsKey(item.UserId))
                 .Select(item => new OverviewVelocityDto { User = people[item.UserId], Points = item.Points, Issues = item.Issues })],
-            VelocitySprints = Math.Min(VelocitySprintCount, boardSprints.Count(sprint => sprint.State == SprintState.Closed)),
+            VelocitySprints = Math.Min(SprintCount, boardSprints.Count(sprint => sprint.State == SprintState.Closed)),
             Recent = [.. events.Select(item => new OverviewEventDto
             {
                 Actor = people.GetValueOrDefault(item.ActorId),
@@ -88,39 +103,59 @@ public class ProjectOverviewAppService(
         };
     }
 
-    private static OverviewRangeDto RangeOf(OverviewPeriod period, List<Sprint> boardSprints, DateOnly today)
+    /// <summary>The period's dates, and the sprints whose issues it counts; no sprints means it counts by date.</summary>
+    private static (OverviewRangeDto Range, List<Guid> Sprints) RangeOf(OverviewPeriod period, List<Sprint> boardSprints, DateOnly today)
     {
-        var active = boardSprints.FirstOrDefault(sprint => sprint.State == SprintState.Active);
-        OverviewRangeDto Range(DateOnly from, DateOnly to, string? name = null, int? left = null) =>
-            new() { Period = period, From = from, To = to, SprintName = name, DaysLeft = left };
+        OverviewRangeDto Range(DateOnly from, DateOnly to, bool bySprint, string? name = null, int? left = null) =>
+            new() { Period = period, From = from, To = to, SprintName = name, DaysLeft = left, BySprint = bySprint };
+        var fallback = (Range(today.AddDays(-FallbackDays + 1), today, false), new List<Guid>());
 
         switch (period)
         {
+            case OverviewPeriod.CurrentSprint:
+            {
+                var active = boardSprints.FirstOrDefault(sprint => sprint.State == SprintState.Active);
+                if (active?.StartDate is not { } start)
+                {
+                    return fallback;
+                }
+
+                var end = active.EndDate ?? today;
+                return (Range(start, end, true, active.Name, Math.Max(0, end.DayNumber - today.DayNumber + 1)), [active.Id]);
+            }
+
             case OverviewPeriod.LastThreeSprints:
             {
                 var recent = boardSprints
                     .Where(sprint => sprint.State != SprintState.Future && sprint.StartDate is not null)
                     .OrderByDescending(sprint => sprint.StartDate)
-                    .Take(VelocitySprintCount)
+                    .Take(SprintCount)
                     .ToList();
-                return recent.Count == 0 ? Range(today.AddDays(-FallbackDays + 1), today) : Range(recent.Min(sprint => sprint.StartDate!.Value), today);
+                if (recent.Count == 0)
+                {
+                    return fallback;
+                }
+
+                var last = recent.Max(sprint => sprint.EndDate ?? today);
+                return (Range(recent.Min(sprint => sprint.StartDate!.Value), last > today ? last : today, true), [.. recent.Select(sprint => sprint.Id)]);
             }
 
             case OverviewPeriod.ThisMonth:
-                return Range(new DateOnly(today.Year, today.Month, 1), today);
+                return (Range(new DateOnly(today.Year, today.Month, 1), today, false), []);
             case OverviewPeriod.ThisQuarter:
-                return Range(new DateOnly(today.Year, ((today.Month - 1) / 3 * 3) + 1, 1), today);
-            case OverviewPeriod.ThisYear:
-                return Range(new DateOnly(today.Year, 1, 1), today);
+                return (Range(new DateOnly(today.Year, ((today.Month - 1) / 3 * 3) + 1, 1), today, false), []);
             default:
-                if (active?.StartDate is { } start)
-                {
-                    var end = active.EndDate ?? today;
-                    return Range(start, end, active.Name, Math.Max(0, end.DayNumber - today.DayNumber + 1));
-                }
-
-                return Range(today.AddDays(-FallbackDays + 1), today);
+                return (Range(new DateOnly(today.Year, 1, 1), today, false), []);
         }
+    }
+
+    /// <summary>Issues planned in the sprints, still there or finished there, and the subtasks under them.</summary>
+    private async Task<List<IssueOverviewRow>> InSprintsAsync(List<IssueOverviewRow> all, List<Guid> sprintIds)
+    {
+        var planned = (await sprintIssues.GetListAsync(row => sprintIds.Contains(row.SprintId) && (row.RemovedAt == null || row.Outcome != SprintOutcome.Open)))
+            .Select(row => row.IssueId)
+            .ToHashSet();
+        return [.. all.Where(issue => planned.Contains(issue.Id) || (issue.ParentId is { } parent && planned.Contains(parent) && issue.Hierarchy == IssueHierarchy.Subtask))];
     }
 
     private async Task<List<(Guid UserId, decimal Points, int Issues)>> VelocityAsync(List<IssueOverviewRow> issues, List<Sprint> boardSprints)
@@ -128,7 +163,7 @@ public class ProjectOverviewAppService(
         var closed = boardSprints
             .Where(sprint => sprint.State == SprintState.Closed)
             .OrderByDescending(sprint => sprint.CompletedAt)
-            .Take(VelocitySprintCount)
+            .Take(SprintCount)
             .Select(sprint => sprint.Id)
             .ToList();
         if (closed.Count == 0)

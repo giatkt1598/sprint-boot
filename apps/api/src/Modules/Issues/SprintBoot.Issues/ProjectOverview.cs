@@ -100,6 +100,7 @@ public class IssueOverviewFacts(
             .Select(issue => new
             {
                 issue.Id,
+                issue.ParentId,
                 issue.TypeId,
                 issue.StatusId,
                 issue.AssigneeId,
@@ -117,18 +118,21 @@ public class IssueOverviewFacts(
             .ToDictionaryAsync(item => item.Key, item => item.At);
 
         var typeMap = (await types.GetListAsync(type => type.ProjectId == projectId)).ToDictionary(type => type.Id);
-        var categories = (await statusLookup.GetListAsync()).ToDictionary(status => status.Id, status => status.Category);
+        var statuses = (await statusLookup.GetListAsync()).ToDictionary(status => status.Id);
 
         return [.. rows.Select(row =>
         {
             var type = typeMap.GetValueOrDefault(row.TypeId);
-            var category = categories.GetValueOrDefault(row.StatusId, StatusCategory.ToDo);
+            var status = statuses.GetValueOrDefault(row.StatusId);
+            var category = status?.Category ?? StatusCategory.ToDo;
             return new IssueOverviewRow(
                 row.Id,
+                row.ParentId,
                 type?.Name ?? string.Empty,
                 type?.Icon ?? string.Empty,
                 type?.Hierarchy ?? IssueHierarchy.Standard,
                 category,
+                status?.Name ?? string.Empty,
                 row.AssigneeId,
                 row.StoryPoints,
                 row.CreationTime,
@@ -150,7 +154,7 @@ public class IssueOverviewFacts(
         var changed = await (from activity in await activities.GetQueryableAsync()
                              join issue in issueQuery on activity.IssueId equals issue.Id
                              orderby activity.CreatedAt descending
-                             select new { activity.ActorId, IssueId = issue.Id, Field = (string?)activity.Field, Value = activity.Field == IssueFieldKeys.Status ? activity.NewValue : null, At = activity.CreatedAt, Kind = IssueEventKind.Changed })
+                             select new { activity.ActorId, IssueId = issue.Id, Field = (string?)activity.Field, Value = activity.Field == IssueFieldKeys.Status || activity.Field == IssueFieldKeys.WorkLog ? activity.NewValue : null, At = activity.CreatedAt, Kind = IssueEventKind.Changed })
             .Take(take)
             .ToListAsync();
 

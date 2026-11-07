@@ -171,6 +171,9 @@ public interface IProjectAccess
     /// <summary>Members with their role, for background work that has no calling user.</summary>
     Task<Dictionary<Guid, string>> GetMemberRolesAsync(Guid projectId);
 
+    /// <summary>When each member joined the project.</summary>
+    Task<Dictionary<Guid, DateTime>> GetMemberJoinTimesAsync(Guid projectId);
+
     /// <summary>The caller's role name in the project, null for outsiders.</summary>
     Task<string?> GetCurrentRoleAsync(Guid projectId);
 

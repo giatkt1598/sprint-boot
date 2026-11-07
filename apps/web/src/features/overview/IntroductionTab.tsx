@@ -63,15 +63,21 @@ export function IntroductionTab({ space }: { space: Space }) {
             projectId={space.id}
             autoFocus
             onChange={setDraft}
+            footer={
+              <>
+                <Button kind="ghost" onClick={() => setEditing(false)}>{t('common.cancel')}</Button>
+                <Button disabled={save.isPending} onClick={() => save.mutate(draft)}>{t('common.save')}</Button>
+              </>
+            }
           />
-          <div className="flex gap-2">
-            <Button disabled={save.isPending} onClick={() => save.mutate(draft)}>{t('common.save')}</Button>
-            <Button kind="ghost" onClick={() => setEditing(false)}>{t('common.cancel')}</Button>
-          </div>
         </>
       ) : content ? (
         canEdit ? (
-          <Tooltip title={t('overview.clickToEdit')} placement="top-start" followCursor>
+          <Tooltip
+            title={t('overview.clickToEdit')}
+            placement="top-end"
+            slotProps={{ tooltip: { sx: { backgroundColor: sem('text-primary'), fontSize: font.size.xs } } }}
+          >
             <Box
               role="button"
               tabIndex={0}

@@ -4,7 +4,7 @@ import {
   AtSign, Code2, Heading1, Heading2, Heading3, ImageIcon, Lightbulb, List, ListChecks, ListOrdered, Minus, Paperclip, Quote, Table, Type,
   type LucideIcon,
 } from 'lucide-react';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import Typography from '@mui/material/Typography';
@@ -33,6 +33,8 @@ interface RichTextEditorProps {
   onEdit?: () => void;
   /** Sanitized HTML shown as a hint while the description is empty; never part of the value. */
   ghost?: string;
+  /** Actions such as Save and Cancel, shown inside the frame under the text. */
+  footer?: ReactNode;
 }
 
 const COMMIT_DELAY_MILLISECONDS = 200;
@@ -132,7 +134,7 @@ function ImageDialog({ onClose, onInsert }: { onClose: () => void; onInsert: (ur
   );
 }
 
-export function RichTextEditor({ label, initialValue = '', people, autoFocus, showLabel, projectId, onChange, onEdit, ghost }: RichTextEditorProps) {
+export function RichTextEditor({ label, initialValue = '', people, autoFocus, showLabel, projectId, onChange, onEdit, ghost, footer }: RichTextEditorProps) {
   const { t } = useTranslation();
   const [mentionPopup, setMentionPopup] = useState<PopupState<MentionUser> | null>(null);
   const [slashPopup, setSlashPopup] = useState<PopupState<SlashCommand> | null>(null);
@@ -284,6 +286,7 @@ export function RichTextEditor({ label, initialValue = '', people, autoFocus, sh
         <EditorContent editor={editor} />
       )}
       {uploading > 0 && <Typography role="status" variant="body2" color="textSecondary" className="px-3 pb-2">{t('editor.uploading', { count: uploading })}</Typography>}
+      {footer && <div className="flex justify-end gap-2 px-2 pb-2">{footer}</div>}
       {editor && <EditorMenus editor={editor} container={container} />}
       {slashPopup && (
         <SuggestionPopup

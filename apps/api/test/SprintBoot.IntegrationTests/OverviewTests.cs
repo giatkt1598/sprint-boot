@@ -22,11 +22,11 @@ public class OverviewTests(ApiFixture fixture)
         return (await response.Content.ReadFromJsonAsync<ProjectDto>(Token))!;
     }
 
-    private static async Task<IssueDto> CreateIssueAsync(AuthClient client, ProjectDto project, string typeName, object? assigneeId = null, decimal? points = null)
+    private static async Task<IssueDto> CreateIssueAsync(AuthClient client, ProjectDto project, string typeName, object? assigneeId = null, decimal? points = null, Guid? parentId = null)
     {
         var types = await client.Http.GetFromJsonAsync<List<IssueTypeDto>>($"/api/v1/issue/types/{project.Id}", Token);
         var typeId = types!.Single(type => type.Name == typeName).Id;
-        var response = await client.Http.PostAsJsonAsync("/api/v1/issue", new { projectId = project.Id, typeId, title = $"{typeName} work", assigneeId, storyPoints = points }, Token);
+        var response = await client.Http.PostAsJsonAsync("/api/v1/issue", new { projectId = project.Id, typeId, title = $"{typeName} work", assigneeId, storyPoints = points, parentId }, Token);
         response.StatusCode.ShouldBe(HttpStatusCode.OK, await response.Content.ReadAsStringAsync(Token));
         return (await response.Content.ReadFromJsonAsync<IssueDto>(Token))!;
     }
@@ -50,13 +50,15 @@ public class OverviewTests(ApiFixture fixture)
     }
 
     [Fact]
-    public async Task Summary_counts_issues_types_activity_and_velocity_of_closed_sprints()
+    public async Task Summary_counts_the_issues_of_the_sprint_and_velocity_of_closed_sprints()
     {
         var owner = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(owner);
         var finished = await CreateIssueAsync(owner, project, "Task", owner.UserId, 5);
         var open = await CreateIssueAsync(owner, project, "Task", owner.UserId, 3);
         await CreateIssueAsync(owner, project, "Bug");
+        await CreateIssueAsync(owner, project, "Epic");
+        await CreateIssueAsync(owner, project, "Subtask", parentId: open.Id);
 
         var sprintResponse = await owner.Http.PostAsJsonAsync("/api/v1/sprint", new { projectId = project.Id, name = "Sprint 1" }, Token);
         var sprint = (await sprintResponse.Content.ReadFromJsonAsync<SprintSummaryDto>(Token))!;
@@ -75,24 +77,30 @@ public class OverviewTests(ApiFixture fixture)
         var running = await SummaryAsync(owner, project);
         running.Range.SprintName.ShouldBe("Sprint 1");
         running.Range.DaysLeft.ShouldBe(5);
+        running.Range.BySprint.ShouldBeTrue();
         running.Members.ShouldBe(1);
+        running.MembersAddedInPeriod.ShouldBe(1);
+
+        // Only the sprint's issues and their subtasks count: the bug and the epic outside it do not.
         running.Issues.Total.ShouldBe(3);
         running.Issues.CreatedInPeriod.ShouldBe(3);
         running.Issues.Done.ShouldBe(1);
         running.Issues.ToDo.ShouldBe(2);
-        running.ByType.Select(item => (item.Name, item.Count)).ShouldBe([("Task", 2), ("Bug", 1)]);
+        running.ByType.Select(item => (item.Name, item.Count)).ShouldBe([("Task", 2), ("Subtask", 1)]);
         running.Activity.Completed.ShouldBe(1);
         running.Activity.LastCompletedAt.ShouldNotBeNull();
         running.PullRequests.Total.ShouldBe(0);
         running.Velocity.ShouldBeEmpty();
         running.Recent.ShouldContain(item => item.Kind == IssueEventKind.Changed && item.Field == "status" && item.IssueKey == finished.Key);
-        running.Recent.ShouldContain(item => item.Kind == IssueEventKind.Created && item.IssueKey == open.Key && item.Actor!.Id == owner.UserId);
+        running.Recent.Count.ShouldBe(5);
 
         (await owner.Http.PostAsJsonAsync($"/api/v1/sprint/{sprint.Id}/complete", new { toBacklog = true }, Token)).EnsureSuccessStatusCode();
 
         var closed = await SummaryAsync(owner, project, OverviewPeriod.ThisYear);
         closed.Range.From.ShouldBe(new DateOnly(today.Year, 1, 1));
         closed.Range.SprintName.ShouldBeNull();
+        closed.Range.BySprint.ShouldBeFalse();
+        closed.Issues.Total.ShouldBe(5);
         closed.VelocitySprints.ShouldBe(1);
         var velocity = closed.Velocity.ShouldHaveSingleItem();
         velocity.User.Id.ShouldBe(owner.UserId);

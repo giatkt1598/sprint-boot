@@ -19071,6 +19071,7 @@ export interface components {
             toDo: number;
             /** Format: int32 */
             inProgress: number;
+            inProgressByStatus: components["schemas"]["OverviewStatusCountDto"][] | null;
             /** Format: int32 */
             done: number;
         };
@@ -19096,11 +19097,19 @@ export interface components {
             sprintName: string | null;
             /** Format: int32 */
             daysLeft: number | null;
+            bySprint: boolean;
+        };
+        OverviewStatusCountDto: {
+            name: string | null;
+            /** Format: int32 */
+            count: number;
         };
         OverviewSummaryDto: {
             range: components["schemas"]["OverviewRangeDto"];
             /** Format: int32 */
             members: number;
+            /** Format: int32 */
+            membersAddedInPeriod: number;
             issues: components["schemas"]["OverviewIssueCountsDto"];
             byType: components["schemas"]["OverviewTypeCountDto"][] | null;
             activity: components["schemas"]["OverviewActivityDto"];

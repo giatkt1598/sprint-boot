@@ -27184,6 +27184,7 @@
           "createdInPeriod",
           "done",
           "inProgress",
+          "inProgressByStatus",
           "toDo",
           "total"
         ],
@@ -27204,6 +27205,13 @@
           "inProgress": {
             "type": "integer",
             "format": "int32"
+          },
+          "inProgressByStatus": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OverviewStatusCountDto"
+            },
+            "nullable": true
           },
           "done": {
             "type": "integer",
@@ -27248,6 +27256,7 @@
       },
       "OverviewRangeDto": {
         "required": [
+          "bySprint",
           "daysLeft",
           "from",
           "period",
@@ -27275,6 +27284,27 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "bySprint": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OverviewStatusCountDto": {
+        "required": [
+          "count",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -27285,6 +27315,7 @@
           "byType",
           "issues",
           "members",
+          "membersAddedInPeriod",
           "pullRequests",
           "range",
           "recent",
@@ -27297,6 +27328,10 @@
             "$ref": "#/components/schemas/OverviewRangeDto"
           },
           "members": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "membersAddedInPeriod": {
             "type": "integer",
             "format": "int32"
           },

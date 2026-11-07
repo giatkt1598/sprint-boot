@@ -1446,7 +1446,9 @@
       "priority": "đã đổi độ ưu tiên của",
       "workLog": "đã ghi thời gian cho",
       "sprint": "đã đổi sprint của",
-      "changed": "đã cập nhật"
+      "changed": "đã cập nhật",
+      "completed": "đã hoàn thành",
+      "logged": "đã ghi {{time}} cho"
     },
     "introduction": "Giới thiệu",
     "clickToEdit": "Bấm để sửa",
@@ -1456,8 +1458,8 @@
     "noIntroduction": "Space này chưa có phần giới thiệu.",
     "lastEdited": "Sửa lần cuối bởi {{name}} · {{when}}",
     "comingSoon": "Sắp ra mắt",
-    "docsTitle": "Tài liệu của space",
-    "docsDescription": "Các tài liệu gắn với space này sẽ hiển thị ở đây, lấy trực tiếp từ Docmost.",
+    "docsTitle": "Tài liệu của space sắp có",
+    "docsDescription": "Tab này sẽ sớm liên kết với Docmost và hiển thị cây tài liệu gắn với space.",
     "timeline": {
       "view": "Chế độ xem",
       "sprint": "Sprint",
@@ -1471,7 +1473,25 @@
       "noDates": "Chưa có ngày",
       "empty": "Không có issue nào có ngày trong khoảng này.",
       "moreUndated_one": "Còn {{count}} issue chưa có ngày",
-      "moreUndated_other": "Còn {{count}} issue chưa có ngày"
+      "moreUndated_other": "Còn {{count}} issue chưa có ngày",
+      "noDatesGroup": "Chưa có ngày bắt đầu hoặc hạn",
+      "views": "Chế độ xem dòng thời gian",
+      "type": "Loại",
+      "assignee": "Người thực hiện",
+      "epic": "Epic",
+      "clear": "Bỏ lọc"
+    },
+    "periodGroup": {
+      "sprints": "Sprint",
+      "calendar": "Lịch"
+    },
+    "membersAdded": "+{{count}} {{period}}",
+    "inStatus": "{{count}} {{status}}",
+    "ago": {
+      "now": "Vừa xong",
+      "minutes": "{{count}} phút trước",
+      "hours": "{{count}} giờ trước",
+      "yesterday": "Hôm qua"
     }
   }
 }

@@ -30,6 +30,19 @@ public class OverviewRangeDto
 
     /// <summary>Days left in the running sprint, counting today.</summary>
     public required int? DaysLeft { get; set; }
+
+    /// <summary>
+    /// True when the figures count the issues of the period's sprints (and their subtasks); otherwise they count the
+    /// issues created or updated in the period.
+    /// </summary>
+    public required bool BySprint { get; set; }
+}
+
+public class OverviewStatusCountDto
+{
+    public required string Name { get; set; }
+
+    public required int Count { get; set; }
 }
 
 public class OverviewIssueCountsDto
@@ -41,6 +54,9 @@ public class OverviewIssueCountsDto
     public required int ToDo { get; set; }
 
     public required int InProgress { get; set; }
+
+    /// <summary>The in-progress count split by status, most first.</summary>
+    public required List<OverviewStatusCountDto> InProgressByStatus { get; set; }
 
     public required int Done { get; set; }
 }
@@ -111,6 +127,8 @@ public class OverviewSummaryDto
     public required OverviewRangeDto Range { get; set; }
 
     public required int Members { get; set; }
+
+    public required int MembersAddedInPeriod { get; set; }
 
     public required OverviewIssueCountsDto Issues { get; set; }
 
