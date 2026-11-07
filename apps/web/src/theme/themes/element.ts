@@ -3,7 +3,7 @@ import fire404 from './art/fire-404.svg';
 import fire500 from './art/fire-500.svg';
 import glass404 from './art/glass-404.svg';
 import glass500 from './art/glass-500.svg';
-import glassDrops from './art/glass-drops.svg';
+import glassSprouts from './art/glass-sprouts.svg';
 import water404 from './art/water-404.svg';
 import water500 from './art/water-500.svg';
 import wood404 from './art/wood-404.svg';
@@ -12,7 +12,7 @@ import woodPlanks from './art/wood-planks.svg';
 import { alpha, picture } from './kit';
 import type { ThemeDefinition } from './types';
 
-// Liquid Glass: clear panes over a dim scene with drops of water, white text on top. The panes barely tint or frost
+// Liquid Glass: clear panes over young sprouts wet with drops of water, white text on top. The panes barely tint or frost
 // what is behind them; their rim catches the light, brightest at the top-left and bottom-right corners, with a soft
 // inner glow and a faint sheen across the face.
 const glassEdge = [
@@ -26,7 +26,7 @@ const glassSheen =
 const glassLift = (blur: number, opacity: number) => `${glassEdge}, 0 ${Math.round(blur / 3)}px ${blur}px rgba(0, 0, 0, ${opacity})`;
 const glassTint = '#121626';
 
-/** Clear glass over water drops at dusk. The picture is crisp; the panes only just soften what is behind them. */
+/** Clear glass over sprouts with drops of water on their leaves. The picture is crisp; the panes only just soften what is behind them. */
 export const glass = {
   id: 'glass',
   category: 'element',
@@ -55,15 +55,15 @@ export const glass = {
     popover: glassLift(24, 0.35),
     dialog: glassLift(48, 0.45),
   },
-  page: `url("${glassDrops}") center / cover, #151A2C`,
+  page: `url("${glassSprouts}") center / cover, #16301B`,
   content: 'transparent',
   surfaceFilter: 'blur(6px) saturate(140%)',
   surfaces: {
-    chrome: alpha(glassTint, 0.2),
-    card: alpha(glassTint, 0.18),
-    column: alpha(glassTint, 0.1),
-    overlay: alpha(glassTint, 0.55),
-    panel: alpha(glassTint, 0.22),
+    chrome: alpha(glassTint, 0.34),
+    card: alpha(glassTint, 0.32),
+    column: alpha(glassTint, 0.16),
+    overlay: alpha(glassTint, 0.6),
+    panel: alpha(glassTint, 0.36),
     cardFilter: 'blur(4px) saturate(140%)',
     sheen: glassSheen,
     edge: glassEdge,
