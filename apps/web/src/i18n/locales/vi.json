@@ -615,6 +615,7 @@
   },
   "agile": {
     "sprint": "Sprint",
+    "closedSprint": "{{name}} (đã đóng)",
     "backlog": "Backlog",
     "board": "Board",
     "epics": "Epic",

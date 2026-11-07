@@ -615,6 +615,7 @@
   },
   "agile": {
     "sprint": "Sprint",
+    "closedSprint": "{{name}} (closed)",
     "backlog": "Backlog",
     "board": "Board",
     "epics": "Epics",

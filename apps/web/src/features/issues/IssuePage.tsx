@@ -599,20 +599,23 @@ function SprintField({ issue, canEdit, onError }: { issue: Issue; canEdit: boole
   });
 
   if (!canEdit) {
-    return <span>{current.data?.name ?? t('common.none')}</span>;
+    const name = current.data?.state === 2 ? t('agile.closedSprint', { name: current.data.name }) : current.data?.name;
+    return <span>{name ?? t('common.none')}</span>;
   }
 
-  const closed = current.data?.state === 2;
   const options = (backlog.data?.sprints ?? []).map((item) => ({ value: item.sprint!.id!, label: item.sprint!.name! }));
+  // A closed sprint is no longer a choice, but it is still where the issue was done: show it, marked closed, rather than
+  // None. Moving the issue on to an open sprint stays possible.
+  const closed = current.data?.state === 2 && current.data.id ? [{ value: current.data.id, label: t('agile.closedSprint', { name: current.data.name }), disabled: true }] : [];
 
   return (
     <SelectField
       quiet
       label={t('agile.sprint')}
-      value={closed ? '' : (current.data?.id ?? '')}
+      value={current.data?.id ?? ''}
       displayEmpty
       onChange={(event) => move.mutate(event.target.value)}
-      options={[{ value: '', label: t('common.none') }, ...options]}
+      options={[{ value: '', label: t('common.none') }, ...closed, ...options]}
     />
   );
 }

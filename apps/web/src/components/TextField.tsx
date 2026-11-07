@@ -136,6 +136,8 @@ export interface SelectOption {
   label: string;
   /** Decorative: the label already says what it means. */
   icon?: ReactNode;
+  /** Shown as the current value but not offered as a choice, such as a closed sprint. */
+  disabled?: boolean;
 }
 
 export interface SelectFieldProps extends Omit<SelectProps<string>, 'error' | 'label' | 'variant'> {
@@ -160,7 +162,7 @@ export function SelectField({ label, options, error, quiet, id, ...props }: Sele
         {...props}
       >
         {options.map((option) => (
-          <MenuItem key={option.value} value={option.value}>
+          <MenuItem key={option.value} value={option.value} disabled={option.disabled}>
             {option.icon ? (
               <span className="flex items-center gap-2">
                 <span aria-hidden className="flex">{option.icon}</span>
