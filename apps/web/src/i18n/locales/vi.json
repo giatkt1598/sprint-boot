@@ -1303,7 +1303,11 @@
     },
     "minimize": "Thu nhỏ",
     "restore": "Mở lại {{title}}",
-    "answering": "Đang trả lời…"
+    "answering": "Đang trả lời…",
+    "usedToolTimes_other": "Đã dùng {{tool}} ({{count}} lần)",
+    "runningToolTimes_other": "Đang chạy {{tool}}… ({{count}} lần)",
+    "usedToolTimes_one": "Đã dùng {{tool}} ({{count}} lần)",
+    "runningToolTimes_one": "Đang chạy {{tool}}… ({{count}} lần)"
   },
   "assistantAdmin": {
     "title": "Trợ lý AI",

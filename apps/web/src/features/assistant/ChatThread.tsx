@@ -46,7 +46,7 @@ interface Live {
 
 const EMPTY_LIVE: Live = { question: null, tools: [], toolsShown: 0, segments: [] };
 
-/** One badge per tool, in the order first used, counting the runs: "Used search_issues (4)". */
+/** One badge per tool, in the order first used, counting the runs: "Used search_issues (4 times)". */
 function groupTools(runs: ToolRun[]) {
   const groups = new Map<string, ToolRun[]>();
   for (const run of runs) {
@@ -95,8 +95,9 @@ function ToolBadges({ runs }: { runs: ToolRun[] }) {
     <div className="flex flex-wrap gap-1">
       {groupTools(runs).map((tool) => (
         <Badge key={tool.name} tone={tool.state === 'failed' ? 'danger' : 'subtle'}>
-          {t(tool.state === 'running' ? 'assistant.runningTool' : 'assistant.usedTool', { tool: tool.name })}
-          {tool.count > 1 && ` (${tool.count})`}
+          {tool.count > 1
+            ? t(tool.state === 'running' ? 'assistant.runningToolTimes' : 'assistant.usedToolTimes', { tool: tool.name, count: tool.count })
+            : t(tool.state === 'running' ? 'assistant.runningTool' : 'assistant.usedTool', { tool: tool.name })}
         </Badge>
       ))}
     </div>

@@ -1303,7 +1303,11 @@
     },
     "minimize": "Minimize",
     "restore": "Open {{title}} again",
-    "answering": "Answering…"
+    "answering": "Answering…",
+    "usedToolTimes_one": "Used {{tool}} ({{count}} time)",
+    "usedToolTimes_other": "Used {{tool}} ({{count}} times)",
+    "runningToolTimes_one": "Running {{tool}}… ({{count}} time)",
+    "runningToolTimes_other": "Running {{tool}}… ({{count}} times)"
   },
   "assistantAdmin": {
     "title": "AI assistant",

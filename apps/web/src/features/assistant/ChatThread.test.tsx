@@ -313,13 +313,13 @@ describe('ChatThread', () => {
       fireEvent.keyDown(box, { key: 'Enter' });
     });
 
-    expect(await screen.findByText('Used search_issues (3)')).toBeTruthy();
+    expect(await screen.findByText('Used search_issues (3 times)')).toBeTruthy();
     expect(screen.getByText('Used get_issue')).toBeTruthy();
 
     get.mockResolvedValue({ conversation: { id: 'c7', title: 'Bugs' }, messages: saved });
     await act(async () => release());
     await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeTruthy());
-    expect(screen.getAllByText(/Used search_issues/).map((badge) => badge.textContent)).toEqual(['Used search_issues (4)']);
+    expect(screen.getAllByText(/Used search_issues/).map((badge) => badge.textContent)).toEqual(['Used search_issues (4 times)']);
     expect(screen.getAllByText(/Used get_issue/)).toHaveLength(1);
   });
 
