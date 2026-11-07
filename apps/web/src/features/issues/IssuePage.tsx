@@ -141,6 +141,9 @@ function IssueView({ issue, compact, panelHeader }: { issue: Issue; compact?: bo
       setFieldError(null);
       queryClient.setQueryData(['issues', issue.key], next);
       void queryClient.invalidateQueries({ queryKey: ['issues', issue.id, 'activity'] });
+      // The space overview shows dates, statuses and counts from its own lists, so they reload too.
+      void queryClient.invalidateQueries({ queryKey: ['issues', 'timeline', issue.projectId] });
+      void queryClient.invalidateQueries({ queryKey: ['issues', 'overview', issue.projectId] });
     },
     onError: (failure) => {
       if (failure instanceof ApiError && failure.status === 409) {
