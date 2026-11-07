@@ -28,7 +28,7 @@ import { FilterChips, FilterControls, useIssueFilters } from '../issues/IssueFil
 import { QuickAssignee, QuickPriority, QuickStatus } from '../issues/QuickFields';
 import { useMembers, useSpace } from '../spaces/api';
 import { IssuePanel } from './IssuePanel';
-import { ClosedSprintDialog, CompleteSprintDialog, SprintDialog } from './SprintDialogs';
+import { CompleteSprintDialog, SprintDialog } from './SprintDialogs';
 import { backlogKey, useBacklog, useBoardLive, type Backlog, type Card, type SprintSummary } from './api';
 
 const BACKLOG_LIST = 'backlog';
@@ -123,9 +123,15 @@ function IssueTable({ extraColumn, children }: { extraColumn?: boolean; children
   );
 }
 
-/** A single row for places outside the backlog lists. */
-export function IssueRow({ card, onOpen }: IssueRowProps) {
-  return <IssueTable><Box component="tr" sx={rowStyles}><RowCells card={card} onOpen={onOpen} /></Box></IssueTable>;
+/** Rows that only open their issue, for lists outside the backlog such as a closed sprint. */
+export function StaticIssueList({ cards, onOpen }: { cards: Card[]; onOpen: (key: string) => void }) {
+  return (
+    <div style={{ borderTop: `1px solid ${sem('border-default')}` }}>
+      <IssueTable>
+        {cards.map((card) => <Box key={card.id} component="tr" sx={rowStyles}><RowCells card={card} onOpen={onOpen} /></Box>)}
+      </IssueTable>
+    </div>
+  );
 }
 
 /** Neighbouring rows share a line; the list draws the one above the first row. */
@@ -138,7 +144,7 @@ const rowStyles = {
   '&:hover': { backgroundColor: sem('bg-hover') },
 };
 
-function SectionCard({ children }: { children: ReactNode }) {
+export function SectionCard({ children }: { children: ReactNode }) {
   return (
     <section
       className="flex flex-col gap-2 p-3"
@@ -352,7 +358,6 @@ export function BacklogPage() {
   const [openIssue, setOpenIssue] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [closedOpen, setClosedOpen] = useState(false);
-  const [closedSprint, setClosedSprint] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -519,13 +524,12 @@ export function BacklogPage() {
             <Typography variant="body2" color="textSecondary" component="span">{t('agile.sprintCount', { count: backlog.data?.closedSprints?.length })}</Typography>
           </ButtonBase>
           {closedOpen && (backlog.data?.closedSprints ?? []).map((sprint) => (
-            <Button key={sprint.id} kind="ghost" sx={{ alignSelf: 'flex-start' }} onClick={() => setClosedSprint(sprint.id!)}>{sprint.name}</Button>
+            <Button key={sprint.id} kind="ghost" component={RouterLink} to={`/spaces/${spaceKey}/sprints/${sprint.id}`} sx={{ alignSelf: 'flex-start' }}>{sprint.name}</Button>
           ))}
         </section>
       )}
 
       {creating && projectId && <SprintDialog mode="create" projectId={projectId} onClose={() => setCreating(false)} />}
-      {closedSprint && <ClosedSprintDialog sprintId={closedSprint} onClose={() => setClosedSprint(null)} onOpenIssue={(issueKey) => { setClosedSprint(null); setOpenIssue(issueKey); }} />}
       <IssuePanel issueKey={openIssue} onClose={() => setOpenIssue(null)} />
     </div>
   );

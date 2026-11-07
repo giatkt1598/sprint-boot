@@ -627,7 +627,11 @@
       "epic": "Epic",
       "labels": "Labels",
       "points": "Story points"
-    }
+    },
+    "closedOn": "Closed {{date}}",
+    "sprintClosed": "Closed",
+    "noneCompleted": "No issue was completed in this sprint.",
+    "noneNotCompleted": "Every issue was completed."
   },
   "notifications": {
     "bellUnread": "Notifications, {{count}} unread",

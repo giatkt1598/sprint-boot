@@ -627,7 +627,11 @@
       "epic": "Epic",
       "labels": "Nhãn",
       "points": "Story point"
-    }
+    },
+    "closedOn": "Đóng ngày {{date}}",
+    "sprintClosed": "Đã đóng",
+    "noneCompleted": "Sprint này không có issue nào hoàn thành.",
+    "noneNotCompleted": "Tất cả issue đã hoàn thành."
   },
   "notifications": {
     "bellUnread": "Thông báo, {{count}} chưa đọc",

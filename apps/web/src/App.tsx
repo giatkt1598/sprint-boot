@@ -17,6 +17,7 @@ import { IssueLinkTypesPage } from './features/admin/IssueLinkTypesPage';
 import { StatusesPage, WorkflowsPage } from './features/admin/WorkflowPages';
 import { BacklogPage } from './features/agile/BacklogPage';
 import { BoardPage } from './features/agile/BoardPage';
+import { ClosedSprintPage } from './features/agile/ClosedSprintPage';
 import { EpicsPage } from './features/agile/EpicsPage';
 import { IssuePage } from './features/issues/IssuePage';
 import { EditSchemePage, NotificationPreferencesPage, NotificationSchemesPage, NotificationsPage } from './features/notifications/NotificationPages';
@@ -101,6 +102,7 @@ export function App() {
                 <Route path="board" element={<BoardPage />} />
                 <Route path="epics" element={<EpicsPage />} />
                 <Route path="issues" element={<IssuesListPage />} />
+                <Route path="sprints/:sprintId" element={<ClosedSprintPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
               <Route path="issues/:issueKey" element={<IssuePage />} />

@@ -7,7 +7,6 @@ import { DatePicker } from '../../components/DatePicker';
 import { Dialog, DialogFooter } from '../../components/Dialog';
 import { SelectField, TextField } from '../../components/TextField';
 import { useErrorMessage } from '../../lib/errors';
-import { IssueRow } from './BacklogPage';
 import type { SprintSummary } from './api';
 
 const BACKLOG_TARGET = 'backlog';
@@ -153,23 +152,6 @@ export function CompleteSprintDialog({ sprint, futureSprints, onClose }: { sprin
         />
       )}
       {complete.isError && <Typography role="alert" color="error" variant="body2">{toMessage(complete.error)}</Typography>}
-    </Dialog>
-  );
-}
-
-export function ClosedSprintDialog({ sprintId, onClose, onOpenIssue }: { sprintId: string; onClose: () => void; onOpenIssue: (key: string) => void }) {
-  const { t } = useTranslation();
-  const closed = useQuery({
-    queryKey: ['sprints', sprintId, 'closed'],
-    queryFn: () => unwrap(apiClient.GET('/api/v1/sprint/{id}/closed', { params: { path: { id: sprintId } } })),
-  });
-
-  return (
-    <Dialog open width={640} title={closed.data?.sprint?.name ?? ''} onClose={onClose}>
-      <Typography variant="h3" component="h3">{t('agile.completed')}</Typography>
-      {(closed.data?.completed ?? []).map((card) => <IssueRow key={card.id} card={card} onOpen={onOpenIssue} />)}
-      <Typography variant="h3" component="h3">{t('agile.notCompleted')}</Typography>
-      {(closed.data?.notCompleted ?? []).map((card) => <IssueRow key={card.id} card={card} onOpen={onOpenIssue} />)}
     </Dialog>
   );
 }
