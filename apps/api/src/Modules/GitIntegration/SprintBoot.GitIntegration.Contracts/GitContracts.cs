@@ -338,6 +338,15 @@ public interface IIssueGitFacts
     Task<bool> HasPullRequestAsync(Guid issueId);
 }
 
+public record PullRequestCounts(int Total, int Open, int Merged);
+
+/// <summary>Lets the space overview count development work without touching Git tables.</summary>
+public interface IProjectGitFacts
+{
+    /// <summary>Pull requests linked to at least one issue of the space, each counted once.</summary>
+    Task<PullRequestCounts> GetPullRequestCountsAsync(Guid projectId);
+}
+
 [EventName("SprintBoot.Git.WebhookReceived")]
 public class GitWebhookReceivedEto
 {

@@ -579,6 +579,24 @@ public class IssueGitFacts(IRepository<IssueGitLink, Guid> links) : IIssueGitFac
         links.AnyAsync(item => item.IssueId == issueId && item.TargetType == GitLinkTarget.PullRequest);
 }
 
+public class ProjectGitFacts(IRepository<IssueGitLink, Guid> links, IRepository<GitPullRequest, Guid> pullRequests)
+    : IProjectGitFacts, ITransientDependency
+{
+    public async Task<PullRequestCounts> GetPullRequestCountsAsync(Guid projectId)
+    {
+        var linked = (await links.GetQueryableAsync())
+            .Where(link => link.ProjectId == projectId && link.TargetType == GitLinkTarget.PullRequest)
+            .Select(link => link.TargetId);
+        var states = await (await pullRequests.GetQueryableAsync())
+            .Where(pull => linked.Contains(pull.Id))
+            .GroupBy(pull => pull.State)
+            .Select(group => new { group.Key, Count = group.Count() })
+            .ToListAsync();
+        int Count(GitPullRequestState state) => states.FirstOrDefault(item => item.Key == state)?.Count ?? 0;
+        return new PullRequestCounts(states.Sum(item => item.Count), Count(GitPullRequestState.Open), Count(GitPullRequestState.Merged));
+    }
+}
+
 /// <summary>Signed, short-lived state so a provider redirect can only finish a setup an admin started.</summary>
 public class GitAuthState(IDataProtectionProvider protection, GitSyncService sync) : ITransientDependency
 {

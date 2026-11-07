@@ -1597,6 +1597,32 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.ToTable("priorities", "issues");
                 });
 
+            modelBuilder.Entity("SprintBoot.Issues.ProjectIntroduction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UpdatedById")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId")
+                        .IsUnique();
+
+                    b.ToTable("project_introductions", "issues");
+                });
+
             modelBuilder.Entity("SprintBoot.Issues.RichTextFile", b =>
                 {
                     b.Property<Guid>("Id")

@@ -11960,6 +11960,292 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/project-introduction": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    projectId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProjectIntroductionDto"];
+                        "text/json": components["schemas"]["ProjectIntroductionDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: {
+                    projectId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateProjectIntroductionInput"];
+                    "text/json": components["schemas"]["UpdateProjectIntroductionInput"];
+                    "application/*+json": components["schemas"]["UpdateProjectIntroductionInput"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProjectIntroductionDto"];
+                        "text/json": components["schemas"]["ProjectIntroductionDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/project-overview/summary/{projectId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Period?: components["schemas"]["OverviewPeriod"];
+                };
+                header?: never;
+                path: {
+                    projectId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OverviewSummaryDto"];
+                        "text/json": components["schemas"]["OverviewSummaryDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/project-workflow": {
         parameters: {
             query?: never;
@@ -18580,6 +18866,11 @@ export interface components {
          * Format: int32
          * @enum {integer}
          */
+        IssueEventKind: 0 | 1 | 2;
+        /**
+         * Format: int32
+         * @enum {integer}
+         */
         IssueHierarchy: 0 | 1 | 2;
         /**
          * Format: int32
@@ -18741,6 +19032,92 @@ export interface components {
             spaceCount: number;
             rules: components["schemas"]["NotificationRuleDto"][] | null;
         };
+        OverviewActivityDto: {
+            /** Format: int32 */
+            created: number;
+            /** Format: int32 */
+            updated: number;
+            /** Format: int32 */
+            completed: number;
+            /** Format: date-time */
+            lastCreatedAt: string | null;
+            /** Format: date-time */
+            lastUpdatedAt: string | null;
+            /** Format: date-time */
+            lastCompletedAt: string | null;
+        };
+        OverviewEventDto: {
+            actor: components["schemas"]["UserRefDto"];
+            kind: components["schemas"]["IssueEventKind"];
+            issueKey: string | null;
+            issueTitle: string | null;
+            field: string | null;
+            newValue: string | null;
+            /** Format: date-time */
+            at: string;
+        };
+        OverviewIssueCountsDto: {
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            createdInPeriod: number;
+            /** Format: int32 */
+            toDo: number;
+            /** Format: int32 */
+            inProgress: number;
+            /** Format: int32 */
+            done: number;
+        };
+        /**
+         * Format: int32
+         * @enum {integer}
+         */
+        OverviewPeriod: 0 | 1 | 2 | 3 | 4;
+        OverviewPullRequestsDto: {
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            open: number;
+            /** Format: int32 */
+            merged: number;
+        };
+        OverviewRangeDto: {
+            period: components["schemas"]["OverviewPeriod"];
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            sprintName: string | null;
+            /** Format: int32 */
+            daysLeft: number | null;
+        };
+        OverviewSummaryDto: {
+            range: components["schemas"]["OverviewRangeDto"];
+            /** Format: int32 */
+            members: number;
+            issues: components["schemas"]["OverviewIssueCountsDto"];
+            byType: components["schemas"]["OverviewTypeCountDto"][] | null;
+            activity: components["schemas"]["OverviewActivityDto"];
+            pullRequests: components["schemas"]["OverviewPullRequestsDto"];
+            velocity: components["schemas"]["OverviewVelocityDto"][] | null;
+            /** Format: int32 */
+            velocitySprints: number;
+            recent: components["schemas"]["OverviewEventDto"][] | null;
+        };
+        OverviewTypeCountDto: {
+            name: string | null;
+            icon: string | null;
+            hierarchy: components["schemas"]["IssueHierarchy"];
+            /** Format: int32 */
+            count: number;
+        };
+        OverviewVelocityDto: {
+            user: components["schemas"]["UserRefDto"];
+            /** Format: double */
+            points: number;
+            /** Format: int32 */
+            issues: number;
+        };
         PagedResultDtoOfDeletedIssueDto: {
             items?: components["schemas"]["DeletedIssueDto"][] | null;
             /** Format: int64 */
@@ -18803,6 +19180,13 @@ export interface components {
             updatedAt: string;
             permissions: string[] | null;
             logoUrl?: string | null;
+        };
+        ProjectIntroductionDto: {
+            content: string | null;
+            updatedBy: components["schemas"]["UserRefDto"];
+            /** Format: date-time */
+            updatedAt: string | null;
+            canEdit: boolean;
         };
         ProjectMemberDto: {
             user: components["schemas"]["UserRefDto"];
@@ -19224,6 +19608,9 @@ export interface components {
             branchNameTemplate?: string | null;
             /** Format: int32 */
             sprintLengthDays?: number | null;
+        };
+        UpdateProjectIntroductionInput: {
+            content?: string | null;
         };
         UpdateWorkLogInput: {
             /** Format: int32 */

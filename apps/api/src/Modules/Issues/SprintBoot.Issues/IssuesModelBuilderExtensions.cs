@@ -91,6 +91,14 @@ public static class IssuesModelBuilderExtensions
             b.Property(template => template.Content).IsRequired();
         });
 
+        builder.Entity<ProjectIntroduction>(b =>
+        {
+            b.ToTable("project_introductions", Schema);
+            b.ConfigureByConvention();
+            b.Property(introduction => introduction.Content).IsRequired();
+            b.HasIndex(introduction => introduction.ProjectId).IsUnique();
+        });
+
         builder.Entity<Label>(b =>
         {
             b.ToTable("labels", Schema);
