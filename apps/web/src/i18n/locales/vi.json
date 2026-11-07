@@ -381,7 +381,6 @@
     "settings": "Cài đặt Space",
     "general": "Chung",
     "members": "Thành viên",
-    "branchTemplate": "Mẫu tên branch",
     "person": "Người dùng",
     "role": "Role",
     "remove": "Gỡ",
@@ -940,7 +939,9 @@
     "redirectCopied": "Đã sao chép Redirect URI.",
     "copyRedirect": "Sao chép Redirect URI",
     "unassigned": "{{name}} chưa thuộc Space nào nên không được dùng.",
-    "moveHere": "Chuyển vào Space này"
+    "moveHere": "Chuyển vào Space này",
+    "branchTemplate": "Mẫu tên branch",
+    "branchTemplateHint": "Tên branch được gợi ý khi tạo branch từ một issue. Dùng {issue_key} và {issue_title}."
   },
   "development": {
     "title": "Phát triển",

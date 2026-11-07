@@ -21,7 +21,7 @@ import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { formatDate } from '../../lib/format';
 import { radius, sem } from '../../theme/tokens';
-import type { Space } from '../spaces/api';
+import { SpacePermission, type Space } from '../spaces/api';
 
 type Connection = components['schemas']['GitConnectionDto'];
 type Repository = components['schemas']['GitRepositoryDto'];
@@ -219,6 +219,58 @@ function ConnectionDialog({ projectId, connection, onClose }: { projectId: strin
   );
 }
 
+const BRANCH_TEMPLATE_PLACEHOLDER = 'feature/{issue_key}-{issue_title}';
+
+/** How the branch name for an issue is suggested; it lives with the Git settings, not with the space's general ones. */
+function BranchTemplateSection({ space }: { space: Space }) {
+  const { t } = useTranslation();
+  const toast = useToast();
+  const toMessage = useErrorMessage();
+  const queryClient = useQueryClient();
+  const canManage = Boolean(space.permissions?.includes(SpacePermission.manage));
+  const [template, setTemplate] = useState(space.branchNameTemplate ?? '');
+
+  const save = useMutation({
+    mutationFn: () =>
+      unwrap(
+        apiClient.PUT('/api/v1/project/{id}', {
+          params: { path: { id: space.id! } },
+          // The update replaces every field, so the others go back as they are.
+          body: { name: space.name!, leadId: space.lead?.id, branchNameTemplate: template || null, sprintLengthDays: space.sprintLengthDays },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['spaces'] });
+      toast('success', t('account.saved'));
+    },
+    onError: (failure) => toast('error', toMessage(failure)),
+  });
+
+  return (
+    <form
+      className="flex max-w-xl flex-col gap-2"
+      onSubmit={(event) => {
+        event.preventDefault();
+        save.mutate();
+      }}
+    >
+      <TextField
+        label={t('git.branchTemplate')}
+        placeholder={BRANCH_TEMPLATE_PLACEHOLDER}
+        value={template}
+        disabled={!canManage}
+        onChange={(event) => setTemplate(event.target.value)}
+      />
+      <Typography variant="body2" color="textSecondary">{t('git.branchTemplateHint')}</Typography>
+      {canManage && (
+        <div>
+          <Button type="submit" disabled={save.isPending || template === (space.branchNameTemplate ?? '')}>{t('common.save')}</Button>
+        </div>
+      )}
+    </form>
+  );
+}
+
 export function GitConnectionsPage() {
   const { t, i18n } = useTranslation();
   const space = useOutletContext<Space>();
@@ -254,6 +306,7 @@ export function GitConnectionsPage() {
         </div>
         <Button onClick={() => setAdding(true)}>{t('git.add')}</Button>
       </div>
+      <BranchTemplateSection space={space} />
       {canAssign && unassigned.data?.map((item) => (
         <div key={item.id} role="status" className="flex items-center gap-2 p-3" style={{ backgroundColor: sem('feedback-warning-bg'), color: sem('feedback-warning-text'), borderRadius: radius.card }}>
           <Typography variant="body2" className="flex-1" sx={{ color: 'inherit' }}>{t('git.unassigned', { name: item.name })}</Typography>

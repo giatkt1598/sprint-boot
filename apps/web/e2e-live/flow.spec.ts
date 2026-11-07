@@ -884,8 +884,9 @@ test('a real Gitea connection links commits, pull requests and CI, and creates b
   const issueUrl = page.url();
 
   await page.goto(`/spaces/${key}/settings/general`);
-  await expect(page.getByLabel('Branch name template')).toHaveAttribute('placeholder', 'feature/{issue_key}-{issue_title}');
+  await expect(page.getByLabel('Branch name template')).toHaveCount(0);
   await page.goto(`/spaces/${key}/settings/git`);
+  await expect(page.getByLabel('Branch name template')).toHaveAttribute('placeholder', 'feature/{issue_key}-{issue_title}');
   await expect(page.getByText('No Git connections yet')).toBeVisible();
   await expectAccessible(page);
   await page.getByRole('button', { name: 'Add connection' }).click();

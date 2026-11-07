@@ -193,7 +193,6 @@ export function SpaceGeneralPage() {
   const queryClient = useQueryClient();
   const canManage = space.permissions?.includes(SpacePermission.manage);
   const [name, setName] = useState(space.name ?? '');
-  const [template, setTemplate] = useState(space.branchNameTemplate ?? '');
   const [lengthDays, setLengthDays] = useState(space.sprintLengthDays ?? DEFAULT_SPRINT_DAYS);
   const [customLength, setCustomLength] = useState(!SPRINT_PRESETS.includes(space.sprintLengthDays ?? DEFAULT_SPRINT_DAYS));
 
@@ -202,7 +201,8 @@ export function SpaceGeneralPage() {
       unwrap(
         apiClient.PUT('/api/v1/project/{id}', {
           params: { path: { id: space.id! } },
-          body: { name, leadId: space.lead?.id, branchNameTemplate: template || null, sprintLengthDays: lengthDays },
+          // The branch template is edited on the Git tab; saving here must keep it.
+          body: { name, leadId: space.lead?.id, branchNameTemplate: space.branchNameTemplate, sprintLengthDays: lengthDays },
         }),
       ),
     onSuccess: async () => {
@@ -223,7 +223,6 @@ export function SpaceGeneralPage() {
       <SpaceLogoField space={space} canManage={Boolean(canManage)} />
       <TextField label={t('spaces.name')} value={name} disabled={!canManage} onChange={(event) => setName(event.target.value)} />
       <TextField label={t('spaces.key')} value={space.key ?? ''} disabled />
-      <TextField label={t('spaces.branchTemplate')} placeholder="feature/{issue_key}-{issue_title}" value={template} disabled={!canManage} onChange={(event) => setTemplate(event.target.value)} />
       {space.type === 0 && (
         <>
           <SelectField

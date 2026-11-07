@@ -381,7 +381,6 @@
     "settings": "Space settings",
     "general": "General",
     "members": "Members",
-    "branchTemplate": "Branch name template",
     "person": "Person",
     "role": "Role",
     "remove": "Remove",
@@ -940,7 +939,9 @@
     "redirectCopied": "Redirect URI copied.",
     "copyRedirect": "Copy redirect URI",
     "unassigned": "{{name}} belongs to no space and is not in use.",
-    "moveHere": "Move to this space"
+    "moveHere": "Move to this space",
+    "branchTemplate": "Branch name template",
+    "branchTemplateHint": "Suggested name for a branch created from an issue. Use {issue_key} and {issue_title}."
   },
   "development": {
     "title": "Development",
