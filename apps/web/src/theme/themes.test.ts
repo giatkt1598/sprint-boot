@@ -33,11 +33,11 @@ describe('themes', () => {
     expect(firstAccent).toBeGreaterThan(lastTheme);
   });
 
-  it('let the decor through the content area and draw all three pictures when they have a decor', () => {
+  it('let the decor through the content area and draw both pictures when they have a decor', () => {
     for (const theme of THEMES as readonly ThemeDefinition[]) {
       if (theme.decor) {
         expect(theme.content, theme.id).toBe('transparent');
-        expect(Object.keys(theme.illustrations ?? {}).sort(), theme.id).toEqual(['empty', 'error', 'notFound']);
+        expect(Object.keys(theme.illustrations ?? {}).sort(), theme.id).toEqual(['error', 'notFound']);
       }
     }
   });

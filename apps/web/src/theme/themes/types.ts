@@ -4,8 +4,8 @@ import type { Accent, AccentTokens, ColorMode, SemanticToken, ShadowSet } from '
 
 export type ThemeCategory = 'basic' | 'gradient' | 'element' | 'culture';
 
-/** Full-page and empty-state pictures a theme may draw in its own style. */
-export type IllustrationKind = 'notFound' | 'error' | 'empty';
+/** Full-page pictures a theme may draw in its own style: not found and crash. Empty states never get one. */
+export type IllustrationKind = 'notFound' | 'error';
 
 export interface DecorProps {
   /** Draw one quiet frame: the person or their device asked for less motion. */

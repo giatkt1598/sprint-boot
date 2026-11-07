@@ -1,10 +1,8 @@
 import { semanticDark, semanticLight, shadowValues } from '../tokens';
 import aurora404 from './art/aurora-404.svg';
 import aurora500 from './art/aurora-500.svg';
-import auroraEmpty from './art/aurora-empty.svg';
 import sunset404 from './art/sunset-404.svg';
 import sunset500 from './art/sunset-500.svg';
-import sunsetEmpty from './art/sunset-empty.svg';
 import { alpha, picture } from './kit';
 import type { ThemeDefinition } from './types';
 
@@ -46,7 +44,7 @@ export const aurora = {
     cardShadow: auroraCard,
   },
   decor: () => import('./decor/aurora'),
-  illustrations: { notFound: picture(aurora404), error: picture(aurora500), empty: picture(auroraEmpty, 160, 100) },
+  illustrations: { notFound: picture(aurora404), error: picture(aurora500) },
 } satisfies ThemeDefinition<'aurora'>;
 
 const sunsetCard = '0 2px 8px rgba(154, 52, 18, 0.1)';
@@ -95,5 +93,5 @@ export const sunset = {
     cardShadow: sunsetCard,
   },
   decor: () => import('./decor/sunset'),
-  illustrations: { notFound: picture(sunset404), error: picture(sunset500), empty: picture(sunsetEmpty, 160, 100) },
+  illustrations: { notFound: picture(sunset404), error: picture(sunset500) },
 } satisfies ThemeDefinition<'sunset'>;

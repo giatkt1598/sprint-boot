@@ -1,16 +1,12 @@
 import { semanticDark, semanticLight, shadowValues } from '../tokens';
 import fire404 from './art/fire-404.svg';
 import fire500 from './art/fire-500.svg';
-import fireEmpty from './art/fire-empty.svg';
 import glass404 from './art/glass-404.svg';
 import glass500 from './art/glass-500.svg';
-import glassEmpty from './art/glass-empty.svg';
 import water404 from './art/water-404.svg';
 import water500 from './art/water-500.svg';
-import waterEmpty from './art/water-empty.svg';
 import wood404 from './art/wood-404.svg';
 import wood500 from './art/wood-500.svg';
-import woodEmpty from './art/wood-empty.svg';
 import woodPlanks from './art/wood-planks.svg';
 import { alpha, picture } from './kit';
 import type { ThemeDefinition } from './types';
@@ -58,7 +54,7 @@ export const glass = {
     cardShadow: glassCard,
   },
   decor: () => import('./decor/glass'),
-  illustrations: { notFound: picture(glass404), error: picture(glass500), empty: picture(glassEmpty, 160, 100) },
+  illustrations: { notFound: picture(glass404), error: picture(glass500) },
 } satisfies ThemeDefinition<'glass'>;
 
 const woodCard = '0 1px 0 rgba(92, 58, 30, 0.18), 0 3px 8px rgba(59, 36, 20, 0.18)';
@@ -107,7 +103,7 @@ export const wood = {
   },
   font: 'lora',
   decor: () => import('./decor/wood'),
-  illustrations: { notFound: picture(wood404), error: picture(wood500), empty: picture(woodEmpty, 160, 100) },
+  illustrations: { notFound: picture(wood404), error: picture(wood500) },
 } satisfies ThemeDefinition<'wood'>;
 
 const waterCard = '0 4px 14px rgba(7, 89, 133, 0.14)';
@@ -153,7 +149,7 @@ export const water = {
     cardShadow: waterCard,
   },
   decor: () => import('./decor/water'),
-  illustrations: { notFound: picture(water404), error: picture(water500), empty: picture(waterEmpty, 160, 100) },
+  illustrations: { notFound: picture(water404), error: picture(water500) },
 } satisfies ThemeDefinition<'water'>;
 
 // Cards carry a faint orange rim.
@@ -200,5 +196,5 @@ export const fire = {
   },
   font: 'oswald',
   decor: () => import('./decor/fire'),
-  illustrations: { notFound: picture(fire404), error: picture(fire500), empty: picture(fireEmpty, 160, 100) },
+  illustrations: { notFound: picture(fire404), error: picture(fire500) },
 } satisfies ThemeDefinition<'fire'>;

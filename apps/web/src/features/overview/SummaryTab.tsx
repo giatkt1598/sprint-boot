@@ -116,7 +116,7 @@ export function SummaryTab({ space }: { space: Space }) {
               <StatusDonut summary={summary.data} link={withStatuses} />
             </Card>
             <Card title={t('overview.byType')} meta={t('overview.issueCount', { count: summary.data.issues.total })}>
-              {byType.length === 0 ? <EmptyState inline title={t('overview.noIssues')} /> : (
+              {byType.length === 0 ? <EmptyState title={t('overview.noIssues')} /> : (
                 <div className="flex flex-col gap-3">
                   {byType.map((item) => (
                     <BarRow
@@ -141,7 +141,7 @@ export function SummaryTab({ space }: { space: Space }) {
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <Card title={t('overview.velocity')} meta={t('overview.velocityMeta', { count: summary.data.velocitySprints })}>
-              {velocity.length === 0 ? <EmptyState inline title={t('overview.noVelocity')} /> : (
+              {velocity.length === 0 ? <EmptyState title={t('overview.noVelocity')} /> : (
                 <div className="flex flex-col gap-3">
                   {velocity.map((item) => (
                     <BarRow
@@ -158,7 +158,7 @@ export function SummaryTab({ space }: { space: Space }) {
               )}
             </Card>
             <Card title={t('overview.recent')} action={<Link component={RouterLink} to={issuesPath} underline="hover" sx={{ fontSize: font.size.xs }}>{t('overview.viewAll')}</Link>}>
-              {recent.length === 0 ? <EmptyState inline title={t('overview.noActivity')} /> : (
+              {recent.length === 0 ? <EmptyState title={t('overview.noActivity')} /> : (
                 <ul className="m-0 flex list-none flex-col gap-1 p-0">
                   {recent.map((item, index) => (
                     <Box
@@ -302,7 +302,7 @@ function StatusDonut({ summary, link }: { summary: OverviewSummary; link: (categ
   const counts = [summary.issues.toDo, summary.issues.inProgress, summary.issues.done];
   const total = counts.reduce((sum, count) => sum + count, 0);
   if (total === 0) {
-    return <EmptyState inline title={t('overview.noIssues')} />;
+    return <EmptyState title={t('overview.noIssues')} />;
   }
 
   const circumference = 2 * Math.PI * DONUT_RADIUS;
