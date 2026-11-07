@@ -29,6 +29,9 @@ const themeVariables = (theme: ThemeDefinition) => ({
   '--sb-column-bg': theme.surfaces?.column ?? 'var(--sb-bg-page)',
   '--sb-overlay-bg': theme.surfaces?.overlay ?? 'var(--sb-bg-surface)',
   '--sb-panel-bg': theme.surfaces?.panel ?? 'transparent',
+  '--sb-card-filter': theme.surfaces?.cardFilter ?? 'none',
+  '--sb-surface-sheen': theme.surfaces?.sheen ?? 'none',
+  '--sb-surface-edge': theme.surfaces?.edge ?? 'none',
   '--sb-board-card-shadow': theme.surfaces?.cardShadow ?? 'none',
 });
 
@@ -113,7 +116,7 @@ export function createAppTheme(themeId: string, accent: Accent) {
       },
       // MUI lightens a raised surface in dark mode; ours are flat and take their colour from the tokens.
       // Every paper floats over the page, so a see-through theme lets its backdrop through by the overlay amount.
-      MuiPaper: { styleOverrides: { root: { backgroundImage: 'none', backgroundColor: 'var(--sb-overlay-bg)', backdropFilter: 'var(--sb-surface-filter)' } } },
+      MuiPaper: { styleOverrides: { root: { backgroundImage: 'var(--sb-surface-sheen)', backgroundColor: 'var(--sb-overlay-bg)', backdropFilter: 'var(--sb-surface-filter)' } } },
       MuiButtonBase: { defaultProps: { disableRipple: true } },
       MuiButton: {
         defaultProps: { disableElevation: true },
@@ -160,7 +163,7 @@ export function createAppTheme(themeId: string, accent: Accent) {
         },
       },
       MuiTabs: { styleOverrides: { root: { minHeight: size.control } } },
-      MuiTable: { styleOverrides: { root: { backgroundColor: 'var(--sb-panel-bg)', borderRadius: radius.card } } },
+      MuiTable: { styleOverrides: { root: { backgroundColor: 'var(--sb-panel-bg)', backdropFilter: 'var(--sb-card-filter)', borderRadius: radius.card } } },
       MuiTableCell: {
         styleOverrides: {
           root: { padding: '6px 8px', height: size.row, fontSize: font.size.md, borderColor: sem('border-default') },

@@ -89,7 +89,7 @@ const BoardCard = memo(function BoardCard({ card, canDrag, onOpen }: { card: Car
         role="button"
         data-testid={`card-${card.key}`}
         onClick={() => onOpen(card.key!)}
-        className="w-full min-w-0"
+        className="sb-card w-full min-w-0"
         sx={{ ...cardStyle, display: 'block', overflow: 'hidden', opacity: isDragging ? 0.4 : 1, '&:hover': { backgroundColor: sem('bg-hover') } }}
       >
         <CardBody card={card} />

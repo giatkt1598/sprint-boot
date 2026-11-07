@@ -29,6 +29,12 @@ export interface SurfaceSet {
   overlay: string;
   /** Tables, which sit straight on the content area. See-through by default; a busy backdrop puts paper under them. */
   panel: string;
+  /** backdrop-filter of cards and tables. None by default: a blur under every card is costly over a moving decor. */
+  cardFilter: string;
+  /** background-image laid over surfaces, cards and papers, such as a glossy light across glass. */
+  sheen: string;
+  /** Box shadow of the top bar and sidebar, such as a bright glass edge. */
+  edge: string;
   /** Box shadow of board cards. None by default, where cards sit flat on their column. */
   cardShadow: string;
 }

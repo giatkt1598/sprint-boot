@@ -3,6 +3,7 @@ import fire404 from './art/fire-404.svg';
 import fire500 from './art/fire-500.svg';
 import glass404 from './art/glass-404.svg';
 import glass500 from './art/glass-500.svg';
+import glassDrops from './art/glass-drops.svg';
 import water404 from './art/water-404.svg';
 import water500 from './art/water-500.svg';
 import wood404 from './art/wood-404.svg';
@@ -11,10 +12,15 @@ import woodPlanks from './art/wood-planks.svg';
 import { alpha, picture } from './kit';
 import type { ThemeDefinition } from './types';
 
-// Every surface and card of Glass has a bright rim instead of a grey border.
-const glassCard = '0 8px 24px rgba(30, 27, 75, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.75)';
+// Liquid Glass: panes of clear glass over drops of water. Light catches the rim of every pane, brightest along the top
+// edge, and a soft sheen runs across it; the backdrop shows through, frosted.
+const glassEdge =
+  'inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 0 rgba(255, 255, 255, 0.35), inset 1px 0 0 rgba(255, 255, 255, 0.55), inset -1px 0 0 rgba(255, 255, 255, 0.55)';
+const glassSheen =
+  'linear-gradient(135deg, rgb(255 255 255 / 0.32) 0%, rgb(255 255 255 / 0.08) 30%, rgb(255 255 255 / 0) 55%, rgb(255 255 255 / 0.04) 80%, rgb(255 255 255 / 0.18) 100%)';
+const glassLift = (blur: number, opacity: number) => `${glassEdge}, 0 ${Math.round(blur / 3)}px ${blur}px rgba(30, 27, 75, ${opacity})`;
 
-/** Frosted panes over drifting colour. Values from the Penpot page "Themes / Glass". */
+/** Clear glass over water drops. The picture is crisp; only the panes frost what is behind them. */
 export const glass = {
   id: 'glass',
   category: 'element',
@@ -38,22 +44,25 @@ export const glass = {
     'accent-hover': '#4338CA',
   },
   shadows: {
-    drawer: '0 16px 48px rgba(30, 27, 75, 0.2)',
-    card: glassCard,
-    popover: '0 8px 24px rgba(30, 27, 75, 0.16)',
-    dialog: '0 16px 48px rgba(30, 27, 75, 0.2)',
+    drawer: glassLift(48, 0.2),
+    card: glassLift(24, 0.12),
+    popover: glassLift(24, 0.16),
+    dialog: glassLift(48, 0.2),
   },
-  page: '#EEF2FF',
+  page: `url("${glassDrops}") center / cover, #E4E9FF`,
   content: 'transparent',
-  surfaceFilter: 'blur(32px) saturate(160%)',
+  surfaceFilter: 'blur(8px) saturate(170%)',
   surfaces: {
-    chrome: alpha('#FFFFFF', 0.45),
-    card: alpha('#FFFFFF', 0.58),
-    column: alpha('#FFFFFF', 0.22),
-    overlay: alpha('#FFFFFF', 0.86),
-    cardShadow: glassCard,
+    chrome: alpha('#FFFFFF', 0.14),
+    card: alpha('#FFFFFF', 0.16),
+    column: alpha('#FFFFFF', 0.06),
+    overlay: alpha('#FFFFFF', 0.4),
+    panel: alpha('#FFFFFF', 0.2),
+    cardFilter: 'blur(6px) saturate(160%)',
+    sheen: glassSheen,
+    edge: glassEdge,
+    cardShadow: glassLift(24, 0.12),
   },
-  decor: () => import('./decor/glass'),
   illustrations: { notFound: picture(glass404), error: picture(glass500) },
 } satisfies ThemeDefinition<'glass'>;
 

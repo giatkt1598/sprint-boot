@@ -33,6 +33,14 @@
 /* Surfaces built by hand take the theme's surface effect, such as frosted glass, as MUI papers do. */
 .sb-surface {
   backdrop-filter: var(--sb-surface-filter, none);
+  background-image: var(--sb-surface-sheen, none);
+  box-shadow: var(--sb-surface-edge, none);
+}
+
+/* Cards: the theme may frost them and lay its sheen over them, as Liquid Glass does. */
+.sb-card {
+  backdrop-filter: var(--sb-card-filter, none);
+  background-image: var(--sb-surface-sheen, none);
 }
 
 .rich-text {

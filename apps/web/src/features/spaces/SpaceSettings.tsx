@@ -90,8 +90,8 @@ export function SettingsFrame({ title, backTo, menu, context }: { title: string;
   return (
     <div className="flex min-h-0 flex-1">
       <aside
-        className="flex shrink-0 flex-col gap-1 p-4"
-        style={{ width: size.sidebar, backgroundColor: sem('bg-surface'), borderRight: `1px solid ${sem('border-default')}` }}
+        className="sb-surface flex shrink-0 flex-col gap-1 p-4"
+        style={{ width: size.sidebar, backgroundColor: 'var(--sb-chrome-bg)', borderRight: `1px solid ${sem('border-default')}` }}
       >
         <BackHeader title={title} backTo={backTo} />
         {menu}

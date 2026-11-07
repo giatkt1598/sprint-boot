@@ -244,7 +244,7 @@ function shortAgo(value: string, language: string, t: (key: string, options?: Re
 
 function Card({ title, meta, action, children }: { title: string; meta?: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-4 p-4" style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card, backgroundColor: sem('bg-surface') }}>
+    <section className="sb-card flex flex-col gap-4 p-4" style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card, backgroundColor: 'var(--sb-card-bg)' }}>
       <div className="flex items-center gap-2">
         <Typography variant="h3" component="h2" className="flex-1">{title}</Typography>
         {meta && <Typography variant="body2" color="textSecondary" sx={{ fontSize: font.size.xs }}>{meta}</Typography>}
@@ -258,7 +258,7 @@ function Card({ title, meta, action, children }: { title: string; meta?: string;
 function Kpi({ icon: Icon, label, value, note, to }: { icon: LucideIcon; label: string; value: number; note: string; to?: string }) {
   const number = <span style={{ fontSize: font.size.xl, fontWeight: font.weight.semibold, color: sem('text-primary') }}>{value}</span>;
   return (
-    <section className="flex flex-col gap-1 p-4" style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card, backgroundColor: sem('bg-surface') }}>
+    <section className="sb-card flex flex-col gap-1 p-4" style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card, backgroundColor: 'var(--sb-card-bg)' }}>
       <span className="flex items-center gap-2" style={{ fontSize: font.size.md, color: sem('text-secondary') }}>
         <Icon size={16} strokeWidth={1.5} aria-hidden />
         {label}

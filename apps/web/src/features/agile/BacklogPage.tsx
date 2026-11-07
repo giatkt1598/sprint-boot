@@ -139,7 +139,8 @@ const rowStyles = {
   height: 36,
   // One line per issue: whatever does not fit its column is cut off, never wrapped.
   '& > td': { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
-  backgroundColor: sem('bg-surface'),
+  // Rows take the card under them, so a see-through card stays see-through.
+  backgroundColor: 'transparent',
   borderBottom: `1px solid ${sem('border-default')}`,
   '&:hover': { backgroundColor: sem('bg-hover') },
 };
@@ -147,8 +148,8 @@ const rowStyles = {
 export function SectionCard({ children }: { children: ReactNode }) {
   return (
     <section
-      className="flex flex-col gap-2 p-3"
-      style={{ backgroundColor: sem('bg-surface'), borderRadius: radius.card, boxShadow: shadow.card }}
+      className="sb-card flex flex-col gap-2 p-3"
+      style={{ backgroundColor: 'var(--sb-card-bg)', borderRadius: radius.card, boxShadow: shadow.card }}
     >
       {children}
     </section>
@@ -170,6 +171,7 @@ function DraggableRow({ card, onOpen, actions, canDrag }: IssueRowProps & { canD
       sx={[rowStyles, { '& td': { boxShadow: isOver ? `inset 0 2px 0 ${sem('border-focus')}` : undefined } }]}
       style={{
         opacity: isDragging ? 0.5 : 1,
+        backgroundColor: isDragging ? 'var(--sb-overlay-bg)' : undefined,
         transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
         cursor: canDrag ? 'grab' : undefined,
       }}

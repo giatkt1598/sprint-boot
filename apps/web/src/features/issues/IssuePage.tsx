@@ -972,7 +972,9 @@ function StickyHeader({ panel, children }: { panel?: PanelHeader; children: Reac
       className="sticky top-0 -mx-6 flex flex-col gap-4 px-6 pb-3 pt-6"
       sx={{
         zIndex: 2,
-        backgroundColor: sem('bg-surface'),
+        // Clear until something scrolls under it; then the panel's own background, frosted, hides what passes beneath.
+        backgroundColor: panel.scrolled ? 'var(--sb-overlay-bg)' : 'transparent',
+        backdropFilter: panel.scrolled ? 'var(--sb-surface-filter)' : 'none',
         borderBottom: '1px solid',
         borderColor: panel.scrolled ? sem('border-default') : 'transparent',
       }}
