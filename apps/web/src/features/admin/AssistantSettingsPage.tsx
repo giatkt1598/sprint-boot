@@ -243,10 +243,21 @@ function ConnectionDialog({ draft, onClose }: { draft: Draft; onClose: () => voi
           {t(loadModels.isPending ? 'assistantAdmin.loadingModels' : 'assistantAdmin.loadModels')}
         </Button>
       </div>
+      <TextField
+        autoComplete="off"
+        label={t('assistantAdmin.maxRequestKb')}
+        hint={t('assistantAdmin.maxRequestKbHint')}
+        type="number"
+        inputProps={{ min: 64 }}
+        placeholder={t('assistantAdmin.maxRequestKbPlaceholder')}
+        value={value.maxRequestKb}
+        onChange={(event) => update({ maxRequestKb: event.target.value })}
+      />
       <div className="grid grid-cols-2 gap-4">
         <TextField
           autoComplete="off"
           label={t('assistantAdmin.maxOutputTokens')}
+          hint={t('assistantAdmin.maxOutputTokensHint')}
           type="number"
           placeholder={anthropic ? '16000' : undefined}
           value={value.maxOutputTokens}
@@ -260,18 +271,6 @@ function ConnectionDialog({ draft, onClose }: { draft: Draft; onClose: () => voi
             options={EFFORTS.map((effort) => ({ value: effort, label: t(`assistantAdmin.efforts.${effort}`) }))}
           />
         )}
-      </div>
-      <div className="flex flex-col gap-1">
-        <TextField
-          autoComplete="off"
-          label={t('assistantAdmin.maxRequestKb')}
-          type="number"
-          inputProps={{ min: 64 }}
-          placeholder={t('assistantAdmin.maxRequestKbPlaceholder')}
-          value={value.maxRequestKb}
-          onChange={(event) => update({ maxRequestKb: event.target.value })}
-        />
-        <Typography variant="body2" color="textSecondary">{t('assistantAdmin.maxRequestKbHint')}</Typography>
       </div>
       <Checkbox label={t('assistantAdmin.makeDefault')} checked={value.isDefault} onChange={(event) => update({ isDefault: event.target.checked })} />
       {result && (

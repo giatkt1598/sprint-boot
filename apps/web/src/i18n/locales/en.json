@@ -1356,6 +1356,7 @@
     "privacy": "Questions, and the issues the assistant reads to answer them, are sent to the provider of the default connection.",
     "maxRequestKb": "Max request size (KB)",
     "maxRequestKbPlaceholder": "No limit",
-    "maxRequestKbHint": "For gateways that reject large requests (HTTP 413), such as chatgpt2api behind nginx: long conversations then leave out their older messages to fit. Leave empty for OpenAI, Anthropic and most servers."
+    "maxRequestKbHint": "For gateways that reject large requests (HTTP 413), such as chatgpt2api behind nginx: long conversations then leave out their older messages to fit. Leave empty for OpenAI, Anthropic and most servers.",
+    "maxOutputTokensHint": "The longest answer the model may write in one turn, in tokens. Empty uses the default: 16,000 for Anthropic, the server’s own for others."
   }
 }

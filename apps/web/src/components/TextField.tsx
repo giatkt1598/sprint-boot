@@ -1,4 +1,6 @@
 import FormHelperText from '@mui/material/FormHelperText';
+import Tooltip from '@mui/material/Tooltip';
+import { CircleHelp } from 'lucide-react';
 import MenuItem from '@mui/material/MenuItem';
 import OutlinedInput, { type OutlinedInputProps } from '@mui/material/OutlinedInput';
 import Select, { type SelectProps } from '@mui/material/Select';
@@ -7,6 +9,8 @@ import { font, sem } from '../theme/tokens';
 
 interface FieldFrameProps {
   label: string;
+  /** Shown in a tooltip on a ? icon right of the label. */
+  hint?: string;
   htmlFor: string;
   labelId?: string;
   helperId: string;
@@ -21,17 +25,38 @@ const quietStyles = {
   '& .MuiOutlinedInput-input': { paddingInline: '8px' },
 };
 
-function FieldFrame({ label, htmlFor, labelId, helperId, error, quiet, children }: FieldFrameProps) {
+function FieldFrame({ label, hint, htmlFor, labelId, helperId, error, quiet, children }: FieldFrameProps) {
+  const labelElement = (
+    <label
+      id={labelId}
+      htmlFor={htmlFor}
+      className={quiet ? 'sr-only' : undefined}
+      style={{ fontSize: font.size.xs, fontWeight: font.weight.medium, color: sem('text-secondary') }}
+    >
+      {label}
+    </label>
+  );
+
   return (
     <div className="flex flex-col gap-1">
-      <label
-        id={labelId}
-        htmlFor={htmlFor}
-        className={quiet ? 'sr-only' : undefined}
-        style={{ fontSize: font.size.xs, fontWeight: font.weight.medium, color: sem('text-secondary') }}
-      >
-        {label}
-      </label>
+      {hint && !quiet ? (
+        <span className="flex items-center gap-1">
+          {labelElement}
+          <Tooltip title={hint} describeChild>
+            <span
+              role="img"
+              tabIndex={0}
+              aria-label={hint}
+              className="flex"
+              style={{ color: sem('text-tertiary'), cursor: 'help' }}
+            >
+              <CircleHelp size={14} strokeWidth={1.5} aria-hidden />
+            </span>
+          </Tooltip>
+        </span>
+      ) : (
+        labelElement
+      )}
       {children}
       {error && (
         <FormHelperText id={helperId} error sx={{ margin: 0, fontSize: font.size.xs }}>
@@ -49,17 +74,19 @@ const disabledStyles = {
 
 export interface TextFieldProps extends Omit<OutlinedInputProps, 'error' | 'label'> {
   label: string;
+  /** Shown in a tooltip on a ? icon right of the label. */
+  hint?: string;
   error?: string;
   quiet?: boolean;
 }
 
-export function TextField({ label, error, quiet, id, sx, ...props }: TextFieldProps) {
+export function TextField({ label, hint, error, quiet, id, sx, ...props }: TextFieldProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const helperId = `${inputId}-helper`;
 
   return (
-    <FieldFrame label={label} htmlFor={inputId} helperId={helperId} error={error} quiet={quiet}>
+    <FieldFrame label={label} hint={hint} htmlFor={inputId} helperId={helperId} error={error} quiet={quiet}>
       <OutlinedInput
         id={inputId}
         error={Boolean(error)}

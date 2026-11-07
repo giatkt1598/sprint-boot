@@ -1356,6 +1356,7 @@
     "privacy": "Câu hỏi và các issue mà trợ lý đọc để trả lời sẽ được gửi tới provider của kết nối mặc định.",
     "maxRequestKb": "Kích thước request tối đa (KB)",
     "maxRequestKbPlaceholder": "Không giới hạn",
-    "maxRequestKbHint": "Dành cho các gateway từ chối request lớn (HTTP 413), như chatgpt2api đứng sau nginx: cuộc trò chuyện dài sẽ bỏ bớt các tin nhắn cũ cho vừa. Để trống với OpenAI, Anthropic và hầu hết server khác."
+    "maxRequestKbHint": "Dành cho các gateway từ chối request lớn (HTTP 413), như chatgpt2api đứng sau nginx: cuộc trò chuyện dài sẽ bỏ bớt các tin nhắn cũ cho vừa. Để trống với OpenAI, Anthropic và hầu hết server khác.",
+    "maxOutputTokensHint": "Độ dài tối đa của một câu trả lời, tính bằng token. Để trống thì dùng mặc định: 16.000 với Anthropic, của server với các provider khác."
   }
 }
