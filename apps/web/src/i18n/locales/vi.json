@@ -703,7 +703,9 @@
       "workflow_notification": "Thông báo từ workflow",
       "sprint_started": "Sprint bắt đầu",
       "sprint_completed": "Sprint hoàn thành",
-      "project_member_added": "Được thêm vào Space"
+      "project_member_added": "Được thêm vào Space",
+      "comment_reply": "Phản hồi bình luận của tôi",
+      "comment_reaction": "Reaction vào bình luận của tôi"
     },
     "event": {
       "issue_created": "{{actor}} đã tạo {{key}}",
@@ -715,7 +717,9 @@
       "workflow_notification": "{{actor}} đã chuyển {{key}}: {{status}}",
       "sprint_started": "{{name}} đã bắt đầu",
       "sprint_completed": "{{name}} đã hoàn thành",
-      "project_member_added": "{{actor}} đã thêm bạn vào một Space"
+      "project_member_added": "{{actor}} đã thêm bạn vào một Space",
+      "comment_reply": "{{actor}} đã trả lời bình luận của bạn ở {{key}}",
+      "comment_reaction": "{{actor}} đã thả {{status}} vào bình luận của bạn ở {{key}}"
     }
   },
   "invitations": {

@@ -703,7 +703,9 @@
       "workflow_notification": "Workflow notification",
       "sprint_started": "Sprint started",
       "sprint_completed": "Sprint completed",
-      "project_member_added": "Added to a space"
+      "project_member_added": "Added to a space",
+      "comment_reply": "Reply to my comment",
+      "comment_reaction": "Reaction to my comment"
     },
     "event": {
       "issue_created": "{{actor}} created {{key}}",
@@ -715,7 +717,9 @@
       "workflow_notification": "{{actor}} moved {{key}}: {{status}}",
       "sprint_started": "{{name}} started",
       "sprint_completed": "{{name}} completed",
-      "project_member_added": "{{actor}} added you to a space"
+      "project_member_added": "{{actor}} added you to a space",
+      "comment_reply": "{{actor}} replied to your comment on {{key}}",
+      "comment_reaction": "{{actor}} reacted {{status}} to your comment on {{key}}"
     }
   },
   "invitations": {

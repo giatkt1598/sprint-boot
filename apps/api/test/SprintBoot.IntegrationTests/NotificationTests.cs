@@ -108,6 +108,94 @@ public class NotificationTests(ApiFixture fixture)
         (await InboxAsync(team.Member))!.Items.ShouldNotContain(item => item.EventType == NotificationEventTypes.CommentAdded);
     }
 
+    private static async Task<CommentDto> CommentAsync(AuthClient client, IssueDto issue, string body, Guid? parentId = null)
+    {
+        var response = await client.Http.PostAsJsonAsync("/api/v1/comment", new { issueId = issue.Id, body, parentId }, Token);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, await response.Content.ReadAsStringAsync(Token));
+        return (await response.Content.ReadFromJsonAsync<CommentDto>(Token))!;
+    }
+
+    private static Task<HttpResponseMessage> ReactAsync(AuthClient client, CommentDto comment, string emoji) =>
+        client.Http.PostAsJsonAsync($"/api/v1/comment/{comment.Id}/toggle-reaction", new { emoji }, Token);
+
+    [Fact]
+    public async Task A_reply_notifies_the_author_of_the_comment_once_and_not_the_replier()
+    {
+        var team = await TeamAsync();
+        var issue = await IssueAsync(team.Owner, team);
+        var parent = await CommentAsync(team.Member, issue, "<p>A question</p>");
+
+        await CommentAsync(team.Owner, issue, "<p>An answer</p>", parent.Id);
+
+        // The member also watches the issue, yet hears of the reply as a reply and only once.
+        var reply = await WaitForAsync(team.Member, item => item.EventType == NotificationEventTypes.CommentReply);
+        reply.ShouldHaveSingleItem().IssueKey.ShouldBe(issue.Key);
+        await SettleAsync(team.Owner, team);
+        var inbox = (await InboxAsync(team.Member))!.Items;
+        inbox.Count(item => item.EventType == NotificationEventTypes.CommentReply).ShouldBe(1);
+        inbox.ShouldNotContain(item => item.EventType == NotificationEventTypes.CommentAdded);
+        (await InboxAsync(team.Owner))!.Items.ShouldNotContain(item => item.EventType == NotificationEventTypes.CommentReply);
+
+        // Answering oneself tells nobody.
+        var own = await CommentAsync(team.Member, issue, "<p>Another thought</p>");
+        await CommentAsync(team.Member, issue, "<p>Following up</p>", own.Id);
+        await SettleAsync(team.Owner, team);
+        (await InboxAsync(team.Member))!.Items.Count(item => item.EventType == NotificationEventTypes.CommentReply).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task A_reaction_notifies_the_comment_author_once_with_the_emoji()
+    {
+        var team = await TeamAsync();
+        var issue = await IssueAsync(team.Owner, team);
+        var comment = await CommentAsync(team.Member, issue, "<p>Worth a look</p>");
+
+        (await ReactAsync(team.Owner, comment, "👍")).EnsureSuccessStatusCode();
+
+        var found = await WaitForAsync(team.Member, item => item.EventType == NotificationEventTypes.CommentReaction);
+        var reaction = found.ShouldHaveSingleItem();
+        reaction.IssueKey.ShouldBe(issue.Key);
+        reaction.Detail.ShouldBe("👍");
+
+        // Taking it back and giving it again, or reacting with it twice over, is still one.
+        (await ReactAsync(team.Owner, comment, "👍")).EnsureSuccessStatusCode();
+        (await ReactAsync(team.Owner, comment, "👍")).EnsureSuccessStatusCode();
+        await SettleAsync(team.Owner, team);
+        (await InboxAsync(team.Member))!.Items.Count(item => item.EventType == NotificationEventTypes.CommentReaction).ShouldBe(1);
+
+        // Reacting to one's own comment tells nobody, and a different emoji is news again.
+        (await ReactAsync(team.Member, comment, "🎉")).EnsureSuccessStatusCode();
+        (await ReactAsync(team.Owner, comment, "🎉")).EnsureSuccessStatusCode();
+        await WaitForAsync(team.Member, item => item.EventType == NotificationEventTypes.CommentReaction, 2);
+        await SettleAsync(team.Owner, team);
+        (await InboxAsync(team.Member))!.Items.Count(item => item.EventType == NotificationEventTypes.CommentReaction).ShouldBe(2);
+        (await InboxAsync(team.Owner))!.Items.ShouldNotContain(item => item.EventType == NotificationEventTypes.CommentReaction);
+    }
+
+    [Fact]
+    public async Task Reply_and_reaction_notifications_follow_the_personal_preference()
+    {
+        var team = await TeamAsync();
+        var issue = await IssueAsync(team.Owner, team);
+        var comment = await CommentAsync(team.Member, issue, "<p>Hello</p>");
+        (await team.Member.Http.PostAsJsonAsync("/api/v1/notification/save-preferences", new
+        {
+            items = new[]
+            {
+                new { eventType = NotificationEventTypes.CommentReaction, enabled = false },
+                new { eventType = NotificationEventTypes.CommentReply, enabled = false },
+            },
+        }, Token)).EnsureSuccessStatusCode();
+
+        (await ReactAsync(team.Owner, comment, "👍")).EnsureSuccessStatusCode();
+        await CommentAsync(team.Owner, issue, "<p>Hi back</p>", comment.Id);
+
+        await SettleAsync(team.Owner, team);
+        var inbox = (await InboxAsync(team.Member))!.Items;
+        inbox.ShouldNotContain(item => item.EventType == NotificationEventTypes.CommentReaction);
+        inbox.ShouldNotContain(item => item.EventType == NotificationEventTypes.CommentReply);
+    }
+
     [Fact]
     public async Task Leaving_a_project_stops_its_notifications()
     {

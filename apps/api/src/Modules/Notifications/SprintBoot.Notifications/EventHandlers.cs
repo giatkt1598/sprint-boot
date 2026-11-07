@@ -12,6 +12,7 @@ public class NotificationEventHandlers(NotificationProcessor processor) :
     IDistributedEventHandler<IssueCreatedEto>,
     IDistributedEventHandler<IssueUpdatedEto>,
     IDistributedEventHandler<CommentAddedEto>,
+    IDistributedEventHandler<CommentReactedEto>,
     IDistributedEventHandler<IssueTransitionedEto>,
     IDistributedEventHandler<WorkflowNotificationEto>,
     IDistributedEventHandler<SprintStateChangedEto>,
@@ -47,9 +48,27 @@ public class NotificationEventHandlers(NotificationProcessor processor) :
             eventData.Mentioned, Detail: string.Join(",", eventData.Fields)));
     }
 
+    /// <summary>
+    /// The author of the comment a reply answers hears of it first, so they get one notification even when they also
+    /// watch the issue or are mentioned: later ones for the same event are skipped.
+    /// </summary>
     [UnitOfWork]
-    public virtual Task HandleEventAsync(CommentAddedEto eventData) => WithMentionsAsync(new NotificationEvent(
-        eventData.EventId, NotificationEventTypes.CommentAdded, eventData.ProjectId, eventData.IssueId, eventData.ActorId, eventData.Mentioned));
+    public virtual async Task HandleEventAsync(CommentAddedEto eventData)
+    {
+        if (eventData.ParentAuthorId is { } parentAuthor)
+        {
+            await processor.ProcessAsync(new NotificationEvent(
+                eventData.EventId, NotificationEventTypes.CommentReply, eventData.ProjectId, eventData.IssueId, eventData.ActorId, [parentAuthor]));
+        }
+
+        await WithMentionsAsync(new NotificationEvent(
+            eventData.EventId, NotificationEventTypes.CommentAdded, eventData.ProjectId, eventData.IssueId, eventData.ActorId, eventData.Mentioned));
+    }
+
+    [UnitOfWork]
+    public virtual Task HandleEventAsync(CommentReactedEto eventData) => processor.ProcessAsync(new NotificationEvent(
+        eventData.EventId, NotificationEventTypes.CommentReaction, eventData.ProjectId, eventData.IssueId, eventData.ActorId,
+        [eventData.CommentAuthorId], Detail: eventData.Emoji));
 
     [UnitOfWork]
     public virtual Task HandleEventAsync(IssueTransitionedEto eventData) => processor.ProcessAsync(new NotificationEvent(

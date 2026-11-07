@@ -39,6 +39,7 @@ public class CommentAppService(
         var issue = await issues.GetAsync(input.IssueId);
         await projectAccess.CheckAsync(issue.ProjectId, ProjectPermissions.EditIssues);
 
+        Guid? parentAuthorId = null;
         if (input.ParentId is { } parentId)
         {
             var parent = await comments.GetAsync(parentId);
@@ -46,6 +47,8 @@ public class CommentAppService(
             {
                 throw new BusinessException(IssueErrors.ReplyDepth);
             }
+
+            parentAuthorId = parent.AuthorId;
         }
 
         var (html, text) = Clean(input.Body);
@@ -62,6 +65,7 @@ public class CommentAppService(
                 ProjectId = issue.ProjectId,
                 ActorId = CurrentUser.GetId(),
                 Mentioned = RichTextSanitizer.Mentions(html),
+                ParentAuthorId = parentAuthorId,
             },
             useOutbox: true);
         return (await ToDtosAsync([comment])).Single();
@@ -110,6 +114,18 @@ public class CommentAppService(
         if (existing is null)
         {
             await reactions.InsertAsync(new CommentReaction(GuidGenerator.Create(), id, userId, input.Emoji, clock.Now), autoSave: true);
+            await eventBus.PublishAsync(
+                new CommentReactedEto
+                {
+                    EventId = ReactionEventId(id, userId, input.Emoji),
+                    CommentId = id,
+                    IssueId = comment.IssueId,
+                    ProjectId = (await issues.GetAsync(comment.IssueId)).ProjectId,
+                    ActorId = userId,
+                    CommentAuthorId = comment.AuthorId,
+                    Emoji = input.Emoji,
+                },
+                useOutbox: true);
         }
         else
         {
@@ -118,6 +134,10 @@ public class CommentAppService(
 
         return (await ToDtosAsync([comment])).Single();
     }
+
+    /// <summary>The same person reacting to the same comment with the same emoji always gives the same id, so taking it back and giving it again is one notification.</summary>
+    private static Guid ReactionEventId(Guid commentId, Guid userId, string emoji) =>
+        new(System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes($"reaction:{commentId}:{userId}:{emoji}")));
 
     private (string Html, string Text) Clean(string body)
     {

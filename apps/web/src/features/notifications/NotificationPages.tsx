@@ -25,7 +25,7 @@ type Rule = components['schemas']['NotificationRuleDto'];
 const PAGE_SIZE = 25;
 
 const EVENTS = [
-  'issue.created', 'issue.assigned', 'issue.updated', 'comment.added', 'mentioned',
+  'issue.created', 'issue.assigned', 'issue.updated', 'comment.added', 'mentioned', 'comment.reply', 'comment.reaction',
   'issue.transitioned', 'workflow.notification', 'sprint.started', 'sprint.completed', 'project.member-added',
 ];
 
