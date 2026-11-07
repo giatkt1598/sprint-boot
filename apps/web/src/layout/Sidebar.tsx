@@ -57,7 +57,7 @@ export function Sidebar() {
         <Menu open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}>
           {/* Managing spaces is an admin screen, so everyone else needs the full list here. */}
           {(canManageSpaces ? (spaces.data ?? []).slice(0, RECENT_SPACES) : (spaces.data ?? [])).map((item) => (
-            <MenuItem key={item.id} onClick={() => open(`/spaces/${item.key}/issues`)}>
+            <MenuItem key={item.id} onClick={() => open(`/spaces/${item.key}/overview`)}>
               <span className="flex min-w-0 items-center gap-2">
                 <SpaceLogo spaceKey={item.key} logoUrl={item.logoUrl} />
                 <span className="truncate">{item.name}</span>
