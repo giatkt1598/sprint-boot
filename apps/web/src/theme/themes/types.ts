@@ -14,6 +14,25 @@ export interface DecorProps {
 }
 
 /**
+ * Backgrounds of the surfaces a see-through theme lets its backdrop through, each by its own amount. Any CSS colour.
+ * Left out, chrome, cards and overlays are bg-surface and columns are bg-page, as in the basic themes.
+ */
+export interface SurfaceSet {
+  /** Top bar and sidebar. */
+  chrome: string;
+  /** Board cards. */
+  card: string;
+  /** Board columns. */
+  column: string;
+  /** Drawers, dialogs, menus and popovers: everything that floats over the page. */
+  overlay: string;
+  /** Tables, which sit straight on the content area. See-through by default; a busy backdrop puts paper under them. */
+  panel: string;
+  /** Box shadow of board cards. None by default, where cards sit flat on their column. */
+  cardShadow: string;
+}
+
+/**
  * Everything a theme changes. Components keep reading the semantic tokens, so a theme reaches every screen without
  * touching it; the optional parts add what colours alone cannot: a page backdrop, frosted surfaces, a heading font,
  * an animated layer behind the app and its own pictures.
@@ -33,6 +52,7 @@ export interface ThemeDefinition<Id extends string = string> {
   content?: string;
   /** backdrop-filter of surfaces (papers, sidebar, top bar), such as a blur for frosted glass. */
   surfaceFilter?: string;
+  surfaces?: Partial<SurfaceSet>;
   /** font-family for headings. Body text stays SVN-Poppins. The font must carry Vietnamese glyphs. */
   headingFont?: string;
   /** Marks the theme as a gradient one in the gallery. */

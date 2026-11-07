@@ -258,7 +258,7 @@ function Card({ title, meta, action, children }: { title: string; meta?: string;
 function Kpi({ icon: Icon, label, value, note, to }: { icon: LucideIcon; label: string; value: number; note: string; to?: string }) {
   const number = <span style={{ fontSize: font.size.xl, fontWeight: font.weight.semibold, color: sem('text-primary') }}>{value}</span>;
   return (
-    <section className="flex flex-col gap-1 p-4" style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}>
+    <section className="flex flex-col gap-1 p-4" style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card, backgroundColor: sem('bg-surface') }}>
       <span className="flex items-center gap-2" style={{ fontSize: font.size.md, color: sem('text-secondary') }}>
         <Icon size={16} strokeWidth={1.5} aria-hidden />
         {label}

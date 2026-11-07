@@ -340,7 +340,13 @@
       "themeName": {
         "classic": "Classic",
         "dark": "Dark",
-        "minimal": "Minimal"
+        "minimal": "Minimal",
+        "aurora": "Aurora",
+        "sunset": "Sunset",
+        "glass": "Glass",
+        "wood": "Wood",
+        "water": "Water",
+        "fire": "Fire"
       },
       "themeTag": {
         "animated": "Animated",

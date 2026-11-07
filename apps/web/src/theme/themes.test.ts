@@ -3,7 +3,7 @@ import indexHtml from '../../index.html?raw';
 import en from '../i18n/locales/en.json';
 import { normalizeAppearance } from './appearance';
 import { cssVariables } from './theme';
-import { THEMES, themeById } from './themes';
+import { THEMES, themeById, type ThemeDefinition } from './themes';
 
 describe('themes', () => {
   it('have unique ids, a name and a blue accent when they offer accents', () => {
@@ -30,6 +30,15 @@ describe('themes', () => {
     const lastTheme = selectors.findLastIndex((selector) => !selector.includes('data-accent') && selector.includes('data-app-theme'));
     const firstAccent = selectors.findIndex((selector) => selector.includes('data-accent'));
     expect(firstAccent).toBeGreaterThan(lastTheme);
+  });
+
+  it('let the decor through the content area and draw all three pictures when they have a decor', () => {
+    for (const theme of THEMES as readonly ThemeDefinition[]) {
+      if (theme.decor) {
+        expect(theme.content, theme.id).toBe('transparent');
+        expect(Object.keys(theme.illustrations ?? {}).sort(), theme.id).toEqual(['empty', 'error', 'notFound']);
+      }
+    }
   });
 
   it('fall back to Classic for an id nobody knows', () => {

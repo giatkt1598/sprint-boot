@@ -74,7 +74,7 @@ function CardBody({ card }: { card: Card }) {
   );
 }
 
-const cardStyle = { backgroundColor: sem('bg-surface'), borderRadius: `${radius.card}px` };
+const cardStyle = { backgroundColor: 'var(--sb-card-bg)', boxShadow: 'var(--sb-board-card-shadow)', borderRadius: `${radius.card}px` };
 
 const BoardCard = memo(function BoardCard({ card, canDrag, onOpen }: { card: Card; canDrag: boolean; onOpen: (key: string) => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: card.id!, disabled: !canDrag });
@@ -149,7 +149,7 @@ function ColumnView({ column, cards, total, canDrag, dragging, transitions, onOp
       aria-label={column.name ?? ''}
       data-testid={`column-${column.name}`}
       className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-2"
-      style={{ minWidth: COLUMN_MIN_WIDTH, borderRadius: radius.card, backgroundColor: sem(warn ? 'feedback-warning-bg' : 'bg-page') }}
+      style={{ minWidth: COLUMN_MIN_WIDTH, borderRadius: radius.card, backgroundColor: warn ? sem('feedback-warning-bg') : 'var(--sb-column-bg)' }}
     >
       <div className="flex items-center gap-2 px-1 py-1" style={{ fontSize: font.size.xs, fontWeight: font.weight.medium, color: sem(warn ? 'feedback-warning-text' : 'text-secondary') }}>
         <span>{column.name}</span>

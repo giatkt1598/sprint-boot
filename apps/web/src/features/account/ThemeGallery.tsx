@@ -122,11 +122,11 @@ function Miniature({ theme, accent, children }: { theme: ThemeDefinition; accent
       style={{ background: 'var(--sb-page-bg)' }}
     >
       {children}
-      <span className="sb-surface flex h-3 shrink-0 items-center px-1.5" style={{ backgroundColor: sem('bg-surface'), borderBottom: `1px solid ${sem('border-default')}` }}>
+      <span className="sb-surface flex h-3 shrink-0 items-center px-1.5" style={{ backgroundColor: 'var(--sb-chrome-bg)', borderBottom: `1px solid ${sem('border-default')}` }}>
         <span style={line('text-tertiary', '20%', 3)} />
       </span>
       <span className="flex min-h-0 flex-1">
-        <span className="sb-surface flex w-1/4 flex-col gap-1 p-1.5" style={{ backgroundColor: sem('bg-surface'), borderRight: `1px solid ${sem('border-default')}` }}>
+        <span className="sb-surface flex w-1/4 flex-col gap-1 p-1.5" style={{ backgroundColor: 'var(--sb-chrome-bg)', borderRight: `1px solid ${sem('border-default')}` }}>
           <span style={line('bg-selected', '100%', 6)} />
           <span style={line('bg-subtle', '80%')} />
           <span style={line('bg-subtle', '90%')} />
@@ -134,7 +134,7 @@ function Miniature({ theme, accent, children }: { theme: ThemeDefinition; accent
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-1.5 p-2" style={{ background: 'var(--sb-content-bg)' }}>
           <span style={{ ...line('text-primary', '45%', 5), fontFamily: 'var(--sb-heading-font)' }} />
-          <span className="flex flex-col gap-1 p-1.5" style={{ backgroundColor: sem('bg-surface'), boxShadow: shadow.card, borderRadius: 4, border: `1px solid ${sem('border-default')}` }}>
+          <span className="flex flex-col gap-1 p-1.5" style={{ backgroundColor: 'var(--sb-card-bg)', boxShadow: shadow.card, borderRadius: 4, border: `1px solid ${sem('border-default')}` }}>
             <span style={line('text-secondary', '75%', 3)} />
             <span className="flex gap-1">
               <span style={line('status-progress-bg', '28%', 6)} />

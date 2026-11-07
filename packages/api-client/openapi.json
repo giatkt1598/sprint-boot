@@ -29114,7 +29114,7 @@
         "type": "object",
         "properties": {
           "theme": {
-            "pattern": "^(classic|dark|minimal)$",
+            "pattern": "^(classic|dark|minimal|aurora|sunset|glass|wood|water|fire)$",
             "type": "string",
             "nullable": true
           },

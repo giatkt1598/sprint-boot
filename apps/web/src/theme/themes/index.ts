@@ -1,13 +1,15 @@
 import { classic, dark, minimal } from './basic';
+import { fire, glass, water, wood } from './element';
+import { aurora, sunset } from './gradient';
 import type { ThemeCategory, ThemeDefinition } from './types';
 
-export type { DecorProps, IllustrationKind, ThemeCategory, ThemeDefinition } from './types';
+export type { DecorProps, IllustrationKind, SurfaceSet, ThemeCategory, ThemeDefinition } from './types';
 
 /**
  * Every theme the gallery offers, in gallery order. A new theme also needs its id in PreferencesDto.ThemePattern on
  * the server, its name in the locale files and, when it is dark, in the DARK_THEMES list of index.html.
  */
-export const THEMES = [classic, dark, minimal] as const;
+export const THEMES = [classic, dark, minimal, aurora, sunset, glass, wood, water, fire] as const;
 
 export type ThemeId = (typeof THEMES)[number]['id'];
 

@@ -35,7 +35,7 @@ export function TopBar() {
       className="sb-surface flex shrink-0 items-center gap-4 px-6"
       style={{
         height: size.topBar,
-        backgroundColor: sem('bg-surface'),
+        backgroundColor: 'var(--sb-chrome-bg)',
         borderBottom: `1px solid ${sem('border-default')}`,
       }}
     >

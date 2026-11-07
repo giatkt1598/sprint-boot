@@ -82,7 +82,7 @@ public class CurrentUserDto
 public class PreferencesDto
 {
     /// <summary>The themes the client offers. A theme sets every colour, light or dark included.</summary>
-    public const string ThemePattern = "^(classic|dark|minimal)$";
+    public const string ThemePattern = "^(classic|dark|minimal|aurora|sunset|glass|wood|water|fire)$";
 
     public const string MotionPattern = "^(full|reduced|off)$";
 

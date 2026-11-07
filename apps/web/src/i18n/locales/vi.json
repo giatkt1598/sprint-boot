@@ -340,7 +340,13 @@
       "themeName": {
         "classic": "Cổ điển",
         "dark": "Tối",
-        "minimal": "Tối giản"
+        "minimal": "Tối giản",
+        "aurora": "Cực quang",
+        "sunset": "Hoàng hôn",
+        "glass": "Kính",
+        "wood": "Gỗ",
+        "water": "Nước",
+        "fire": "Lửa"
       },
       "themeTag": {
         "animated": "Chuyển động",

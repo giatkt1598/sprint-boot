@@ -2,7 +2,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { MotionChoice } from './appearance';
 import { DecorLayer } from './ThemeDecor';
-import { themeById, type DecorProps, type ThemeDefinition } from './themes';
+import { THEMES, themeById, type DecorProps, type ThemeDefinition } from './themes';
 
 const animated: ThemeDefinition = {
   ...themeById('classic'),
@@ -38,6 +38,20 @@ describe('DecorLayer', () => {
     expect(await screen.findByText('still:false paused:true')).toBeTruthy();
     expect(screen.getByTestId('theme-decor').hasAttribute('data-paused')).toBe(true);
   });
+
+  it.each(THEMES.filter((theme) => 'decor' in theme).map((theme) => [theme.id, theme as ThemeDefinition] as const))(
+    'draws the %s decor moving and still, with no animation when still',
+    async (_, theme) => {
+      const { default: Decor } = await theme.decor!();
+      const moving = render(<Decor still={false} paused={false} />);
+      expect(moving.container.querySelector('style')?.textContent).toContain('@keyframes');
+      moving.unmount();
+      const still = render(<Decor still paused={false} />);
+      expect(still.container.children.length).toBeGreaterThan(0);
+      expect(still.container.querySelector('style')).toBeNull();
+      expect([...still.container.querySelectorAll<HTMLElement>('div')].some((layer) => layer.style.animation)).toBe(false);
+    },
+  );
 
   it('stays out when motion is off or the theme has no decor', () => {
     const { container } = show('off');
