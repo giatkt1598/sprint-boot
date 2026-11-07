@@ -40,8 +40,14 @@ const DAY_MS = 86_400_000;
 /** Types that have an icon; anything else shows an empty box. */
 const KNOWN_TYPES = ['story', 'task', 'bug', 'subtask', 'epic'];
 
+const SHADE_PERCENT = 22;
+
+/** A status background deepened a little with its own text colour, so it stays in the same hue. */
+const deeper = (background: SemanticToken, text: SemanticToken) =>
+  `color-mix(in srgb, ${sem(background)}, ${sem(text)} ${SHADE_PERCENT}%)`;
+
 /** A bar takes the colour of its status group: To Do, In progress, Done. */
-const STATUS_BARS: SemanticToken[] = ['border-strong', 'accent-default', 'status-done-text'];
+const STATUS_BARS = [sem('border-strong'), deeper('status-progress-bg', 'accent-default'), deeper('status-done-bg', 'type-story')];
 
 /** Dates are plain calendar days; arithmetic happens on UTC midnights so time zones never shift a bar. */
 const toDay = (iso: string) => Date.parse(`${iso}T00:00:00Z`) / DAY_MS;
@@ -175,15 +181,14 @@ export function TimelineTab({ space }: { space: Space }) {
         className="absolute flex items-center overflow-hidden px-2"
         sx={{
           justifyContent: 'flex-start',
-          // A light To Do bar takes dark text; the other two are dark enough for white.
-          color: sem(issue.status?.category ? 'text-on-accent' : 'text-primary'),
+          color: sem('text-primary'),
           fontSize: font.size.xs,
           fontWeight: font.weight.medium,
           left: (from - range.from) * dayWidth + (start < range.from ? 0 : 4),
           width: Math.max((to - from + 1) * dayWidth - (start < range.from ? 0 : 4) - (end > range.to ? 0 : 4), 6),
           top: (ROW_HEIGHT - BAR_HEIGHT) / 2,
           height: BAR_HEIGHT,
-          backgroundColor: sem(STATUS_BARS[issue.status?.category ?? 0] ?? 'accent-default'),
+          backgroundColor: STATUS_BARS[issue.status?.category ?? 0] ?? STATUS_BARS[0],
           borderRadius: `${left}px ${right}px ${right}px ${left}px`,
         }}
       >
