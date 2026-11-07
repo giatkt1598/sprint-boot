@@ -18029,6 +18029,7 @@ export interface components {
             /** Format: int32 */
             count: number;
             reactedByMe: boolean;
+            users: components["schemas"]["UserRefDto"][] | null;
         };
         CompleteSprintInput: {
             /** Format: uuid */

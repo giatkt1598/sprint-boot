@@ -127,6 +127,8 @@ public static class IssuesModelBuilderExtensions
             b.ToTable("comment_reactions", Schema);
             b.ConfigureByConvention();
             b.Property(reaction => reaction.Emoji).HasMaxLength(16).IsRequired();
+            // Reactions from before the column count as given when it was added.
+            b.Property(reaction => reaction.CreatedAt).HasDefaultValueSql("now()");
             b.HasIndex(reaction => new { reaction.CommentId, reaction.UserId, reaction.Emoji }).IsUnique();
         });
 

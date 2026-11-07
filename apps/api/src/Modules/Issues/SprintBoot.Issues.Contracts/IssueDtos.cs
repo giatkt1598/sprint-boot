@@ -270,6 +270,9 @@ public class CommentReactionDto
     public required int Count { get; set; }
 
     public required bool ReactedByMe { get; set; }
+
+    /// <summary>Who reacted, earliest first. People no longer in the directory are left out, so it may be shorter than Count.</summary>
+    public required List<UserRefDto> Users { get; set; }
 }
 
 public class CreateCommentInput

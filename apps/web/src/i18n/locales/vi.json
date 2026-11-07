@@ -503,7 +503,10 @@
     "searchPeople": "Tìm người",
     "resizeSidebar": "Đổi độ rộng phần chi tiết issue",
     "uploadingPercent": "Đang tải lên {{name}}… {{percent}}%",
-    "uploadFailed": "Chưa tải lên được {{name}}: {{message}}"
+    "uploadFailed": "Chưa tải lên được {{name}}: {{message}}",
+    "reactedWith_one": "{{count}} người đã thả {{emoji}}",
+    "reactedWith_other": "{{count}} người đã thả {{emoji}}",
+    "reactedYou": "Bạn"
   },
   "workflows": {
     "title": "Workflow",

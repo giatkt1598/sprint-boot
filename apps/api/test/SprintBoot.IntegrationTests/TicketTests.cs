@@ -308,6 +308,35 @@ public class TicketTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task Reactions_list_who_reacted_earliest_first()
+    {
+        var owner = await fixture.CreateUserClientAsync(Token);
+        var project = await CreateProjectAsync(owner);
+        var issue = await CreateIssueAsync(owner, project);
+        var member = await fixture.CreateUserClientAsync(Token);
+        (await owner.Http.PostAsJsonAsync(
+            $"/api/v1/project/{project.Id}/member", new { userId = member.UserId, role = ProjectRoleNames.Member }, Token))
+            .EnsureSuccessStatusCode();
+        var comment = await PostCommentAsync(owner, issue.Id, null);
+
+        (await member.Http.PostAsJsonAsync($"/api/v1/comment/{comment.Id}/toggle-reaction", new { emoji = "👍" }, Token)).EnsureSuccessStatusCode();
+        await Task.Delay(20, Token);
+        (await owner.Http.PostAsJsonAsync($"/api/v1/comment/{comment.Id}/toggle-reaction", new { emoji = "👍" }, Token)).EnsureSuccessStatusCode();
+        (await owner.Http.PostAsJsonAsync($"/api/v1/comment/{comment.Id}/toggle-reaction", new { emoji = "🎉" }, Token)).EnsureSuccessStatusCode();
+
+        var reactions = (await owner.Http.GetFromJsonAsync<List<CommentDto>>($"/api/v1/comment?issueId={issue.Id}", Token))!.Single().Reactions;
+        var like = reactions.Single(item => item.Emoji == "👍");
+        like.Count.ShouldBe(2);
+        like.Users.Select(user => user.Id).ShouldBe([member.UserId, owner.UserId]);
+        reactions.Single(item => item.Emoji == "🎉").Users.ShouldHaveSingleItem().Id.ShouldBe(owner.UserId);
+
+        // Taking a reaction back takes the person off its list.
+        (await member.Http.PostAsJsonAsync($"/api/v1/comment/{comment.Id}/toggle-reaction", new { emoji = "👍" }, Token)).EnsureSuccessStatusCode();
+        var after = (await owner.Http.GetFromJsonAsync<List<CommentDto>>($"/api/v1/comment?issueId={issue.Id}", Token))!.Single().Reactions;
+        after.Single(item => item.Emoji == "👍").Users.Select(user => user.Id).ShouldBe([owner.UserId]);
+    }
+
+    [Fact]
     public async Task Viewer_can_read_but_not_edit_or_comment()
     {
         var owner = await fixture.CreateUserClientAsync(Token);

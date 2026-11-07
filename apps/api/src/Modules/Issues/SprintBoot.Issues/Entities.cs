@@ -222,13 +222,17 @@ public class CommentReaction : Entity<Guid>
 
     public string Emoji { get; private set; } = null!;
 
+    /// <summary>Orders who reacted, earliest first.</summary>
+    public DateTime CreatedAt { get; private set; }
+
     protected CommentReaction()
     {
     }
 
-    public CommentReaction(Guid id, Guid commentId, Guid userId, string emoji)
+    public CommentReaction(Guid id, Guid commentId, Guid userId, string emoji, DateTime createdAt)
         : base(id)
     {
+        CreatedAt = createdAt;
         CommentId = commentId;
         UserId = userId;
         Emoji = emoji;

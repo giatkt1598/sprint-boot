@@ -1161,6 +1161,11 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.Property<Guid>("CommentId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
                     b.Property<string>("Emoji")
                         .IsRequired()
                         .HasMaxLength(16)

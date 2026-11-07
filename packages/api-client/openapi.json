@@ -24178,7 +24178,8 @@
         "required": [
           "count",
           "emoji",
-          "reactedByMe"
+          "reactedByMe",
+          "users"
         ],
         "type": "object",
         "properties": {
@@ -24192,6 +24193,13 @@
           },
           "reactedByMe": {
             "type": "boolean"
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserRefDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false

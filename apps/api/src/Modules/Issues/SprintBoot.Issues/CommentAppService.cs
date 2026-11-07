@@ -109,7 +109,7 @@ public class CommentAppService(
             item.CommentId == id && item.UserId == userId && item.Emoji == input.Emoji);
         if (existing is null)
         {
-            await reactions.InsertAsync(new CommentReaction(GuidGenerator.Create(), id, userId, input.Emoji), autoSave: true);
+            await reactions.InsertAsync(new CommentReaction(GuidGenerator.Create(), id, userId, input.Emoji, clock.Now), autoSave: true);
         }
         else
         {
@@ -137,7 +137,7 @@ public class CommentAppService(
     {
         var ids = list.Select(comment => comment.Id).ToList();
         var allReactions = await reactions.GetListAsync(reaction => ids.Contains(reaction.CommentId));
-        var users = await userDirectory.GetByIdsAsync(list.Select(comment => comment.AuthorId));
+        var users = await userDirectory.GetByIdsAsync(list.Select(comment => comment.AuthorId).Concat(allReactions.Select(reaction => reaction.UserId)).Distinct());
         var me = CurrentUser.GetId();
 
         return [.. list.Select(comment => new CommentDto
@@ -155,6 +155,11 @@ public class CommentAppService(
                     Emoji = group.Key,
                     Count = group.Count(),
                     ReactedByMe = group.Any(reaction => reaction.UserId == me),
+                    Users = [.. group
+                        .OrderBy(reaction => reaction.CreatedAt)
+                        .ThenBy(reaction => reaction.Id)
+                        .Select(reaction => users.GetValueOrDefault(reaction.UserId))
+                        .OfType<UserRefDto>()],
                 })],
         })];
     }

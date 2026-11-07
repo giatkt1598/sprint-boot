@@ -57,6 +57,29 @@ const reactionChipSx = (mine: boolean) => ({
   backgroundColor: mine ? sem('bg-selected') : undefined,
 });
 
+type Reaction = NonNullable<Comment['reactions']>[number];
+
+/** Who gave a reaction, one person per line, earliest first. */
+export function ReactionUsers({ reaction, meId }: { reaction: Reaction; meId: string | undefined }) {
+  const { t } = useTranslation();
+  const users = reaction.users ?? [];
+  return (
+    <div className="flex flex-col gap-1 py-1">
+      <span style={{ fontSize: font.size.xs, fontWeight: font.weight.medium }}>
+        {t('issues.reactedWith', { emoji: reaction.emoji, count: reaction.count ?? users.length })}
+      </span>
+      <ul className="m-0 flex list-none flex-col gap-1 p-0">
+        {users.map((user) => (
+          <li key={user.id} className="flex items-center gap-2">
+            <Avatar name={user.name ?? ''} src={user.avatarUrl} size={20} decorative />
+            <span style={{ fontSize: font.size.xs }}>{user.id === meId ? t('issues.reactedYou') : user.name}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function ActionButton({ label, pressed, ...props }: { label: string; pressed?: boolean } & ComponentProps<typeof IconButton>) {
   return <Tooltip title={label}><RoundButton label={label} pressed={pressed} {...props} /></Tooltip>;
 }
@@ -251,17 +274,21 @@ function CommentItem({ comment, issue, replies, people, canEdit, canManage }: { 
             </ActionButton>
           )}
           {(comment.reactions ?? []).map((reaction) => (
-            <Button
-              key={reaction.emoji}
-              kind="ghost"
-              disabled={!canEdit}
-              aria-label={t('issues.reactWith', { emoji: reaction.emoji })}
-              aria-pressed={reaction.reactedByMe ?? false}
-              sx={reactionChipSx(reaction.reactedByMe ?? false)}
-              onClick={() => react.mutate(reaction.emoji!)}
-            >
-              {reaction.emoji} {reaction.count}
-            </Button>
+            // The wrapper keeps the tooltip working when the chip is disabled for people who cannot react.
+            <Tooltip key={reaction.emoji} title={<ReactionUsers reaction={reaction} meId={me.id} />} describeChild>
+              <span className="inline-flex">
+                <Button
+                  kind="ghost"
+                  disabled={!canEdit}
+                  aria-label={t('issues.reactWith', { emoji: reaction.emoji })}
+                  aria-pressed={reaction.reactedByMe ?? false}
+                  sx={reactionChipSx(reaction.reactedByMe ?? false)}
+                  onClick={() => react.mutate(reaction.emoji!)}
+                >
+                  {reaction.emoji} {reaction.count}
+                </Button>
+              </span>
+            </Tooltip>
           ))}
           {isMine && (
             <ActionButton label={t('common.edit')} onClick={() => setEditing(true)}>
