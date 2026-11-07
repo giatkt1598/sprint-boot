@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
 import { MemoryRouter } from 'react-router';
@@ -161,6 +161,113 @@ describe('ChatThread', () => {
     await act(async () => release());
     await screen.findByText(/\(saved\)/);
     expect(screen.getAllByText('Payment fails')).toHaveLength(1);
+  });
+
+  it('puts the cursor in the question from anywhere in the box but its buttons', async () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <Host />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    const box = screen.getByRole('textbox', { name: 'Ask the assistant' });
+    const send = screen.getByRole('button', { name: 'Send' });
+    box.blur();
+
+    fireEvent.click(send.parentElement!);
+    expect(document.activeElement).toBe(box);
+    box.blur();
+    fireEvent.click(send);
+    expect(document.activeElement).not.toBe(box);
+  });
+
+  it('reloads what the page shows once a confirmed change has run, and never shows the answer twice', async () => {
+    const message = { id: 'm1', role: 'assistant', text: 'Done.', html: '<p>Done.</p>', tools: [], actions: [], sources: [] };
+    get.mockResolvedValue({ conversation: { id: 'c5', title: 'Fix' }, messages: [] });
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(sse([
+      { type: 'action', action: { id: 'a1', tool: 'update_issue', arguments: '{}', state: 1 } },
+      { type: 'delta', text: 'Done. ' },
+      { type: 'message', message },
+      { type: 'done' },
+    ]))));
+    const client = new QueryClient();
+    const issue = vi.fn(() => Promise.resolve({ key: 'SB-1' }));
+    function Page() {
+      useQuery({ queryKey: ['issue', 'SB-1'], queryFn: issue });
+      return <ChatThread conversationId="c5" onConversation={() => undefined} />;
+    }
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter>
+          <Page />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    await waitFor(() => expect(issue).toHaveBeenCalledTimes(1));
+    get.mockResolvedValue({ conversation: { id: 'c5', title: 'Fix' }, messages: [{ id: 'u1', role: 'user', text: 'Fix it', tools: [], actions: [], sources: [] }, message] });
+
+    const box = screen.getByRole('textbox', { name: 'Ask the assistant' });
+    fireEvent.change(box, { target: { value: 'Fix it' } });
+    await act(async () => {
+      fireEvent.keyDown(box, { key: 'Enter' });
+    });
+
+    await waitFor(() => expect(issue).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeTruthy());
+    expect(screen.getAllByText('Done.')).toHaveLength(1);
+    expect(screen.getAllByText('Fix it')).toHaveLength(1);
+  });
+
+  it('shows the question once when the conversation refetches while the answer streams', async () => {
+    get.mockResolvedValue({ conversation: { id: 'c6', title: 'Hi' }, messages: [] });
+    let release: () => void = () => undefined;
+    const encoder = new TextEncoder();
+    const event = (data: object) => encoder.encode(`data: ${JSON.stringify(data)}
+
+`);
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(event({ type: 'delta', text: 'Working on it ' }));
+        release = () => {
+          controller.enqueue(event({ type: 'message', message: { id: 'm1', role: 'assistant', text: 'Working on it', html: '<p>Working on it</p>', tools: [], actions: [], sources: [] } }));
+          controller.enqueue(event({ type: 'done' }));
+          controller.close();
+        };
+      },
+    }), { headers: { 'content-type': 'text/event-stream' } }))));
+    const client = new QueryClient();
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter>
+          <ChatThread conversationId="c6" onConversation={() => undefined} />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    await waitFor(() => expect(get).toHaveBeenCalled());
+    const box = screen.getByRole('textbox', { name: 'Ask the assistant' });
+    fireEvent.change(box, { target: { value: 'Status?' } });
+    await act(async () => {
+      fireEvent.keyDown(box, { key: 'Enter' });
+    });
+    await waitFor(() => expect(document.body.textContent).toContain('Working on it'));
+
+    // The server has saved the question by now; a refetch brings it back mid-answer.
+    const question = { id: 'u1', role: 'user', text: 'Status?', tools: [], actions: [], sources: [] };
+    get.mockResolvedValue({ conversation: { id: 'c6', title: 'Hi' }, messages: [question] });
+    await act(async () => {
+      await client.refetchQueries({ queryKey: ['assistant', 'conversation', 'c6'] });
+    });
+    expect(screen.getAllByText('Status?')).toHaveLength(1);
+
+    get.mockResolvedValue({
+      conversation: { id: 'c6', title: 'Hi' },
+      messages: [question, { id: 'm1', role: 'assistant', text: 'Working on it', html: '<p>Working on it</p>', tools: [], actions: [], sources: [] }],
+    });
+    await act(async () => release());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeTruthy());
+    expect(screen.getAllByText('Status?')).toHaveLength(1);
+    expect(screen.getAllByText('Working on it')).toHaveLength(1);
   });
 
   it('keeps answering in the panel when the first question creates the conversation', async () => {

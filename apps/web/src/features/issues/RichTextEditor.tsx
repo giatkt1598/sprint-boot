@@ -322,7 +322,8 @@ export function RichTextEditor({ label, initialValue = '', people, autoFocus, sh
 export function RichTextView({ html }: { html: string }) {
   const view = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  // Before paint: a streaming answer replaces this HTML every frame, and code highlighted only after paint would flash.
+  useLayoutEffect(() => {
     view.current?.querySelectorAll<HTMLElement>('pre code[class*="language-"]').forEach((block) => hljs.highlightElement(block));
 
     // The editor names checkboxes only while editing; screen readers need a name in saved text too.

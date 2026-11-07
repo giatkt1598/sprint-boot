@@ -43,6 +43,8 @@ const EMPTY_LIVE: Live = { question: null, tools: [], segments: [] };
 interface Ending {
   id: string;
   done?: () => Promise<void>;
+  /** A confirmed change ran, so what the pages show may be out of date. */
+  changed: boolean;
 }
 
 const actionTones: Record<number, BadgeTone> = {
@@ -232,6 +234,8 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
   const [ending, setEnding] = useState<Ending | null>(null);
   const [revealed, setRevealed] = useState(true);
   const [skip, setSkip] = useState(false);
+  /** How many saved messages there were when the live answer started; later ones show only once it is saved. */
+  const [baseline, setBaseline] = useState<number | null>(null);
   const abort = useRef<AbortController | null>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const scroller = useStickToBottom<HTMLDivElement, HTMLDivElement>();
@@ -264,8 +268,13 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
     void (async () => {
       await queryClient.invalidateQueries({ queryKey: assistantKeys.detail(ending.id) });
       await queryClient.invalidateQueries({ queryKey: ['assistant', 'conversations'] });
+      if (ending.changed) {
+        // The assistant may have changed any issue, sprint or board; the page behind the chat reloads what it shows.
+        await queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] !== 'assistant' });
+      }
       await ending.done?.();
       setLive(EMPTY_LIVE);
+      setBaseline(null);
       setSkip(false);
       setBusy(false);
     })();
@@ -282,8 +291,10 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
     setBusy(true);
     setError(null);
     setLive({ ...EMPTY_LIVE, question });
+    setBaseline(detail.data?.messages?.length ?? 0);
     setRevealed(true);
     scroller.stick();
+    let changed = false;
     try {
       await streamAssistant(path, body, (event) => {
         setLive((current) => {
@@ -318,6 +329,9 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
         if (event.type === 'error') {
           setError(describe(event));
         }
+        if (event.type === 'action' && event.action?.state === ActionState.confirmed) {
+          changed = true;
+        }
       }, abort.current.signal);
     } catch (failure) {
       if (!(failure instanceof DOMException && failure.name === 'AbortError')) {
@@ -325,7 +339,7 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
       }
     } finally {
       // Still busy until the last words have shown; see the ending effect.
-      setEnding({ id, done });
+      setEnding({ id, done, changed });
     }
   };
 
@@ -368,6 +382,12 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
   };
 
   const messages = detail.data?.messages ?? [];
+  // Once the refetched conversation holds the answer, the live copy would only show it twice.
+  const saved = new Set(messages.map((message) => message.id));
+  const persisted = live.segments.some((segment) => segment.message && saved.has(segment.message.id));
+  // A refetch while the answer streams (say, on window focus) already holds the question: the live copy shows it until
+  // the answer is saved too, so nothing shows twice.
+  const shownMessages = baseline !== null && !persisted ? messages.slice(0, baseline) : messages;
   // Earlier steps are done; only the latest one is still being revealed.
   const earlier = live.segments.slice(0, -1);
   const current = live.segments[live.segments.length - 1];
@@ -387,18 +407,18 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
             </div>
           </>
         )}
-        {messages.map((message) =>
+        {shownMessages.map((message) =>
           message.role === 'user'
             ? <UserBubble key={message.id} text={message.text ?? ''} />
             : <AssistantBubble key={message.id} message={message} busy={busy} onDecide={decide} />,
         )}
-        {live.question && <UserBubble text={live.question} />}
-        {earlier.map((segment, index) => (
+        {live.question && !persisted && <UserBubble text={live.question} />}
+        {!persisted && earlier.map((segment, index) => (
           segment.message
             ? <AssistantBubble key={segment.message.id ?? index} message={segment.message} busy={busy} onDecide={decide} />
             : null
         ))}
-        {live.tools.length > 0 && busy && (
+        {live.tools.length > 0 && busy && !persisted && (
           <div className="flex flex-wrap gap-1">
             {live.tools.map((tool, index) => (
               <Badge key={index} tone={tool.state === 'failed' ? 'danger' : 'subtle'}>
@@ -407,7 +427,7 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
             ))}
           </div>
         )}
-        {current && (
+        {current && !persisted && (
           <StreamingAnswer
             key={live.segments.length}
             segment={current}
@@ -432,7 +452,14 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
       <div className="px-3 pb-3 pt-1">
         <Box
           className="flex flex-col gap-1 py-2 pl-3 pr-2"
+          // Anywhere in the box but its buttons puts the cursor in the question.
+          onClick={(event) => {
+            if (!(event.target as HTMLElement).closest('button, textarea')) {
+              input.current?.focus();
+            }
+          }}
           sx={{
+            cursor: 'text',
             border: `1px solid ${sem('border-default')}`,
             borderRadius: `${radius.card}px`,
             backgroundColor: sem('bg-surface'),
