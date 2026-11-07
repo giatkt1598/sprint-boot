@@ -46,7 +46,10 @@ export function ThemeGallery({ value, accent, onChange }: { value: ThemeId; acce
 function ThemeCard({ theme, accent, selected, onSelect }: { theme: ThemeDefinition; accent: Accent; selected: boolean; onSelect: () => void }) {
   const { t } = useTranslation();
   const name = t(`account.preferences.themeName.${theme.id}`);
-  const tags = tagsOf(theme);
+  // A tag that only repeats the name, such as Dark on the Dark theme, says nothing. Compared by id, not by label, so it holds in every language.
+  const tags = tagsOf(theme)
+    .filter((tag) => tag !== theme.id)
+    .map((tag) => t(`account.preferences.themeTag.${tag}`));
 
   return (
     <ButtonBase
@@ -91,7 +94,7 @@ function ThemeCard({ theme, accent, selected, onSelect }: { theme: ThemeDefiniti
         {tags.length > 0 && (
           <span className="absolute bottom-2 left-2 flex flex-wrap gap-1">
             {tags.map((tag) => (
-              <Badge key={tag} tone="subtle">{t(`account.preferences.themeTag.${tag}`)}</Badge>
+              <Badge key={tag} tone="subtle">{tag}</Badge>
             ))}
           </span>
         )}
