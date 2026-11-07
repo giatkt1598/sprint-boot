@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -30,7 +30,10 @@ function Host() {
 }
 
 describe('ChatThread', () => {
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
 
   it('starts a conversation on the first question and shows the streamed answer', async () => {
     post.mockResolvedValue({ id: 'c1' });
@@ -58,6 +61,62 @@ describe('ChatThread', () => {
 
     await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/v1/assistant/conversations/c1/messages', expect.anything()));
     await waitFor(() => expect(get).toHaveBeenCalled());
+  });
+
+  it('does not cut off the first answer when the parent keys the thread by conversation', async () => {
+    post.mockResolvedValue({ id: 'c3' });
+    get.mockResolvedValue({
+      conversation: { id: 'c3', title: 'Hi' },
+      messages: [
+        { id: 'u1', role: 'user', text: 'Hi', tools: [], actions: [], sources: [] },
+        { id: 'm1', role: 'assistant', text: 'Hello there', html: '<p>Hello there</p>', tools: [], actions: [], sources: [] },
+      ],
+    });
+    let signal: AbortSignal | undefined;
+    let release: () => void = () => undefined;
+    const encoder = new TextEncoder();
+    const event = (data: object) => encoder.encode(`data: ${JSON.stringify(data)}
+
+`);
+    vi.stubGlobal('fetch', vi.fn((_: string, init: RequestInit) => {
+      signal = init.signal ?? undefined;
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(event({ type: 'delta', text: 'Hello' }));
+          release = () => {
+            controller.enqueue(event({ type: 'message', message: { id: 'm1', role: 'assistant', text: 'Hello there', html: '<p>Hello there</p>', tools: [], actions: [], sources: [] } }));
+            controller.enqueue(event({ type: 'done' }));
+            controller.close();
+          };
+        },
+      });
+      return Promise.resolve(new Response(body, { headers: { 'content-type': 'text/event-stream' } }));
+    }));
+
+    function Keyed() {
+      const [id, setId] = useState<string | null>(null);
+      return <ChatThread key={id ?? 'new'} conversationId={id} onConversation={setId} />;
+    }
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <Keyed />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    const box = screen.getByRole('textbox');
+    fireEvent.change(box, { target: { value: 'Hi' } });
+    await act(async () => {
+      fireEvent.keyDown(box, { key: 'Enter' });
+    });
+
+    await screen.findByText('Hello');
+    expect(signal?.aborted).toBe(false);
+    await act(async () => release());
+    await screen.findByText('Hello there');
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 
   it('keeps answering in the panel when the first question creates the conversation', async () => {

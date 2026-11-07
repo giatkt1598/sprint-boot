@@ -13,6 +13,7 @@ import { RichTextView } from '../issues/RichTextEditor';
 import {
   ActionState,
   assistantKeys,
+  conversationQuery,
   createConversation,
   streamAssistant,
   useConversation,
@@ -175,7 +176,8 @@ export function ChatThread({ conversationId, issueId, onConversation }: {
     return event.code && i18n.exists(key) ? t(key) : event.text || t('errors.generic');
   };
 
-  const run = async (id: string, path: string, body: unknown, question: string | null) => {
+  /** Streams one answer; `done` runs once it is saved, before the live copy is cleared. */
+  const run = async (id: string, path: string, body: unknown, question: string | null, done?: () => Promise<void>) => {
     abort.current = new AbortController();
     setBusy(true);
     setError(null);
@@ -212,6 +214,7 @@ export function ChatThread({ conversationId, issueId, onConversation }: {
       setBusy(false);
       await queryClient.invalidateQueries({ queryKey: assistantKeys.detail(id) });
       await queryClient.invalidateQueries({ queryKey: ['assistant', 'conversations'] });
+      await done?.();
       setLive(EMPTY_LIVE);
     }
   };
@@ -222,18 +225,25 @@ export function ChatThread({ conversationId, issueId, onConversation }: {
       return;
     }
     setDraft('');
-    let id = conversationId;
-    if (!id) {
-      try {
-        id = (await createConversation(issueId)).id!;
-      } catch {
-        setError(t('errors.generic'));
-        setDraft(text);
-        return;
-      }
-      onConversation(id);
+    if (conversationId) {
+      await run(conversationId, `/api/v1/assistant/conversations/${conversationId}/messages`, { text }, text);
+      return;
     }
-    await run(id, `/api/v1/assistant/conversations/${id}/messages`, { text }, text);
+
+    let id: string;
+    try {
+      id = (await createConversation(issueId)).id!;
+    } catch {
+      setError(t('errors.generic'));
+      setDraft(text);
+      return;
+    }
+    // Parents key the thread by conversation, so telling them now would remount it and cut off the first answer.
+    // They hear of it once the answer is saved, with the conversation already loaded so nothing flickers.
+    await run(id, `/api/v1/assistant/conversations/${id}/messages`, { text }, text, async () => {
+      await queryClient.prefetchQuery(conversationQuery(id));
+      onConversation(id);
+    });
   };
 
   const decide = (action: AssistantAction, confirm: boolean) =>

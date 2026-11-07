@@ -44,12 +44,13 @@ export const useConversations = (issueId?: string) =>
     queryFn: () => unwrap(apiClient.GET('/api/v1/assistant', { params: { query: { issueId } } })),
   });
 
+export const conversationQuery = (id: string) => ({
+  queryKey: assistantKeys.detail(id),
+  queryFn: () => unwrap(apiClient.GET('/api/v1/assistant/{id}', { params: { path: { id } } })),
+});
+
 export const useConversation = (id: string | null) =>
-  useQuery({
-    queryKey: assistantKeys.detail(id ?? ''),
-    enabled: Boolean(id),
-    queryFn: () => unwrap(apiClient.GET('/api/v1/assistant/{id}', { params: { path: { id: id! } } })),
-  });
+  useQuery({ ...conversationQuery(id ?? ''), enabled: Boolean(id) });
 
 export const createConversation = (issueId?: string) =>
   unwrap(apiClient.POST('/api/v1/assistant', { body: { issueId: issueId ?? null } }));
