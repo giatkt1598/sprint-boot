@@ -2,14 +2,15 @@ import CssBaseline from '@mui/material/CssBaseline';
 import GlobalStyles from '@mui/material/GlobalStyles';
 import { StyledEngineProvider, ThemeProvider } from '@mui/material/styles';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { StrictMode, useEffect, useLayoutEffect, useMemo, type ReactNode } from 'react';
+import { StrictMode, useLayoutEffect, useMemo, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ApiError } from './api';
 import { App } from './App';
 import './i18n';
 import './index.css';
-import { applyAppearance, resolveMode, useAppearance, watchSystemMode } from './theme/appearance';
+import { applyAppearance, useAppearance } from './theme/appearance';
 import { createAppTheme } from './theme/theme';
+import { ThemeDecor } from './theme/ThemeDecor';
 
 const MAX_RETRIES = 3;
 
@@ -20,15 +21,18 @@ const queryClient = new QueryClient({
   },
 });
 
-/** The theme follows the person's mode and accent; the rest of their choices reach the page as attributes on <html>. */
+/** MUI follows the person's theme and accent; the rest of their choices reach the page as attributes on <html>. */
 function ThemeRoot({ children }: { children: ReactNode }) {
   const appearance = useAppearance();
-  const mode = resolveMode(appearance.colorMode);
-  const theme = useMemo(() => createAppTheme(mode, appearance.accent), [mode, appearance.accent]);
+  const theme = useMemo(() => createAppTheme(appearance.theme, appearance.accent), [appearance.theme, appearance.accent]);
   useLayoutEffect(() => applyAppearance(appearance), [appearance]);
-  useEffect(() => watchSystemMode(), []);
 
-  return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
+  return (
+    <ThemeProvider theme={theme}>
+      <ThemeDecor />
+      {children}
+    </ThemeProvider>
+  );
 }
 
 createRoot(document.getElementById('root')!).render(

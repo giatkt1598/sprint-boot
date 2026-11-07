@@ -1,4 +1,6 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Volo.Abp;
@@ -298,16 +300,39 @@ public class AuthAppService(
         return await ToDtoAsync(user);
     }
 
-    /// <summary>Anything unreadable, such as a value an older version wrote, means the defaults.</summary>
-    private static PreferencesDto ReadPreferences(IdentityUser user)
+    /// <summary>
+    /// Anything unreadable means the defaults. Before themes there was a colour mode: an explicit dark one becomes the
+    /// Dark theme, and a theme that is no longer offered falls back to Classic.
+    /// </summary>
+    private static PreferencesDto ReadPreferences(string? json)
     {
+        if (string.IsNullOrEmpty(json))
+        {
+            return new PreferencesDto();
+        }
+
         try
         {
-            return user.GetProperty<string>(PreferencesProperty) is { Length: > 0 } json
-                ? JsonSerializer.Deserialize<PreferencesDto>(json) ?? new PreferencesDto()
-                : new PreferencesDto();
+            var preferences = JsonSerializer.Deserialize<PreferencesDto>(json) ?? new PreferencesDto();
+            var stored = JsonNode.Parse(json)?.AsObject();
+            if (stored is not null && !stored.ContainsKey(nameof(PreferencesDto.Theme)) && stored["ColorMode"]?.GetValue<string>() == "dark")
+            {
+                preferences.Theme = "dark";
+            }
+
+            if (!Regex.IsMatch(preferences.Theme ?? "", PreferencesDto.ThemePattern))
+            {
+                preferences.Theme = "classic";
+            }
+
+            if (!Regex.IsMatch(preferences.Motion ?? "", PreferencesDto.MotionPattern))
+            {
+                preferences.Motion = "full";
+            }
+
+            return preferences;
         }
-        catch (JsonException)
+        catch (Exception failure) when (failure is JsonException or InvalidOperationException)
         {
             return new PreferencesDto();
         }
@@ -384,7 +409,7 @@ public class AuthAppService(
             AvatarUrl = UserAvatars.Url(user),
             Title = user.GetProperty<string?>(TitleProperty),
             TimeZone = user.GetProperty<string?>(TimeZoneProperty),
-            Preferences = ReadPreferences(user),
+            Preferences = ReadPreferences(user.GetProperty<string>(PreferencesProperty)),
             BackgroundUrl = UserBackgrounds.Url(user),
             HomePage = ReadHomePage(user),
         };

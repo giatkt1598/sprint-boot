@@ -1,6 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using Volo.Abp.Data;
+using Volo.Abp.Uow;
 using SprintBoot.Identity;
 using SprintBoot.Projects;
 using Xunit;
@@ -87,36 +91,60 @@ public class AuthTests(ApiFixture fixture)
         (await fixture.Factory.CreateClient().GetAsync(url, Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
+    [Theory]
+    [InlineData("""{"ColorMode":"dark","Accent":"violet","FontFamily":"poppins","FontScale":100,"BackgroundOpacity":30}""", "dark", "violet")]
+    [InlineData("""{"ColorMode":"system","Accent":"green","FontFamily":"poppins","FontScale":100,"BackgroundOpacity":30}""", "classic", "green")]
+    [InlineData("""{"Theme":"retired","Accent":"blue","FontFamily":"poppins","FontScale":100,"BackgroundOpacity":30,"Motion":"fast"}""", "classic", "blue")]
+    [InlineData("not json", "classic", "blue")]
+    public async Task Preferences_saved_before_themes_read_as_a_theme(string stored, string theme, string accent)
+    {
+        var client = await fixture.CreateUserClientAsync(Token);
+        using (var scope = fixture.Factory.Services.CreateScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<Volo.Abp.Identity.IdentityUserManager>();
+            using var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true);
+            var user = await users.GetByIdAsync(client.UserId);
+            user.SetProperty(AuthAppService.PreferencesProperty, stored);
+            (await users.UpdateAsync(user)).CheckErrors();
+            await uow.CompleteAsync(Token);
+        }
+
+        var preferences = (await client.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!.Preferences;
+        (preferences.Theme, preferences.Accent, preferences.Motion).ShouldBe((theme, accent, "full"));
+    }
+
     [Fact]
     public async Task People_choose_how_the_app_looks_and_keep_a_background_image()
     {
         var client = await fixture.CreateUserClientAsync(Token);
         var me = (await client.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!;
-        me.Preferences.ColorMode.ShouldBe("system");
+        me.Preferences.Theme.ShouldBe("classic");
         me.Preferences.Accent.ShouldBe("blue");
         me.Preferences.FontScale.ShouldBe(100);
+        me.Preferences.Motion.ShouldBe("full");
         me.BackgroundUrl.ShouldBeNull();
 
-        var saved = await client.Http.PutAsJsonAsync("/api/v1/auth/preferences", new { colorMode = "dark", accent = "green", fontFamily = "system", fontScale = 110, backgroundOpacity = 45 }, Token);
+        var saved = await client.Http.PutAsJsonAsync("/api/v1/auth/preferences", new { theme = "minimal", accent = "green", fontFamily = "system", fontScale = 110, backgroundOpacity = 45, motion = "reduced" }, Token);
         saved.StatusCode.ShouldBe(HttpStatusCode.OK, await saved.Content.ReadAsStringAsync(Token));
         var preferences = (await client.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!.Preferences;
-        (preferences.ColorMode, preferences.Accent, preferences.FontFamily, preferences.FontScale, preferences.BackgroundOpacity)
-            .ShouldBe(("dark", "green", "system", 110, 45));
+        (preferences.Theme, preferences.Accent, preferences.FontFamily, preferences.FontScale, preferences.BackgroundOpacity, preferences.Motion)
+            .ShouldBe(("minimal", "green", "system", 110, 45, "reduced"));
 
         // Only the offered values are kept.
         foreach (var body in new object[]
         {
-            new { colorMode = "sepia", accent = "blue", fontFamily = "poppins", fontScale = 100, backgroundOpacity = 30 },
-            new { colorMode = "light", accent = "pink", fontFamily = "poppins", fontScale = 100, backgroundOpacity = 30 },
-            new { colorMode = "light", accent = "blue", fontFamily = "comic", fontScale = 100, backgroundOpacity = 30 },
-            new { colorMode = "light", accent = "blue", fontFamily = "poppins", fontScale = 105, backgroundOpacity = 30 },
-            new { colorMode = "light", accent = "blue", fontFamily = "poppins", fontScale = 100, backgroundOpacity = 150 },
+            new { theme = "sepia", accent = "blue", fontFamily = "poppins", fontScale = 100, backgroundOpacity = 30, motion = "full" },
+            new { theme = "classic", accent = "pink", fontFamily = "poppins", fontScale = 100, backgroundOpacity = 30, motion = "full" },
+            new { theme = "classic", accent = "blue", fontFamily = "comic", fontScale = 100, backgroundOpacity = 30, motion = "full" },
+            new { theme = "classic", accent = "blue", fontFamily = "poppins", fontScale = 105, backgroundOpacity = 30, motion = "full" },
+            new { theme = "classic", accent = "blue", fontFamily = "poppins", fontScale = 100, backgroundOpacity = 150, motion = "full" },
+            new { theme = "classic", accent = "blue", fontFamily = "poppins", fontScale = 100, backgroundOpacity = 30, motion = "wild" },
         })
         {
             (await client.Http.PutAsJsonAsync("/api/v1/auth/preferences", body, Token)).IsSuccessStatusCode.ShouldBeFalse();
         }
 
-        (await client.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!.Preferences.ColorMode.ShouldBe("dark");
+        (await client.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!.Preferences.Theme.ShouldBe("minimal");
 
         byte[] png = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0];
         using var refused = new MultipartFormDataContent { { new ByteArrayContent("<svg/>"u8.ToArray()), "file", "a.svg" } };

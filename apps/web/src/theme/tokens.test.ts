@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { accents, primitive, semanticDark, semanticLight, type Accent, type ColorMode } from './tokens';
+import { themeColors } from './theme';
+import { THEMES, type ThemeDefinition } from './themes';
+import { primitive, semanticDark, semanticLight, type Accent } from './tokens';
 
 const luminance = (hex: string) => {
   const channels = [1, 3, 5].map((start) => {
@@ -63,11 +65,17 @@ const PAIRS = [
   ['text-on-accent', 'feedback-danger-hover'],
 ] as const;
 
-describe.each(['light', 'dark'] as ColorMode[])('%s mode with every accent', (mode) => {
-  it.each(['blue', 'green', 'violet'] as Accent[])('keeps text readable with the %s accent', (accent) => {
-    const colors = { ...(mode === 'dark' ? semanticDark : semanticLight), ...accents[accent][mode] };
+describe.each(THEMES.map((theme) => [theme.id, theme as ThemeDefinition] as const))('the %s theme', (_, theme) => {
+  const offered = Object.keys(theme.accents ?? { blue: {} }) as Accent[];
+
+  it.each(offered)('keeps text readable with the %s accent', (accent) => {
+    const colors = themeColors(theme, accent);
     for (const [text, background] of PAIRS) {
       expect(contrast(colors[text], colors[background]), `${text} on ${background}`).toBeGreaterThanOrEqual(4.5);
     }
+  });
+
+  it('sets every semantic token', () => {
+    expect(Object.keys(theme.tokens).sort()).toEqual(Object.keys(semanticLight).sort());
   });
 });

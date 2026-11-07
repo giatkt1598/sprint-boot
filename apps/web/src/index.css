@@ -14,6 +14,27 @@
   }
 }
 
+/* Motion off in the preferences stills the whole app, as the device setting does. */
+:root[data-motion='off'] *,
+:root[data-motion='off'] *::before,
+:root[data-motion='off'] *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* A theme's decor holds its frame while the tab is hidden or motion is reduced. */
+.sb-decor[data-paused],
+.sb-decor[data-paused] *,
+.sb-decor[data-paused] *::before,
+.sb-decor[data-paused] *::after {
+  animation-play-state: paused !important;
+}
+
+/* Surfaces built by hand take the theme's surface effect, such as frosted glass, as MUI papers do. */
+.sb-surface {
+  backdrop-filter: var(--sb-surface-filter, none);
+}
+
 .rich-text {
   min-height: 1.4em;
   line-height: 1.5;
@@ -414,6 +435,11 @@
   margin-left: auto;
   background-color: var(--sb-accent-default);
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* The main area: a surface in most themes, see-through where a theme draws a decor behind it. */
+.sb-content {
+  background: var(--sb-content-bg);
 }
 
 /* A background image shows through the page: the page colour covers it by --sb-bg-cover, set from the person's preferences. */

@@ -32,7 +32,7 @@ export function TopBar() {
 
   return (
     <header
-      className="flex shrink-0 items-center gap-4 px-6"
+      className="sb-surface flex shrink-0 items-center gap-4 px-6"
       style={{
         height: size.topBar,
         backgroundColor: sem('bg-surface'),

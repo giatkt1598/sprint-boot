@@ -20298,13 +20298,14 @@ export interface components {
          */
         PersonalTokenKind: 0 | 1;
         PreferencesDto: {
-            colorMode?: string | null;
+            theme?: string | null;
             accent?: string | null;
             fontFamily?: string | null;
             /** Format: int32 */
             fontScale?: number;
             /** Format: int32 */
             backgroundOpacity?: number;
+            motion?: string | null;
         };
         PriorityDto: {
             /** Format: uuid */

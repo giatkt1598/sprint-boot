@@ -249,7 +249,9 @@
     "InvalidPreferences": "Tùy chọn không hợp lệ.",
     "GoalDatesInvalid": "Hạn không được trước ngày bắt đầu.",
     "GoalOwnerNotMember": "Người phụ trách phải là thành viên của space.",
-    "GoalArchived": "Không sửa được mục tiêu đã lưu trữ. Hãy khôi phục trước."
+    "GoalArchived": "Không sửa được mục tiêu đã lưu trữ. Hãy khôi phục trước.",
+    "crashTitle": "Đã có lỗi xảy ra",
+    "crashDescription": "Trang này đã ngừng hoạt động. Tải lại để thử lần nữa; dữ liệu đã lưu vẫn an toàn."
   },
   "auth": {
     "ldapTitle": "Đăng nhập vào {{provider}}",
@@ -325,13 +327,33 @@
     "timeZoneBrowser": "Mặc định của trình duyệt ({{zone}})",
     "preferences": {
       "title": "Tùy chọn",
-      "colorMode": "Chế độ màu",
-      "mode": {
-        "system": "Theo thiết bị",
-        "light": "Sáng",
-        "dark": "Tối"
+      "theme": "Giao diện",
+      "themeHint": "Mỗi giao diện đổi toàn bộ diện mạo của ứng dụng: màu sắc, bề mặt, hình ảnh và chuyển động.",
+      "themeCategories": "Nhóm giao diện",
+      "category": {
+        "all": "Tất cả",
+        "basic": "Cơ bản",
+        "gradient": "Gradient",
+        "element": "Nguyên tố",
+        "culture": "Văn hoá"
       },
-      "accent": "Màu chủ đạo",
+      "themeName": {
+        "classic": "Cổ điển",
+        "dark": "Tối",
+        "minimal": "Tối giản"
+      },
+      "themeTag": {
+        "animated": "Chuyển động",
+        "gradient": "Gradient",
+        "dark": "Nền tối"
+      },
+      "accent": "Màu nhấn",
+      "motion": "Chuyển động",
+      "motionName": {
+        "full": "Đầy đủ",
+        "reduced": "Giảm: giao diện đứng yên",
+        "off": "Tắt: không hiệu ứng, không animation"
+      },
       "accentName": {
         "blue": "Xanh dương",
         "green": "Xanh lá",

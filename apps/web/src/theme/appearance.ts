@@ -1,37 +1,64 @@
 import { useSyncExternalStore } from 'react';
-import type { Accent, ColorMode } from './tokens';
+import { DEFAULT_THEME, isThemeId, themeById, type ThemeId } from './themes';
+import type { Accent } from './tokens';
 
-export type ColorChoice = 'system' | 'light' | 'dark';
 export type FontChoice = 'poppins' | 'system';
+export type MotionChoice = 'full' | 'reduced' | 'off';
 
 /** What the person chose, plus the image they uploaded. Kept in localStorage too, so the first paint already matches. */
 export interface Appearance {
-  colorMode: ColorChoice;
+  theme: ThemeId;
   accent: Accent;
   fontFamily: FontChoice;
   fontScale: number;
   backgroundOpacity: number;
   backgroundUrl: string | null;
+  motion: MotionChoice;
 }
 
 export const FONT_SCALES = [90, 100, 110, 125] as const;
+export const MOTIONS = ['full', 'reduced', 'off'] as const;
 
 export const defaultAppearance: Appearance = {
-  colorMode: 'system',
+  theme: DEFAULT_THEME,
   accent: 'blue',
   fontFamily: 'poppins',
   fontScale: 100,
   backgroundOpacity: 30,
   backgroundUrl: null,
+  motion: 'full',
 };
 
 /** Read by the inline script in index.html as well, so the name and shape must stay in step with it. */
 export const APPEARANCE_STORAGE_KEY = 'sb.appearance';
 
+const systemDark = () => typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+/**
+ * Keeps only known values. Before themes there was a colour mode: dark, or system on a dark device, becomes the Dark
+ * theme, so nobody is thrown back to a light screen.
+ */
+export function normalizeAppearance(stored: Record<string, unknown> | null | undefined): Appearance {
+  const value = stored ?? {};
+  const legacyDark = value.colorMode === 'dark' || (value.colorMode === 'system' && systemDark());
+  const theme = isThemeId(value.theme) ? value.theme : value.theme === undefined && legacyDark ? 'dark' : DEFAULT_THEME;
+  const pick = <T,>(key: keyof Appearance, allowed: readonly T[]) =>
+    allowed.includes(value[key] as T) ? (value[key] as T) : (defaultAppearance[key] as T);
+
+  return {
+    theme,
+    accent: pick<Accent>('accent', ['blue', 'green', 'violet']),
+    fontFamily: pick<FontChoice>('fontFamily', ['poppins', 'system']),
+    fontScale: pick<number>('fontScale', FONT_SCALES),
+    backgroundOpacity: typeof value.backgroundOpacity === 'number' ? value.backgroundOpacity : defaultAppearance.backgroundOpacity,
+    backgroundUrl: typeof value.backgroundUrl === 'string' ? value.backgroundUrl : null,
+    motion: pick<MotionChoice>('motion', MOTIONS),
+  };
+}
+
 const read = (): Appearance => {
   try {
-    const stored = JSON.parse(localStorage.getItem(APPEARANCE_STORAGE_KEY) ?? 'null') as Partial<Appearance> | null;
-    return { ...defaultAppearance, ...stored };
+    return normalizeAppearance(JSON.parse(localStorage.getItem(APPEARANCE_STORAGE_KEY) ?? 'null') as Record<string, unknown> | null);
   } catch {
     return defaultAppearance;
   }
@@ -40,17 +67,16 @@ const read = (): Appearance => {
 let current = read();
 const listeners = new Set<() => void>();
 
-const systemDark = () => typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-/** The mode in force: system follows the device. */
-export const resolveMode = (choice: ColorChoice): ColorMode => (choice === 'system' ? (systemDark() ? 'dark' : 'light') : choice);
-
 /** Puts the choices on <html>, where the CSS variables and the background rules read them. */
 export function applyAppearance(appearance: Appearance) {
   const root = document.documentElement;
-  root.dataset.theme = resolveMode(appearance.colorMode);
+  const theme = themeById(appearance.theme);
+  root.dataset.appTheme = theme.id;
+  // Rules that only care about light or dark, such as the rich-text colour swaps, read this one.
+  root.dataset.theme = theme.base;
   root.dataset.accent = appearance.accent;
   root.dataset.font = appearance.fontFamily;
+  root.dataset.motion = appearance.motion;
   root.style.setProperty('--sb-font-scale', String(appearance.fontScale / 100));
   if (appearance.backgroundUrl) {
     root.dataset.background = 'on';
@@ -65,7 +91,7 @@ export function applyAppearance(appearance: Appearance) {
 }
 
 export function setAppearance(next: Partial<Appearance>) {
-  current = { ...current, ...next };
+  current = normalizeAppearance({ ...current, ...next });
   try {
     localStorage.setItem(APPEARANCE_STORAGE_KEY, JSON.stringify(current));
   } catch {
@@ -81,15 +107,3 @@ const subscribe = (listener: () => void) => {
 };
 
 export const useAppearance = () => useSyncExternalStore(subscribe, () => current);
-
-/** Follows the device while the choice is "system". */
-export function watchSystemMode() {
-  const query = window.matchMedia('(prefers-color-scheme: dark)');
-  const onChange = () => {
-    if (current.colorMode === 'system') {
-      setAppearance({});
-    }
-  };
-  query.addEventListener('change', onChange);
-  return () => query.removeEventListener('change', onChange);
-}

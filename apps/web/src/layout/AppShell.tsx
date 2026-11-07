@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router';
 import { rememberAppLocation } from '../lib/returnTo';
-import { sem } from '../theme/tokens';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 
@@ -19,7 +18,7 @@ export function AppShell() {
       <TopBar />
       <div className="flex min-h-0 flex-1">
         {!wide && <Sidebar />}
-        <main className="sb-content min-w-0 flex-1 overflow-auto p-8" style={{ backgroundColor: sem('bg-surface') }}>
+        <main className="sb-content min-w-0 flex-1 overflow-auto p-8">
           <Outlet />
         </main>
       </div>

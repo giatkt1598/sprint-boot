@@ -29113,8 +29113,8 @@
       "PreferencesDto": {
         "type": "object",
         "properties": {
-          "colorMode": {
-            "pattern": "^(system|light|dark)$",
+          "theme": {
+            "pattern": "^(classic|dark|minimal)$",
             "type": "string",
             "nullable": true
           },
@@ -29139,6 +29139,11 @@
             "minimum": 0,
             "type": "integer",
             "format": "int32"
+          },
+          "motion": {
+            "pattern": "^(full|reduced|off)$",
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false

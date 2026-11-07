@@ -81,10 +81,15 @@ public class CurrentUserDto
 /// <summary>How the app looks for this person. Values are short names so the client maps them to tokens.</summary>
 public class PreferencesDto
 {
-    /// <summary>system follows the device.</summary>
-    [RegularExpression("^(system|light|dark)$")]
-    public string ColorMode { get; set; } = "system";
+    /// <summary>The themes the client offers. A theme sets every colour, light or dark included.</summary>
+    public const string ThemePattern = "^(classic|dark|minimal)$";
 
+    public const string MotionPattern = "^(full|reduced|off)$";
+
+    [RegularExpression(ThemePattern)]
+    public string Theme { get; set; } = "classic";
+
+    /// <summary>Only themes that offer accents use it.</summary>
     [RegularExpression("^(blue|green|violet)$")]
     public string Accent { get; set; } = "blue";
 
@@ -98,6 +103,10 @@ public class PreferencesDto
     /// <summary>How strongly the background image shows through the page, 0 to 100.</summary>
     [Range(0, 100)]
     public int BackgroundOpacity { get; set; } = 30;
+
+    /// <summary>full animates the theme, reduced keeps it still, off leaves it out.</summary>
+    [RegularExpression(MotionPattern)]
+    public string Motion { get; set; } = "full";
 }
 
 public enum HomePageKind

@@ -9,14 +9,23 @@
     <title>Sprint Boot</title>
     <meta name="color-scheme" content="light dark" />
     <script>
-      // Applies the saved look before the first paint, so a dark page never flashes light. Mirrors theme/appearance.ts.
+      // Applies the saved look before the first paint, so a dark theme never flashes light. Mirrors theme/appearance.ts.
       try {
+        // The themes whose base is dark; a test keeps this list in step with theme/themes.
+        var DARK_THEMES = ['dark'];
         var saved = JSON.parse(localStorage.getItem('sb.appearance') || 'null') || {};
         var root = document.documentElement;
-        var dark = saved.colorMode === 'dark' || ((saved.colorMode || 'system') === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
-        root.dataset.theme = dark ? 'dark' : 'light';
+        var theme = saved.theme;
+        if (!theme) {
+          // Saved before themes existed, when dark was a colour mode.
+          var dark = saved.colorMode === 'dark' || (saved.colorMode === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+          theme = dark ? 'dark' : 'classic';
+        }
+        root.dataset.appTheme = theme;
+        root.dataset.theme = DARK_THEMES.indexOf(theme) >= 0 ? 'dark' : 'light';
         root.dataset.accent = saved.accent || 'blue';
         root.dataset.font = saved.fontFamily || 'poppins';
+        root.dataset.motion = saved.motion || 'full';
         root.style.setProperty('--sb-font-scale', String((saved.fontScale || 100) / 100));
         if (saved.backgroundUrl) {
           root.dataset.background = 'on';

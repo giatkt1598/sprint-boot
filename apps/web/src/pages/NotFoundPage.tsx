@@ -3,6 +3,7 @@ import { FileQuestion } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import { Button } from '../components/Button';
+import { ThemedIllustration } from '../theme/ThemedIllustration';
 import { radius, sem } from '../theme/tokens';
 
 /** React Router numbers its history entries; the first page of a visit is 0, so there is nowhere to go back to. */
@@ -18,13 +19,18 @@ export function NotFoundPage({ title, description }: { title?: string; descripti
 
   return (
     <section className="flex min-h-[60vh] w-full flex-col items-center justify-center gap-2 px-4 py-12 text-center">
-      <span
-        aria-hidden
-        className="mb-2 flex size-12 items-center justify-center"
-        style={{ backgroundColor: sem('bg-subtle'), borderRadius: radius.card, color: sem('text-secondary') }}
-      >
-        <FileQuestion size={24} strokeWidth={1.5} />
-      </span>
+      <ThemedIllustration
+        kind="notFound"
+        fallback={
+          <span
+            aria-hidden
+            className="mb-2 flex size-12 items-center justify-center"
+            style={{ backgroundColor: sem('bg-subtle'), borderRadius: radius.card, color: sem('text-secondary') }}
+          >
+            <FileQuestion size={24} strokeWidth={1.5} />
+          </span>
+        }
+      />
       <Typography variant="body2" color="textSecondary">{t('notFound.code')}</Typography>
       <Typography variant="h2" component="h1">{title ?? t('notFound.title')}</Typography>
       <Typography color="textSecondary" className="max-w-md">{description ?? t('notFound.description')}</Typography>

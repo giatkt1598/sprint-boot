@@ -1,5 +1,6 @@
 import { createTheme } from '@mui/material/styles';
-import { accents, font, motion, radius, sem, semanticDark, semanticLight, shadowValues, size, type Accent, type ColorMode, type SemanticToken } from './tokens';
+import { THEMES, themeById, type ThemeDefinition } from './themes';
+import { font, motion, radius, sem, size, type Accent, type SemanticToken } from './tokens';
 
 const focusRing = {
   outline: `2px solid ${sem('border-focus')}`,
@@ -9,39 +10,57 @@ const focusRing = {
 const SYSTEM_FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
 const variables = (tokens: Record<string, string>) => Object.fromEntries(Object.entries(tokens).map(([token, value]) => [`--sb-${token}`, value]));
-const shadowVariables = (mode: ColorMode) => variables(Object.fromEntries(Object.entries(shadowValues[mode]).map(([name, value]) => [`shadow-${name}`, value])));
 
-/** Every colour of one mode, with an accent laid over the base set. */
-export const semanticFor = (mode: ColorMode, accent: Accent): Record<SemanticToken, string> => ({
-  ...(mode === 'dark' ? semanticDark : semanticLight),
-  ...accents[accent][mode],
+/** Every colour of a theme, with the accent laid over it when the theme offers accents. */
+export const themeColors = (theme: ThemeDefinition, accent: Accent): Record<SemanticToken, string> => ({
+  ...theme.tokens,
+  ...theme.accents?.[accent],
+});
+
+/** What a theme sets besides colours: shadows, the page behind the app, the content area, surfaces and headings. */
+const themeVariables = (theme: ThemeDefinition) => ({
+  colorScheme: theme.base,
+  ...variables(theme.tokens),
+  ...variables(Object.fromEntries(Object.entries(theme.shadows).map(([name, value]) => [`shadow-${name}`, value]))),
+  '--sb-page-bg': theme.page ?? 'var(--sb-bg-page)',
+  '--sb-content-bg': theme.content ?? 'var(--sb-bg-surface)',
+  '--sb-surface-filter': theme.surfaceFilter ?? 'none',
+  '--sb-heading-font': theme.headingFont ?? 'var(--sb-font-family)',
 });
 
 /**
- * The variables the whole app reads. The root carries light blue; attributes the preferences set on <html> switch
- * the mode (data-theme), the accent (data-accent) and the font (data-font), so a change never rebuilds a component.
+ * The variables the whole app reads. Attributes the preferences set on <html> pick the theme (data-app-theme), the
+ * accent (data-accent) and the font (data-font), so a change never rebuilds a component. Every theme block also
+ * matches any element carrying the attribute, so a gallery card can show a theme other than the one in use.
  */
 export const cssVariables = () => {
   const blocks: Record<string, Record<string, string>> = {
     ':root': {
-      colorScheme: 'light',
       '--sb-font-family': '"SVN-Poppins", sans-serif',
-      ...variables(semanticFor('light', 'blue')),
-      ...shadowVariables('light'),
+      ...themeVariables(themeById('classic')),
     },
     ':root[data-font="system"]': { '--sb-font-family': SYSTEM_FONT },
-    ':root[data-theme="dark"]': { colorScheme: 'dark', ...variables(semanticFor('dark', 'blue')), ...shadowVariables('dark') },
   };
-  for (const accent of ['green', 'violet'] as const) {
-    blocks[`:root[data-accent="${accent}"]`] = variables(accents[accent].light);
-    blocks[`:root[data-theme="dark"][data-accent="${accent}"]`] = variables(accents[accent].dark);
+  for (const theme of THEMES) {
+    blocks[`:root[data-app-theme="${theme.id}"], [data-app-theme="${theme.id}"]`] = themeVariables(theme);
+  }
+  // After the themes, so an accent wins over the blue a theme block sets.
+  for (const theme of THEMES) {
+    for (const [accent, tokens] of Object.entries((theme as ThemeDefinition).accents ?? {})) {
+      if (accent !== 'blue') {
+        blocks[`:root[data-app-theme="${theme.id}"][data-accent="${accent}"], [data-app-theme="${theme.id}"][data-accent="${accent}"]`] = variables(tokens);
+      }
+    }
   }
   return blocks;
 };
 
-/** MUI needs real colours for its own components, so the palette follows the mode and accent while the app reads variables. */
-export function createAppTheme(mode: ColorMode, accent: Accent) {
-  const colors = semanticFor(mode, accent);
+/** MUI needs real colours for its own components, so the palette follows the theme and accent while the app reads variables. */
+export function createAppTheme(themeId: string, accent: Accent) {
+  const theme = themeById(themeId);
+  const colors = themeColors(theme, accent);
+  const mode = theme.base;
+  const heading = { fontFamily: 'var(--sb-heading-font)' };
 
   return createTheme({
     palette: {
@@ -65,9 +84,9 @@ export function createAppTheme(mode: ColorMode, accent: Accent) {
       fontWeightMedium: font.weight.medium,
       fontWeightBold: font.weight.semibold,
       allVariants: { lineHeight: font.lineHeight },
-      h1: { fontSize: font.size.xl, fontWeight: font.weight.semibold },
-      h2: { fontSize: font.size.lg, fontWeight: font.weight.semibold },
-      h3: { fontSize: font.size.md, fontWeight: font.weight.semibold },
+      h1: { ...heading, fontSize: font.size.xl, fontWeight: font.weight.semibold },
+      h2: { ...heading, fontSize: font.size.lg, fontWeight: font.weight.semibold },
+      h3: { ...heading, fontSize: font.size.md, fontWeight: font.weight.semibold },
       body1: { fontSize: font.size.md },
       body2: { fontSize: font.size.xs },
       button: { fontSize: font.size.md, fontWeight: font.weight.medium, textTransform: 'none' },
@@ -79,13 +98,13 @@ export function createAppTheme(mode: ColorMode, accent: Accent) {
       MuiCssBaseline: {
         styleOverrides: {
           ...cssVariables(),
-          body: { backgroundColor: sem('bg-page'), color: sem('text-primary') },
+          body: { background: 'var(--sb-page-bg)', backgroundAttachment: 'fixed', color: sem('text-primary') },
           'button, input, select, textarea': { fontFamily: 'inherit' },
           '*:focus-visible': focusRing,
         },
       },
       // MUI lightens a raised surface in dark mode; ours are flat and take their colour from the tokens.
-      MuiPaper: { styleOverrides: { root: { backgroundImage: 'none' } } },
+      MuiPaper: { styleOverrides: { root: { backgroundImage: 'none', backdropFilter: 'var(--sb-surface-filter)' } } },
       MuiButtonBase: { defaultProps: { disableRipple: true } },
       MuiButton: {
         defaultProps: { disableElevation: true },

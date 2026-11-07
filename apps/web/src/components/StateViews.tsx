@@ -1,6 +1,7 @@
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ThemedIllustration } from '../theme/ThemedIllustration';
 import { Button } from './Button';
 
 export function LoadingState() {
@@ -21,6 +22,7 @@ export function ErrorState({ onRetry }: { onRetry?: () => void }) {
 export function EmptyState({ title, action }: { title: string; action?: ReactNode }) {
   return (
     <div className="flex flex-col items-start gap-2">
+      <ThemedIllustration kind="empty" />
       <Typography color="textSecondary">{title}</Typography>
       {action}
     </div>

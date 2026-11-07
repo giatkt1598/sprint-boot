@@ -1,5 +1,5 @@
 // Values mirror the Penpot token sets "primitive" and "semantic/light".
-// Components use semantic tokens only, so a dark set can be added without touching them.
+// Components use semantic tokens only, so a theme (theme/themes) can replace every colour without touching them.
 
 export const primitive = {
   white: '#FFFFFF',
@@ -160,8 +160,10 @@ export const font = {
   lineHeight: 1.4,
 } as const;
 
-/** The values per mode; components use `shadow`, which reads the variable the mode sets. */
-export const shadowValues: Record<ColorMode, Record<'drawer' | 'card' | 'popover' | 'dialog', string>> = {
+export type ShadowSet = Record<'drawer' | 'card' | 'popover' | 'dialog', string>;
+
+/** The values for a light and a dark page; components use `shadow`, which reads the variable the theme sets. */
+export const shadowValues: Record<ColorMode, ShadowSet> = {
   light: {
     drawer: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
     card: 'rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em',

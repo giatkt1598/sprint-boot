@@ -45,7 +45,7 @@ export function Sidebar() {
   };
 
   return (
-    <div className="flex shrink-0" style={{ backgroundColor: sem('bg-surface'), borderRight: `1px solid ${sem('border-default')}` }}>
+    <div className="sb-surface flex shrink-0" style={{ backgroundColor: sem('bg-surface'), borderRight: `1px solid ${sem('border-default')}` }}>
       <aside className="flex min-w-0 flex-col gap-1 p-4" style={{ width: sidebar.width }}>
         <SpaceSwitcher
           spaceKey={(space.data?.key ?? '').slice(0, 2)}

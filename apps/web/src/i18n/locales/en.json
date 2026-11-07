@@ -249,7 +249,9 @@
     "InvalidPreferences": "Those preferences are not valid.",
     "GoalDatesInvalid": "The target date cannot be before the start date.",
     "GoalOwnerNotMember": "The owner must be a member of this space.",
-    "GoalArchived": "An archived goal cannot be changed. Restore it first."
+    "GoalArchived": "An archived goal cannot be changed. Restore it first.",
+    "crashTitle": "Something went wrong",
+    "crashDescription": "This page stopped working. Reload to try again; your saved work is safe."
   },
   "auth": {
     "ldapTitle": "Sign in to {{provider}}",
@@ -325,13 +327,33 @@
     "timeZoneBrowser": "Browser default ({{zone}})",
     "preferences": {
       "title": "Preferences",
-      "colorMode": "Color mode",
-      "mode": {
-        "system": "Same as device",
-        "light": "Light",
+      "theme": "Theme",
+      "themeHint": "A theme changes the whole look of the app: colours, surfaces, pictures and motion.",
+      "themeCategories": "Theme categories",
+      "category": {
+        "all": "All",
+        "basic": "Basic",
+        "gradient": "Gradient",
+        "element": "Elements",
+        "culture": "Culture"
+      },
+      "themeName": {
+        "classic": "Classic",
+        "dark": "Dark",
+        "minimal": "Minimal"
+      },
+      "themeTag": {
+        "animated": "Animated",
+        "gradient": "Gradient",
         "dark": "Dark"
       },
-      "accent": "Theme color",
+      "accent": "Accent color",
+      "motion": "Motion",
+      "motionName": {
+        "full": "Full",
+        "reduced": "Reduced: themes stay still",
+        "off": "Off: no theme effects or animations"
+      },
       "accentName": {
         "blue": "Blue",
         "green": "Green",
