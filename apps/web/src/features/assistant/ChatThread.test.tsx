@@ -323,6 +323,35 @@ describe('ChatThread', () => {
     expect(screen.getAllByText(/Used get_issue/)).toHaveLength(1);
   });
 
+  it('gives the Send button back when the connection drops mid-answer', async () => {
+    get.mockResolvedValue({ conversation: { id: 'c8', title: 'Hi' }, messages: [] });
+    const encoder = new TextEncoder();
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(encoder.encode('data: {"type":"start"}\n\n'));
+        controller.enqueue(encoder.encode('data: {"type":"delta","text":"Half an answer "}\n\n'));
+        setTimeout(() => controller.error(new TypeError('network error')), 50);
+      },
+    }), { headers: { 'content-type': 'text/event-stream' } }))));
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <ChatThread conversationId="c8" onConversation={() => undefined} />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    await waitFor(() => expect(get).toHaveBeenCalled());
+    const box = screen.getByRole('textbox', { name: 'Ask the assistant' });
+    fireEvent.change(box, { target: { value: 'Go' } });
+    await act(async () => {
+      fireEvent.keyDown(box, { key: 'Enter' });
+    });
+
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', expect.stringContaining('connection to the server dropped'));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeTruthy());
+  });
+
   it('keeps answering in the panel when the first question creates the conversation', async () => {
     post.mockResolvedValue({ id: 'c2' });
     get.mockImplementation((path: string) =>

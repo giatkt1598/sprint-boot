@@ -15,6 +15,9 @@ public record FakeAiReply(string Text, params (string Name, object Arguments)[] 
 
     /// <summary>Fails with this HTTP status instead, the way a proxy in front of the provider would.</summary>
     public HttpStatusCode? Status { get; init; }
+
+    /// <summary>How long the model takes before it starts answering.</summary>
+    public TimeSpan Delay { get; init; }
 }
 
 /// <summary>
@@ -93,6 +96,7 @@ public sealed class FakeAiServer : HttpMessageHandler
             return new HttpResponseMessage(HttpStatusCode.InternalServerError) { Content = new StringContent("{\"error\":{\"message\":\"No scripted reply\"}}") };
         }
 
+        await Task.Delay(reply.Delay, cancellationToken);
         if (reply.Status is { } status)
         {
             return new HttpResponseMessage(status) { Content = new StringContent("<html><body><h1>413 Request Entity Too Large</h1></body></html>", Encoding.UTF8, "text/html") };

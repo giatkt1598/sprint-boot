@@ -1308,7 +1308,8 @@
     "usedToolTimes_one": "Used {{tool}} ({{count}} time)",
     "usedToolTimes_other": "Used {{tool}} ({{count}} times)",
     "runningToolTimes_one": "Running {{tool}}… ({{count}} time)",
-    "runningToolTimes_other": "Running {{tool}}… ({{count}} times)"
+    "runningToolTimes_other": "Running {{tool}}… ({{count}} times)",
+    "connectionLost": "The connection to the server dropped while the assistant was answering. What it saved is shown; ask again to continue."
   },
   "assistantAdmin": {
     "title": "AI assistant",

@@ -18,6 +18,7 @@ import {
   assistantKeys,
   conversationQuery,
   createConversation,
+  StreamStalledError,
   streamAssistant,
   useConversation,
   type AssistantAction,
@@ -401,7 +402,9 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
       }, abort.current.signal);
     } catch (failure) {
       if (!(failure instanceof DOMException && failure.name === 'AbortError')) {
-        setError(t('errors.generic'));
+        // A dropped connection: what arrived shows at once, and the saved conversation follows.
+        setSkip(true);
+        setError(t(failure instanceof StreamStalledError || failure instanceof TypeError ? 'assistant.connectionLost' : 'errors.generic'));
       }
     } finally {
       // Still busy until the last words have shown; see the ending effect.

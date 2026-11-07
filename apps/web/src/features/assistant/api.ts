@@ -72,6 +72,17 @@ export function parseEvents(buffer: string, onEvent: (event: AssistantEvent) => 
   return rest;
 }
 
+/** The server sends at least a keep-alive line every 15 seconds; this long without a byte means the stream is gone. */
+export const STREAM_SILENCE_MS = 45_000;
+
+/** The stream went quiet past {@link STREAM_SILENCE_MS}: a proxy or the network dropped it without saying so. */
+export class StreamStalledError extends Error {
+  constructor() {
+    super('The answer stream stopped sending.');
+    this.name = 'StreamStalledError';
+  }
+}
+
 /** The answer streams as server-sent events; openapi-fetch cannot read those, so this is a plain fetch with the token. */
 export async function streamAssistant(path: string, body: unknown, onEvent: (event: AssistantEvent) => void, signal: AbortSignal) {
   const token = await getAccessToken();
@@ -90,13 +101,32 @@ export async function streamAssistant(path: string, body: unknown, onEvent: (eve
   }
 
   const reader = response.body!.pipeThrough(new TextDecoderStream()).getReader();
+  // Some connections (QUIC through a CDN, say) die without an error, and the read would then wait forever.
+  let stalled = false;
+  let watchdog: ReturnType<typeof setTimeout> | undefined;
+  const arm = () => {
+    clearTimeout(watchdog);
+    watchdog = setTimeout(() => {
+      stalled = true;
+      void reader.cancel();
+    }, STREAM_SILENCE_MS);
+  };
   let buffer = '';
-  for (;;) {
-    const { value, done } = await reader.read();
-    if (done) {
-      break;
+  try {
+    arm();
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) {
+        break;
+      }
+      arm();
+      buffer = parseEvents(buffer + value, onEvent);
     }
-    buffer = parseEvents(buffer + value, onEvent);
+  } finally {
+    clearTimeout(watchdog);
+  }
+  if (stalled) {
+    throw new StreamStalledError();
   }
   parseEvents(`${buffer}\n\n`, onEvent);
 }

@@ -268,6 +268,8 @@ public class AssistantChatAppService(
             await uow.CompleteAsync();
         }
 
+        // The question is saved: the stream opens now, so proxies see bytes while the model is still thinking.
+        yield return new AssistantEventDto { Type = "start" };
         await foreach (var item in RunAsync(conversationId, connection, cancellationToken))
         {
             yield return item;

@@ -71,6 +71,7 @@ public class AssistantTests(ApiFixture fixture)
         response.Content.Headers.ContentType!.MediaType.ShouldBe("text/event-stream");
         var text = await response.Content.ReadAsStringAsync(Token);
         return [.. text.Split("\n\n", StringSplitOptions.RemoveEmptyEntries)
+            .Where(chunk => chunk.StartsWith("data: ", StringComparison.Ordinal))
             .Select(chunk => JsonSerializer.Deserialize<AssistantEventDto>(chunk["data: ".Length..], Json)!)];
     }
 
@@ -266,6 +267,23 @@ public class AssistantTests(ApiFixture fixture)
             roles[index].ShouldBe("user");
             roles[index + 1].ShouldBe("assistant");
         }
+    }
+
+    [Fact]
+    public async Task A_quiet_stream_sends_keep_alive_lines_so_proxies_keep_it_open()
+    {
+        await UseAsync(AiProvider.OpenAiCompatible);
+        var client = await fixture.CreateUserClientAsync(Token);
+        var conversation = await ConversationAsync(client);
+        Ai.Script(new FakeAiReply("Thought it through.") { Delay = TimeSpan.FromSeconds(1.5) });
+
+        var response = await client.Http.PostAsJsonAsync($"/api/v1/assistant/conversations/{conversation.Id}/messages", new { text = "Think hard" }, Token);
+        var text = await response.Content.ReadAsStringAsync(Token);
+
+        // The stream opens before the model answers, then stays busy while it thinks.
+        text.ShouldStartWith("data: {\"type\":\"start\"");
+        text.ShouldContain(": keep-alive\n\n");
+        text.ShouldContain("Thought it through.");
     }
 
     [Fact]

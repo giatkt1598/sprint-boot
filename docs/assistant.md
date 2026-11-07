@@ -65,6 +65,13 @@ Gateways that put a proxy in front of the model, such as chatgpt2api behind ngin
 HTTP 413 (`client_max_body_size`). Raise that limit on the proxy, or set the connection's max request size below it. A
 request the provider still finds too large shows as "The conversation is too long for the AI provider".
 
+## Streaming through proxies
+
+Answers stream as server-sent events. The stream opens as soon as the question is saved, and while the model thinks or a
+tool runs, the server sends a keep-alive comment line every 15 seconds (`Assistant:HeartbeatSeconds`), so CDNs and
+proxies such as Cloudflare or nginx do not drop a quiet stream. If nothing at all arrives for 45 seconds, the app treats
+the connection as lost: it shows what was saved and gives the question box back.
+
 ## Data sent to the provider
 
 Each question sends the conversation so far, the tools' answers (issue content the person can read), and the issues

@@ -1308,7 +1308,8 @@
     "usedToolTimes_other": "Đã dùng {{tool}} ({{count}} lần)",
     "runningToolTimes_other": "Đang chạy {{tool}}… ({{count}} lần)",
     "usedToolTimes_one": "Đã dùng {{tool}} ({{count}} lần)",
-    "runningToolTimes_one": "Đang chạy {{tool}}… ({{count}} lần)"
+    "runningToolTimes_one": "Đang chạy {{tool}}… ({{count}} lần)",
+    "connectionLost": "Mất kết nối tới server khi trợ lý đang trả lời. Phần đã lưu được hiển thị; hãy hỏi lại để tiếp tục."
   },
   "assistantAdmin": {
     "title": "Trợ lý AI",
