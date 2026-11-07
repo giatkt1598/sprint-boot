@@ -32,19 +32,28 @@ The assistant uses the same tools as the [MCP server](../apps/api/src/SprintBoot
   their own**. The assistant proposes them as a card with the arguments, and nothing happens until the person clicks
   **Confirm**. **Decline** tells the assistant the change was refused. Asking something else declines what is pending.
 
-In an issue chat, the current issue with its comments goes along with every question, so answers follow the issue as it
-changes.
+The issue a conversation is about, and the issue the person has open while asking, go along with every question with
+their comments, so "this ticket" or "this page" needs no explaining and answers follow the issue as it changes. An issue
+the person cannot open is left out. On an issue, the panel offers one-click questions such as **Summarize this page**.
 
 ## Conversations
 
-Conversations are stored on the server and private to the person who started them. An issue's conversations open again
-from that issue. Every assistant turn records its provider, model and token usage. Deleting a conversation does not undo
-changes it made.
+Conversations are stored on the server and private to the person who started them. Opening the panel starts a new
+conversation, tied to the issue on screen if there is one. The three latest conversations show above it, those about the
+issue on screen first; **View all** and the **History** button search the rest. The full page (`/assistant`) lists them
+all, without the app sidebar. Every assistant turn records its provider, model and token usage. Deleting a conversation
+does not undo changes it made.
+
+A conversation starts with the beginning of its first question as its title. Once the assistant has answered it,
+`ConversationTitleWorker` asks the default connection for a short title from that exchange, without tools or issue
+content (poll interval `Assistant:Titles:PollMilliseconds`, 5000 by default). A title the person set is never replaced;
+if naming fails, the draft title stays.
 
 ## Data sent to the provider
 
-Each question sends the conversation so far, the tools' answers (issue content the person can read), and, for issue
-chats, the issue with its comments. Only connect providers the organization trusts with that data.
+Each question sends the conversation so far, the tools' answers (issue content the person can read), and the issues
+described above with their comments. Naming a conversation sends the text of its first question and answer again. Only
+connect providers the organization trusts with that data.
 
 ## Anthropic defaults
 

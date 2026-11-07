@@ -41,6 +41,12 @@ public sealed class FakeAiServer : HttpMessageHandler
 
     public List<JsonObject> Bodies => [.. Requests.Select(request => request.Body)];
 
+    /// <summary>Questions containing this get a title from the title worker; others fail to be named and keep their draft.</summary>
+    public const string NameMe = "[name me]";
+
+    /// <summary>What the title worker asked, kept apart so it never disturbs the scripted chat.</summary>
+    public ConcurrentQueue<JsonObject> TitleRequests { get; } = new();
+
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         if (request.Method == HttpMethod.Get && request.RequestUri!.AbsolutePath.EndsWith("/models", StringComparison.Ordinal))
@@ -64,13 +70,27 @@ public sealed class FakeAiServer : HttpMessageHandler
         }
 
         var body = JsonNode.Parse(await request.Content!.ReadAsStringAsync(cancellationToken))!.AsObject();
+        var anthropicFormat = request.RequestUri!.AbsolutePath.EndsWith("/v1/messages", StringComparison.Ordinal);
+        if (body.ToJsonString().Contains("You name conversations", StringComparison.Ordinal))
+        {
+            TitleRequests.Enqueue(body);
+            return body.ToJsonString().Contains(NameMe.Replace("[", "\u005B", StringComparison.Ordinal), StringComparison.Ordinal)
+                || body.ToJsonString().Contains(NameMe, StringComparison.Ordinal)
+                ? new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    // Quoted, with a period, as models tend to answer.
+                    Content = new StringContent(anthropicFormat ? Anthropic(new FakeAiReply("\"Sprint planning help.\"")) : OpenAi(new FakeAiReply("\"Sprint planning help.\"")), Encoding.UTF8, "text/event-stream"),
+                }
+                : new HttpResponseMessage(HttpStatusCode.InternalServerError) { Content = new StringContent("{\"error\":{\"message\":\"No title scripted\"}}") };
+        }
+
         Requests.Enqueue((request.RequestUri!.AbsolutePath, body, request.Headers));
         if (!_replies.TryDequeue(out var reply))
         {
             return new HttpResponseMessage(HttpStatusCode.InternalServerError) { Content = new StringContent("{\"error\":{\"message\":\"No scripted reply\"}}") };
         }
 
-        var stream = request.RequestUri.AbsolutePath.EndsWith("/v1/messages", StringComparison.Ordinal) ? Anthropic(reply) : OpenAi(reply);
+        var stream = anthropicFormat ? Anthropic(reply) : OpenAi(reply);
         return new HttpResponseMessage(HttpStatusCode.OK)
         {
             Content = new StringContent(stream, Encoding.UTF8, "text/event-stream"),

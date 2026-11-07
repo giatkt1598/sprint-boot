@@ -71,6 +71,7 @@ public class AssistantAppService(
     {
         var conversation = await GetOwnAsync(conversations, id, CurrentUser.GetId());
         conversation.Title = input.Title.Trim();
+        conversation.TitleState = ConversationTitleState.Custom;
         await conversations.UpdateAsync(conversation, autoSave: true);
         return (await ToDtosAsync([conversation])).Single();
     }
@@ -249,7 +250,7 @@ public class AssistantChatAppService(
         }
 
         var text = input.Text.Trim();
-        var prompt = $"{await ContextAsync(conversation, cancellationToken)}{text}";
+        var prompt = $"{await ContextAsync(conversation, input.IssueId, cancellationToken)}{text}";
         using (var uow = unitOfWork.Begin(requiresNew: true))
         {
             var question = ConversationMessage.FromUser(GuidGenerator.Create(), conversationId, text, prompt, Clock.Now);
@@ -413,6 +414,17 @@ public class AssistantChatAppService(
                 }
 
                 await actions.InsertManyAsync(calls);
+                if (calls.Count == 0 && turn.Text.Length > 0)
+                {
+                    // The first answer is enough to say what the conversation is about.
+                    var conversation = await conversations.GetAsync(conversationId);
+                    if (conversation.TitleState == ConversationTitleState.Draft)
+                    {
+                        conversation.TitleState = ConversationTitleState.Pending;
+                        await conversations.UpdateAsync(conversation);
+                    }
+                }
+
                 await uow.CompleteAsync();
             }
 
@@ -481,15 +493,48 @@ public class AssistantChatAppService(
         return connection;
     }
 
-    /// <summary>The issue as it is now, sent with every question of an issue chat.</summary>
-    private async Task<string> ContextAsync(Conversation conversation, CancellationToken cancellationToken)
+    /// <summary>
+    /// Today, and the issues as they are now: the one the conversation is about and the one the person has open, so the
+    /// model never has to ask which ticket "this" is.
+    /// </summary>
+    private async Task<string> ContextAsync(Conversation conversation, Guid? viewingIssueId, CancellationToken cancellationToken)
     {
-        var today = $"Today is {Clock.Now:yyyy-MM-dd}.";
-        if (conversation.IssueId is not { } issueId)
+        var parts = new List<string> { $"Today is {Clock.Now:yyyy-MM-dd}." };
+        if (conversation.IssueId is { } issueId)
         {
-            return $"<context>{today}</context>\n\n";
+            var (key, content) = await ReadIssueAsync(issueId, cancellationToken);
+            parts.Add(key is null
+                ? "The issue this conversation was about no longer exists."
+                : content is null
+                    ? $"This conversation is about issue {key}, which the person can no longer open."
+                    : $"This conversation is about issue [{key}](/issues/{key}) (id {issueId}).");
+            if (content is not null && (viewingIssueId is null || viewingIssueId == issueId))
+            {
+                parts.Add($"When the person says \"this issue\", \"this ticket\" or \"this page\", they mean {key}.");
+            }
+
+            if (content is not null)
+            {
+                parts.Add($"Its current content:\n{content}");
+            }
         }
 
+        if (viewingIssueId is { } viewing && viewing != conversation.IssueId)
+        {
+            // An issue the person cannot read is left out, without even its key.
+            var (key, content) = await ReadIssueAsync(viewing, cancellationToken);
+            if (key is not null && content is not null)
+            {
+                parts.Add($"The person has issue [{key}](/issues/{key}) (id {viewing}) open now, so \"this issue\", \"this ticket\" or \"this page\" means {key}. Its current content:\n{content}");
+            }
+        }
+
+        return $"<context>{string.Join(' ', parts)}</context>\n\n";
+    }
+
+    /// <summary>The key, and the content the get_issue tool gives the person, or null when they cannot read it.</summary>
+    private async Task<(string? Key, string? Content)> ReadIssueAsync(Guid issueId, CancellationToken cancellationToken)
+    {
         string? key;
         using (var uow = unitOfWork.Begin(requiresNew: true))
         {
@@ -499,13 +544,11 @@ public class AssistantChatAppService(
 
         if (key is null)
         {
-            return $"<context>{today} The issue this conversation was about no longer exists.</context>\n\n";
+            return (null, null);
         }
 
         var issue = await toolbox.InvokeAsync("get_issue", Parse(JsonSerializer.Serialize(new { key, includeComments = true })), cancellationToken);
-        return issue.IsError
-            ? $"<context>{today} This conversation is about issue {key}, which the person can no longer open.</context>\n\n"
-            : $"<context>{today} This conversation is about issue [{key}](/issues/{key}). Its current content:\n{issue.Content}</context>\n\n";
+        return (key, issue.IsError ? null : issue.Content);
     }
 
     private async Task<List<ChatTurn>> HistoryAsync(Guid conversationId)

@@ -1,13 +1,15 @@
+import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import InputBase from '@mui/material/InputBase';
 import Typography from '@mui/material/Typography';
 import { useQueryClient } from '@tanstack/react-query';
-import { Bot, Check, LoaderCircle, Square, Wrench, X } from 'lucide-react';
-import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { ArrowUp, Bot, Check, LoaderCircle, Square, Wrench, X } from 'lucide-react';
+import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useNavigate } from 'react-router';
 import { Badge, type BadgeTone } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { ErrorState, LoadingState } from '../../components/StateViews';
-import { TextField } from '../../components/TextField';
 import { font, radius, sem } from '../../theme/tokens';
 import { RichTextView } from '../issues/RichTextEditor';
 import {
@@ -151,10 +153,13 @@ function UserBubble({ text }: { text: string }) {
  * One conversation: what was said, the answer as it streams, and the changes waiting for confirmation. With no conversation
  * yet, the first question starts one, tied to the issue when there is one.
  */
-export function ChatThread({ conversationId, issueId, onConversation }: {
+export function ChatThread({ conversationId, issueId, onConversation, intro }: {
   conversationId: string | null;
+  /** The issue on screen: a new conversation is tied to it, and it goes with every question. */
   issueId?: string;
   onConversation: (id: string) => void;
+  /** Shown above an empty new chat; `ask` sends a question as if typed. */
+  intro?: (ask: (text: string) => void) => ReactNode;
 }) {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
@@ -219,14 +224,15 @@ export function ChatThread({ conversationId, issueId, onConversation }: {
     }
   };
 
-  const send = async () => {
-    const text = draft.trim();
+  const send = async (typed: string) => {
+    const text = typed.trim();
     if (!text || busy) {
       return;
     }
     setDraft('');
+    const body = { text, issueId: issueId ?? null };
     if (conversationId) {
-      await run(conversationId, `/api/v1/assistant/conversations/${conversationId}/messages`, { text }, text);
+      await run(conversationId, `/api/v1/assistant/conversations/${conversationId}/messages`, body, text);
       return;
     }
 
@@ -235,12 +241,12 @@ export function ChatThread({ conversationId, issueId, onConversation }: {
       id = (await createConversation(issueId)).id!;
     } catch {
       setError(t('errors.generic'));
-      setDraft(text);
+      setDraft(typed);
       return;
     }
     // Parents key the thread by conversation, so telling them now would remount it and cut off the first answer.
     // They hear of it once the answer is saved, with the conversation already loaded so nothing flickers.
-    await run(id, `/api/v1/assistant/conversations/${id}/messages`, { text }, text, async () => {
+    await run(id, `/api/v1/assistant/conversations/${id}/messages`, body, text, async () => {
       await queryClient.prefetchQuery(conversationQuery(id));
       onConversation(id);
     });
@@ -252,7 +258,7 @@ export function ChatThread({ conversationId, issueId, onConversation }: {
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
       event.preventDefault();
-      void send();
+      void send(draft);
     }
   };
 
@@ -264,10 +270,13 @@ export function ChatThread({ conversationId, issueId, onConversation }: {
         {conversationId && detail.isPending && <LoadingState />}
         {detail.isError && <ErrorState onRetry={() => void detail.refetch()} />}
         {!conversationId && !live.question && (
-          <div className="flex flex-col items-center gap-2 py-8 text-center">
-            <Bot size={24} strokeWidth={1.5} aria-hidden />
-            <Typography variant="body2" color="textSecondary">{t(issueId ? 'assistant.emptyIssue' : 'assistant.empty')}</Typography>
-          </div>
+          <>
+            {intro?.((text) => void send(text))}
+            <div className="flex flex-col items-center gap-2 py-6 text-center">
+              <Bot size={24} strokeWidth={1.5} aria-hidden />
+              <Typography variant="body2" color="textSecondary">{t(issueId ? 'assistant.emptyIssue' : 'assistant.empty')}</Typography>
+            </div>
+          </>
         )}
         {messages.map((message) =>
           message.role === 'user'
@@ -297,23 +306,57 @@ export function ChatThread({ conversationId, issueId, onConversation }: {
         )}
         <div ref={bottom} />
       </div>
-      <div className="flex items-end gap-2 p-3" style={{ borderTop: `1px solid ${sem('border-default')}` }}>
-        <div className="min-w-0 flex-1">
-          <TextField
-            label={t('assistant.question')}
-            placeholder={t('assistant.placeholder')}
+      <div className="px-3 pb-3 pt-1">
+        <Box
+          className="flex flex-col gap-1 py-2 pl-3 pr-2"
+          sx={{
+            border: `1px solid ${sem('border-default')}`,
+            borderRadius: `${radius.card}px`,
+            backgroundColor: sem('bg-surface'),
+            '&:focus-within': { borderColor: sem('border-focus') },
+          }}
+        >
+          <InputBase
             multiline
-            maxRows={6}
+            minRows={1}
+            maxRows={5}
+            placeholder={t('assistant.placeholder')}
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={onKeyDown}
+            inputProps={{ 'aria-label': t('assistant.question') }}
+            sx={{ padding: 0, fontSize: font.size.md, lineHeight: 1.5, '& textarea': { overflowY: 'auto' } }}
           />
-        </div>
-        {busy ? (
-          <Button kind="secondary" startIcon={<Square size={16} strokeWidth={1.5} aria-hidden />} onClick={() => abort.current?.abort()}>
-            {t('assistant.stop')}
-          </Button>
-        ) : null}
+          <div className="flex justify-end">
+            {busy ? (
+              <IconButton
+                size="small"
+                aria-label={t('assistant.stop')}
+                onClick={() => abort.current?.abort()}
+                sx={{ width: 28, height: 28, backgroundColor: sem('text-primary'), color: sem('bg-surface'), '&:hover': { backgroundColor: sem('text-primary') } }}
+              >
+                <Square size={12} strokeWidth={1.5} fill="currentColor" aria-hidden />
+              </IconButton>
+            ) : (
+              <IconButton
+                size="small"
+                aria-label={t('assistant.send')}
+                disabled={!draft.trim()}
+                onClick={() => void send(draft)}
+                sx={{
+                  width: 28,
+                  height: 28,
+                  backgroundColor: sem('accent-default'),
+                  color: sem('text-on-accent'),
+                  '&:hover': { backgroundColor: sem('accent-hover') },
+                  '&.Mui-disabled': { backgroundColor: sem('bg-subtle'), color: sem('text-tertiary') },
+                }}
+              >
+                <ArrowUp size={16} strokeWidth={1.5} aria-hidden />
+              </IconButton>
+            )}
+          </div>
+        </Box>
       </div>
     </div>
   );

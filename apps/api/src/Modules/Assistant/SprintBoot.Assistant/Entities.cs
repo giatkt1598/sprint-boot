@@ -43,6 +43,8 @@ public class Conversation : Entity<Guid>
 
     public string Title { get; set; } = null!;
 
+    public ConversationTitleState TitleState { get; set; }
+
     public DateTime CreatedAt { get; private set; }
 
     public DateTime UpdatedAt { get; set; }
@@ -60,6 +62,21 @@ public class Conversation : Entity<Guid>
         CreatedAt = createdAt;
         UpdatedAt = createdAt;
     }
+}
+
+/// <summary>Where the title comes from; only the first two may still be replaced by a summary.</summary>
+public enum ConversationTitleState
+{
+    /// <summary>The start of the first question, until the assistant has answered it.</summary>
+    Draft = 0,
+
+    /// <summary>Answered once: <see cref="ConversationTitleWorker"/> summarizes it into a title.</summary>
+    Pending = 1,
+
+    Summarized = 2,
+
+    /// <summary>The person renamed it; nothing replaces that.</summary>
+    Custom = 3,
 }
 
 public enum ConversationRole
@@ -201,6 +218,7 @@ public static class AssistantModelBuilderExtensions
             b.Property(item => item.Title).HasMaxLength(AssistantConsts.MaxTitleLength).IsRequired();
             b.HasIndex(item => new { item.OwnerId, item.UpdatedAt });
             b.HasIndex(item => item.IssueId);
+            b.HasIndex(item => item.TitleState);
         });
 
         builder.Entity<ConversationMessage>(b =>

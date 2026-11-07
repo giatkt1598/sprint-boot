@@ -39,7 +39,7 @@ import { QuickAssignee, QuickStatus, QuickTitle, TitleEditor } from './QuickFiel
 import { TransitionControl } from './TransitionControl';
 import { EpicProgress } from '../agile/EpicProgress';
 import { backlogKey, useBacklog } from '../agile/api';
-import { useAssistant } from '../assistant/AssistantPanel';
+import { useAssistant, useViewingIssue } from '../assistant/AssistantPanel';
 import { RichTextEditor, RichTextView } from './RichTextEditor';
 import { priorityLevel, uploadAttachment, useEpics, useIssueTypes, useLabels, usePriorities, type Issue } from './api';
 import { DatePicker } from '../../components/DatePicker';
@@ -102,6 +102,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
   const canEdit = space.data?.permissions?.includes('Issue.Edit') ?? false;
   const me = useCurrentUser();
   const people = (members.data ?? []).map((member) => member.user!);
+  useViewingIssue({ id: issue.id!, key: issue.key! });
 
   const [conflict, setConflict] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
@@ -229,7 +230,7 @@ function IssueView({ issue, compact }: { issue: Issue; compact?: boolean }) {
             </Typography>
           )}
         </div>
-        <AskAssistant issue={issue} />
+        <AskAssistant />
         <WatchControl issueId={issue.id!} />
         <IconButton size="small" aria-label={t('issues.more')} onClick={(event) => setMenuAnchor(event.currentTarget)}>
           <Ellipsis size={16} strokeWidth={1.5} aria-hidden />
@@ -596,8 +597,8 @@ function SprintField({ issue, canEdit, onError }: { issue: Issue; canEdit: boole
   );
 }
 
-/** Opens the assistant on this issue, with its content as context. */
-function AskAssistant({ issue }: { issue: Issue }) {
+/** Opens the assistant; the issue on screen goes with every question. */
+function AskAssistant() {
   const { t } = useTranslation();
   const assistant = useAssistant();
   if (!assistant.available) {
@@ -605,7 +606,7 @@ function AskAssistant({ issue }: { issue: Issue }) {
   }
 
   return (
-    <Button kind="secondary" startIcon={<Sparkles size={16} strokeWidth={1.5} aria-hidden />} onClick={() => assistant.open({ id: issue.id!, key: issue.key! })}>
+    <Button kind="secondary" startIcon={<Sparkles size={16} strokeWidth={1.5} aria-hidden />} onClick={() => assistant.open()}>
       {t('assistant.ask')}
     </Button>
   );

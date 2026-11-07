@@ -138,6 +138,61 @@ public class AssistantTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task The_first_answer_gets_the_conversation_a_summarized_title_unless_the_person_renamed_it()
+    {
+        await UseAsync(AiProvider.OpenAiCompatible);
+        var client = await fixture.CreateUserClientAsync(Token);
+        var named = await ConversationAsync(client);
+        var renamed = await ConversationAsync(client);
+        Ai.Script(new FakeAiReply("Plan it in the backlog."), new FakeAiReply("Plan it in the backlog."));
+
+        await AskAsync(client, named.Id, $"{FakeAiServer.NameMe} How do I plan a sprint?");
+        (await client.Http.PostAsJsonAsync($"/api/v1/assistant/{renamed.Id}/rename", new { title = "Mine" }, Token)).EnsureSuccessStatusCode();
+        await AskAsync(client, renamed.Id, $"{FakeAiServer.NameMe} How do I plan a sprint?");
+
+        async Task<string> TitleAsync(Guid id) =>
+            (await client.Http.GetFromJsonAsync<ConversationDetailDto>($"/api/v1/assistant/{id}", Token))!.Conversation.Title;
+
+        var deadline = DateTime.UtcNow.AddSeconds(15);
+        while (await TitleAsync(named.Id) != "Sprint planning help" && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(200, Token);
+        }
+
+        (await TitleAsync(named.Id)).ShouldBe("Sprint planning help");
+        (await TitleAsync(renamed.Id)).ShouldBe("Mine");
+        var asked = Ai.TitleRequests.Last(body => body.ToJsonString().Contains("How do I plan a sprint", StringComparison.Ordinal));
+        asked["tools"].ShouldBeNull();
+        asked.ToJsonString().ShouldContain("Plan it in the backlog.");
+        asked.ToJsonString().ShouldNotContain("<context>");
+    }
+
+    [Fact]
+    public async Task The_issue_the_person_has_open_goes_with_the_question_when_they_can_read_it()
+    {
+        await UseAsync(AiProvider.OpenAiCompatible);
+        var owner = await fixture.CreateUserClientAsync(Token);
+        var (_, issue) = await IssueAsync(owner, "Checkout button misaligned");
+        var conversation = await ConversationAsync(owner);
+        Ai.Script(new FakeAiReply("It is about the checkout button."));
+
+        await StreamAsync(owner, $"/api/v1/assistant/conversations/{conversation.Id}/messages", new { text = "Summarize this page", issueId = issue.Id });
+
+        var question = Ai.Bodies.Single()["messages"]!.AsArray().Last()!["content"]!.ToJsonString();
+        question.ShouldContain($"[{issue.Key}](/issues/{issue.Key})");
+        question.ShouldContain("Checkout button misaligned");
+        question.ShouldContain("this page");
+
+        var outsider = await fixture.CreateUserClientAsync(Token);
+        var theirs = await ConversationAsync(outsider);
+        Ai.Script(new FakeAiReply("Which page?"));
+        await StreamAsync(outsider, $"/api/v1/assistant/conversations/{theirs.Id}/messages", new { text = "Summarize this page", issueId = issue.Id });
+        var hidden = Ai.Bodies.Single()["messages"]!.AsArray().Last()!["content"]!.ToJsonString();
+        hidden.ShouldNotContain(issue.Key);
+        hidden.ShouldNotContain("Checkout button misaligned");
+    }
+
+    [Fact]
     public async Task Read_tools_run_at_once_and_their_results_go_back_to_the_model()
     {
         await UseAsync(AiProvider.OpenAiCompatible);

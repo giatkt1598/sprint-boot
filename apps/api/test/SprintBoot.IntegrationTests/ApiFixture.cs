@@ -63,6 +63,7 @@ public sealed class ApiFixture : IAsyncLifetime
         Environment.SetEnvironmentVariable("Workflows__Migration__PollMilliseconds", "300");
         Environment.SetEnvironmentVariable("Workflows__Webhooks__PollMilliseconds", "300");
         Environment.SetEnvironmentVariable("Workflows__Webhooks__BackoffSeconds", "1");
+        Environment.SetEnvironmentVariable("Assistant__Titles__PollMilliseconds", "300");
         Environment.SetEnvironmentVariable("Issues__Attachments__MaxFileSizeMb", "1");
         Environment.SetEnvironmentVariable("Issues__Uploads__PartSizeKb", UploadPartSizeKb.ToString());
         Environment.SetEnvironmentVariable("Storage__Local__Path", Path.Combine(Path.GetTempPath(), $"sb-test-{Guid.NewGuid():N}"));

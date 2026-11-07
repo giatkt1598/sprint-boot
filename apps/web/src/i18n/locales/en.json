@@ -1260,7 +1260,7 @@
     "empty": "Ask about your issues: find them, summarize them, explain what they mean. Changes only happen after you confirm them.",
     "emptyIssue": "Ask about this issue. The assistant reads it, with its comments, before it answers.",
     "question": "Ask the assistant",
-    "placeholder": "Ask a question. Enter sends, Shift+Enter adds a line.",
+    "placeholder": "Ask anything…",
     "send": "Send",
     "stop": "Stop",
     "thinking": "Thinking…",
@@ -1286,7 +1286,21 @@
     "delete": "Delete {{title}}",
     "deleteTitle": "Delete {{title}}?",
     "deleteBody": "The conversation is removed for good. Changes it made to issues stay.",
-    "unavailable": "The assistant is switched off. An administrator can turn it on under Administration → AI assistant."
+    "unavailable": "The assistant is switched off. An administrator can turn it on under Administration → AI assistant.",
+    "history": "History",
+    "recent": "Recent conversations",
+    "viewAll_one": "View all ({{count}} more)",
+    "viewAll_other": "View all ({{count}} more)",
+    "searchConversations": "Search conversations",
+    "noMatches": "No conversation matches.",
+    "thisIssue": "About this issue",
+    "otherConversations": "Other conversations",
+    "suggestions": "Suggestions",
+    "prompts": {
+      "summarize": "Summarize this page",
+      "explain": "Explain this ticket",
+      "nextSteps": "What should happen next?"
+    }
   },
   "assistantAdmin": {
     "title": "AI assistant",

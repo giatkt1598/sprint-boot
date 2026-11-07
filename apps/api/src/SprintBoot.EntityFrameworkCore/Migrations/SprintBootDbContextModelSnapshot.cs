@@ -385,12 +385,17 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
+                    b.Property<int>("TitleState")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
                     b.HasIndex("IssueId");
+
+                    b.HasIndex("TitleState");
 
                     b.HasIndex("OwnerId", "UpdatedAt");
 

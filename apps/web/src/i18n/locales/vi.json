@@ -1260,7 +1260,7 @@
     "empty": "Hỏi về issue của bạn: tìm, tóm tắt, giải thích ý nghĩa. Mọi thay đổi chỉ diễn ra sau khi bạn xác nhận.",
     "emptyIssue": "Hỏi về issue này. Trợ lý đọc nội dung và comment của issue trước khi trả lời.",
     "question": "Hỏi trợ lý",
-    "placeholder": "Nhập câu hỏi. Enter để gửi, Shift+Enter để xuống dòng.",
+    "placeholder": "Hỏi bất cứ điều gì…",
     "send": "Gửi",
     "stop": "Dừng",
     "thinking": "Đang suy nghĩ…",
@@ -1286,7 +1286,21 @@
     "delete": "Xoá {{title}}",
     "deleteTitle": "Xoá {{title}}?",
     "deleteBody": "Cuộc trò chuyện sẽ bị xoá vĩnh viễn. Các thay đổi nó đã làm trên issue vẫn giữ nguyên.",
-    "unavailable": "Trợ lý đang tắt. Quản trị viên có thể bật trong Quản trị → Trợ lý AI."
+    "unavailable": "Trợ lý đang tắt. Quản trị viên có thể bật trong Quản trị → Trợ lý AI.",
+    "history": "Lịch sử",
+    "recent": "Cuộc trò chuyện gần đây",
+    "viewAll_one": "Xem tất cả (còn {{count}})",
+    "viewAll_other": "Xem tất cả (còn {{count}})",
+    "searchConversations": "Tìm cuộc trò chuyện",
+    "noMatches": "Không có cuộc trò chuyện nào khớp.",
+    "thisIssue": "Về issue này",
+    "otherConversations": "Cuộc trò chuyện khác",
+    "suggestions": "Gợi ý",
+    "prompts": {
+      "summarize": "Tóm tắt trang này",
+      "explain": "Giải thích ticket này",
+      "nextSteps": "Bước tiếp theo nên làm gì?"
+    }
   },
   "assistantAdmin": {
     "title": "Trợ lý AI",

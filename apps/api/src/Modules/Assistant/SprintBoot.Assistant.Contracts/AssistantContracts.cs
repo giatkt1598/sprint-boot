@@ -239,6 +239,12 @@ public class SendAssistantMessageInput
     [Required]
     [StringLength(AssistantConsts.MaxQuestionLength)]
     public required string Text { get; set; }
+
+    /// <summary>
+    /// The issue the person has open while asking, so "this ticket" or "this page" means something. Its content goes with
+    /// the question when they can read it.
+    /// </summary>
+    public Guid? IssueId { get; set; }
 }
 
 public class AssistantStatusDto
