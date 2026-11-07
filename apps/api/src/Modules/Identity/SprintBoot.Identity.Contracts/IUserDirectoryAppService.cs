@@ -13,6 +13,9 @@ public class UserRefDto
     /// <summary>Null until the user uploads a picture; clients then show initials.</summary>
     public string? AvatarUrl { get; set; }
 
+    /// <summary>The job title the person set; null when left empty.</summary>
+    public string? Title { get; set; }
+
     /// <summary>The account was deleted; the name then reads Deactivated User.</summary>
     public bool IsDeactivated { get; set; }
 }

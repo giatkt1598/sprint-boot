@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import type { components } from '@sprint-boot/api-client';
 import { apiClient, unwrap } from '../api';
+import { setDisplayTimeZone } from '../lib/format';
 import { userManager } from './oidc';
 
 export type CurrentUser = components['schemas']['CurrentUserDto'];
@@ -66,6 +67,8 @@ export function RequireAuth({ children }: { children: ReactNode }) {
     }
   }, [me.data, i18n]);
 
+  // Set while rendering, so the first screen already formats times in the person's zone.
+  setDisplayTimeZone(me.data?.timeZone);
   const value = useMemo(() => me.data ?? null, [me.data]);
   return value ? <AuthContext value={value}>{children}</AuthContext> : null;
 }

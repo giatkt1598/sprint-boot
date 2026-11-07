@@ -25169,6 +25169,14 @@
             "type": "string",
             "nullable": true
           },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "timeZone": {
+            "type": "string",
+            "nullable": true
+          },
           "homePage": {
             "$ref": "#/components/schemas/HomePageDto"
           }
@@ -29193,6 +29201,18 @@
             "minLength": 1,
             "pattern": "^(en|vi)$",
             "type": "string"
+          },
+          "title": {
+            "maxLength": 128,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
+          "timeZone": {
+            "maxLength": 64,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -29369,6 +29389,10 @@
             "type": "string",
             "nullable": true
           },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
           "isDeactivated": {
             "type": "boolean"
           }
@@ -29437,6 +29461,10 @@
             "nullable": true
           },
           "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
             "type": "string",
             "nullable": true
           },

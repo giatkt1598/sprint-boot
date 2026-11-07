@@ -40,6 +40,10 @@ public class AuthAppService(
 
     public const string HomePageProperty = "HomePage";
 
+    public const string TitleProperty = "Title";
+
+    public const string TimeZoneProperty = "TimeZone";
+
     /// <summary>Reports failures as a value: throwing would roll back the failed-attempt counter.</summary>
     [AllowAnonymous]
     public async Task<LoginOutcome> LoginAsync(LoginInput input)
@@ -209,8 +213,29 @@ public class AuthAppService(
         var user = await userManager.GetByIdAsync(CurrentUser.GetId());
         user.Name = input.Name;
         user.SetProperty(LanguageProperty, input.Language);
+        SetOrClear(user, TitleProperty, input.Title?.Trim());
+        var zone = input.TimeZone?.Trim();
+        if (!string.IsNullOrEmpty(zone) && !TimeZoneInfo.TryFindSystemTimeZoneById(zone, out _))
+        {
+            throw new BusinessException(AuthErrors.InvalidTimeZone);
+        }
+
+        SetOrClear(user, TimeZoneProperty, zone);
         (await userManager.UpdateAsync(user)).CheckErrors();
         return await ToDtoAsync(user);
+    }
+
+    /// <summary>An empty value removes the property, so "not set" has one shape.</summary>
+    private static void SetOrClear(IdentityUser user, string property, string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            user.ExtraProperties.Remove(property);
+        }
+        else
+        {
+            user.SetProperty(property, value);
+        }
     }
 
     [Authorize]
@@ -307,6 +332,8 @@ public class AuthAppService(
             Language = user.GetProperty(LanguageProperty, "en")!,
             Permissions = [.. permissions],
             AvatarUrl = UserAvatars.Url(user),
+            Title = user.GetProperty<string?>(TitleProperty),
+            TimeZone = user.GetProperty<string?>(TimeZoneProperty),
             HomePage = ReadHomePage(user),
         };
     }

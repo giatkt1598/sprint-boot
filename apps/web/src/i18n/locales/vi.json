@@ -242,7 +242,8 @@
     "AssistantActionNotPending": "Thay đổi này đã được quyết định rồi.",
     "AssistantProviderFailed": "Provider AI không phản hồi. Hãy thử lại.",
     "AssistantModelsUnavailable": "Không tải được danh sách model. Hãy kiểm tra Base URL và API key.",
-    "AssistantRequestTooLarge": "Cuộc trò chuyện quá dài so với giới hạn của provider AI. Hãy bắt đầu cuộc trò chuyện mới, hoặc đặt kích thước request tối đa cho connection."
+    "AssistantRequestTooLarge": "Cuộc trò chuyện quá dài so với giới hạn của provider AI. Hãy bắt đầu cuộc trò chuyện mới, hoặc đặt kích thước request tối đa cho connection.",
+    "InvalidTimeZone": "Múi giờ này không hợp lệ."
   },
   "auth": {
     "ldapTitle": "Đăng nhập vào {{provider}}",
@@ -312,7 +313,10 @@
     "avatarUnreadable": "Không đọc được tệp này dưới dạng ảnh.",
     "currentPassword": "Mật khẩu hiện tại",
     "changePassword": "Đổi mật khẩu",
-    "passwordChanged": "Đã đổi mật khẩu"
+    "passwordChanged": "Đã đổi mật khẩu",
+    "jobTitle": "Chức danh",
+    "timeZone": "Múi giờ",
+    "timeZoneBrowser": "Mặc định của trình duyệt ({{zone}})"
   },
   "admin": {
     "deleteAccount": "Xóa tài khoản",

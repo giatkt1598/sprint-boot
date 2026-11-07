@@ -124,6 +124,38 @@ public class AuthTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task People_keep_a_job_title_and_a_time_zone_on_their_profile()
+    {
+        var client = await fixture.CreateUserClientAsync(Token);
+        var me = (await client.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!;
+        me.Title.ShouldBeNull();
+        me.TimeZone.ShouldBeNull();
+
+        var saved = await client.Http.PutAsJsonAsync("/api/v1/auth/profile", new { name = me.Name, language = "en", title = "  Tech Lead ", timeZone = "Asia/Ho_Chi_Minh" }, Token);
+        saved.StatusCode.ShouldBe(HttpStatusCode.OK, await saved.Content.ReadAsStringAsync(Token));
+        me = (await client.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!;
+        me.Title.ShouldBe("Tech Lead");
+        me.TimeZone.ShouldBe("Asia/Ho_Chi_Minh");
+
+        // Other people see the title where they see the person.
+        var admin = new AuthClient(fixture);
+        await admin.SignInAsync(ApiFixture.AdminEmail, ApiFixture.AdminPassword, Token);
+        var found = (await admin.Http.GetFromJsonAsync<List<UserRefDto>>("/api/v1/user-directory/search?search=" + Uri.EscapeDataString(me.Email), Token))!;
+        found.ShouldHaveSingleItem().Title.ShouldBe("Tech Lead");
+        (await admin.Http.GetFromJsonAsync<UserSummaryDto>($"/api/v1/user-admin/{me.Id}", Token))!.Title.ShouldBe("Tech Lead");
+
+        var unknown = await client.Http.PutAsJsonAsync("/api/v1/auth/profile", new { name = me.Name, language = "en", timeZone = "Mars/Olympus" }, Token);
+        unknown.IsSuccessStatusCode.ShouldBeFalse();
+        (await unknown.Content.ReadAsStringAsync(Token)).ShouldContain(AuthErrors.InvalidTimeZone);
+        (await client.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!.TimeZone.ShouldBe("Asia/Ho_Chi_Minh");
+
+        (await client.Http.PutAsJsonAsync("/api/v1/auth/profile", new { name = me.Name, language = "en", title = "", timeZone = "" }, Token)).EnsureSuccessStatusCode();
+        me = (await client.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!;
+        me.Title.ShouldBeNull();
+        me.TimeZone.ShouldBeNull();
+    }
+
+    [Fact]
     public async Task Authorization_code_flow_with_pkce_issues_tokens_that_call_the_api()
     {
         var client = new AuthClient(fixture);

@@ -22,7 +22,7 @@ import { EmptyState, LoadingState } from '../../components/StateViews';
 import { TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
-import { formatDate, formatDateTime, formatMinutes, parseDuration } from '../../lib/format';
+import { formatDate, formatDateTime, formatMinutes, parseDuration, todayIso } from '../../lib/format';
 import { font, radius, sem } from '../../theme/tokens';
 import { RichTextEditor, RichTextView, type MentionUser } from './RichTextEditor';
 import type { Activity, Comment, Issue } from './api';
@@ -345,7 +345,7 @@ function WorkLogDialog({ issueId, log: existing, onClose }: { issueId: string; l
   const toMessage = useErrorMessage();
   const queryClient = useQueryClient();
   const [time, setTime] = useState(existing ? formatMinutes(existing.minutes ?? 0) : '');
-  const [workDate, setWorkDate] = useState(existing?.workDate ?? new Date().toISOString().slice(0, 10));
+  const [workDate, setWorkDate] = useState(existing?.workDate ?? todayIso());
   const [note, setNote] = useState(existing?.note ?? '');
   const [touched, setTouched] = useState(false);
   const minutes = parseDuration(time);

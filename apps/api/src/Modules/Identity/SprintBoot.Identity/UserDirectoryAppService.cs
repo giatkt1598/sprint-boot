@@ -50,5 +50,6 @@ public class UserDirectory(IIdentityUserRepository users, IDataFilter dataFilter
         Name = string.IsNullOrWhiteSpace(user.Name) ? user.UserName : user.Name,
         Email = user.Email,
         AvatarUrl = UserAvatars.Url(user),
+        Title = user.GetProperty<string?>(AuthAppService.TitleProperty),
     };
 }

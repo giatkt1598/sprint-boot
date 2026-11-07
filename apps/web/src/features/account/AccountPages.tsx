@@ -377,6 +377,11 @@ function HomePageSection() {
   );
 }
 
+const TIME_ZONES = Intl.supportedValuesOf('timeZone');
+
+/** An empty select value reads as no choice, so the browser's own zone needs a value of its own. */
+const BROWSER_ZONE = 'browser';
+
 export function ProfilePage() {
   const { t, i18n } = useTranslation();
   const user = useCurrentUser();
@@ -385,9 +390,11 @@ export function ProfilePage() {
   const queryClient = useQueryClient();
   const [name, setName] = useState(user.name ?? '');
   const [language, setLanguage] = useState(user.language ?? 'en');
+  const [title, setTitle] = useState(user.title ?? '');
+  const [timeZone, setTimeZone] = useState(user.timeZone ?? '');
 
   const save = useMutation({
-    mutationFn: () => unwrap(apiClient.PUT('/api/v1/auth/profile', { body: { name, language } })),
+    mutationFn: () => unwrap(apiClient.PUT('/api/v1/auth/profile', { body: { name, language, title: title.trim() || null, timeZone: timeZone || null } })),
     onSuccess: async () => {
       await i18n.changeLanguage(language);
       await queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
@@ -408,6 +415,13 @@ export function ProfilePage() {
       <AvatarSection />
       <TextField label={t('account.name')} required value={name} onChange={(event) => setName(event.target.value)} />
       <TextField label={t('auth.email')} value={user.email ?? ''} disabled />
+      <TextField label={t('account.jobTitle')} value={title} inputProps={{ maxLength: 128 }} onChange={(event) => setTitle(event.target.value)} />
+      <SelectField
+        label={t('account.timeZone')}
+        value={timeZone || BROWSER_ZONE}
+        onChange={(event) => setTimeZone(event.target.value === BROWSER_ZONE ? '' : event.target.value)}
+        options={[{ value: BROWSER_ZONE, label: t('account.timeZoneBrowser', { zone: Intl.DateTimeFormat().resolvedOptions().timeZone }) }, ...TIME_ZONES.map((zone) => ({ value: zone, label: zone }))]}
+      />
       <SelectField
         label={t('account.language')}
         value={language}

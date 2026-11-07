@@ -1,3 +1,4 @@
+using Volo.Abp.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Volo.Abp;
@@ -162,6 +163,7 @@ public class UserAdminAppService(
             Name = string.IsNullOrWhiteSpace(user.Name) ? user.UserName : user.Name,
             Email = user.Email,
             AvatarUrl = UserAvatars.Url(user),
+            Title = user.GetProperty<string?>(AuthAppService.TitleProperty),
             SystemRole = roles.Contains(SystemRoles.Admin) ? SystemRoles.Admin : SystemRoles.Member,
             IsLocked = await userManager.IsLockedOutAsync(user),
             CreationTime = user.CreationTime,

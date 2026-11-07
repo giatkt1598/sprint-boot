@@ -19,6 +19,9 @@ public class UserSummaryDto
     /// <summary>Null until the user uploads a picture; clients then show initials.</summary>
     public string? AvatarUrl { get; set; }
 
+    /// <summary>The job title the person set; null when left empty.</summary>
+    public string? Title { get; set; }
+
     public required string SystemRole { get; set; }
 
     public required bool IsLocked { get; set; }

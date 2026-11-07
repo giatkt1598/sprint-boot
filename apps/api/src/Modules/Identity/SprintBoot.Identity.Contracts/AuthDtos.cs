@@ -62,6 +62,12 @@ public class CurrentUserDto
     /// <summary>Null until the user uploads a picture.</summary>
     public string? AvatarUrl { get; set; }
 
+    /// <summary>The job title the person set; null when left empty.</summary>
+    public string? Title { get; set; }
+
+    /// <summary>An IANA time zone such as Asia/Ho_Chi_Minh; null means the browser's own.</summary>
+    public string? TimeZone { get; set; }
+
     /// <summary>Where the app opens; clients fall back to the last space when it is no longer available.</summary>
     public required HomePageDto HomePage { get; set; }
 }
@@ -141,6 +147,13 @@ public class UpdateProfileInput
     [Required]
     [RegularExpression("^(en|vi)$")]
     public required string Language { get; set; }
+
+    [StringLength(128)]
+    public string? Title { get; set; }
+
+    /// <summary>An IANA time zone id; empty or null goes back to the browser's.</summary>
+    [StringLength(64)]
+    public string? TimeZone { get; set; }
 }
 
 public class ResetTokenStatusDto

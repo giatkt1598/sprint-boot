@@ -18475,6 +18475,8 @@ export interface components {
             language: string | null;
             permissions: string[] | null;
             avatarUrl?: string | null;
+            title?: string | null;
+            timeZone?: string | null;
             homePage: components["schemas"]["HomePageDto"];
         };
         DeletedIssueDto: {
@@ -19615,6 +19617,8 @@ export interface components {
         UpdateProfileInput: {
             name: string;
             language: string;
+            title?: string | null;
+            timeZone?: string | null;
         };
         UpdateProjectInput: {
             name: string;
@@ -19668,6 +19672,7 @@ export interface components {
             name: string | null;
             email: string | null;
             avatarUrl?: string | null;
+            title?: string | null;
             isDeactivated?: boolean;
         };
         UserSpaceDto: {
@@ -19686,6 +19691,7 @@ export interface components {
             name: string | null;
             email: string | null;
             avatarUrl?: string | null;
+            title?: string | null;
             systemRole: string | null;
             isLocked: boolean;
             /** Format: date-time */

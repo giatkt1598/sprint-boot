@@ -4,15 +4,30 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 
 dayjs.extend(relativeTime);
 
+let displayTimeZone: string | undefined;
+
+/** The person's time zone for every timestamp shown; empty goes back to the browser's. Set once their profile loads. */
+export const setDisplayTimeZone = (zone: string | null | undefined) => {
+  displayTimeZone = zone || undefined;
+};
+
+/** A calendar day carries no time, so no zone may move it. */
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+const zoneOf = (value: string) => (DATE_ONLY.test(value) ? 'UTC' : displayTimeZone);
+
+/** Today's date as YYYY-MM-DD in the person's time zone. */
+export const todayIso = () =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: displayTimeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+
 /** "2 hours ago", in the given language. */
 export const formatRelative = (value: string | null | undefined, language: string) =>
   (value ? dayjs(value).locale(language.startsWith('vi') ? 'vi' : 'en').fromNow() : '');
 
 export const formatDate = (value: string | null | undefined, language: string) =>
-  value ? new Intl.DateTimeFormat(language, { dateStyle: 'medium' }).format(new Date(value)) : '';
+  value ? new Intl.DateTimeFormat(language, { dateStyle: 'medium', timeZone: zoneOf(value) }).format(new Date(value)) : '';
 
 export const formatDateTime = (value: string | null | undefined, language: string) =>
-  value ? new Intl.DateTimeFormat(language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) : '';
+  value ? new Intl.DateTimeFormat(language, { dateStyle: 'medium', timeStyle: 'short', timeZone: zoneOf(value) }).format(new Date(value)) : '';
 
 
 export const formatSize = (bytes: number) =>
