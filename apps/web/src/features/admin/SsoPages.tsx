@@ -160,6 +160,7 @@ function SignInButtonLook({ provider, displayName, color, onColor }: {
         />
         <div className="w-40">
           <TextField
+            autoComplete="off"
             label={t('sso.buttonColor')}
             placeholder={t('sso.defaultColor')}
             value={color}
@@ -242,6 +243,7 @@ function PolicyCard() {
         <Toggle label={t('sso.selfSignUp')} checked={current.selfRegistrationEnabled ?? false} onChange={(event) => save.mutate({ ...current, selfRegistrationEnabled: event.target.checked })} />
       </div>
       <TextField
+        autoComplete="off"
         label={t('sso.domains')}
         value={domains}
         onChange={(event) => setDomains(event.target.value)}
@@ -286,8 +288,8 @@ function LdapFields({ searchBase, userFilter, onSearchBase, onUserFilter }: {
   const { t } = useTranslation();
   return (
     <>
-      <TextField label={t('sso.ldapSearchBase')} placeholder="ou=people,dc=example,dc=com" value={searchBase} onChange={(event) => onSearchBase(event.target.value)} />
-      <TextField label={t('sso.ldapUserFilter')} placeholder="(|(uid={0})(sAMAccountName={0})(mail={0}))" value={userFilter} onChange={(event) => onUserFilter(event.target.value)} />
+      <TextField autoComplete="off" label={t('sso.ldapSearchBase')} placeholder="ou=people,dc=example,dc=com" value={searchBase} onChange={(event) => onSearchBase(event.target.value)} />
+      <TextField autoComplete="off" label={t('sso.ldapUserFilter')} placeholder="(|(uid={0})(sAMAccountName={0})(mail={0}))" value={userFilter} onChange={(event) => onUserFilter(event.target.value)} />
       <Typography variant="body2" color="textSecondary">{t('sso.ldapUserFilterHint')}</Typography>
     </>
   );
@@ -366,14 +368,14 @@ function AddProviderDialog({ onClose }: { onClose: () => void }) {
       />
       {hasAddress(type) && (
         <>
-          <TextField label={t('sso.displayName')} autoFocus value={displayName} onChange={(event) => setDisplayName(event.target.value)} />
-          <TextField label={t(labels.address)} placeholder={type === LDAP ? 'ldaps://ldap.example.com:636' : undefined} value={discoveryUrl} onChange={(event) => setDiscoveryUrl(event.target.value)} />
+          <TextField autoComplete="off" label={t('sso.displayName')} autoFocus value={displayName} onChange={(event) => setDisplayName(event.target.value)} />
+          <TextField autoComplete="off" label={t(labels.address)} placeholder={type === LDAP ? 'ldaps://ldap.example.com:636' : undefined} value={discoveryUrl} onChange={(event) => setDiscoveryUrl(event.target.value)} />
         </>
       )}
       <RedirectUrlField name={name} type={type} />
-      <TextField label={t(labels.id)} placeholder={type === SAML ? samlMetadataUrl(name) : undefined} value={clientId} onChange={(event) => setClientId(event.target.value)} />
+      <TextField autoComplete="off" label={t(labels.id)} placeholder={type === SAML ? samlMetadataUrl(name) : undefined} value={clientId} onChange={(event) => setClientId(event.target.value)} />
       {labels.secret && (
-        <TextField label={t(labels.secret)} type="password" autoComplete="off" placeholder={type === LDAP ? undefined : t('sso.secretPlaceholder')} value={clientSecret} onChange={(event) => setClientSecret(event.target.value)} />
+        <TextField label={t(labels.secret)} type="password" autoComplete="new-password" placeholder={type === LDAP ? undefined : t('sso.secretPlaceholder')} value={clientSecret} onChange={(event) => setClientSecret(event.target.value)} />
       )}
       {type === LDAP && <LdapFields searchBase={searchBase} userFilter={userFilter} onSearchBase={setSearchBase} onUserFilter={setUserFilter} />}
       {(type === SAML || type === LDAP) && <TrustEmailToggle checked={trustEmail} onChange={setTrustEmail} />}
@@ -525,20 +527,20 @@ function ProviderForm({ provider }: { provider: Provider }) {
       </div>
       <section className="flex flex-col gap-4 p-4" style={{ maxWidth: 800, border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}>
         <Typography variant="h2">{t('sso.connection')}</Typography>
-        <TextField label={t('sso.displayName')} value={displayName} onChange={(event) => setDisplayName(event.target.value)} />
-        {hasAddress(type) && <TextField label={t(labels.address)} value={discoveryUrl} onChange={(event) => setDiscoveryUrl(event.target.value)} />}
+        <TextField autoComplete="off" label={t('sso.displayName')} value={displayName} onChange={(event) => setDisplayName(event.target.value)} />
+        {hasAddress(type) && <TextField autoComplete="off" label={t(labels.address)} value={discoveryUrl} onChange={(event) => setDiscoveryUrl(event.target.value)} />}
         <RedirectUrlField name={provider.name!} type={type} />
-        <TextField label={t(labels.id)} value={clientId} onChange={(event) => setClientId(event.target.value)} />
+        <TextField autoComplete="off" label={t(labels.id)} value={clientId} onChange={(event) => setClientId(event.target.value)} />
         {labels.secret && (
           <>
-            <TextField label={t(labels.secret)} type="password" autoComplete="off" placeholder={provider.hasSecret ? '••••••••••••' : t('sso.secretPlaceholder')} value={clientSecret} onChange={(event) => setClientSecret(event.target.value)} />
+            <TextField label={t(labels.secret)} type="password" autoComplete="new-password" placeholder={provider.hasSecret ? '••••••••••••' : t('sso.secretPlaceholder')} value={clientSecret} onChange={(event) => setClientSecret(event.target.value)} />
             <Typography variant="body2" color="textSecondary">{t('sso.secretHint')}</Typography>
           </>
         )}
         {type === LDAP && <LdapFields searchBase={searchBase} userFilter={userFilter} onSearchBase={setSearchBase} onUserFilter={setUserFilter} />}
-        {isOidc && <TextField label={t('sso.scopes')} value={scopes} onChange={(event) => setScopes(event.target.value)} />}
+        {isOidc && <TextField autoComplete="off" label={t('sso.scopes')} value={scopes} onChange={(event) => setScopes(event.target.value)} />}
         {(isOidc || directory) && (
-          <TextField label={t(directory ? 'sso.attributeMapping' : 'sso.claimMapping')} value={mapping} onChange={(event) => setMapping(event.target.value)} />
+          <TextField autoComplete="off" label={t(directory ? 'sso.attributeMapping' : 'sso.claimMapping')} value={mapping} onChange={(event) => setMapping(event.target.value)} />
         )}
         {directory && <TrustEmailToggle checked={trustEmail} onChange={setTrustEmail} />}
         <div className="flex justify-end gap-2">
