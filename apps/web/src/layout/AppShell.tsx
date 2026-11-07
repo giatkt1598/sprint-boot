@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router';
-import { AssistantHost } from '../features/assistant/AssistantPanel';
 import { rememberAppLocation } from '../lib/returnTo';
 import { sem } from '../theme/tokens';
 import { Sidebar } from './Sidebar';
@@ -16,30 +15,26 @@ export function AppShell() {
   useEffect(() => rememberAppLocation(location.pathname + location.search), [location.pathname, location.search]);
 
   return (
-    <AssistantHost>
-      <div className="flex h-screen flex-col">
-        <TopBar />
-        <div className="flex min-h-0 flex-1">
-          {!wide && <Sidebar />}
-          <main className="min-w-0 flex-1 overflow-auto p-8" style={{ backgroundColor: sem('bg-surface') }}>
-            <Outlet />
-          </main>
-        </div>
+    <div className="flex h-screen flex-col">
+      <TopBar />
+      <div className="flex min-h-0 flex-1">
+        {!wide && <Sidebar />}
+        <main className="min-w-0 flex-1 overflow-auto p-8" style={{ backgroundColor: sem('bg-surface') }}>
+          <Outlet />
+        </main>
       </div>
-    </AssistantHost>
+    </div>
   );
 }
 
 /** Settings areas replace the sidebar with their own menu. */
 export function BareShell() {
   return (
-    <AssistantHost>
-      <div className="flex h-screen flex-col">
-        <TopBar />
-        <div className="flex min-h-0 flex-1">
-          <Outlet />
-        </div>
+    <div className="flex h-screen flex-col">
+      <TopBar />
+      <div className="flex min-h-0 flex-1">
+        <Outlet />
       </div>
-    </AssistantHost>
+    </div>
   );
 }

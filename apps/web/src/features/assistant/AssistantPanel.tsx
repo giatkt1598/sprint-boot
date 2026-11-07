@@ -6,7 +6,7 @@ import { History, Maximize2, Plus, Sparkles, X } from 'lucide-react';
 import { createContext, use, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
-import { sem, shadow } from '../../theme/tokens';
+import { sem, shadow, size } from '../../theme/tokens';
 import { useAssistantStatus } from './api';
 import { ChatThread } from './ChatThread';
 import { ConversationPicker, QuickPrompts, RecentConversations } from './ConversationPicker';
@@ -18,12 +18,21 @@ export interface IssueRef {
 
 interface AssistantControls {
   available: boolean;
+  isOpen: boolean;
+  /** Opens the panel on a new conversation; an open panel stays as it is. */
   open: () => void;
+  close: () => void;
   /** The issue on screen; its conversations come first and its key goes with every question. */
   setViewing: (issue: IssueRef | null) => void;
 }
 
-const AssistantContext = createContext<AssistantControls>({ available: false, open: () => undefined, setViewing: () => undefined });
+const AssistantContext = createContext<AssistantControls>({
+  available: false,
+  isOpen: false,
+  open: () => undefined,
+  close: () => undefined,
+  setViewing: () => undefined,
+});
 
 export const useAssistant = () => use(AssistantContext);
 
@@ -107,16 +116,26 @@ function Panel({ issue, onClose }: { issue: IssueRef | null; onClose: () => void
   );
 }
 
-/** Mounted by the shells, so the panel opens from any page and survives moving between pages. */
+/**
+ * Mounted above every signed-in page, so the panel survives moving between them. It is not modal: the page beside it
+ * stays usable, and only the panel's own column is covered.
+ */
 export function AssistantHost({ children }: { children: ReactNode }) {
+  const { t } = useTranslation();
   const status = useAssistantStatus();
   const [state, setState] = useState<{ open: boolean; session: number }>({ open: false, session: 0 });
   const [viewing, setViewing] = useState<IssueRef | null>(null);
   const available = status.data?.available ?? false;
 
   const controls = useMemo<AssistantControls>(
-    () => ({ available, open: () => setState((current) => ({ open: true, session: current.session + 1 })), setViewing }),
-    [available],
+    () => ({
+      available,
+      isOpen: state.open,
+      open: () => setState((current) => (current.open ? current : { open: true, session: current.session + 1 })),
+      close: () => setState((current) => ({ ...current, open: false })),
+      setViewing,
+    }),
+    [available, state.open],
   );
 
   useEffect(() => {
@@ -130,11 +149,18 @@ export function AssistantHost({ children }: { children: ReactNode }) {
       {children}
       <Drawer
         anchor="right"
+        variant="persistent"
         open={state.open}
-        onClose={() => setState((current) => ({ ...current, open: false }))}
-        slotProps={{ backdrop: { invisible: true }, paper: { sx: { width: 480, maxWidth: '100%', boxShadow: shadow.drawer } } }}
+        slotProps={{
+          paper: {
+            'aria-label': t('assistant.title'),
+            role: 'complementary',
+            // Below the top bar, which keeps its Assistant button reachable.
+            sx: { top: size.topBar, height: `calc(100% - ${size.topBar}px)`, width: 480, maxWidth: '100%', boxShadow: shadow.drawer },
+          },
+        }}
       >
-        {state.open && <Panel key={state.session} issue={viewing} onClose={() => setState((current) => ({ ...current, open: false }))} />}
+        {state.open && <Panel key={state.session} issue={viewing} onClose={controls.close} />}
       </Drawer>
     </AssistantContext>
   );
@@ -143,14 +169,14 @@ export function AssistantHost({ children }: { children: ReactNode }) {
 /** The TopBar entry point. */
 export function AssistantButton() {
   const { t } = useTranslation();
-  const { available, open } = useAssistant();
+  const { available, isOpen, open, close } = useAssistant();
   if (!available) {
     return null;
   }
 
   return (
     <Tooltip title={t('assistant.title')}>
-      <IconButton size="small" aria-label={t('assistant.open')} onClick={() => open()}>
+      <IconButton size="small" aria-label={t('assistant.open')} aria-pressed={isOpen} onClick={() => (isOpen ? close() : open())}>
         <Sparkles size={20} strokeWidth={1.5} aria-hidden />
       </IconButton>
     </Tooltip>

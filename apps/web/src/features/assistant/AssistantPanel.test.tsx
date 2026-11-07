@@ -83,6 +83,27 @@ describe('AssistantPanel', () => {
     expect(JSON.parse(init.body as string)).toEqual({ text: 'Summarize this page', issueId: 'i1' });
   });
 
+  it('leaves the page usable beside it and keeps the chat until closed', async () => {
+    get.mockImplementation((path: string) => Promise.resolve(path === '/api/v1/assistant/status' ? { available: true } : []));
+    const clicked = vi.fn();
+    renderHost(
+      <>
+        <AssistantButton />
+        <button type="button" onClick={clicked}>On the page</button>
+      </>,
+    );
+    fireEvent.click(await screen.findByRole('button', { name: /open the assistant/i }));
+    const box = await screen.findByRole('textbox', { name: 'Ask the assistant' });
+    fireEvent.change(box, { target: { value: 'Draft question' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'On the page' }));
+    expect(clicked).toHaveBeenCalled();
+    expect(screen.getByRole('textbox', { name: 'Ask the assistant' })).toHaveProperty('value', 'Draft question');
+
+    fireEvent.click(screen.getByRole('button', { name: /open the assistant/i }));
+    await waitFor(() => expect(screen.queryByRole('textbox', { name: 'Ask the assistant' })).toBeNull());
+  });
+
   it('offers no issue suggestions away from an issue', async () => {
     get.mockImplementation((path: string) => Promise.resolve(path === '/api/v1/assistant/status' ? { available: true } : []));
     renderHost(<AssistantButton />);
