@@ -1,13 +1,18 @@
+import Box from '@mui/material/Box';
+import ButtonBase from '@mui/material/ButtonBase';
 import Drawer from '@mui/material/Drawer';
+import Grow from '@mui/material/Grow';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { History, Maximize2, Plus, Sparkles, X } from 'lucide-react';
+import { History, LoaderCircle, Maximize2, Minus, Plus, Sparkles, X } from 'lucide-react';
 import { createContext, use, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
-import { sem, shadow, size } from '../../theme/tokens';
-import { useAssistantStatus } from './api';
+import { Badge } from '../../components/Badge';
+import { font, radius, sem, shadow, size } from '../../theme/tokens';
+import { useAssistantStatus, useConversation } from './api';
 import { ChatThread } from './ChatThread';
 import { ConversationPicker, QuickPrompts, RecentConversations } from './ConversationPicker';
 
@@ -50,15 +55,83 @@ export function useViewingIssue(issue: IssueRef | null) {
   }, [id, key, setViewing]);
 }
 
-function Panel({ issue, onClose }: { issue: IssueRef | null; onClose: () => void }) {
+/** The minimized panel: one line in the bottom right corner, which opens the conversation again. */
+function MinimizedCard({ title, issueKey, busy, onRestore, onClose }: {
+  title: string;
+  issueKey?: string;
+  busy: boolean;
+  onRestore: () => void;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <Grow in style={{ transformOrigin: 'bottom right' }}>
+      <Box
+        role="complementary"
+        aria-label={t('assistant.title')}
+        className="fixed bottom-6 right-6 flex items-center"
+        sx={{
+          width: 340,
+          maxWidth: 'calc(100vw - 48px)',
+          zIndex: (theme) => theme.zIndex.drawer,
+          backgroundColor: sem('bg-surface'),
+          border: `1px solid ${sem('border-default')}`,
+          borderRadius: `${radius.card}px`,
+          boxShadow: shadow.popover,
+        }}
+      >
+        <ButtonBase
+          onClick={onRestore}
+          aria-label={t('assistant.restore', { title })}
+          className="flex min-w-0 flex-1 items-center gap-3 py-2 pl-2 pr-1 text-left"
+          sx={{ borderRadius: `${radius.card}px`, '&:hover': { backgroundColor: sem('bg-hover') } }}
+        >
+          <span
+            aria-hidden
+            className="flex shrink-0 items-center justify-center"
+            style={{ width: 28, height: 28, borderRadius: radius.full, backgroundColor: sem('bg-selected'), color: sem('text-accent') }}
+          >
+            {busy ? <LoaderCircle size={16} strokeWidth={1.5} className="animate-spin" /> : <Sparkles size={16} strokeWidth={1.5} />}
+          </span>
+          <span className="min-w-0 flex-1 truncate" style={{ fontSize: font.size.md, fontWeight: font.weight.medium, color: sem('text-primary') }}>
+            {title}
+          </span>
+          {busy ? (
+            <span className="shrink-0" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>{t('assistant.answering')}</span>
+          ) : (
+            issueKey && <Badge tone="subtle">{issueKey}</Badge>
+          )}
+        </ButtonBase>
+        <IconButton size="small" aria-label={t('common.close')} onClick={onClose} sx={{ marginRight: 1 }}>
+          <X size={16} strokeWidth={1.5} aria-hidden />
+        </IconButton>
+      </Box>
+    </Grow>
+  );
+}
+
+function Panel({ issue, minimized, onMinimize, onRestore, onClose }: {
+  issue: IssueRef | null;
+  minimized: boolean;
+  onMinimize: () => void;
+  onRestore: () => void;
+  onClose: () => void;
+}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   // Opening the panel starts a new conversation; an older one is picked from the history.
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [history, setHistory] = useState<HTMLElement | null>(null);
+  const [busy, setBusy] = useState(false);
+  const detail = useConversation(conversationId);
+  const conversation = detail.data?.conversation;
+  const title = conversation?.title || t('assistant.untitled');
+  const issueKey = conversation ? (conversation.issueKey ?? undefined) : issue?.key;
 
   return (
     <div className="flex h-full flex-col">
+      {/* The panel stays mounted while minimized, so an answer keeps streaming. */}
+      {minimized && createPortal(<MinimizedCard title={title} issueKey={issueKey} busy={busy} onRestore={onRestore} onClose={onClose} />, document.body)}
       <div className="flex items-center gap-1 py-2 pl-4 pr-2" style={{ borderBottom: `1px solid ${sem('border-default')}` }}>
         <Sparkles size={16} strokeWidth={1.5} aria-hidden />
         <Typography variant="h3" component="h2" className="min-w-0 flex-1 truncate pl-1">
@@ -86,6 +159,11 @@ function Panel({ issue, onClose }: { issue: IssueRef | null; onClose: () => void
             <Maximize2 size={16} strokeWidth={1.5} aria-hidden />
           </IconButton>
         </Tooltip>
+        <Tooltip title={t('assistant.minimize')}>
+          <IconButton size="small" aria-label={t('assistant.minimize')} onClick={onMinimize}>
+            <Minus size={16} strokeWidth={1.5} aria-hidden />
+          </IconButton>
+        </Tooltip>
         <IconButton size="small" aria-label={t('common.close')} onClick={onClose}>
           <X size={16} strokeWidth={1.5} aria-hidden />
         </IconButton>
@@ -105,6 +183,7 @@ function Panel({ issue, onClose }: { issue: IssueRef | null; onClose: () => void
         conversationId={conversationId}
         issueId={issue?.id}
         onConversation={setConversationId}
+        onBusyChange={setBusy}
         intro={(ask) => (
           <div className="flex flex-col gap-4">
             <RecentConversations issueId={issue?.id} onPick={setConversationId} />
@@ -123,19 +202,20 @@ function Panel({ issue, onClose }: { issue: IssueRef | null; onClose: () => void
 export function AssistantHost({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   const status = useAssistantStatus();
-  const [state, setState] = useState<{ open: boolean; session: number }>({ open: false, session: 0 });
+  const [state, setState] = useState<{ open: boolean; minimized: boolean; session: number }>({ open: false, minimized: false, session: 0 });
   const [viewing, setViewing] = useState<IssueRef | null>(null);
   const available = status.data?.available ?? false;
 
   const controls = useMemo<AssistantControls>(
     () => ({
       available,
-      isOpen: state.open,
-      open: () => setState((current) => (current.open ? current : { open: true, session: current.session + 1 })),
-      close: () => setState((current) => ({ ...current, open: false })),
+      isOpen: state.open && !state.minimized,
+      // A minimized panel comes back as it was.
+      open: () => setState((current) => (current.open ? { ...current, minimized: false } : { open: true, minimized: false, session: current.session + 1 })),
+      close: () => setState((current) => ({ ...current, open: false, minimized: false })),
       setViewing,
     }),
-    [available, state.open],
+    [available, state.open, state.minimized],
   );
 
   useEffect(() => {
@@ -150,7 +230,7 @@ export function AssistantHost({ children }: { children: ReactNode }) {
       <Drawer
         anchor="right"
         variant="persistent"
-        open={state.open}
+        open={state.open && !state.minimized}
         slotProps={{
           paper: {
             'aria-label': t('assistant.title'),
@@ -160,7 +240,16 @@ export function AssistantHost({ children }: { children: ReactNode }) {
           },
         }}
       >
-        {state.open && <Panel key={state.session} issue={viewing} onClose={controls.close} />}
+        {state.open && (
+          <Panel
+            key={state.session}
+            issue={viewing}
+            minimized={state.minimized}
+            onMinimize={() => setState((current) => ({ ...current, minimized: true }))}
+            onRestore={controls.open}
+            onClose={controls.close}
+          />
+        )}
       </Drawer>
     </AssistantContext>
   );

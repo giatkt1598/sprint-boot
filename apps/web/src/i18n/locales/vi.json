@@ -1300,7 +1300,10 @@
       "summarize": "Tóm tắt trang này",
       "explain": "Giải thích ticket này",
       "nextSteps": "Bước tiếp theo nên làm gì?"
-    }
+    },
+    "minimize": "Thu nhỏ",
+    "restore": "Mở lại {{title}}",
+    "answering": "Đang trả lời…"
   },
   "assistantAdmin": {
     "title": "Trợ lý AI",

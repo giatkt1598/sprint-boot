@@ -153,13 +153,15 @@ function UserBubble({ text }: { text: string }) {
  * One conversation: what was said, the answer as it streams, and the changes waiting for confirmation. With no conversation
  * yet, the first question starts one, tied to the issue when there is one.
  */
-export function ChatThread({ conversationId, issueId, onConversation, intro }: {
+export function ChatThread({ conversationId, issueId, onConversation, intro, onBusyChange }: {
   conversationId: string | null;
   /** The issue on screen: a new conversation is tied to it, and it goes with every question. */
   issueId?: string;
   onConversation: (id: string) => void;
   /** Shown above an empty new chat; `ask` sends a question as if typed. */
   intro?: (ask: (text: string) => void) => ReactNode;
+  /** Told when an answer starts and ends, for a minimized panel to show it. */
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
@@ -173,6 +175,7 @@ export function ChatThread({ conversationId, issueId, onConversation, intro }: {
   const input = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => () => abort.current?.abort(), []);
+  useEffect(() => onBusyChange?.(busy), [busy, onBusyChange]);
   useEffect(() => {
     // After the drawer has taken focus for itself, so the question can be typed straight away.
     const frame = requestAnimationFrame(() => input.current?.focus());
