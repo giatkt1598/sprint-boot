@@ -39,6 +39,9 @@ public class IssueTemplate : Entity<Guid>
 /// <summary>A template the workspace keeps for every space to reuse.</summary>
 public class GlobalIssueTemplate : Entity<Guid>
 {
+    /// <summary>The <see cref="IssueType.Icon"/> of the space types it is for.</summary>
+    public string IssueTypeKey { get; set; } = null!;
+
     public string Name { get; set; } = null!;
 
     public string Content { get; set; } = string.Empty;
@@ -116,6 +119,11 @@ public class IssueTemplateAppService(
         {
             // Copies, kept in step by the workspace service, so reading a space needs no join.
             var source = await globals.GetAsync(globalId);
+            if (source.IssueTypeKey != type.Icon)
+            {
+                throw new BusinessException(IssueTemplateErrors.TypeMismatch);
+            }
+
             template.GlobalTemplateId = source.Id;
             template.Name = source.Name;
             template.Content = source.Content;
@@ -173,7 +181,8 @@ public class GlobalIssueTemplateAppService(
             .Select(group => new { Id = group.Key, Count = group.Count() }));
         var counts = usage.ToDictionary(item => item.Id, item => item.Count);
         return [.. list
-            .OrderBy(global => global.Name, StringComparer.CurrentCultureIgnoreCase)
+            .OrderBy(global => Array.IndexOf(IssueTemplateConsts.TypeKeys, global.IssueTypeKey))
+            .ThenBy(global => global.Name, StringComparer.CurrentCultureIgnoreCase)
             .Select(global => ToDto(global, counts.GetValueOrDefault(global.Id)))];
     }
 
@@ -181,6 +190,7 @@ public class GlobalIssueTemplateAppService(
     public async Task<GlobalIssueTemplateDto> CreateAsync(SaveGlobalIssueTemplateInput input)
     {
         var global = new GlobalIssueTemplate(GuidGenerator.Create());
+        global.IssueTypeKey = CheckTypeKey(input.IssueTypeKey);
         Apply(global, input);
         await globals.InsertAsync(global, autoSave: true);
         return ToDto(global, 0);
@@ -190,11 +200,19 @@ public class GlobalIssueTemplateAppService(
     public async Task<GlobalIssueTemplateDto> UpdateAsync(Guid id, SaveGlobalIssueTemplateInput input)
     {
         var global = await globals.GetAsync(id);
+        var reusing = await templates.GetListAsync(template => template.GlobalTemplateId == id);
+        var typeKey = CheckTypeKey(input.IssueTypeKey);
+        if (typeKey != global.IssueTypeKey && reusing.Count > 0)
+        {
+            // Spaces picked it for one of their types; moving it would leave those templates on the wrong type.
+            throw new BusinessException(IssueTemplateErrors.TypeInUse);
+        }
+
+        global.IssueTypeKey = typeKey;
         Apply(global, input);
         await globals.UpdateAsync(global);
 
         // Spaces that reuse it follow every change.
-        var reusing = await templates.GetListAsync(template => template.GlobalTemplateId == id);
         foreach (var template in reusing)
         {
             template.Name = global.Name;
@@ -227,12 +245,19 @@ public class GlobalIssueTemplateAppService(
         return string.IsNullOrEmpty(name) ? throw new BusinessException(IssueTemplateErrors.NameRequired) : name;
     }
 
+    private static string CheckTypeKey(string? input)
+    {
+        var key = input?.Trim().ToLowerInvariant();
+        return key is not null && IssueTemplateConsts.TypeKeys.Contains(key) ? key : throw new BusinessException(IssueTemplateErrors.InvalidType);
+    }
+
     internal static IssueTemplateMode CheckMode(IssueTemplateMode mode) =>
         Enum.IsDefined(mode) ? mode : throw new BusinessException(IssueTemplateErrors.InvalidMode);
 
     private static GlobalIssueTemplateDto ToDto(GlobalIssueTemplate global, int usage) => new()
     {
         Id = global.Id,
+        IssueTypeKey = global.IssueTypeKey,
         Name = global.Name,
         Content = global.Content,
         Mode = global.Mode,

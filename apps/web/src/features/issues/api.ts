@@ -57,6 +57,10 @@ export type TemplateModeValue = NonNullable<IssueTemplate['mode']>;
 /** How the create form shows a template, as the API numbers it. */
 export const TemplateMode = { fill: 0, placeholder: 1 } as const satisfies Record<string, TemplateModeValue>;
 
+/** The issue types workspace templates are for, matched to each space's type by its icon; subtasks take none. */
+export const TemplateTypeKeys = ['epic', 'story', 'task', 'bug'] as const;
+export type TemplateTypeKey = (typeof TemplateTypeKeys)[number];
+
 export const globalIssueTemplatesKey = ['global-issue-templates'];
 
 export const useGlobalIssueTemplates = (enabled = true) =>

@@ -62,6 +62,9 @@ public class GlobalIssueTemplateDto
 {
     public required Guid Id { get; set; }
 
+    /// <summary>The issue type it is for, by key: epic, story, task or bug. Spaces use it for their type of that key.</summary>
+    public required string IssueTypeKey { get; set; }
+
     public required string Name { get; set; }
 
     /// <summary>Sanitized rich text HTML.</summary>
@@ -75,6 +78,11 @@ public class GlobalIssueTemplateDto
 
 public class SaveGlobalIssueTemplateInput
 {
+    /// <summary>epic, story, task or bug. It cannot change while spaces use the template.</summary>
+    [Required]
+    [StringLength(IssueTemplateConsts.MaxTypeKeyLength)]
+    public required string IssueTypeKey { get; set; }
+
     [Required]
     [StringLength(IssueTemplateConsts.MaxNameLength)]
     public required string Name { get; set; }
@@ -87,6 +95,11 @@ public class SaveGlobalIssueTemplateInput
 public static class IssueTemplateConsts
 {
     public const int MaxNameLength = 128;
+
+    public const int MaxTypeKeyLength = 32;
+
+    /// <summary>The keys of the issue types every space has and templates may target; subtasks take none.</summary>
+    public static readonly string[] TypeKeys = ["epic", "story", "task", "bug"];
 }
 
 public static class IssueTemplateErrors
@@ -94,6 +107,9 @@ public static class IssueTemplateErrors
     public const string SubtaskType = "SprintBoot:IssueTemplateSubtaskType";
     public const string NameRequired = "SprintBoot:IssueTemplateNameRequired";
     public const string InvalidMode = "SprintBoot:IssueTemplateInvalidMode";
+    public const string InvalidType = "SprintBoot:IssueTemplateInvalidType";
+    public const string TypeMismatch = "SprintBoot:IssueTemplateTypeMismatch";
+    public const string TypeInUse = "SprintBoot:IssueTemplateTypeInUse";
 }
 
 public interface IIssueTemplateAppService : IApplicationService

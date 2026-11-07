@@ -17,11 +17,13 @@ import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { radius, sem } from '../../theme/tokens';
 import {
+  globalIssueTemplatesKey,
   issueTemplatesKey,
   TemplateMode,
   useGlobalIssueTemplates,
   useIssueTemplates,
   useIssueTypes,
+  type GlobalIssueTemplate,
   type IssueTemplate,
   type IssueType,
   type TemplateModeValue,
@@ -52,8 +54,10 @@ function TemplateDialog({ draft, types, projectId, onClose }: { draft: Draft; ty
   const toMessage = useErrorMessage();
   const queryClient = useQueryClient();
   const [value, setValue] = useState(draft);
+  const type = types.find((item) => item.id === value.issueTypeId);
   const globals = useGlobalIssueTemplates();
-  const reused = globals.data?.find((item) => item.id === value.globalTemplateId);
+  const offered = (globals.data ?? []).filter((item) => item.issueTypeKey === type?.icon);
+  const reused = offered.find((item) => item.id === value.globalTemplateId);
 
   const save = useMutation({
     mutationFn: () => {
@@ -72,8 +76,6 @@ function TemplateDialog({ draft, types, projectId, onClose }: { draft: Draft; ty
     onError: (failure) => toast('error', toMessage(failure)),
   });
 
-  const type = types.find((item) => item.id === value.issueTypeId);
-
   return (
     <Dialog
       open
@@ -89,14 +91,14 @@ function TemplateDialog({ draft, types, projectId, onClose }: { draft: Draft; ty
         />
       }
     >
-      {(globals.data?.length ?? 0) > 0 && (
+      {offered.length > 0 && (
         <SelectField
           label={t('templates.source')}
           value={value.globalTemplateId}
           onChange={(event) => setValue({ ...value, globalTemplateId: event.target.value })}
           options={[
             { value: OWN, label: t('templates.ownSource') },
-            ...(globals.data ?? []).map((item) => ({ value: item.id!, label: item.name! })),
+            ...offered.map((item) => ({ value: item.id!, label: item.name! })),
           ]}
         />
       )}
@@ -144,6 +146,7 @@ export function SpaceIssueTemplatesPage() {
   const queryClient = useQueryClient();
   const types = useIssueTypes(projectId);
   const templates = useIssueTemplates(projectId);
+  const globals = useGlobalIssueTemplates();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [removing, setRemoving] = useState<IssueTemplate | null>(null);
 
@@ -152,6 +155,20 @@ export function SpaceIssueTemplatesPage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: issueTemplatesKey(projectId) });
       setRemoving(null);
+    },
+    onError: (failure) => toast('error', toMessage(failure)),
+  });
+
+  const use = useMutation({
+    mutationFn: ({ issueTypeId, global, isDefault }: { issueTypeId: string; global: GlobalIssueTemplate; isDefault: boolean }) =>
+      unwrap(apiClient.POST('/api/v1/issue-template', {
+        params: { query: { projectId } },
+        body: { issueTypeId, globalTemplateId: global.id!, isDefault },
+      })),
+    onSuccess: async (_, { global }) => {
+      await queryClient.invalidateQueries({ queryKey: issueTemplatesKey(projectId) });
+      await queryClient.invalidateQueries({ queryKey: globalIssueTemplatesKey });
+      toast('success', t('templates.used', { name: global.name }));
     },
     onError: (failure) => toast('error', toMessage(failure)),
   });
@@ -169,6 +186,10 @@ export function SpaceIssueTemplatesPage() {
       {types.data && templates.data && usable.map((type) => {
         const typeName = t(`issue.type.${type.icon}`);
         const own = templates.data.filter((template) => template.issueTypeId === type.id);
+        // Workspace templates for this type that the space does not use yet.
+        const available = (globals.data ?? []).filter(
+          (global) => global.issueTypeKey === type.icon && !own.some((template) => template.globalTemplateId === global.id),
+        );
         return (
           <section key={type.id} aria-labelledby={`templates-${type.id}`} className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
@@ -187,7 +208,7 @@ export function SpaceIssueTemplatesPage() {
                 </Button>
               )}
             </div>
-            {own.length === 0 && <Typography variant="body2" color="textSecondary">{t('templates.none', { type: typeName })}</Typography>}
+            {own.length === 0 && available.length === 0 && <Typography variant="body2" color="textSecondary">{t('templates.none', { type: typeName })}</Typography>}
             {own.map((template) => (
               <div
                 key={template.id}
@@ -196,7 +217,7 @@ export function SpaceIssueTemplatesPage() {
               >
                 <Typography variant="body2" className="min-w-0 flex-1 truncate">{template.name}</Typography>
                 {template.mode === TemplateMode.placeholder && <Badge tone="subtle">{t('templates.mode.placeholder')}</Badge>}
-                {template.globalTemplateId && <Badge tone="subtle">{t('templates.workspace')}</Badge>}
+                {template.globalTemplateId && <Badge tone="info">{t('templates.global')}</Badge>}
                 {template.isDefault && <Badge tone="info">{t('templates.default')}</Badge>}
                 {canManage && (
                   <span className="flex gap-3">
@@ -228,6 +249,28 @@ export function SpaceIssueTemplatesPage() {
                       {t('common.delete')}
                     </Link>
                   </span>
+                )}
+              </div>
+            ))}
+            {available.map((global) => (
+              <div
+                key={global.id}
+                className="flex items-center gap-3 px-3 py-2"
+                style={{ border: `1px dashed ${sem('border-default')}`, borderRadius: radius.card }}
+              >
+                <Typography variant="body2" className="min-w-0 flex-1 truncate">{global.name}</Typography>
+                {global.mode === TemplateMode.placeholder && <Badge tone="subtle">{t('templates.mode.placeholder')}</Badge>}
+                <Badge tone="info">{t('templates.global')}</Badge>
+                {canManage && (
+                  <Link
+                    component="button"
+                    variant="body2"
+                    disabled={use.isPending}
+                    aria-label={`${t('templates.use')} ${global.name}`}
+                    onClick={() => use.mutate({ issueTypeId: type.id!, global, isDefault: own.length === 0 })}
+                  >
+                    {t('templates.use')}
+                  </Link>
                 )}
               </div>
             ))}

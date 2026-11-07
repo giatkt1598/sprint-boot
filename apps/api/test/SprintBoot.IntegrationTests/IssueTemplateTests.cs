@@ -94,27 +94,35 @@ public class IssueTemplateTests(ApiFixture fixture)
         var admin = new AuthClient(fixture);
         await admin.SignInAsync(ApiFixture.AdminEmail, ApiFixture.AdminPassword, Token);
         var name = $"Bug report {Guid.NewGuid():N}";
-        var created = await admin.Http.PostAsJsonAsync("/api/v1/global-issue-template", new { name, content = "<p>Steps</p>", mode = 1 }, Token);
+        var created = await admin.Http.PostAsJsonAsync("/api/v1/global-issue-template", new { issueTypeKey = "bug", name, content = "<p>Steps</p>", mode = 1 }, Token);
         created.StatusCode.ShouldBe(HttpStatusCode.OK, await created.Content.ReadAsStringAsync(Token));
         var global = (await created.Content.ReadFromJsonAsync<GlobalIssueTemplateDto>(Token))!;
         global.Mode.ShouldBe(IssueTemplateMode.Placeholder);
+        global.IssueTypeKey.ShouldBe("bug");
+        (await (await admin.Http.PostAsJsonAsync("/api/v1/global-issue-template", new { issueTypeKey = "subtask", name, mode = 0 }, Token))
+            .Content.ReadAsStringAsync(Token)).ShouldContain(IssueTemplateErrors.InvalidType);
 
         var owner = await fixture.CreateUserClientAsync(Token);
-        (await owner.Http.PostAsJsonAsync("/api/v1/global-issue-template", new { name = "Mine", content = "", mode = 0 }, Token))
+        (await owner.Http.PostAsJsonAsync("/api/v1/global-issue-template", new { issueTypeKey = "bug", name = "Mine", content = "", mode = 0 }, Token))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await owner.Http.GetFromJsonAsync<List<GlobalIssueTemplateDto>>("/api/v1/global-issue-template", Token))!
             .ShouldContain(item => item.Id == global.Id);
 
         var project = await CreateProjectAsync(owner);
         var bug = await TypeIdAsync(owner, project.Id, "Bug");
+        var task = await TypeIdAsync(owner, project.Id, "Task");
+        (await (await owner.Http.PostAsJsonAsync($"/api/v1/issue-template?projectId={project.Id}", new { issueTypeId = task, globalTemplateId = global.Id }, Token))
+            .Content.ReadAsStringAsync(Token)).ShouldContain(IssueTemplateErrors.TypeMismatch);
         var reused = await CreateTemplateAsync(owner, project.Id, new { issueTypeId = bug, globalTemplateId = global.Id, isDefault = true });
         reused.Name.ShouldBe(name);
         reused.Content.ShouldBe("<p>Steps</p>");
         reused.Mode.ShouldBe(IssueTemplateMode.Placeholder);
         reused.GlobalTemplateId.ShouldBe(global.Id);
 
-        (await admin.Http.PutAsJsonAsync($"/api/v1/global-issue-template/{global.Id}", new { name, content = "<p>Steps to reproduce</p>", mode = 0 }, Token))
+        (await admin.Http.PutAsJsonAsync($"/api/v1/global-issue-template/{global.Id}", new { issueTypeKey = "bug", name, content = "<p>Steps to reproduce</p>", mode = 0 }, Token))
             .EnsureSuccessStatusCode();
+        (await (await admin.Http.PutAsJsonAsync($"/api/v1/global-issue-template/{global.Id}", new { issueTypeKey = "task", name, mode = 0 }, Token))
+            .Content.ReadAsStringAsync(Token)).ShouldContain(IssueTemplateErrors.TypeInUse);
         var followed = (await ListAsync(owner, project.Id)).ShouldHaveSingleItem();
         followed.Content.ShouldBe("<p>Steps to reproduce</p>");
         followed.Mode.ShouldBe(IssueTemplateMode.Fill);

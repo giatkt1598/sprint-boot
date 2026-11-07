@@ -1,26 +1,39 @@
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiClient, unwrap } from '../../api';
+import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { Dialog, DialogConfirm, DialogFooter } from '../../components/Dialog';
+import { IssueTypeIcon } from '../../components/IssueIcons';
 import { ErrorState, LoadingState } from '../../components/StateViews';
-import { Table } from '../../components/Table';
-import { TextField } from '../../components/TextField';
+import { SelectField, TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
-import { sem } from '../../theme/tokens';
-import { globalIssueTemplatesKey, TemplateMode, useGlobalIssueTemplates, type GlobalIssueTemplate, type TemplateModeValue } from '../issues/api';
+import { radius, sem } from '../../theme/tokens';
+import {
+  globalIssueTemplatesKey,
+  TemplateMode,
+  TemplateTypeKeys,
+  useGlobalIssueTemplates,
+  type GlobalIssueTemplate,
+  type TemplateModeValue,
+  type TemplateTypeKey,
+} from '../issues/api';
 import { RichTextEditor } from '../issues/RichTextEditor';
 import { TemplateModeField } from '../issues/TemplateModeField';
 
 interface Draft {
   id?: string;
+  issueTypeKey: TemplateTypeKey;
   name: string;
   content: string;
   mode: TemplateModeValue;
+  /** Spaces use it, so its type stays. */
+  inUse: boolean;
 }
 
 function GlobalTemplateDialog({ draft, onClose }: { draft: Draft; onClose: () => void }) {
@@ -32,7 +45,7 @@ function GlobalTemplateDialog({ draft, onClose }: { draft: Draft; onClose: () =>
 
   const save = useMutation({
     mutationFn: () => {
-      const body = { name: value.name, content: value.content || null, mode: value.mode };
+      const body = { issueTypeKey: value.issueTypeKey, name: value.name, content: value.content || null, mode: value.mode };
       return value.id
         ? unwrap(apiClient.PUT('/api/v1/global-issue-template/{id}', { params: { path: { id: value.id } }, body }))
         : unwrap(apiClient.POST('/api/v1/global-issue-template', { body }));
@@ -51,13 +64,23 @@ function GlobalTemplateDialog({ draft, onClose }: { draft: Draft; onClose: () =>
     <Dialog
       open
       width={640}
-      title={t(value.id ? 'globalTemplates.editTitle' : 'globalTemplates.createTitle')}
+      title={t(value.id ? 'globalTemplates.editTitle' : 'globalTemplates.createTitle', { type: t(`issue.type.${value.issueTypeKey}`) })}
       onClose={onClose}
       footer={
         <DialogFooter confirmLabel={t('common.save')} confirmDisabled={!value.name.trim() || save.isPending} onCancel={onClose} onConfirm={() => save.mutate()} />
       }
     >
       <TextField label={t('templates.name')} value={value.name} autoFocus onChange={(event) => setValue({ ...value, name: event.target.value })} />
+      <div className="flex flex-col gap-1">
+        <SelectField
+          label={t('globalTemplates.issueType')}
+          value={value.issueTypeKey}
+          disabled={value.inUse}
+          onChange={(event) => setValue({ ...value, issueTypeKey: event.target.value as TemplateTypeKey })}
+          options={TemplateTypeKeys.map((key) => ({ value: key, label: t(`issue.type.${key}`), icon: <IssueTypeIcon type={key} /> }))}
+        />
+        {value.inUse && <Typography variant="body2" color="textSecondary">{t('globalTemplates.typeLocked')}</Typography>}
+      </div>
       {/* No space is given, so a template holds no uploaded files an issue could later lose. */}
       <RichTextEditor
         label={t('templates.content')}
@@ -71,7 +94,7 @@ function GlobalTemplateDialog({ draft, onClose }: { draft: Draft; onClose: () =>
   );
 }
 
-/** Workspace-wide templates, which every space can reuse for its own issue types. */
+/** Workspace-wide templates by issue type; every space can use them for its type of the same kind. */
 export function GlobalIssueTemplatesPage() {
   const { t } = useTranslation();
   const toast = useToast();
@@ -96,59 +119,72 @@ export function GlobalIssueTemplatesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-start gap-2">
-        <div className="flex-1">
-          <Typography variant="h1">{t('globalTemplates.title')}</Typography>
-          <Typography variant="body2" color="textSecondary">{t('globalTemplates.subtitle')}</Typography>
-        </div>
-        <Button onClick={() => setDraft({ name: '', content: '', mode: TemplateMode.fill })}>{t('templates.add')}</Button>
+      <div>
+        <Typography variant="h1">{t('globalTemplates.title')}</Typography>
+        <Typography variant="body2" color="textSecondary">{t('globalTemplates.subtitle')}</Typography>
       </div>
       {templates.isPending && <LoadingState />}
       {templates.isError && <ErrorState onRetry={() => void templates.refetch()} />}
-      {templates.data && templates.data.length === 0 && (
-        <Typography variant="body2" color="textSecondary">{t('globalTemplates.empty')}</Typography>
-      )}
-      {templates.data && templates.data.length > 0 && (
-        <Table<GlobalIssueTemplate>
-          label={t('globalTemplates.title')}
-          rows={templates.data}
-          rowKey={(item) => item.id!}
-          columns={[
-            { key: 'name', header: t('templates.name'), render: (item) => item.name },
-            {
-              key: 'mode',
-              header: t('templates.mode.label'),
-              render: (item) => t(item.mode === TemplateMode.placeholder ? 'templates.mode.placeholder' : 'templates.mode.fill'),
-            },
-            { key: 'used', header: t('globalTemplates.used'), render: (item) => t('globalTemplates.spaceCount', { count: item.usageCount ?? 0 }) },
-            {
-              key: 'actions',
-              header: <span className="sr-only">{t('invitations.actions')}</span>,
-              render: (item) => (
-                <span className="flex gap-3 whitespace-nowrap">
+      {templates.data && TemplateTypeKeys.map((key) => {
+        const typeName = t(`issue.type.${key}`);
+        const list = templates.data.filter((template) => template.issueTypeKey === key);
+        return (
+          <section key={key} aria-labelledby={`global-templates-${key}`} className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <IssueTypeIcon type={key} />
+              <Typography id={`global-templates-${key}`} variant="h3" component="h2" className="flex-1">{typeName}</Typography>
+              <Button
+                kind="ghost"
+                startIcon={<Plus size={16} strokeWidth={1.5} aria-hidden />}
+                aria-label={t('templates.addFor', { type: typeName })}
+                onClick={() => setDraft({ issueTypeKey: key, name: '', content: '', mode: TemplateMode.fill, inUse: false })}
+              >
+                {t('templates.add')}
+              </Button>
+            </div>
+            {list.length === 0 && <Typography variant="body2" color="textSecondary">{t('globalTemplates.none', { type: typeName })}</Typography>}
+            {list.map((template) => (
+              <div
+                key={template.id}
+                className="flex items-center gap-3 px-3 py-2"
+                style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}
+              >
+                <Typography variant="body2" className="min-w-0 flex-1 truncate">{template.name}</Typography>
+                {template.mode === TemplateMode.placeholder && <Badge tone="subtle">{t('templates.mode.placeholder')}</Badge>}
+                <Typography variant="body2" color="textSecondary" className="whitespace-nowrap">
+                  {t('globalTemplates.spaceCount', { count: template.usageCount ?? 0 })}
+                </Typography>
+                <span className="flex gap-3">
                   <Link
                     component="button"
                     variant="body2"
-                    aria-label={`${t('common.edit')} ${item.name}`}
-                    onClick={() => setDraft({ id: item.id!, name: item.name ?? '', content: item.content ?? '', mode: item.mode ?? TemplateMode.fill })}
+                    aria-label={`${t('common.edit')} ${template.name}`}
+                    onClick={() => setDraft({
+                      id: template.id!,
+                      issueTypeKey: key,
+                      name: template.name ?? '',
+                      content: template.content ?? '',
+                      mode: template.mode ?? TemplateMode.fill,
+                      inUse: (template.usageCount ?? 0) > 0,
+                    })}
                   >
                     {t('common.edit')}
                   </Link>
                   <Link
                     component="button"
                     variant="body2"
-                    aria-label={`${t('common.delete')} ${item.name}`}
+                    aria-label={`${t('common.delete')} ${template.name}`}
                     sx={{ color: sem('feedback-danger-text') }}
-                    onClick={() => setRemoving(item)}
+                    onClick={() => setRemoving(template)}
                   >
                     {t('common.delete')}
                   </Link>
                 </span>
-              ),
-            },
-          ]}
-        />
-      )}
+              </div>
+            ))}
+          </section>
+        );
+      })}
       {draft && <GlobalTemplateDialog draft={draft} onClose={() => setDraft(null)} />}
       <DialogConfirm
         open={removing !== null}

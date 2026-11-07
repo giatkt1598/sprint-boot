@@ -18388,6 +18388,7 @@ export interface components {
         GlobalIssueTemplateDto: {
             /** Format: uuid */
             id: string;
+            issueTypeKey: string | null;
             name: string | null;
             content: string | null;
             mode: components["schemas"]["IssueTemplateMode"];
@@ -18937,6 +18938,7 @@ export interface components {
             clientSecret?: string | null;
         };
         SaveGlobalIssueTemplateInput: {
+            issueTypeKey: string;
             name: string;
             content?: string | null;
             mode?: components["schemas"]["IssueTemplateMode"];

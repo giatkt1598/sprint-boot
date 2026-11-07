@@ -1178,6 +1178,11 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("IssueTypeKey")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<int>("Mode")
                         .HasColumnType("integer");
 

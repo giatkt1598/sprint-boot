@@ -86,6 +86,7 @@ public static class IssuesModelBuilderExtensions
         {
             b.ToTable("global_issue_templates", Schema);
             b.ConfigureByConvention();
+            b.Property(template => template.IssueTypeKey).HasMaxLength(IssueTemplateConsts.MaxTypeKeyLength).IsRequired();
             b.Property(template => template.Name).HasMaxLength(IssueTemplateConsts.MaxNameLength).IsRequired();
             b.Property(template => template.Content).IsRequired();
         });

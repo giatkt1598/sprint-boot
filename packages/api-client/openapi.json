@@ -25448,6 +25448,7 @@
         "required": [
           "content",
           "id",
+          "issueTypeKey",
           "mode",
           "name",
           "usageCount"
@@ -25457,6 +25458,10 @@
           "id": {
             "type": "string",
             "format": "uuid"
+          },
+          "issueTypeKey": {
+            "type": "string",
+            "nullable": true
           },
           "name": {
             "type": "string",
@@ -27376,10 +27381,16 @@
       },
       "SaveGlobalIssueTemplateInput": {
         "required": [
+          "issueTypeKey",
           "name"
         ],
         "type": "object",
         "properties": {
+          "issueTypeKey": {
+            "maxLength": 32,
+            "minLength": 0,
+            "type": "string"
+          },
           "name": {
             "maxLength": 128,
             "minLength": 0,
