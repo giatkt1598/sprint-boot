@@ -2,15 +2,11 @@ import ButtonBase from '@mui/material/ButtonBase';
 import { Check } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Badge } from '../../components/Badge';
 import { Tabs } from '../../components/Tabs';
 import { THEME_CATEGORIES, THEMES, type ThemeCategory, type ThemeDefinition, type ThemeId } from '../../theme/themes';
 import { font, radius, sem, shadow, type Accent } from '../../theme/tokens';
 
 type Filter = ThemeCategory | 'all';
-
-const tagsOf = (theme: ThemeDefinition) =>
-  [theme.decor && 'animated', theme.gradient && 'gradient', theme.base === 'dark' && 'dark'].filter(Boolean) as string[];
 
 /**
  * Every theme as a card that shows it in miniature. The miniature carries the theme's own attribute, so it renders
@@ -46,10 +42,6 @@ export function ThemeGallery({ value, accent, onChange }: { value: ThemeId; acce
 function ThemeCard({ theme, accent, selected, onSelect }: { theme: ThemeDefinition; accent: Accent; selected: boolean; onSelect: () => void }) {
   const { t } = useTranslation();
   const name = t(`account.preferences.themeName.${theme.id}`);
-  // A tag that only repeats the name, such as Dark on the Dark theme, says nothing. Compared by id, not by label, so it holds in every language.
-  const tags = tagsOf(theme)
-    .filter((tag) => tag !== theme.id)
-    .map((tag) => t(`account.preferences.themeTag.${tag}`));
 
   return (
     <ButtonBase
@@ -66,7 +58,7 @@ function ThemeCard({ theme, accent, selected, onSelect }: { theme: ThemeDefiniti
       }}
     >
       <Miniature theme={theme} accent={accent}>
-        {/* Name, check and tags sit on the miniature and wear the theme's own colours. */}
+        {/* Name and check sit on the miniature and wear the theme's own colours. */}
         <span
           className="absolute left-2 top-2 max-w-[calc(100%-48px)] truncate px-2 py-0.5"
           style={{
@@ -89,13 +81,6 @@ function ThemeCard({ theme, accent, selected, onSelect }: { theme: ThemeDefiniti
             style={{ borderRadius: radius.full, backgroundColor: sem('accent-default'), color: sem('text-on-accent'), boxShadow: shadow.popover }}
           >
             <Check size={12} strokeWidth={2} />
-          </span>
-        )}
-        {tags.length > 0 && (
-          <span className="absolute bottom-2 left-2 flex flex-wrap gap-1">
-            {tags.map((tag) => (
-              <Badge key={tag} tone="subtle">{tag}</Badge>
-            ))}
           </span>
         )}
       </Miniature>

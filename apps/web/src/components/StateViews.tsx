@@ -19,10 +19,14 @@ export function ErrorState({ onRetry }: { onRetry?: () => void }) {
   );
 }
 
-export function EmptyState({ title, action }: { title: string; action?: ReactNode }) {
+/**
+ * Nothing to show. A page that is empty gets the theme's picture; an empty part of a page, such as a comment list or
+ * a card on the overview, passes `inline` and shows the text only, so a picture never crowds the content around it.
+ */
+export function EmptyState({ title, action, inline }: { title: string; action?: ReactNode; inline?: boolean }) {
   return (
     <div className="flex flex-col items-start gap-2">
-      <ThemedIllustration kind="empty" />
+      {!inline && <ThemedIllustration kind="empty" />}
       <Typography color="textSecondary">{title}</Typography>
       {action}
     </div>

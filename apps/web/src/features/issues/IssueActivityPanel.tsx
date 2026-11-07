@@ -418,7 +418,7 @@ function WorkLogPanel({ issue, canEdit, canManage }: { issue: Issue; canEdit: bo
         {canEdit && <Button kind="secondary" onClick={() => setLogging(true)}>{t('issues.logWork')}</Button>}
       </div>
       {logs.isPending && <LoadingState />}
-      {logs.data?.items?.length === 0 && <EmptyState title={t('issues.noWorkLogs')} />}
+      {logs.data?.items?.length === 0 && <EmptyState inline title={t('issues.noWorkLogs')} />}
       {(logs.data?.items ?? []).map((log) => (
         <div key={log.id} className="flex items-center gap-2">
           <Avatar name={log.author?.name ?? ''} src={log.author?.avatarUrl} />
@@ -470,7 +470,7 @@ export function IssueActivityPanel({ tab, issue, people, canEdit, canManage }: P
 
   if (tab === 'history') {
     return activity.data?.length === 0 ? (
-      <EmptyState title={t('issues.noHistory')} />
+      <EmptyState inline title={t('issues.noHistory')} />
     ) : (
       <div className="flex flex-col gap-3">{(activity.data ?? []).map((item) => <ActivityLine key={item.id} item={item} />)}</div>
     );
@@ -492,7 +492,7 @@ export function IssueActivityPanel({ tab, issue, people, canEdit, canManage }: P
   return (
     <div className="flex flex-col gap-4">
       {canEdit && <Composer issueId={issue.id!} projectId={issue.projectId} people={people} placeholder={t('issues.addComment')} />}
-      {comments.isSuccess && feed.length === 0 && <EmptyState title={t('issues.noComments')} />}
+      {comments.isSuccess && feed.length === 0 && <EmptyState inline title={t('issues.noComments')} />}
       {feed.slice(0, visible).map((entry) => entry.node)}
       {feed.length > visible && <LoadMore onClick={() => setCommentCount(visible + LOAD_MORE_STEP)} />}
     </div>

@@ -249,7 +249,7 @@ export function TimelineTab({ space }: { space: Space }) {
             <div className="relative">
               <DayGrid days={days} dayWidth={dayWidth} from={range.from} today={today} weekend={isWeekend} />
               {rows.dated.length === 0 && rows.undated.length === 0 && (
-                <div className="sticky left-0 p-4" style={{ width: LABEL_WIDTH + 320 }}><EmptyState title={t('overview.timeline.empty')} /></div>
+                <div className="sticky left-0 p-4" style={{ width: LABEL_WIDTH + 320 }}><EmptyState inline title={t('overview.timeline.empty')} /></div>
               )}
               {rows.dated.map((issue) => (
                 <div key={issue.id} className="relative flex" style={{ height: ROW_HEIGHT, borderBottom: `1px solid ${sem('border-default')}` }}>

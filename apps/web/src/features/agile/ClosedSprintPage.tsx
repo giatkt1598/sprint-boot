@@ -94,7 +94,7 @@ function Group({ title, cards, empty, onOpen }: { title: string; cards: Card[]; 
         <Typography variant="h3" component="h2">{title}</Typography>
         <Typography variant="body2" color="textSecondary">{t('agile.issueCount', { count: cards.length })}</Typography>
       </div>
-      {cards.length > 0 ? <StaticIssueList cards={cards} onOpen={onOpen} /> : <div className="px-2"><EmptyState title={empty} /></div>}
+      {cards.length > 0 ? <StaticIssueList cards={cards} onOpen={onOpen} /> : <div className="px-2"><EmptyState inline title={empty} /></div>}
     </SectionCard>
   );
 }

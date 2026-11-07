@@ -348,11 +348,6 @@
         "water": "Water",
         "fire": "Fire"
       },
-      "themeTag": {
-        "animated": "Animated",
-        "gradient": "Gradient",
-        "dark": "Dark"
-      },
       "accent": "Accent color",
       "motion": "Motion",
       "motionName": {

@@ -348,11 +348,6 @@
         "water": "Nước",
         "fire": "Lửa"
       },
-      "themeTag": {
-        "animated": "Chuyển động",
-        "gradient": "Gradient",
-        "dark": "Nền tối"
-      },
       "accent": "Màu nhấn",
       "motion": "Chuyển động",
       "motionName": {

@@ -508,7 +508,7 @@ export function BacklogPage() {
                     ))}
                   </IssueTable>
                 )}
-                {backlogCards.length === 0 && <EmptyState title={t('agile.backlogEmpty')} />}
+                {backlogCards.length === 0 && <EmptyState inline title={t('agile.backlogEmpty')} />}
               </div>
             )}
           </SectionCard>
