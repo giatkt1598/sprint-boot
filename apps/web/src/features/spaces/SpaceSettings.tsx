@@ -24,7 +24,7 @@ import { SpaceSchemeField } from '../notifications/NotificationPages';
 import { InviteMemberDialog, SpaceInvitations } from '../admin/InvitationPages';
 import { SpacePermission, useMembers, useSpace, type Space, type SpaceMember } from './api';
 
-const ROLE_LABELS: Record<string, string> = {
+export const ROLE_LABELS: Record<string, string> = {
   ProjectAdmin: 'spaces.roleProjectAdmin',
   Member: 'spaces.roleMember',
   Viewer: 'spaces.roleViewer',

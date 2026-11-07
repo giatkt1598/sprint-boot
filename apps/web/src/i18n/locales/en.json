@@ -22,7 +22,8 @@
     "settings": "Settings",
     "switchSpace": "Switch space",
     "allSpaces": "View all spaces",
-    "overview": "Overview"
+    "overview": "Overview",
+    "people": "People"
   },
   "home": {
     "title": "Home",
@@ -1527,5 +1528,13 @@
       "hours": "{{count}}h ago",
       "yesterday": "Yesterday"
     }
+  },
+  "people": {
+    "title": "People",
+    "subtitle_one": "{{count}} person in this space",
+    "subtitle_other": "{{count}} people in this space",
+    "search": "Search people",
+    "person": "Person",
+    "none": "Nobody matches your search."
   }
 }

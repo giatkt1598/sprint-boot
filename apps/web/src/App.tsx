@@ -24,6 +24,7 @@ import { IssuePage } from './features/issues/IssuePage';
 import { EditSchemePage, NotificationPreferencesPage, NotificationSchemesPage, NotificationsPage } from './features/notifications/NotificationPages';
 import { IssuesListPage } from './features/issues/IssuesListPage';
 import { OverviewPage } from './features/overview/OverviewPage';
+import { PeoplePage } from './features/people/PeoplePage';
 import { SpaceGeneralPage, SpaceMembersPage, SpaceSettingsIndex, SpaceSettingsLayout } from './features/spaces/SpaceSettings';
 import { SpaceBoardPage } from './features/spaces/SpaceBoardPage';
 import { SpacesPage } from './features/spaces/SpacesPage';
@@ -106,6 +107,7 @@ export function App() {
                 <Route path="board" element={<BoardPage />} />
                 <Route path="epics" element={<EpicsPage />} />
                 <Route path="issues" element={<IssuesListPage />} />
+                <Route path="people" element={<PeoplePage />} />
                 <Route path="sprints/:sprintId" element={<ClosedSprintPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>

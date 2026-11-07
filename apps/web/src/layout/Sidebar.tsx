@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Menu from '@mui/material/Menu';
-import { LayoutDashboard, List, Settings, SquareCheck, SquareKanban, Zap } from 'lucide-react';
+import { LayoutDashboard, List, Settings, SquareCheck, SquareKanban, Users, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import { useCan, useCurrentUser } from '../auth/AuthProvider';
@@ -75,6 +75,7 @@ export function Sidebar() {
             <SidebarItem to={`/spaces/${spaceKey}/board`} label={t('nav.board')} icon={SquareKanban} />
             <SidebarItem to={`/spaces/${spaceKey}/epics`} label={t('nav.epics')} icon={Zap} />
             <SidebarItem to={`/spaces/${spaceKey}/issues`} label={t('nav.issues')} icon={SquareCheck} />
+            <SidebarItem to={`/spaces/${spaceKey}/people`} label={t('nav.people')} icon={Users} />
             <SidebarItem to={`/spaces/${spaceKey}/settings`} label={t('nav.settings')} icon={Settings} />
           </nav>
         )}

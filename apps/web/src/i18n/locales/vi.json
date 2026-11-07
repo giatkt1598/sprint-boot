@@ -22,7 +22,8 @@
     "settings": "Cài đặt",
     "switchSpace": "Đổi Space",
     "allSpaces": "Xem tất cả Space",
-    "overview": "Tổng quan"
+    "overview": "Tổng quan",
+    "people": "Mọi người"
   },
   "home": {
     "title": "Trang chủ",
@@ -1527,5 +1528,13 @@
       "hours": "{{count}} giờ trước",
       "yesterday": "Hôm qua"
     }
+  },
+  "people": {
+    "title": "Mọi người",
+    "subtitle_one": "{{count}} người trong space này",
+    "subtitle_other": "{{count}} người trong space này",
+    "search": "Tìm người",
+    "person": "Người",
+    "none": "Không có ai khớp với tìm kiếm."
   }
 }
