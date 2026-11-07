@@ -450,6 +450,15 @@
   background: var(--sb-content-bg);
 }
 
+/*
+ * The person's background image replaces the theme's own backdrop behind the whole app, so see-through top bars and
+ * sidebars (Liquid Glass and the other decorated themes) frost that image instead of the theme's picture. Themes with
+ * opaque chrome hide it there as before. Gallery miniatures set their own --sb-page-bg and keep the theme's.
+ */
+:root[data-background] {
+  --sb-page-bg: var(--sb-bg-image) center / cover;
+}
+
 /* A background image shows through the page: the page colour covers it by --sb-bg-cover, set from the person's preferences. */
 :root[data-background] .sb-content {
   background:
