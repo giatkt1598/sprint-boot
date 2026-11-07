@@ -1,4 +1,5 @@
 import ButtonBase from '@mui/material/ButtonBase';
+import Link from '@mui/material/Link';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import Tooltip from '@mui/material/Tooltip';
@@ -8,6 +9,7 @@ import type { components } from '@sprint-boot/api-client';
 import { Check, ChevronLeft, ChevronRight, ListFilter } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link as RouterLink } from 'react-router';
 import { apiClient, unwrap } from '../../api';
 import { Button } from '../../components/Button';
 import { IssueTypeIcon, type IssueType as IconType } from '../../components/IssueIcons';
@@ -135,18 +137,21 @@ export function TimelineTab({ space }: { space: Space }) {
 
   const issueLabel = (issue: Issue, faded: boolean) => (
     <div className="sticky left-0 z-10 flex h-full shrink-0" style={{ width: LABEL_WIDTH, backgroundColor: sem('bg-surface'), opacity: faded ? 0.5 : 1 }}>
-    <ButtonBase
-      onClick={() => setOpenIssue(issue.key!)}
-      className="flex h-full shrink-0 items-center gap-2 px-4"
-      sx={{ width: TITLE_WIDTH, boxSizing: 'border-box', justifyContent: 'flex-start', fontSize: font.size.md, textAlign: 'left' }}
-    >
+    <div className="flex h-full shrink-0 items-center gap-2 px-4" style={{ width: TITLE_WIDTH, fontSize: font.size.md }}>
       {/* Its own box, so a long title never squeezes the icon away. */}
       <span className="flex size-4 shrink-0 items-center justify-center">
         {issue.type?.icon && issue.type.icon in TYPE_BARS ? <IssueTypeIcon type={issue.type.icon as IconType} /> : null}
       </span>
-      <span className="shrink-0" style={{ color: sem('text-secondary') }}>{issue.key}</span>
-      <TruncatedText text={issue.title ?? ''} style={{ color: sem('text-primary') }} />
-    </ButtonBase>
+      {/* The key opens the full page; the title opens the side panel. */}
+      <Link component={RouterLink} to={`/issues/${issue.key}`} underline="hover" className="shrink-0" sx={{ color: sem('text-secondary') }}>{issue.key}</Link>
+      <ButtonBase
+        onClick={() => setOpenIssue(issue.key!)}
+        className="h-full min-w-0 flex-1"
+        sx={{ justifyContent: 'flex-start', fontSize: font.size.md, textAlign: 'left' }}
+      >
+        <TruncatedText text={issue.title ?? ''} style={{ color: sem('text-primary') }} />
+      </ButtonBase>
+    </div>
     <span className="flex shrink-0 items-center justify-center" style={{ width: ASSIGNEE_WIDTH }}>
       <Tooltip title={issue.assignee?.name ?? t('common.unassigned')} disableInteractive>
         <span className="flex">
