@@ -1,6 +1,7 @@
 import ButtonBase from '@mui/material/ButtonBase';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import type { components } from '@sprint-boot/api-client';
@@ -10,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { apiClient, unwrap } from '../../api';
 import { Button } from '../../components/Button';
 import { IssueTypeIcon, type IssueType as IconType } from '../../components/IssueIcons';
+import { Avatar, UnassignedAvatar } from '../../components/Avatar';
 import { MenuItem } from '../../components/Menu';
 import { TruncatedText } from '../../components/TruncatedText';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
@@ -23,7 +25,10 @@ type View = 'sprint' | 'week' | 'month' | 'quarter';
 type Range = { from: number; to: number };
 
 const DAY_WIDTH: Record<View, number> = { sprint: 60, week: 120, month: 40, quarter: 14 };
-const LABEL_WIDTH = 320;
+const TITLE_WIDTH = 400;
+const ASSIGNEE_WIDTH = 48;
+/** The pinned columns on the left: the issue, then its assignee. */
+const LABEL_WIDTH = TITLE_WIDTH + ASSIGNEE_WIDTH;
 const HEADER_HEIGHT = 40;
 const ROW_HEIGHT = 41;
 const BAR_HEIGHT = 24;
@@ -129,10 +134,11 @@ export function TimelineTab({ space }: { space: Space }) {
   const gridWidth = days * dayWidth;
 
   const issueLabel = (issue: Issue, faded: boolean) => (
+    <div className="sticky left-0 z-10 flex h-full shrink-0" style={{ width: LABEL_WIDTH, backgroundColor: sem('bg-surface'), opacity: faded ? 0.5 : 1 }}>
     <ButtonBase
       onClick={() => setOpenIssue(issue.key!)}
-      className="sticky left-0 z-10 flex h-full shrink-0 items-center gap-2 px-4"
-      sx={{ width: LABEL_WIDTH, boxSizing: 'border-box', justifyContent: 'flex-start', backgroundColor: sem('bg-surface'), opacity: faded ? 0.5 : 1, fontSize: font.size.md, textAlign: 'left' }}
+      className="flex h-full shrink-0 items-center gap-2 px-4"
+      sx={{ width: TITLE_WIDTH, boxSizing: 'border-box', justifyContent: 'flex-start', fontSize: font.size.md, textAlign: 'left' }}
     >
       {/* Its own box, so a long title never squeezes the icon away. */}
       <span className="flex size-4 shrink-0 items-center justify-center">
@@ -141,6 +147,14 @@ export function TimelineTab({ space }: { space: Space }) {
       <span className="shrink-0" style={{ color: sem('text-secondary') }}>{issue.key}</span>
       <TruncatedText text={issue.title ?? ''} style={{ color: sem('text-primary') }} />
     </ButtonBase>
+    <span className="flex shrink-0 items-center justify-center" style={{ width: ASSIGNEE_WIDTH }}>
+      <Tooltip title={issue.assignee?.name ?? t('common.unassigned')} disableInteractive>
+        <span className="flex">
+          {issue.assignee ? <Avatar name={issue.assignee.name ?? ''} src={issue.assignee.avatarUrl} noTitle /> : <UnassignedAvatar noTitle />}
+        </span>
+      </Tooltip>
+    </span>
+    </div>
   );
 
   const bar = (issue: Issue) => {
@@ -213,8 +227,9 @@ export function TimelineTab({ space }: { space: Space }) {
         <div className="overflow-x-auto" style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}>
           <div style={{ width: LABEL_WIDTH + gridWidth, minWidth: '100%' }}>
             <div className="relative flex" style={{ height: HEADER_HEIGHT, backgroundColor: sem('bg-page'), borderBottom: `1px solid ${sem('border-default')}` }}>
-              <span className="sticky left-0 z-10 flex shrink-0 items-center px-4" style={{ width: LABEL_WIDTH, backgroundColor: sem('bg-page'), fontSize: font.size.xs, color: sem('text-secondary') }}>
-                {t('overview.timeline.issue')}
+              <span className="sticky left-0 z-10 flex shrink-0" style={{ width: LABEL_WIDTH, backgroundColor: sem('bg-page'), fontSize: font.size.xs, color: sem('text-secondary') }}>
+                <span className="flex items-center px-4" style={{ width: TITLE_WIDTH }}>{t('overview.timeline.issue')}</span>
+                <span className="sr-only">{t('overview.timeline.assignee')}</span>
               </span>
               {Array.from({ length: days }, (_, index) => (
                 <span
