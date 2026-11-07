@@ -30,7 +30,7 @@ public class AssistantTests(ApiFixture fixture)
     }
 
     /// <summary>Makes the given connection the only default and switches the assistant on.</summary>
-    private async Task<AiConnectionDto> UseAsync(AiProvider provider)
+    private async Task<AiConnectionDto> UseAsync(AiProvider provider, int? maxRequestKb = null)
     {
         var admin = await AdminAsync();
         var response = await admin.Http.PostAsJsonAsync("/api/v1/assistant-admin/connection", new
@@ -40,6 +40,7 @@ public class AssistantTests(ApiFixture fixture)
             baseUrl = provider == AiProvider.Anthropic ? FakeAiServer.AnthropicUrl : FakeAiServer.OpenAiUrl,
             apiKey = "secret-key",
             model = provider == AiProvider.Anthropic ? "claude-opus-5-5" : "fake-model",
+            maxRequestKb,
             isDefault = true,
         }, Token);
         response.StatusCode.ShouldBe(HttpStatusCode.OK, await response.Content.ReadAsStringAsync(Token));
@@ -190,6 +191,94 @@ public class AssistantTests(ApiFixture fixture)
         var hidden = Ai.Bodies.Single()["messages"]!.AsArray().Last()!["content"]!.ToJsonString();
         hidden.ShouldNotContain(issue.Key);
         hidden.ShouldNotContain("Checkout button misaligned");
+    }
+
+    /// <summary>The text of a chat completions message, whether sent as a string or as parts.</summary>
+    private static string Content(JsonNode? message) => message!["content"] switch
+    {
+        JsonValue value => value.GetValue<string>(),
+        JsonArray parts => string.Concat(parts.Select(part => part!["text"]?.GetValue<string>())),
+        _ => string.Empty,
+    };
+
+    private static List<string> UserTexts(JsonObject body) =>
+        [.. body["messages"]!.AsArray().Where(message => message!["role"]!.GetValue<string>() == "user").Select(Content)];
+
+    [Fact]
+    public async Task An_issue_goes_to_the_model_once_until_it_changes()
+    {
+        await UseAsync(AiProvider.OpenAiCompatible);
+        var owner = await fixture.CreateUserClientAsync(Token);
+        var (_, issue) = await IssueAsync(owner, "Checkout totals are off by a cent");
+        var conversation = await ConversationAsync(owner, issue.Id);
+
+        Ai.Script(new FakeAiReply("A rounding issue."));
+        await AskAsync(owner, conversation.Id, "What is this about?");
+        Ai.Script(new FakeAiReply("Probably in the tax step."));
+        await AskAsync(owner, conversation.Id, "Where should I look?");
+
+        var second = UserTexts(Ai.Bodies.Single());
+        second[0].ShouldContain("Checkout totals are off by a cent");
+        second[1].ShouldNotContain("Checkout totals are off by a cent");
+        second[1].ShouldContain("unchanged=\"true\"");
+
+        var current = (await owner.Http.GetFromJsonAsync<IssueDto>($"/api/v1/issue/by-key?key={issue.Key}", Token))!;
+        (await owner.Http.PutAsJsonAsync($"/api/v1/issue/{issue.Id}", new { concurrencyStamp = current.ConcurrencyStamp, fields = new { title = "Checkout totals are off by two cents" } }, Token))
+            .EnsureSuccessStatusCode();
+        Ai.Script(new FakeAiReply("Then it grew."));
+        await AskAsync(owner, conversation.Id, "And now?");
+        UserTexts(Ai.Bodies.Single())[2].ShouldContain("Checkout totals are off by two cents");
+    }
+
+    [Fact]
+    public void Long_tool_results_are_cut_with_a_hint_to_narrow_the_query()
+    {
+        var clipped = AssistantChatAppService.Clip(new string('x', AssistantConsts.MaxToolResultLength + 500));
+        clipped.Length.ShouldBeLessThan(AssistantConsts.MaxToolResultLength + 200);
+        clipped.ShouldContain("truncated: 500 more characters");
+        AssistantChatAppService.Clip("short").ShouldBe("short");
+    }
+
+    [Fact]
+    public async Task Over_the_connection_limit_older_exchanges_are_left_out_whole()
+    {
+        await UseAsync(AiProvider.OpenAiCompatible, maxRequestKb: 120);
+        var client = await fixture.CreateUserClientAsync(Token);
+        var conversation = await ConversationAsync(client);
+        for (var index = 0; index < 6; index++)
+        {
+            Ai.Script(new FakeAiReply($"Answer {index}."));
+            await AskAsync(client, conversation.Id, $"Question {index} {new string('x', 19_000)}");
+        }
+
+        var sent = Ai.Bodies.Single();
+        Encoding.UTF8.GetByteCount(sent.ToJsonString()).ShouldBeLessThan(140 * 1024);
+        var questions = UserTexts(sent);
+        questions[0].ShouldContain("Question 0");
+        questions[^1].ShouldContain("Question 5");
+        questions.ShouldContain(text => text.Contains(ConversationHistory.LeftOut, StringComparison.Ordinal));
+        questions.ShouldNotContain(text => text.Contains("Question 1 ", StringComparison.Ordinal));
+
+        // Every question that went still has its answer right after it.
+        var roles = sent["messages"]!.AsArray().Select(message => message!["role"]!.GetValue<string>()).Where(role => role != "system").ToList();
+        for (var index = 0; index < roles.Count - 1; index += 2)
+        {
+            roles[index].ShouldBe("user");
+            roles[index + 1].ShouldBe("assistant");
+        }
+    }
+
+    [Fact]
+    public async Task A_request_the_provider_finds_too_large_reads_as_such()
+    {
+        await UseAsync(AiProvider.OpenAiCompatible);
+        var client = await fixture.CreateUserClientAsync(Token);
+        var conversation = await ConversationAsync(client);
+        Ai.Script(new FakeAiReply("") { Status = HttpStatusCode.RequestEntityTooLarge });
+
+        var events = await AskAsync(client, conversation.Id, "Hello");
+
+        events.Single(item => item.Type == "error").Code.ShouldBe(AssistantErrors.RequestTooLarge);
     }
 
     [Fact]

@@ -34,6 +34,12 @@ public class AiConnectionDto
 
     public int? MaxOutputTokens { get; set; }
 
+    /// <summary>
+    /// The largest request the provider takes, in KB. Older turns of long conversations are left out to fit; empty sends
+    /// everything.
+    /// </summary>
+    public int? MaxRequestKb { get; set; }
+
     /// <summary>Anthropic only: low, medium, high, xhigh or max.</summary>
     public string? Effort { get; set; }
 
@@ -65,6 +71,10 @@ public class SaveAiConnectionInput
 
     [Range(256, 128000)]
     public int? MaxOutputTokens { get; set; }
+
+    /// <summary>Empty sends whole conversations, however long.</summary>
+    [Range(AssistantConsts.MinRequestKb, 100000)]
+    public int? MaxRequestKb { get; set; }
 
     [StringLength(16)]
     public string? Effort { get; set; }
@@ -292,6 +302,15 @@ public static class AssistantConsts
 {
     public const int MaxNameLength = 64;
     public const int MaxTitleLength = 128;
+
+    /// <summary>Below this, the system prompt and tools alone would not fit.</summary>
+    public const int MinRequestKb = 64;
+
+    /// <summary>
+    /// The most of one tool result, or of one issue sent as context, that goes to the model. Every request carries the whole
+    /// history, so one large search would otherwise weigh on every later question.
+    /// </summary>
+    public const int MaxToolResultLength = 12_000;
     public const int MaxQuestionLength = 20000;
 }
 
@@ -304,6 +323,7 @@ public static class AssistantErrors
     public const string ActionNotPending = "SprintBoot:AssistantActionNotPending";
     public const string ProviderFailed = "SprintBoot:AssistantProviderFailed";
     public const string ModelsUnavailable = "SprintBoot:AssistantModelsUnavailable";
+    public const string RequestTooLarge = "SprintBoot:AssistantRequestTooLarge";
 }
 
 /// <summary>A tool the assistant may call; the host supplies them, with the caller's own permissions.</summary>

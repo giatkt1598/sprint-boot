@@ -17879,6 +17879,8 @@ export interface components {
             model: string | null;
             /** Format: int32 */
             maxOutputTokens?: number | null;
+            /** Format: int32 */
+            maxRequestKb?: number | null;
             effort?: string | null;
             hasApiKey: boolean;
             isDefault: boolean;
@@ -18894,6 +18896,8 @@ export interface components {
             model: string;
             /** Format: int32 */
             maxOutputTokens?: number | null;
+            /** Format: int32 */
+            maxRequestKb?: number | null;
             effort?: string | null;
             isDefault?: boolean;
         };

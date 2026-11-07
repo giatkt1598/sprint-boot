@@ -233,7 +233,8 @@
     "AssistantBusy": "Trợ lý vẫn đang trả lời trong cuộc trò chuyện này.",
     "AssistantActionNotPending": "Thay đổi này đã được quyết định rồi.",
     "AssistantProviderFailed": "Provider AI không phản hồi. Hãy thử lại.",
-    "AssistantModelsUnavailable": "Không tải được danh sách model. Hãy kiểm tra Base URL và API key."
+    "AssistantModelsUnavailable": "Không tải được danh sách model. Hãy kiểm tra Base URL và API key.",
+    "AssistantRequestTooLarge": "Cuộc trò chuyện quá dài so với giới hạn của provider AI. Hãy bắt đầu cuộc trò chuyện mới, hoặc đặt kích thước request tối đa cho connection."
   },
   "auth": {
     "ldapTitle": "Đăng nhập vào {{provider}}",
@@ -1351,6 +1352,9 @@
     "noModels": "Provider không trả về model nào. Hãy nhập tên model.",
     "deleteTitle": "Xoá {{name}}?",
     "deleteBody": "Nếu đây là kết nối mặc định, một kết nối khác sẽ được chọn làm mặc định.",
-    "privacy": "Câu hỏi và các issue mà trợ lý đọc để trả lời sẽ được gửi tới provider của kết nối mặc định."
+    "privacy": "Câu hỏi và các issue mà trợ lý đọc để trả lời sẽ được gửi tới provider của kết nối mặc định.",
+    "maxRequestKb": "Kích thước request tối đa (KB)",
+    "maxRequestKbPlaceholder": "Không giới hạn",
+    "maxRequestKbHint": "Dành cho các gateway từ chối request lớn (HTTP 413), như chatgpt2api đứng sau nginx: cuộc trò chuyện dài sẽ bỏ bớt các tin nhắn cũ cho vừa. Để trống với OpenAI, Anthropic và hầu hết server khác."
   }
 }

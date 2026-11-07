@@ -23592,6 +23592,11 @@
             "format": "int32",
             "nullable": true
           },
+          "maxRequestKb": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
           "effort": {
             "type": "string",
             "nullable": true
@@ -27190,6 +27195,13 @@
           "maxOutputTokens": {
             "maximum": 128000,
             "minimum": 256,
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "maxRequestKb": {
+            "maximum": 100000,
+            "minimum": 64,
             "type": "integer",
             "format": "int32",
             "nullable": true

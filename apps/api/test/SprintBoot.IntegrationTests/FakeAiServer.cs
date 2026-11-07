@@ -12,6 +12,9 @@ public record FakeAiReply(string Text, params (string Name, object Arguments)[] 
 {
     /// <summary>Anthropic only: a signed thinking block before the text.</summary>
     public string? Thinking { get; init; }
+
+    /// <summary>Fails with this HTTP status instead, the way a proxy in front of the provider would.</summary>
+    public HttpStatusCode? Status { get; init; }
 }
 
 /// <summary>
@@ -88,6 +91,11 @@ public sealed class FakeAiServer : HttpMessageHandler
         if (!_replies.TryDequeue(out var reply))
         {
             return new HttpResponseMessage(HttpStatusCode.InternalServerError) { Content = new StringContent("{\"error\":{\"message\":\"No scripted reply\"}}") };
+        }
+
+        if (reply.Status is { } status)
+        {
+            return new HttpResponseMessage(status) { Content = new StringContent("<html><body><h1>413 Request Entity Too Large</h1></body></html>", Encoding.UTF8, "text/html") };
         }
 
         var stream = anthropicFormat ? Anthropic(reply) : OpenAi(reply);

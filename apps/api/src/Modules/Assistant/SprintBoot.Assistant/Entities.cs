@@ -20,6 +20,9 @@ public class AiConnection : AuditedAggregateRoot<Guid>
 
     public int? MaxOutputTokens { get; set; }
 
+    /// <summary>The largest request the provider takes, in KB; null sends whole conversations.</summary>
+    public int? MaxRequestKb { get; set; }
+
     public string? Effort { get; set; }
 
     public bool IsDefault { get; set; }
@@ -155,6 +158,14 @@ public class ConversationMessage : Entity<Guid>
 
     public static ConversationMessage FromToolResults(Guid id, Guid conversationId, string resultsJson, DateTime now) =>
         new() { Id = id, ConversationId = conversationId, Role = ConversationRole.ToolResults, ToolsJson = resultsJson, CreatedAt = now };
+
+    /// <summary>A copy, never saved, that sends another prompt; the stored turn stays as it was written.</summary>
+    internal ConversationMessage WithPrompt(string prompt)
+    {
+        var copy = (ConversationMessage)MemberwiseClone();
+        copy.Prompt = prompt;
+        return copy;
+    }
 }
 
 /// <summary>A tool call of the assistant. Writes run only once the person confirms them.</summary>

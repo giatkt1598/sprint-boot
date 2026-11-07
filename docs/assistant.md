@@ -49,6 +49,22 @@ A conversation starts with the beginning of its first question as its title. Onc
 content (poll interval `Assistant:Titles:PollMilliseconds`, 5000 by default). A title the person set is never replaced;
 if naming fails, the draft title stays.
 
+## Request size
+
+Every question sends the whole conversation, so requests grow with it. Three things keep them in check:
+
+- An issue goes along with a question only when its content changed since it was last sent in that conversation;
+  otherwise the question refers to the earlier copy by version.
+- A tool result, or an issue sent as context, is cut at 12,000 characters, with a note telling the model to narrow its
+  query.
+- **Max request size (KB)** on a connection caps what the history may weigh. Over it, older exchanges are left out whole
+  (a question with every step and tool result after it), the first exchange and the latest ones stay, and the model is
+  told that messages were left out. Leave it empty for OpenAI, Anthropic and most servers.
+
+Gateways that put a proxy in front of the model, such as chatgpt2api behind nginx, often reject bodies over 1 MB with
+HTTP 413 (`client_max_body_size`). Raise that limit on the proxy, or set the connection's max request size below it. A
+request the provider still finds too large shows as "The conversation is too long for the AI provider".
+
 ## Data sent to the provider
 
 Each question sends the conversation so far, the tools' answers (issue content the person can read), and the issues

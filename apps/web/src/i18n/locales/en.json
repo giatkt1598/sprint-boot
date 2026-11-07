@@ -233,7 +233,8 @@
     "AssistantBusy": "The assistant is still answering in this conversation.",
     "AssistantActionNotPending": "This change was already decided.",
     "AssistantProviderFailed": "The AI provider did not answer. Try again.",
-    "AssistantModelsUnavailable": "The models could not be loaded. Check the base URL and API key."
+    "AssistantModelsUnavailable": "The models could not be loaded. Check the base URL and API key.",
+    "AssistantRequestTooLarge": "The conversation is too long for the AI provider. Start a new conversation, or set a max request size on the connection."
   },
   "auth": {
     "ldapTitle": "Sign in to {{provider}}",
@@ -1351,6 +1352,9 @@
     "noModels": "The provider returned no models. Type the model name.",
     "deleteTitle": "Delete {{name}}?",
     "deleteBody": "If it is the default, another connection becomes the default.",
-    "privacy": "Questions, and the issues the assistant reads to answer them, are sent to the provider of the default connection."
+    "privacy": "Questions, and the issues the assistant reads to answer them, are sent to the provider of the default connection.",
+    "maxRequestKb": "Max request size (KB)",
+    "maxRequestKbPlaceholder": "No limit",
+    "maxRequestKbHint": "For gateways that reject large requests (HTTP 413), such as chatgpt2api behind nginx: long conversations then leave out their older messages to fit. Leave empty for OpenAI, Anthropic and most servers."
   }
 }

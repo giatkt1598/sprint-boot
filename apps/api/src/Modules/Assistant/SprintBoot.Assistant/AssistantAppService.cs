@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
@@ -305,7 +306,7 @@ public class AssistantChatAppService(
             yield return new AssistantEventDto { Type = "tool", Tool = action.Tool, State = "running" };
             var outcome = await toolbox.InvokeAsync(action.Tool, Parse(action.Arguments), cancellationToken);
             action.State = outcome.IsError ? AssistantActionState.Failed : AssistantActionState.Confirmed;
-            action.Result = outcome.Content;
+            action.Result = Clip(outcome.Content);
             yield return new AssistantEventDto { Type = "tool", Tool = action.Tool, State = outcome.IsError ? "failed" : "done" };
         }
         else
@@ -356,7 +357,7 @@ public class AssistantChatAppService(
 
         for (var step = 0; step < MaxSteps; step++)
         {
-            var request = new ChatRequest(SystemPrompt, await HistoryAsync(conversationId), tools);
+            var request = new ChatRequest(SystemPrompt, await HistoryAsync(conversationId, Budget(connection, tools)), tools);
             ChatCompleted? completed = null;
             Exception? failure = null;
             await using (var stream = provider.StreamAsync(chat, request, cancellationToken).GetAsyncEnumerator(cancellationToken))
@@ -393,7 +394,8 @@ public class AssistantChatAppService(
             if (failure is not null || completed is null)
             {
                 Logger.LogWarning(failure, "Assistant provider {Provider} failed", connection.Provider);
-                yield return new AssistantEventDto { Type = "error", Code = AssistantErrors.ProviderFailed, Text = failure?.Message };
+                var code = failure is not null && ChatFailures.IsTooLarge(failure) ? AssistantErrors.RequestTooLarge : AssistantErrors.ProviderFailed;
+                yield return new AssistantEventDto { Type = "error", Code = code, Text = failure?.Message };
                 yield break;
             }
 
@@ -443,7 +445,7 @@ public class AssistantChatAppService(
                     ? await toolbox.InvokeAsync(call.Tool, Parse(call.Arguments), cancellationToken)
                     : new AssistantToolResult($"There is no tool named {call.Tool}.", true);
                 call.State = outcome.IsError ? AssistantActionState.Failed : AssistantActionState.Confirmed;
-                call.Result = outcome.Content;
+                call.Result = Clip(outcome.Content);
                 yield return new AssistantEventDto { Type = "tool", Tool = call.Tool, State = outcome.IsError ? "failed" : "done" };
             }
 
@@ -502,7 +504,7 @@ public class AssistantChatAppService(
         var parts = new List<string> { $"Today is {Clock.Now:yyyy-MM-dd}." };
         if (conversation.IssueId is { } issueId)
         {
-            var (key, content) = await ReadIssueAsync(issueId, cancellationToken);
+            var (key, content) = await ReadIssueAsync(conversation.Id, issueId, cancellationToken);
             parts.Add(key is null
                 ? "The issue this conversation was about no longer exists."
                 : content is null
@@ -522,7 +524,7 @@ public class AssistantChatAppService(
         if (viewingIssueId is { } viewing && viewing != conversation.IssueId)
         {
             // An issue the person cannot read is left out, without even its key.
-            var (key, content) = await ReadIssueAsync(viewing, cancellationToken);
+            var (key, content) = await ReadIssueAsync(conversation.Id, viewing, cancellationToken);
             if (key is not null && content is not null)
             {
                 parts.Add($"The person has issue [{key}](/issues/{key}) (id {viewing}) open now, so \"this issue\", \"this ticket\" or \"this page\" means {key}. Its current content:\n{content}");
@@ -532,8 +534,12 @@ public class AssistantChatAppService(
         return $"<context>{string.Join(' ', parts)}</context>\n\n";
     }
 
-    /// <summary>The key, and the content the get_issue tool gives the person, or null when they cannot read it.</summary>
-    private async Task<(string? Key, string? Content)> ReadIssueAsync(Guid issueId, CancellationToken cancellationToken)
+    /// <summary>
+    /// The key, and the content the get_issue tool gives the person, or null when they cannot read it. Content already sent
+    /// in this conversation, unchanged, is replaced by a pointer to it: the whole history goes with every request, and an
+    /// issue repeated with every question was what made long issue chats too large for some providers.
+    /// </summary>
+    private async Task<(string? Key, string? Content)> ReadIssueAsync(Guid conversationId, Guid issueId, CancellationToken cancellationToken)
     {
         string? key;
         using (var uow = unitOfWork.Begin(requiresNew: true))
@@ -548,26 +554,50 @@ public class AssistantChatAppService(
         }
 
         var issue = await toolbox.InvokeAsync("get_issue", Parse(JsonSerializer.Serialize(new { key, includeComments = true })), cancellationToken);
-        return (key, issue.IsError ? null : issue.Content);
-    }
-
-    private async Task<List<ChatTurn>> HistoryAsync(Guid conversationId)
-    {
-        using var uow = unitOfWork.Begin(requiresNew: true);
-        var history = (await messages.GetListAsync(item => item.ConversationId == conversationId)).OrderBy(item => item.Sequence);
-        var turns = new List<ChatTurn>();
-        foreach (var message in history)
+        if (issue.IsError)
         {
-            turns.Add(message.Role switch
-            {
-                ConversationRole.User => new UserTurn(message.Prompt ?? message.Text),
-                ConversationRole.Assistant => new AssistantTurn(message.Text, AssistantViews.ToolCalls(message), message.NativeJson, message.Provider),
-                _ => new ToolResultsTurn(JsonSerializer.Deserialize<List<AssistantToolOutcome>>(message.ToolsJson!, AssistantViews.Json) ?? []),
-            });
+            return (key, null);
         }
 
-        await uow.CompleteAsync();
-        return turns;
+        var block = IssueContext.Block(key, Clip(issue.Content));
+        bool seen;
+        using (var uow = unitOfWork.Begin(requiresNew: true))
+        {
+            var marker = IssueContext.Marker(block);
+            seen = await messages.AnyAsync(item => item.ConversationId == conversationId && item.Role == ConversationRole.User && item.Prompt != null && item.Prompt.Contains(marker));
+            await uow.CompleteAsync();
+        }
+
+        return (key, seen ? IssueContext.Unchanged(block) : block);
+    }
+
+    /// <summary>At most <see cref="AssistantConsts.MaxToolResultLength"/> characters, telling the model what was cut.</summary>
+    public static string Clip(string content) =>
+        content.Length <= AssistantConsts.MaxToolResultLength
+            ? content
+            : $"{content[..AssistantConsts.MaxToolResultLength]}\n…truncated: {content.Length - AssistantConsts.MaxToolResultLength} more characters. Narrow the query (filters, a smaller limit, one issue) to see the rest.";
+
+    /// <summary>What the history may weigh, in bytes, once the system prompt and tools are counted; null for no limit.</summary>
+    private static int? Budget(AiConnection connection, IReadOnlyList<AssistantTool> tools) =>
+        connection.MaxRequestKb is { } kb
+            ? (kb * 1024) - Encoding.UTF8.GetByteCount(SystemPrompt) - Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(tools, AssistantViews.Json))
+            : null;
+
+    private async Task<List<ChatTurn>> HistoryAsync(Guid conversationId, int? budget)
+    {
+        List<ConversationMessage> history;
+        using (var uow = unitOfWork.Begin(requiresNew: true))
+        {
+            history = [.. (await messages.GetListAsync(item => item.ConversationId == conversationId)).OrderBy(item => item.Sequence)];
+            await uow.CompleteAsync();
+        }
+
+        return [.. ConversationHistory.Fit(history, budget).Select(message => message.Role switch
+        {
+            ConversationRole.User => (ChatTurn)new UserTurn(message.Prompt ?? message.Text),
+            ConversationRole.Assistant => new AssistantTurn(message.Text, AssistantViews.ToolCalls(message), message.NativeJson, message.Provider),
+            _ => new ToolResultsTurn(JsonSerializer.Deserialize<List<AssistantToolOutcome>>(message.ToolsJson!, AssistantViews.Json) ?? []),
+        })];
     }
 
     /// <summary>One message with every answer, in the order the model called the tools.</summary>

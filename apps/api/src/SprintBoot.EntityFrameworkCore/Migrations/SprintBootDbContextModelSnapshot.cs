@@ -307,6 +307,9 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.Property<int?>("MaxOutputTokens")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("MaxRequestKb")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Model")
                         .IsRequired()
                         .HasMaxLength(128)

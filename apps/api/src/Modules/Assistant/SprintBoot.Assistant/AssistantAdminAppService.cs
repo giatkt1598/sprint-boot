@@ -161,6 +161,7 @@ public class AssistantAdminAppService(
         connection.BaseUrl = baseUrl;
         connection.Model = input.Model.Trim();
         connection.MaxOutputTokens = input.MaxOutputTokens;
+        connection.MaxRequestKb = input.MaxRequestKb;
         connection.Effort = effort;
         if (!string.IsNullOrEmpty(input.ApiKey))
         {
@@ -187,6 +188,7 @@ public class AssistantAdminAppService(
         BaseUrl = connection.BaseUrl,
         Model = connection.Model,
         MaxOutputTokens = connection.MaxOutputTokens,
+        MaxRequestKb = connection.MaxRequestKb,
         Effort = connection.Effort,
         HasApiKey = connection.EncryptedApiKey is not null,
         IsDefault = connection.IsDefault,

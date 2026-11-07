@@ -34,6 +34,7 @@ interface Draft {
   hasApiKey: boolean;
   model: string;
   maxOutputTokens: string;
+  maxRequestKb: string;
   effort: string;
   isDefault: boolean;
 }
@@ -106,7 +107,7 @@ function ModelField({ label, placeholder, value, models, onChange }: {
 }
 
 const emptyDraft: Draft = {
-  name: '', provider: Provider.openAiCompatible, baseUrl: '', apiKey: '', hasApiKey: false, model: '', maxOutputTokens: '', effort: '', isDefault: false,
+  name: '', provider: Provider.openAiCompatible, baseUrl: '', apiKey: '', hasApiKey: false, model: '', maxOutputTokens: '', maxRequestKb: '', effort: '', isDefault: false,
 };
 
 function ConnectionDialog({ draft, onClose }: { draft: Draft; onClose: () => void }) {
@@ -162,6 +163,7 @@ function ConnectionDialog({ draft, onClose }: { draft: Draft; onClose: () => voi
         apiKey: value.apiKey || null,
         model: value.model || (anthropic ? ANTHROPIC_MODEL : ''),
         maxOutputTokens: value.maxOutputTokens ? Number(value.maxOutputTokens) : null,
+        maxRequestKb: value.maxRequestKb ? Number(value.maxRequestKb) : null,
         effort: anthropic && value.effort ? value.effort : null,
         isDefault: value.isDefault,
       };
@@ -258,6 +260,18 @@ function ConnectionDialog({ draft, onClose }: { draft: Draft; onClose: () => voi
             options={EFFORTS.map((effort) => ({ value: effort, label: t(`assistantAdmin.efforts.${effort}`) }))}
           />
         )}
+      </div>
+      <div className="flex flex-col gap-1">
+        <TextField
+          autoComplete="off"
+          label={t('assistantAdmin.maxRequestKb')}
+          type="number"
+          inputProps={{ min: 64 }}
+          placeholder={t('assistantAdmin.maxRequestKbPlaceholder')}
+          value={value.maxRequestKb}
+          onChange={(event) => update({ maxRequestKb: event.target.value })}
+        />
+        <Typography variant="body2" color="textSecondary">{t('assistantAdmin.maxRequestKbHint')}</Typography>
       </div>
       <Checkbox label={t('assistantAdmin.makeDefault')} checked={value.isDefault} onChange={(event) => update({ isDefault: event.target.checked })} />
       {result && (
@@ -367,6 +381,7 @@ export function AssistantSettingsPage() {
                           hasApiKey: item.hasApiKey ?? false,
                           model: item.model ?? '',
                           maxOutputTokens: item.maxOutputTokens ? String(item.maxOutputTokens) : '',
+                          maxRequestKb: item.maxRequestKb ? String(item.maxRequestKb) : '',
                           effort: item.effort ?? '',
                           isDefault: item.isDefault ?? false,
                         })}
