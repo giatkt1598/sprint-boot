@@ -36,6 +36,7 @@ export function TopBar() {
       style={{
         height: size.topBar,
         backgroundColor: 'var(--sb-chrome-bg)',
+        boxShadow: 'var(--sb-top-bar-shadow)',
         borderBottom: `1px solid ${sem('border-default')}`,
       }}
     >

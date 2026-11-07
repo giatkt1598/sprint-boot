@@ -67,6 +67,7 @@ export const glass = {
     cardFilter: 'blur(4px) saturate(140%)',
     sheen: glassSheen,
     edge: glassEdge,
+    hoverEdge: glassEdge,
     input: alpha(glassTint, 0.38),
     subtleField: alpha(glassTint, 0.22),
     // A hovered block looks like a card.

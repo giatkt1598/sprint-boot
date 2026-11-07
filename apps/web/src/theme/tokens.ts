@@ -192,7 +192,7 @@ export const shadow = {
 export const hoverPane = {
   backgroundColor: 'var(--sb-hover-bg)',
   backgroundImage: 'var(--sb-surface-sheen)',
-  boxShadow: 'var(--sb-surface-edge)',
+  boxShadow: 'var(--sb-hover-edge)',
   backdropFilter: 'var(--sb-card-filter)',
 } as const;
 

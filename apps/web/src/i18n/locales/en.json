@@ -346,7 +346,11 @@
         "glass": "Liquid Glass",
         "wood": "Wood",
         "water": "Water",
-        "fire": "Fire"
+        "fire": "Fire",
+        "chinese": "Chinese",
+        "japanese": "Japanese",
+        "vietnamese": "Vietnamese",
+        "european": "European"
       },
       "accent": "Accent color",
       "motion": "Motion",
@@ -365,7 +369,11 @@
         "poppins": "SVN-Poppins",
         "system": "System font",
         "lora": "Lora headings, SVN-Poppins text",
-        "oswald": "Oswald headings, SVN-Poppins text"
+        "oswald": "Oswald headings, SVN-Poppins text",
+        "notoSerif": "Noto Serif headings, SVN-Poppins text",
+        "notoSerifJp": "Noto Serif JP headings, SVN-Poppins text",
+        "alegreya": "Alegreya headings, SVN-Poppins text",
+        "playfair": "Playfair Display headings, SVN-Poppins text"
       },
       "fontScale": "Text size",
       "background": "Background image",

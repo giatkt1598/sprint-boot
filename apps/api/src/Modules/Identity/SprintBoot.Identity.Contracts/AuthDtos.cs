@@ -82,7 +82,7 @@ public class CurrentUserDto
 public class PreferencesDto
 {
     /// <summary>The themes the client offers. A theme sets every colour, light or dark included.</summary>
-    public const string ThemePattern = "^(classic|dark|minimal|aurora|sunset|glass|wood|water|fire)$";
+    public const string ThemePattern = "^(classic|dark|minimal|aurora|sunset|glass|wood|water|fire|chinese|japanese|vietnamese|european)$";
 
     public const string MotionPattern = "^(full|reduced|off)$";
 
@@ -93,7 +93,7 @@ public class PreferencesDto
     [RegularExpression("^(blue|green|violet)$")]
     public string Accent { get; set; } = "blue";
 
-    [RegularExpression("^(poppins|system|lora|oswald)$")]
+    [RegularExpression("^(poppins|system|lora|oswald|notoSerif|notoSerifJp|alegreya|playfair)$")]
     public string FontFamily { get; set; } = "poppins";
 
     /// <summary>Percent of the normal text size: 90, 100, 110 or 125.</summary>

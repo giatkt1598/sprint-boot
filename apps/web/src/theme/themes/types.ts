@@ -33,8 +33,12 @@ export interface SurfaceSet {
   cardFilter: string;
   /** background-image laid over surfaces, cards and papers, such as a glossy light across glass. */
   sheen: string;
-  /** Box shadow of the top bar and sidebar, such as a bright glass edge. Hovered blocks wear it too. */
+  /** Box shadow of the top bar and sidebar, such as a bright glass edge. */
   edge: string;
+  /** Box shadow of the top bar alone, such as a gold rule along its bottom. Defaults to the edge. */
+  topBar: string;
+  /** Box shadow of a hovered block of content, such as the rim of a glass pane. None by default. */
+  hoverEdge: string;
   /** Background of text fields and selects. Defaults to bg-surface. */
   input: string;
   /** Background of search boxes and disabled fields. Defaults to bg-subtle. */
