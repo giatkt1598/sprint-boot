@@ -138,7 +138,7 @@ public class OverviewSummaryDto
 
     public required OverviewPullRequestsDto PullRequests { get; set; }
 
-    /// <summary>Completed work per assignee over the last three closed sprints, most first.</summary>
+    /// <summary>Finished work per assignee over the last three sprints, the running one included at its progress so far, most first.</summary>
     public required List<OverviewVelocityDto> Velocity { get; set; }
 
     public required int VelocitySprints { get; set; }

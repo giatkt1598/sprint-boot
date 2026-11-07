@@ -1,3 +1,4 @@
+import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Menu from '@mui/material/Menu';
 import Typography from '@mui/material/Typography';
@@ -158,16 +159,21 @@ export function SummaryTab({ space }: { space: Space }) {
             </Card>
             <Card title={t('overview.recent')} action={<Link component={RouterLink} to={issuesPath} underline="hover" sx={{ fontSize: font.size.xs }}>{t('overview.viewAll')}</Link>}>
               {recent.length === 0 ? <EmptyState title={t('overview.noActivity')} /> : (
-                <ul className="m-0 flex list-none flex-col gap-3 p-0">
+                <ul className="m-0 flex list-none flex-col gap-1 p-0">
                   {recent.map((item, index) => (
-                    <li key={`${item.at}-${index}`} className="flex items-center gap-2">
+                    <Box
+                      component="li"
+                      key={`${item.at}-${index}`}
+                      className="-mx-2 flex items-center gap-2 px-2 py-1"
+                      sx={{ borderRadius: `${radius.control}px`, '&:hover': { backgroundColor: sem('bg-hover') } }}
+                    >
                       <Avatar name={item.actor?.name ?? ''} src={item.actor?.avatarUrl} />
                       <span className="min-w-0 flex-1 truncate" style={{ fontSize: font.size.md }}>
                         <span style={{ fontWeight: font.weight.medium }}>{item.actor?.name ?? t('common.deactivatedUser')}</span>{' '}
                         <EventText item={item} doneStatuses={doneStatuses} />
                       </span>
                       <span className="shrink-0" style={{ fontSize: font.size.xs, color: sem('text-tertiary') }}>{shortAgo(item.at, i18n.language, t)}</span>
-                    </li>
+                    </Box>
                   ))}
                 </ul>
               )}

@@ -1431,7 +1431,7 @@
     "velocityMeta_other": "Story point, {{count}} sprint gần nhất",
     "points_one": "{{count}} điểm",
     "points_other": "{{count}} điểm",
-    "noVelocity": "Velocity hiển thị khi có sprint hoàn thành.",
+    "noVelocity": "Velocity hiển thị khi sprint có việc hoàn thành.",
     "recent": "Hoạt động gần đây",
     "viewAll": "Xem tất cả",
     "noActivity": "Chưa có hoạt động nào.",

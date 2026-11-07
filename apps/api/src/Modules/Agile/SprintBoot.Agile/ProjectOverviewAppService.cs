@@ -48,7 +48,7 @@ public class ProjectOverviewAppService(
             : [.. all.Where(issue => InRange(issue.CreatedAt) || InRange(issue.UpdatedAt))];
         var completed = issues.Where(issue => InRange(issue.CompletedAt)).ToList();
 
-        var velocity = await VelocityAsync(all, boardSprints);
+        var (velocity, velocitySprints) = await VelocityAsync(all, boardSprints);
         var events = await issueFacts.GetRecentEventsAsync(projectId, RecentCount);
         var people = await userDirectory.GetByIdsAsync([.. velocity.Select(item => item.UserId), .. events.Select(item => item.ActorId)]);
         var pulls = await gitFacts.GetPullRequestCountsAsync(projectId);
@@ -89,7 +89,7 @@ public class ProjectOverviewAppService(
             Velocity = [.. velocity
                 .Where(item => people.ContainsKey(item.UserId))
                 .Select(item => new OverviewVelocityDto { User = people[item.UserId], Points = item.Points, Issues = item.Issues })],
-            VelocitySprints = Math.Min(SprintCount, boardSprints.Count(sprint => sprint.State == SprintState.Closed)),
+            VelocitySprints = velocitySprints,
             Recent = [.. events.Select(item => new OverviewEventDto
             {
                 Actor = people.GetValueOrDefault(item.ActorId),
@@ -158,27 +158,39 @@ public class ProjectOverviewAppService(
         return [.. all.Where(issue => planned.Contains(issue.Id) || (issue.ParentId is { } parent && planned.Contains(parent) && issue.Hierarchy == IssueHierarchy.Subtask))];
     }
 
-    private async Task<List<(Guid UserId, decimal Points, int Issues)>> VelocityAsync(List<IssueOverviewRow> issues, List<Sprint> boardSprints)
+    /// <summary>
+    /// Finished work per assignee over the last sprints. A closed sprint counts what it completed; the running one counts
+    /// what is done so far, so its velocity grows as the sprint goes.
+    /// </summary>
+    private async Task<(List<(Guid UserId, decimal Points, int Issues)> Rows, int Sprints)> VelocityAsync(List<IssueOverviewRow> issues, List<Sprint> boardSprints)
     {
-        var closed = boardSprints
-            .Where(sprint => sprint.State == SprintState.Closed)
-            .OrderByDescending(sprint => sprint.CompletedAt)
+        var recent = boardSprints
+            .Where(sprint => sprint.State is SprintState.Closed or SprintState.Active)
+            .OrderByDescending(sprint => sprint.StartDate ?? DateOnly.MinValue)
+            .ThenByDescending(sprint => sprint.CompletedAt)
             .Take(SprintCount)
-            .Select(sprint => sprint.Id)
             .ToList();
-        if (closed.Count == 0)
+        if (recent.Count == 0)
         {
-            return [];
+            return ([], 0);
         }
 
-        var completed = (await sprintIssues.GetListAsync(row => closed.Contains(row.SprintId) && row.Outcome == SprintOutcome.Completed))
+        var closedIds = recent.Where(sprint => sprint.State == SprintState.Closed).Select(sprint => sprint.Id).ToList();
+        var activeIds = recent.Where(sprint => sprint.State == SprintState.Active).Select(sprint => sprint.Id).ToList();
+        var finished = (await sprintIssues.GetListAsync(row => closedIds.Contains(row.SprintId) && row.Outcome == SprintOutcome.Completed))
             .Select(row => row.IssueId)
             .ToHashSet();
-        return [.. issues
-            .Where(issue => completed.Contains(issue.Id) && issue.AssigneeId is not null)
+        var running = (await sprintIssues.GetListAsync(row => activeIds.Contains(row.SprintId) && row.RemovedAt == null))
+            .Select(row => row.IssueId)
+            .ToHashSet();
+
+        var rows = issues
+            .Where(issue => issue.AssigneeId is not null && (finished.Contains(issue.Id) || (running.Contains(issue.Id) && issue.Category == StatusCategory.Done)))
             .GroupBy(issue => issue.AssigneeId!.Value)
             .Select(group => (group.Key, group.Sum(issue => issue.StoryPoints ?? 0), group.Count()))
             .OrderByDescending(item => item.Item2)
-            .ThenByDescending(item => item.Item3)];
+            .ThenByDescending(item => item.Item3)
+            .ToList();
+        return (rows, recent.Count);
     }
 }

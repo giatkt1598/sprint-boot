@@ -90,7 +90,13 @@ public class OverviewTests(ApiFixture fixture)
         running.Activity.Completed.ShouldBe(1);
         running.Activity.LastCompletedAt.ShouldNotBeNull();
         running.PullRequests.Total.ShouldBe(0);
-        running.Velocity.ShouldBeEmpty();
+
+        // The running sprint counts at its progress so far: the finished task's points, not the open one's.
+        running.VelocitySprints.ShouldBe(1);
+        var progress = running.Velocity.ShouldHaveSingleItem();
+        progress.User.Id.ShouldBe(owner.UserId);
+        progress.Points.ShouldBe(5);
+        progress.Issues.ShouldBe(1);
         running.Recent.ShouldContain(item => item.Kind == IssueEventKind.Changed && item.Field == "status" && item.IssueKey == finished.Key);
         running.Recent.Count.ShouldBe(5);
 
