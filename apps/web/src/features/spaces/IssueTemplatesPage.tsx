@@ -242,15 +242,15 @@ export function SpaceIssueTemplatesPage() {
                   {isGlobal && <Badge tone="subtle">{t('templates.global')}</Badge>}
                   {used && <Badge tone="info">{t('templates.inUse')}</Badge>}
                   {canManage && !used && (
-                    <Button
-                      kind="secondary"
-                      size="small"
+                    <Link
+                      component="button"
+                      variant="body2"
                       disabled={use.isPending}
                       aria-label={`${t('templates.use')} ${template.name}`}
                       onClick={() => use.mutate({ issueTypeId: type.id!, template: row })}
                     >
                       {t('templates.use')}
-                    </Button>
+                    </Link>
                   )}
                   {canManage && row.kind === 'own' && (
                     <span className="flex gap-3">
