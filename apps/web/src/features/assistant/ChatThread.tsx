@@ -3,7 +3,7 @@ import IconButton from '@mui/material/IconButton';
 import InputBase from '@mui/material/InputBase';
 import Typography from '@mui/material/Typography';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowUp, Bot, Check, LoaderCircle, Square, Wrench, X } from 'lucide-react';
+import { ArrowUpIcon, BotIcon, CheckIcon, CloseIcon, LoadingIcon, StopIcon, ToolIcon } from '../../components/icons';
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useNavigate } from 'react-router';
@@ -146,7 +146,7 @@ function ActionCard({ action, busy, onDecide }: { action: AssistantAction; busy:
       style={{ border: `1px solid ${sem(state === ActionState.proposed ? 'border-focus' : 'border-default')}`, borderRadius: radius.card }}
     >
       <div className="flex items-center gap-2">
-        <Wrench size={16} strokeWidth={1.5} aria-hidden />
+        <ToolIcon size={16} strokeWidth={1.5} aria-hidden />
         <Typography variant="body2" className="min-w-0 flex-1" sx={{ fontWeight: font.weight.medium }}>
           {t('assistant.actionTitle', { tool: action.tool })}
         </Typography>
@@ -160,10 +160,10 @@ function ActionCard({ action, busy, onDecide }: { action: AssistantAction; busy:
       )}
       {state === ActionState.proposed && (
         <div className="flex justify-end gap-2">
-          <Button kind="ghost" disabled={busy} startIcon={<X size={16} strokeWidth={1.5} aria-hidden />} onClick={() => onDecide(action, false)}>
+          <Button kind="ghost" disabled={busy} startIcon={<CloseIcon size={16} strokeWidth={1.5} aria-hidden />} onClick={() => onDecide(action, false)}>
             {t('assistant.decline')}
           </Button>
-          <Button disabled={busy} startIcon={<Check size={16} strokeWidth={1.5} aria-hidden />} onClick={() => onDecide(action, true)}>
+          <Button disabled={busy} startIcon={<CheckIcon size={16} strokeWidth={1.5} aria-hidden />} onClick={() => onDecide(action, true)}>
             {t('assistant.confirm')}
           </Button>
         </div>
@@ -471,7 +471,7 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
           <>
             {intro?.((text) => void send(text))}
             <div className="flex flex-col items-center gap-2 py-6 text-center">
-              <Bot size={24} strokeWidth={1.5} aria-hidden />
+              <BotIcon size={24} strokeWidth={1.5} aria-hidden />
               <Typography variant="body2" color="textSecondary">{t(issueId ? 'assistant.emptyIssue' : 'assistant.empty')}</Typography>
             </div>
           </>
@@ -501,7 +501,7 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
         )}
         {busy && !ending && !current?.text && (
           <div className="flex items-center gap-2" role="status">
-            <LoaderCircle size={16} strokeWidth={1.5} className="animate-spin" aria-hidden />
+            <LoadingIcon size={16} strokeWidth={1.5} className="animate-spin" aria-hidden />
             <Typography variant="body2" color="textSecondary">{t('assistant.thinking')}</Typography>
           </div>
         )}
@@ -551,7 +551,7 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
                 }}
                 sx={{ width: 28, height: 28, backgroundColor: sem('text-primary'), color: sem('bg-surface'), '&:hover': { backgroundColor: sem('text-primary') } }}
               >
-                <Square size={12} strokeWidth={1.5} fill="currentColor" aria-hidden />
+                <StopIcon size={12} strokeWidth={1.5} fill="currentColor" aria-hidden />
               </IconButton>
             ) : (
               <IconButton
@@ -568,7 +568,7 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
                   '&.Mui-disabled': { backgroundColor: sem('bg-subtle'), color: sem('text-tertiary') },
                 }}
               >
-                <ArrowUp size={16} strokeWidth={1.5} aria-hidden />
+                <ArrowUpIcon size={16} strokeWidth={1.5} aria-hidden />
               </IconButton>
             )}
           </div>

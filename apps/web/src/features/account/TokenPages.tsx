@@ -3,7 +3,7 @@ import Link from '@mui/material/Link';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Copy } from 'lucide-react';
+import { CopyIcon } from '../../components/icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink } from 'react-router';
@@ -291,7 +291,7 @@ function CodeBlock({ code, copyLabel }: { code: string; copyLabel?: string }) {
               '&:hover': { backgroundColor: sem('bg-hover'), color: sem('text-primary') },
             }}
           >
-            <Copy size={16} strokeWidth={1.5} aria-hidden />
+            <CopyIcon size={16} strokeWidth={1.5} aria-hidden />
           </IconButton>
         </Tooltip>
       )}

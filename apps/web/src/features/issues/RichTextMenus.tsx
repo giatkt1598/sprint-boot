@@ -4,10 +4,7 @@ import { DragHandle } from '@tiptap/extension-drag-handle-react';
 import { useEditorState } from '@tiptap/react';
 import { BubbleMenu } from '@tiptap/react/menus';
 import { NodeSelection } from '@tiptap/pm/state';
-import {
-  AlignCenter, AlignLeft, AlignRight, Bold, Code, Code2, Columns2, GripVertical, Highlighter, ImageIcon, Italic, Link2, List,
-  ListChecks, ListOrdered, Palette, Paperclip, Plus, Quote, RemoveFormatting, Rows2, Strikethrough, Table, Trash2, Underline, type LucideIcon,
-} from 'lucide-react';
+import { AddIcon, AlignCenterIcon, AlignLeftIcon, AlignRightIcon, AttachmentIcon, BoldIcon, ClearFormattingIcon, CodeBlockIcon, DeleteIcon, DragHandleIcon, HighlightIcon, ImageIcon, InlineCodeIcon, ItalicIcon, LinkIcon, ListIcon, OrderedListIcon, QuoteIcon, SplitColumnsIcon, SplitRowsIcon, StrikethroughIcon, TableIcon, TaskListIcon, TextColorIcon, UnderlineIcon, type IconComponent } from '../../components/icons';
 import { useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { editorColors, font, radius, sem, shadow } from '../../theme/tokens';
@@ -29,7 +26,7 @@ const menuStyle = {
 
 const floating = { placement: 'top-start' } as const;
 
-function Tool({ label, icon: Icon, active = false, onClick }: { label: string; icon: LucideIcon; active?: boolean; onClick: () => void }) {
+function Tool({ label, icon: Icon, active = false, onClick }: { label: string; icon: IconComponent; active?: boolean; onClick: () => void }) {
   return (
     <IconButton
       size="small"
@@ -173,22 +170,22 @@ function EditorToolbar({ editor, onImage, onAttach }: { editor: Editor; onImage:
         <option value="h3">{t('editor.heading3')}</option>
       </select>
       <Divider />
-      <Tool label={t('editor.bold')} icon={Bold} active={state.bold} onClick={() => chain().toggleBold().run()} />
-      <Tool label={t('editor.italic')} icon={Italic} active={state.italic} onClick={() => chain().toggleItalic().run()} />
-      <Tool label={t('editor.underline')} icon={Underline} active={state.underline} onClick={() => chain().toggleUnderline().run()} />
-      <Tool label={t('editor.strike')} icon={Strikethrough} active={state.strike} onClick={() => chain().toggleStrike().run()} />
-      <Tool label={t('editor.code')} icon={Code} active={state.code} onClick={() => chain().toggleCode().run()} />
-      <Tool label={t('editor.link')} icon={Link2} active={state.link} onClick={() => setLinking(!linking)} />
+      <Tool label={t('editor.bold')} icon={BoldIcon} active={state.bold} onClick={() => chain().toggleBold().run()} />
+      <Tool label={t('editor.italic')} icon={ItalicIcon} active={state.italic} onClick={() => chain().toggleItalic().run()} />
+      <Tool label={t('editor.underline')} icon={UnderlineIcon} active={state.underline} onClick={() => chain().toggleUnderline().run()} />
+      <Tool label={t('editor.strike')} icon={StrikethroughIcon} active={state.strike} onClick={() => chain().toggleStrike().run()} />
+      <Tool label={t('editor.code')} icon={InlineCodeIcon} active={state.code} onClick={() => chain().toggleCode().run()} />
+      <Tool label={t('editor.link')} icon={LinkIcon} active={state.link} onClick={() => setLinking(!linking)} />
       <Divider />
-      <Tool label={t('editor.bullets')} icon={List} active={state.bullets} onClick={() => chain().toggleBulletList().run()} />
-      <Tool label={t('editor.numbers')} icon={ListOrdered} active={state.numbers} onClick={() => chain().toggleOrderedList().run()} />
-      <Tool label={t('editor.tasks')} icon={ListChecks} active={state.tasks} onClick={() => chain().toggleTaskList().run()} />
-      <Tool label={t('editor.quote')} icon={Quote} active={state.quote} onClick={() => chain().toggleBlockquote().run()} />
-      <Tool label={t('editor.codeBlock')} icon={Code2} active={state.codeBlock} onClick={() => chain().toggleCodeBlock().run()} />
+      <Tool label={t('editor.bullets')} icon={ListIcon} active={state.bullets} onClick={() => chain().toggleBulletList().run()} />
+      <Tool label={t('editor.numbers')} icon={OrderedListIcon} active={state.numbers} onClick={() => chain().toggleOrderedList().run()} />
+      <Tool label={t('editor.tasks')} icon={TaskListIcon} active={state.tasks} onClick={() => chain().toggleTaskList().run()} />
+      <Tool label={t('editor.quote')} icon={QuoteIcon} active={state.quote} onClick={() => chain().toggleBlockquote().run()} />
+      <Tool label={t('editor.codeBlock')} icon={CodeBlockIcon} active={state.codeBlock} onClick={() => chain().toggleCodeBlock().run()} />
       <Divider />
-      <Tool label={t('editor.table')} icon={Table} onClick={() => chain().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} />
+      <Tool label={t('editor.table')} icon={TableIcon} onClick={() => chain().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} />
       <Tool label={t('editor.image')} icon={ImageIcon} onClick={onImage} />
-      {onAttach && <Tool label={t('editor.attach')} icon={Paperclip} onClick={onAttach} />}
+      {onAttach && <Tool label={t('editor.attach')} icon={AttachmentIcon} onClick={onAttach} />}
       {linking && <div className="flex w-full"><LinkField editor={editor} onDone={() => setLinking(false)} /></div>}
     </div>
   );
@@ -250,21 +247,21 @@ function TextMenu({ editor, container }: { editor: Editor; container: HTMLElemen
           <option value="h3">{t('editor.heading3')}</option>
         </select>
         <Divider />
-        <Tool label={t('editor.bold')} icon={Bold} active={state.bold} onClick={() => chain().toggleBold().run()} />
-        <Tool label={t('editor.italic')} icon={Italic} active={state.italic} onClick={() => chain().toggleItalic().run()} />
-        <Tool label={t('editor.underline')} icon={Underline} active={state.underline} onClick={() => chain().toggleUnderline().run()} />
-        <Tool label={t('editor.strike')} icon={Strikethrough} active={state.strike} onClick={() => chain().toggleStrike().run()} />
-        <Tool label={t('editor.code')} icon={Code} active={state.code} onClick={() => chain().toggleCode().run()} />
-        <Tool label={t('editor.link')} icon={Link2} active={state.link} onClick={() => toggle('link')} />
+        <Tool label={t('editor.bold')} icon={BoldIcon} active={state.bold} onClick={() => chain().toggleBold().run()} />
+        <Tool label={t('editor.italic')} icon={ItalicIcon} active={state.italic} onClick={() => chain().toggleItalic().run()} />
+        <Tool label={t('editor.underline')} icon={UnderlineIcon} active={state.underline} onClick={() => chain().toggleUnderline().run()} />
+        <Tool label={t('editor.strike')} icon={StrikethroughIcon} active={state.strike} onClick={() => chain().toggleStrike().run()} />
+        <Tool label={t('editor.code')} icon={InlineCodeIcon} active={state.code} onClick={() => chain().toggleCode().run()} />
+        <Tool label={t('editor.link')} icon={LinkIcon} active={state.link} onClick={() => toggle('link')} />
         <Divider />
-        <Tool label={t('editor.textColor')} icon={Palette} active={panel === 'color'} onClick={() => toggle('color')} />
-        <Tool label={t('editor.highlight')} icon={Highlighter} active={panel === 'highlight'} onClick={() => toggle('highlight')} />
+        <Tool label={t('editor.textColor')} icon={TextColorIcon} active={panel === 'color'} onClick={() => toggle('color')} />
+        <Tool label={t('editor.highlight')} icon={HighlightIcon} active={panel === 'highlight'} onClick={() => toggle('highlight')} />
         <Divider />
-        <Tool label={t('editor.alignLeft')} icon={AlignLeft} active={!state.center && !state.right} onClick={() => chain().setTextAlign('left').run()} />
-        <Tool label={t('editor.alignCenter')} icon={AlignCenter} active={state.center} onClick={() => chain().setTextAlign('center').run()} />
-        <Tool label={t('editor.alignRight')} icon={AlignRight} active={state.right} onClick={() => chain().setTextAlign('right').run()} />
+        <Tool label={t('editor.alignLeft')} icon={AlignLeftIcon} active={!state.center && !state.right} onClick={() => chain().setTextAlign('left').run()} />
+        <Tool label={t('editor.alignCenter')} icon={AlignCenterIcon} active={state.center} onClick={() => chain().setTextAlign('center').run()} />
+        <Tool label={t('editor.alignRight')} icon={AlignRightIcon} active={state.right} onClick={() => chain().setTextAlign('right').run()} />
         <Divider />
-        <Tool label={t('editor.clear')} icon={RemoveFormatting} onClick={() => chain().unsetAllMarks().clearNodes().run()} />
+        <Tool label={t('editor.clear')} icon={ClearFormattingIcon} onClick={() => chain().unsetAllMarks().clearNodes().run()} />
         {panel === 'link' && <div className="flex w-full"><LinkField editor={editor} onDone={() => setPanel(null)} /></div>}
         {panel === 'color' && (
           <Swatches
@@ -298,12 +295,12 @@ function TableMenu({ editor, container }: { editor: Editor; container: HTMLEleme
       shouldShow={({ editor: current }) => current.isEditable && current.isFocused && current.isActive('table')}
     >
       <div role="toolbar" aria-label={t('editor.table')} style={menuStyle}>
-        <Tool label={t('editor.addRow')} icon={Rows2} onClick={() => chain().addRowAfter().run()} />
-        <Tool label={t('editor.addColumn')} icon={Columns2} onClick={() => chain().addColumnAfter().run()} />
+        <Tool label={t('editor.addRow')} icon={SplitRowsIcon} onClick={() => chain().addRowAfter().run()} />
+        <Tool label={t('editor.addColumn')} icon={SplitColumnsIcon} onClick={() => chain().addColumnAfter().run()} />
         <Divider />
-        <Tool label={t('editor.deleteRow')} icon={Rows2} onClick={() => chain().deleteRow().run()} />
-        <Tool label={t('editor.deleteColumn')} icon={Columns2} onClick={() => chain().deleteColumn().run()} />
-        <Tool label={t('editor.deleteTable')} icon={Trash2} onClick={() => chain().deleteTable().run()} />
+        <Tool label={t('editor.deleteRow')} icon={SplitRowsIcon} onClick={() => chain().deleteRow().run()} />
+        <Tool label={t('editor.deleteColumn')} icon={SplitColumnsIcon} onClick={() => chain().deleteColumn().run()} />
+        <Tool label={t('editor.deleteTable')} icon={DeleteIcon} onClick={() => chain().deleteTable().run()} />
       </div>
     </BubbleMenu>
   );
@@ -361,10 +358,10 @@ function BlockHandle({ editor }: { editor: Editor }) {
     >
       <div className="flex items-center" style={{ color: sem('text-secondary') }}>
         <IconButton size="small" tabIndex={-1} title={t('editor.addBlock')} aria-label={t('editor.addBlock')} onClick={addBelow} sx={{ padding: '2px', borderRadius: `${radius.control}px` }}>
-          <Plus size={16} strokeWidth={1.5} aria-hidden />
+          <AddIcon size={16} strokeWidth={1.5} aria-hidden />
         </IconButton>
         <span title={t('editor.dragBlock')} className="flex cursor-grab" aria-hidden>
-          <GripVertical size={16} strokeWidth={1.5} />
+          <DragHandleIcon size={16} strokeWidth={1.5} />
         </span>
       </div>
     </DragHandle>

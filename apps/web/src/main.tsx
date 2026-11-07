@@ -11,6 +11,7 @@ import './index.css';
 import { applyAppearance, useAppearance } from './theme/appearance';
 import { createAppTheme } from './theme/theme';
 import { ThemeDecor } from './theme/ThemeDecor';
+import { ThemeIcons } from './theme/ThemeIcons';
 
 const MAX_RETRIES = 3;
 
@@ -30,6 +31,7 @@ function ThemeRoot({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider theme={theme}>
       <ThemeDecor />
+      <ThemeIcons />
       {children}
     </ThemeProvider>
   );

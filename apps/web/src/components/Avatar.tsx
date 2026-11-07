@@ -1,5 +1,5 @@
 import MuiAvatar from '@mui/material/Avatar';
-import { User } from 'lucide-react';
+import { UserIcon } from './icons';
 import { useTranslation } from 'react-i18next';
 import { font, sem } from '../theme/tokens';
 
@@ -47,7 +47,7 @@ export function UnassignedAvatar({ noTitle }: { noTitle?: boolean } = {}) {
 
   return (
     <MuiAvatar role="img" aria-label={label} title={noTitle ? undefined : label} sx={avatarStyles}>
-      <User size={16} strokeWidth={1.5} aria-hidden />
+      <UserIcon size={16} strokeWidth={1.5} aria-hidden />
     </MuiAvatar>
   );
 }

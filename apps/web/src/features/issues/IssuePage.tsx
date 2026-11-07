@@ -7,7 +7,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { DevelopmentPanel } from './DevelopmentPanel';
-import { Ellipsis, Eye, Link2, Plus, Trash2, Upload } from 'lucide-react';
+import { AddIcon, DeleteIcon, LinkIcon, MoreIcon, ShowIcon, UploadIcon } from '../../components/icons';
 import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router';
@@ -223,7 +223,7 @@ function IssueView({ issue, compact, panelHeader }: { issue: Issue; compact?: bo
             {issue.key}
             <Tooltip title={t('issues.copyLink')}>
               <IconButton className="copy-link" size="small" aria-label={t('issues.copyLink')} onClick={() => void copyLink()}>
-                <Link2 size={16} strokeWidth={1.5} aria-hidden />
+                <LinkIcon size={16} strokeWidth={1.5} aria-hidden />
               </IconButton>
             </Tooltip>
           </Box>
@@ -248,11 +248,11 @@ function IssueView({ issue, compact, panelHeader }: { issue: Issue; compact?: bo
           </div>
           <WatchControl issueId={issue.id!} />
           <IconButton size="small" aria-label={t('issues.more')} onClick={(event) => setMenuAnchor(event.currentTarget)}>
-            <Ellipsis size={16} strokeWidth={1.5} aria-hidden />
+            <MoreIcon size={16} strokeWidth={1.5} aria-hidden />
           </IconButton>
           <Menu open={Boolean(menuAnchor)} anchorEl={menuAnchor} onClose={() => setMenuAnchor(null)}>
-            <MenuItem icon={Link2} onClick={() => void copyLink()}>{t('issues.copyLink')}</MenuItem>
-            <MenuItem icon={Trash2} danger onClick={() => { setMenuAnchor(null); setConfirmingDelete(true); }}>{t('common.delete')}</MenuItem>
+            <MenuItem icon={LinkIcon} onClick={() => void copyLink()}>{t('issues.copyLink')}</MenuItem>
+            <MenuItem icon={DeleteIcon} danger onClick={() => { setMenuAnchor(null); setConfirmingDelete(true); }}>{t('common.delete')}</MenuItem>
           </Menu>
         </div>
       </StickyHeader>
@@ -304,7 +304,7 @@ function IssueView({ issue, compact, panelHeader }: { issue: Issue; compact?: bo
               <div className="flex items-center pb-2">
                 <Typography variant="h2" component="h2" className="flex-1">{t(issue.type?.hierarchy === 2 ? 'agile.childIssues' : 'issues.subtasks')}</Typography>
                 {canEdit && issue.type?.hierarchy === 1 && (
-                  <Button kind="link" startIcon={<Plus size={16} strokeWidth={1.5} aria-hidden />} onClick={() => setAddingSubtask(true)}>
+                  <Button kind="link" startIcon={<AddIcon size={16} strokeWidth={1.5} aria-hidden />} onClick={() => setAddingSubtask(true)}>
                     {t('issues.addSubtask')}
                   </Button>
                 )}
@@ -639,7 +639,7 @@ function WatchControl({ issueId }: { issueId: string }) {
       <Button
         kind="ghost"
         aria-label={t('issues.watchers', { count: watchers.data?.count ?? 0 })}
-        startIcon={<Eye size={16} strokeWidth={1.5} aria-hidden />}
+        startIcon={<ShowIcon size={16} strokeWidth={1.5} aria-hidden />}
         onClick={(event) => setAnchor(event.currentTarget)}
       >
         {watchers.data?.count ?? ''}
@@ -912,7 +912,7 @@ function Attachments({ issue, canEdit }: { issue: Issue; canEdit: boolean }) {
         {canEdit && (
           <>
             <input ref={input} type="file" hidden aria-label={t('issues.upload')} onChange={onPick} />
-            <Button kind="link" startIcon={<Upload size={16} strokeWidth={1.5} aria-hidden />} onClick={() => input.current?.click()}>
+            <Button kind="link" startIcon={<UploadIcon size={16} strokeWidth={1.5} aria-hidden />} onClick={() => input.current?.click()}>
               {t('issues.upload')}
             </Button>
           </>
@@ -952,7 +952,7 @@ function Attachments({ issue, canEdit }: { issue: Issue; canEdit: boolean }) {
             </button>
             {canEdit && (
               <IconButton size="small" aria-label={`${t('common.delete')} ${attachment.fileName}`} onClick={() => remove.mutate(attachment.id!)}>
-                <Trash2 size={16} strokeWidth={1.5} aria-hidden />
+                <DeleteIcon size={16} strokeWidth={1.5} aria-hidden />
               </IconButton>
             )}
           </div>

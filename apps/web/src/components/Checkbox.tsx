@@ -1,7 +1,7 @@
 import FormControlLabel from '@mui/material/FormControlLabel';
 import MuiCheckbox, { type CheckboxProps as MuiCheckboxProps } from '@mui/material/Checkbox';
 import MuiSwitch, { type SwitchProps } from '@mui/material/Switch';
-import { Check } from 'lucide-react';
+import { CheckIcon } from './icons';
 import { sem } from '../theme/tokens';
 
 const box = { width: 16, height: 16, borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center' };
@@ -21,7 +21,7 @@ export function Checkbox({ label, ...props }: CheckboxProps) {
           icon={<span style={{ ...box, border: `1px solid ${sem('border-strong')}` }} />}
           checkedIcon={
             <span style={{ ...box, backgroundColor: sem('accent-default'), color: sem('text-on-accent') }}>
-              <Check size={12} strokeWidth={2.5} aria-hidden />
+              <CheckIcon size={12} strokeWidth={2.5} aria-hidden />
             </span>
           }
           {...props}

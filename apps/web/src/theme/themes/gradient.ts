@@ -46,6 +46,7 @@ export const aurora = {
   },
   decor: () => import('./decor/aurora'),
   illustrations: { notFound: picture(aurora404), error: picture(aurora500) },
+  icons: () => import('../icons/phosphor').then((module) => module.phosphorIcons('light')),
 } satisfies ThemeDefinition<'aurora'>;
 
 const sunsetCard = '0 2px 8px rgba(154, 52, 18, 0.1)';
@@ -96,4 +97,5 @@ export const sunset = {
   },
   decor: () => import('./decor/sunset'),
   illustrations: { notFound: picture(sunset404), error: picture(sunset500) },
+  icons: () => import('../icons/phosphor').then((module) => module.phosphorIcons('regular')),
 } satisfies ThemeDefinition<'sunset'>;

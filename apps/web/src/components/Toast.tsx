@@ -1,13 +1,13 @@
-import { CircleAlert, CircleCheck, Info, type LucideIcon } from 'lucide-react';
+import { ErrorIcon, InfoIcon, SuccessIcon, type IconComponent } from './icons';
 import type { ReactNode } from 'react';
 import { font, radius, sem, shadow, type SemanticToken } from '../theme/tokens';
 
 export type ToastKind = 'success' | 'error' | 'info';
 
-const kinds: Record<ToastKind, [LucideIcon, SemanticToken]> = {
-  success: [CircleCheck, 'feedback-success-text'],
-  error: [CircleAlert, 'feedback-danger-text'],
-  info: [Info, 'text-accent'],
+const kinds: Record<ToastKind, [IconComponent, SemanticToken]> = {
+  success: [SuccessIcon, 'feedback-success-text'],
+  error: [ErrorIcon, 'feedback-danger-text'],
+  info: [InfoIcon, 'text-accent'],
 };
 
 export interface ToastProps {

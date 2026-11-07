@@ -1,7 +1,7 @@
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import Tooltip from '@mui/material/Tooltip';
-import { Copy } from 'lucide-react';
+import { CopyIcon } from './icons';
 import { TextField } from './TextField';
 import { useToast } from './ToastHost';
 
@@ -23,7 +23,7 @@ export function CopyField({ label, value, copyLabel, copiedMessage }: { label: s
         <InputAdornment position="end">
           <Tooltip title={copyLabel}>
             <IconButton size="small" aria-label={copyLabel} onClick={() => void copy()}>
-              <Copy size={16} strokeWidth={1.5} aria-hidden />
+              <CopyIcon size={16} strokeWidth={1.5} aria-hidden />
             </IconButton>
           </Tooltip>
         </InputAdornment>

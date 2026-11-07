@@ -2,7 +2,7 @@ import ButtonBase from '@mui/material/ButtonBase';
 import Menu from '@mui/material/Menu';
 import Typography from '@mui/material/Typography';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { TriangleAlert } from 'lucide-react';
+import { WarningIcon } from '../../components/icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { components } from '@sprint-boot/api-client';
@@ -118,7 +118,7 @@ export function TransitionDialog({ issue, transition, people, onConflict, onClos
           className="flex items-start gap-2 p-3"
           style={{ backgroundColor: sem('feedback-danger-bg'), color: sem('feedback-danger-text'), borderRadius: radius.control, fontSize: font.size.xs }}
         >
-          <TriangleAlert size={16} strokeWidth={1.5} aria-hidden style={{ flexShrink: 0 }} />
+          <WarningIcon size={16} strokeWidth={1.5} aria-hidden style={{ flexShrink: 0 }} />
           {i18n.exists(`errors.${problem.split(':')[1]}`) ? t(`errors.${problem.split(':')[1]}`) : t('errors.TransitionValidationFailed')}
         </div>
       ))}

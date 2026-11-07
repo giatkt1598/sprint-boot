@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import type { IconSet } from '../../components/icons';
 import type { FontChoice } from '../fonts';
 import type { Accent, AccentTokens, ColorMode, SemanticToken, ShadowSet } from '../tokens';
 
@@ -77,4 +78,6 @@ export interface ThemeDefinition<Id extends string = string> {
   /** The animated layer behind the app, loaded only while the theme is in use. */
   decor?: () => Promise<{ default: ComponentType<DecorProps> }>;
   illustrations?: Partial<Record<IllustrationKind, ComponentType>>;
+  /** The theme's own icons, loaded only while it is in use. Left out, or for any icon the set lacks, Classic draws it. */
+  icons?: () => Promise<IconSet>;
 }

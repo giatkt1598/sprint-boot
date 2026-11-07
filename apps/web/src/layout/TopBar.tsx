@@ -1,6 +1,6 @@
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
-import { LogOut, Shield, User } from 'lucide-react';
+import { AdminIcon, SignOutIcon, UserIcon } from '../components/icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
@@ -59,9 +59,9 @@ export function TopBar() {
         <span className="sr-only">{t('topBar.account')}</span>
       </IconButton>
       <Menu open={Boolean(menuAnchor)} anchorEl={menuAnchor} onClose={() => setMenuAnchor(null)}>
-        <MenuItem icon={User} onClick={() => open('/account/profile')}>{t('topBar.profile')}</MenuItem>
-        {isAdmin && <MenuItem icon={Shield} onClick={() => open('/admin')}>{t('topBar.administration')}</MenuItem>}
-        <MenuItem icon={LogOut} onClick={() => void signOut()}>{t('topBar.signOut')}</MenuItem>
+        <MenuItem icon={UserIcon} onClick={() => open('/account/profile')}>{t('topBar.profile')}</MenuItem>
+        {isAdmin && <MenuItem icon={AdminIcon} onClick={() => open('/admin')}>{t('topBar.administration')}</MenuItem>}
+        <MenuItem icon={SignOutIcon} onClick={() => void signOut()}>{t('topBar.signOut')}</MenuItem>
       </Menu>
       {creating && <CreateIssueDialog onClose={() => setCreating(false)} />}
     </header>

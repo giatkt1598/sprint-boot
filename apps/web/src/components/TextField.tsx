@@ -1,6 +1,6 @@
 import FormHelperText from '@mui/material/FormHelperText';
 import Tooltip from '@mui/material/Tooltip';
-import { CircleHelp } from 'lucide-react';
+import { HelpIcon } from './icons';
 import MenuItem from '@mui/material/MenuItem';
 import OutlinedInput, { type OutlinedInputProps } from '@mui/material/OutlinedInput';
 import Select, { type SelectProps } from '@mui/material/Select';
@@ -50,7 +50,7 @@ function FieldFrame({ label, hint, htmlFor, labelId, helperId, error, quiet, chi
               className="flex"
               style={{ color: sem('text-tertiary'), cursor: 'help' }}
             >
-              <CircleHelp size={14} strokeWidth={1.5} aria-hidden />
+              <HelpIcon size={14} strokeWidth={1.5} aria-hidden />
             </span>
           </Tooltip>
         </span>

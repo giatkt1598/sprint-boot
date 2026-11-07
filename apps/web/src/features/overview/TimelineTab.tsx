@@ -6,7 +6,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import type { components } from '@sprint-boot/api-client';
-import { Check, ChevronLeft, ChevronRight, ListFilter } from 'lucide-react';
+import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, FilterIcon } from '../../components/icons';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink } from 'react-router';
@@ -196,8 +196,8 @@ export function TimelineTab({ space }: { space: Space }) {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <Button kind="secondary" onClick={() => setShift(0)}>{t('overview.timeline.today')}</Button>
-        <IconButton size="small" aria-label={t('overview.timeline.previous')} onClick={() => setShift(shift - 1)}><ChevronLeft size={16} strokeWidth={1.5} aria-hidden /></IconButton>
-        <IconButton size="small" aria-label={t('overview.timeline.next')} onClick={() => setShift(shift + 1)}><ChevronRight size={16} strokeWidth={1.5} aria-hidden /></IconButton>
+        <IconButton size="small" aria-label={t('overview.timeline.previous')} onClick={() => setShift(shift - 1)}><ChevronLeftIcon size={16} strokeWidth={1.5} aria-hidden /></IconButton>
+        <IconButton size="small" aria-label={t('overview.timeline.next')} onClick={() => setShift(shift + 1)}><ChevronRightIcon size={16} strokeWidth={1.5} aria-hidden /></IconButton>
         <Typography variant="h3" component="h2" className="flex-1">{heading}</Typography>
         <FilterButton filters={filters} filter="type" label={t('overview.timeline.type')} />
         <FilterButton filters={filters} filter="assignee" label={t('overview.timeline.assignee')} />
@@ -310,13 +310,13 @@ function FilterButton({ filters, filter, label }: { filters: IssueFilters; filte
 
   return (
     <>
-      <Button kind="secondary" aria-haspopup="menu" startIcon={<ListFilter size={16} strokeWidth={1.5} aria-hidden />} onClick={(event) => setAnchor(event.currentTarget)}>
+      <Button kind="secondary" aria-haspopup="menu" startIcon={<FilterIcon size={16} strokeWidth={1.5} aria-hidden />} onClick={(event) => setAnchor(event.currentTarget)}>
         {chosen.length > 0 ? `${label} · ${chosen.length}` : label}
       </Button>
       <Menu open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)} slotProps={{ paper: { sx: { minWidth: 220, maxHeight: 360 } } }}>
         {filters.options[filter].map((option) => (
           <MenuItem key={option.value} onClick={() => filters.toggle(filter, option.value)}>
-            <span className="flex w-4 shrink-0" aria-hidden>{chosen.includes(option.value) && <Check size={16} strokeWidth={1.5} />}</span>
+            <span className="flex w-4 shrink-0" aria-hidden>{chosen.includes(option.value) && <CheckIcon size={16} strokeWidth={1.5} />}</span>
             <span className="truncate">{option.label}</span>
           </MenuItem>
         ))}

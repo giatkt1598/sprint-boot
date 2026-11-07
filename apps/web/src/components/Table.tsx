@@ -4,7 +4,7 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TableSortLabel from '@mui/material/TableSortLabel';
-import { ArrowDown } from 'lucide-react';
+import { ArrowDownIcon } from './icons';
 import { useCallback, useMemo, type Key, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
 import { sem } from '../theme/tokens';
@@ -35,7 +35,7 @@ export interface TableProps<Row> {
   onSort?: (key: string) => void;
 }
 
-const SortIcon = (props: { className?: string }) => <ArrowDown size={14} strokeWidth={1.5} aria-hidden {...props} />;
+const SortIcon = (props: { className?: string }) => <ArrowDownIcon size={14} strokeWidth={1.5} aria-hidden {...props} />;
 
 export function Table<Row>({ label, columns, rows, rowKey, nowrap, sort, onSort }: TableProps<Row>) {
   const cell = nowrap ? { whiteSpace: 'nowrap' } : undefined;

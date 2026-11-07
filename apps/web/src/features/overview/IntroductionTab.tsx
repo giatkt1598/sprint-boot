@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Pencil } from 'lucide-react';
+import { EditIcon } from '../../components/icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiClient, unwrap } from '../../api';
@@ -97,7 +97,7 @@ export function IntroductionTab({ space }: { space: Space }) {
             }}
           >
             <span className="edit-mark absolute right-3 top-3 flex" aria-hidden style={{ color: sem('text-secondary') }}>
-              <Pencil size={16} strokeWidth={1.5} />
+              <EditIcon size={16} strokeWidth={1.5} />
             </span>
             <RichTextView html={content} />
           </Box>

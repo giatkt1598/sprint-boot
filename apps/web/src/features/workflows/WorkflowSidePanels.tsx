@@ -4,7 +4,7 @@ import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { GripVertical } from 'lucide-react';
+import { DragHandleIcon } from '../../components/icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { components } from '@sprint-boot/api-client';
@@ -36,7 +36,7 @@ function StatusRow({ id, label, onSelect }: { id: string; label: string; onSelec
       style={{ transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined, transition, opacity: isDragging ? 0.6 : 1 }}
     >
       <IconButton size="small" aria-label={t('designer.reorder', { name: label })} sx={{ cursor: 'grab' }} {...attributes} {...listeners}>
-        <GripVertical size={16} strokeWidth={1.5} aria-hidden />
+        <DragHandleIcon size={16} strokeWidth={1.5} aria-hidden />
       </IconButton>
       <Link component="button" variant="body2" sx={{ minHeight: 24 }} onClick={onSelect}>{label}</Link>
     </div>

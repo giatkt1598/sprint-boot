@@ -4,7 +4,7 @@ import MuiLink from '@mui/material/Link';
 import MuiTextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, GitBranch, GitCommitHorizontal, GitPullRequest } from 'lucide-react';
+import { BranchIcon, CheckIcon, CommitIcon, PullRequestIcon } from '../../components/icons';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { components } from '@sprint-boot/api-client';
@@ -272,11 +272,11 @@ export function DevelopmentPanel({ issueId, label, canEdit }: { issueId: string;
         {canCreate && <MuiLink component="button" variant="body2" onClick={() => setCreating(true)}>{t('development.createBranch')}</MuiLink>}
       </div>
       {open && isEmpty && <Typography variant="body2" color="textSecondary">{t('development.empty')}</Typography>}
-      {open && branches > 0 && <SummaryRow icon={<GitBranch size={16} strokeWidth={1.5} />} label={t('development.branches', { count: branches })} onClick={() => setTab('branches')} />}
-      {open && commits > 0 && <SummaryRow icon={<GitCommitHorizontal size={16} strokeWidth={1.5} />} label={t('development.commits', { count: commits })} onClick={() => setTab('commits')} />}
+      {open && branches > 0 && <SummaryRow icon={<BranchIcon size={16} strokeWidth={1.5} />} label={t('development.branches', { count: branches })} onClick={() => setTab('branches')} />}
+      {open && commits > 0 && <SummaryRow icon={<CommitIcon size={16} strokeWidth={1.5} />} label={t('development.commits', { count: commits })} onClick={() => setTab('commits')} />}
       {open && pulls.length > 0 && (
         <SummaryRow
-          icon={<GitPullRequest size={16} strokeWidth={1.5} />}
+          icon={<PullRequestIcon size={16} strokeWidth={1.5} />}
           label={t('development.pullRequests', { count: pulls.length })}
           badge={<PullBadge state={headlinePullState(pulls.map((pull) => pull.state ?? 0))} />}
           onClick={() => setTab('pullRequests')}
@@ -284,7 +284,7 @@ export function DevelopmentPanel({ issueId, label, canEdit }: { issueId: string;
       )}
       {open && builds.length > 0 && (
         <SummaryRow
-          icon={<Check size={16} strokeWidth={1.5} />}
+          icon={<CheckIcon size={16} strokeWidth={1.5} />}
           label={t('development.builds', { count: builds.length })}
           badge={<BuildBadge state={builds[0]!.state ?? 0} />}
           onClick={() => setTab('builds')}

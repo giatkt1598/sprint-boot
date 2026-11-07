@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Menu from '@mui/material/Menu';
-import { LayoutDashboard, List, Settings, SquareCheck, SquareKanban, Users, Zap } from 'lucide-react';
+import { BoardIcon, EpicIcon, ListIcon, OverviewIcon, PeopleIcon, SettingsIcon, TaskIcon } from '../components/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import { useCan, useCurrentUser } from '../auth/AuthProvider';
@@ -70,13 +70,13 @@ export function Sidebar() {
         {creating && <CreateSpaceDialog open onClose={() => setCreating(false)} />}
         {spaceKey && (
           <nav aria-label={t('nav.label')} className="flex flex-col gap-1">
-            <SidebarItem to={`/spaces/${spaceKey}/overview`} label={t('nav.overview')} icon={LayoutDashboard} />
-            <SidebarItem to={`/spaces/${spaceKey}/backlog`} label={t('nav.backlog')} icon={List} />
-            <SidebarItem to={`/spaces/${spaceKey}/board`} label={t('nav.board')} icon={SquareKanban} />
-            <SidebarItem to={`/spaces/${spaceKey}/epics`} label={t('nav.epics')} icon={Zap} />
-            <SidebarItem to={`/spaces/${spaceKey}/issues`} label={t('nav.issues')} icon={SquareCheck} />
-            <SidebarItem to={`/spaces/${spaceKey}/people`} label={t('nav.people')} icon={Users} />
-            <SidebarItem to={`/spaces/${spaceKey}/settings`} label={t('nav.settings')} icon={Settings} />
+            <SidebarItem to={`/spaces/${spaceKey}/overview`} label={t('nav.overview')} icon={OverviewIcon} />
+            <SidebarItem to={`/spaces/${spaceKey}/backlog`} label={t('nav.backlog')} icon={ListIcon} />
+            <SidebarItem to={`/spaces/${spaceKey}/board`} label={t('nav.board')} icon={BoardIcon} />
+            <SidebarItem to={`/spaces/${spaceKey}/epics`} label={t('nav.epics')} icon={EpicIcon} />
+            <SidebarItem to={`/spaces/${spaceKey}/issues`} label={t('nav.issues')} icon={TaskIcon} />
+            <SidebarItem to={`/spaces/${spaceKey}/people`} label={t('nav.people')} icon={PeopleIcon} />
+            <SidebarItem to={`/spaces/${spaceKey}/settings`} label={t('nav.settings')} icon={SettingsIcon} />
           </nav>
         )}
       </aside>

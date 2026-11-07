@@ -1,5 +1,5 @@
 import Typography from '@mui/material/Typography';
-import { FileQuestion } from 'lucide-react';
+import { NotFoundIcon } from '../components/icons';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import { Button } from '../components/Button';
@@ -27,7 +27,7 @@ export function NotFoundPage({ title, description }: { title?: string; descripti
             className="mb-2 flex size-12 items-center justify-center"
             style={{ backgroundColor: sem('bg-subtle'), borderRadius: radius.card, color: sem('text-secondary') }}
           >
-            <FileQuestion size={24} strokeWidth={1.5} />
+            <NotFoundIcon size={24} strokeWidth={1.5} />
           </span>
         }
       />

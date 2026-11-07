@@ -5,7 +5,7 @@ import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ConnectionMode, Controls, ReactFlow, useNodesState, type Connection, type Edge, type Node, type ReactFlowInstance } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { ArrowLeft, TriangleAlert } from 'lucide-react';
+import { BackIcon, WarningIcon } from '../../components/icons';
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
@@ -421,7 +421,7 @@ export function WorkflowDesignerPage() {
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <header className="flex items-center gap-2 px-4 py-2" style={{ backgroundColor: sem('bg-surface'), borderBottom: `1px solid ${sem('border-default')}` }}>
         <IconButton size="small" aria-label={t('designer.back')} onClick={() => void goBack()}>
-          <ArrowLeft size={20} strokeWidth={1.5} aria-hidden />
+          <BackIcon size={20} strokeWidth={1.5} aria-hidden />
         </IconButton>
         <Typography variant="h1" className="truncate">{workflow.name}</Typography>
         {workflow.draft || dirty ? (
@@ -486,7 +486,7 @@ export function WorkflowDesignerPage() {
                   className="flex items-start gap-2 p-3"
                   style={{ backgroundColor: sem('feedback-danger-bg'), color: sem('feedback-danger-text'), borderRadius: radius.control }}
                 >
-                  <TriangleAlert size={16} strokeWidth={1.5} aria-hidden className="mt-0.5 shrink-0" />
+                  <WarningIcon size={16} strokeWidth={1.5} aria-hidden className="mt-0.5 shrink-0" />
                   <Typography variant="body2" sx={{ color: 'inherit' }}>{problem}</Typography>
                 </div>
               ))}
@@ -621,7 +621,7 @@ export function WorkflowDesignerPage() {
               className="flex items-start gap-2 p-3"
               style={{ backgroundColor: sem('feedback-warning-bg'), color: sem('feedback-warning-text'), borderRadius: radius.control }}
             >
-              <TriangleAlert size={16} strokeWidth={1.5} aria-hidden className="mt-0.5 shrink-0" />
+              <WarningIcon size={16} strokeWidth={1.5} aria-hidden className="mt-0.5 shrink-0" />
               <Typography variant="body2" sx={{ color: 'inherit' }}>{t('workflows.mappingHint')}</Typography>
             </div>
           )}

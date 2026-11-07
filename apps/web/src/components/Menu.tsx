@@ -1,9 +1,9 @@
 import MuiMenuItem, { type MenuItemProps as MuiMenuItemProps } from '@mui/material/MenuItem';
-import type { LucideIcon } from 'lucide-react';
+import type { IconComponent } from './icons';
 import { radius, sem, size } from '../theme/tokens';
 
 export interface MenuItemProps extends MuiMenuItemProps {
-  icon?: LucideIcon;
+  icon?: IconComponent;
   danger?: boolean;
 }
 

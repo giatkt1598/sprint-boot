@@ -1,7 +1,7 @@
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus } from 'lucide-react';
+import { AddIcon } from '../../components/icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiClient, unwrap } from '../../api';
@@ -136,7 +136,7 @@ export function GlobalIssueTemplatesPage() {
               <Typography id={`global-templates-${key}`} variant="h3" component="h2" className="flex-1">{typeName}</Typography>
               <Button
                 kind="ghost"
-                startIcon={<Plus size={16} strokeWidth={1.5} aria-hidden />}
+                startIcon={<AddIcon size={16} strokeWidth={1.5} aria-hidden />}
                 aria-label={t('templates.addFor', { type: typeName })}
                 onClick={() => setDraft({ issueTypeKey: key, name: '', content: '', mode: TemplateMode.fill, inUse: false })}
               >

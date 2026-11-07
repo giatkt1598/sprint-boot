@@ -2,7 +2,7 @@ import ButtonBase from '@mui/material/ButtonBase';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Clock } from 'lucide-react';
+import { TimeIcon } from '../../components/icons';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
@@ -41,7 +41,7 @@ export function RecentsMenu() {
   return (
     <>
       <IconButton aria-label={t('recents.title')} aria-haspopup="dialog" size="small" sx={{ color: sem('text-secondary') }} onClick={(event) => setAnchor(event.currentTarget)}>
-        <Clock size={20} strokeWidth={1.5} aria-hidden />
+        <TimeIcon size={20} strokeWidth={1.5} aria-hidden />
       </IconButton>
       <Popover width={360} open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}>
         <Typography variant="h3" component="h2" className="px-2 pb-2">{t('recents.title')}</Typography>

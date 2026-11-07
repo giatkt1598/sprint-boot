@@ -1,5 +1,5 @@
 import InputBase, { type InputBaseProps } from '@mui/material/InputBase';
-import { Search } from 'lucide-react';
+import { SearchIcon } from './icons';
 import { radius, sem, size } from '../theme/tokens';
 
 export interface SearchInputProps extends Omit<InputBaseProps, 'startAdornment'> {
@@ -12,7 +12,7 @@ export function SearchInput({ label, width = 200, ...props }: SearchInputProps) 
     <InputBase
       placeholder={label}
       inputProps={{ 'aria-label': label }}
-      startAdornment={<Search size={16} strokeWidth={1.5} aria-hidden style={{ flexShrink: 0 }} />}
+      startAdornment={<SearchIcon size={16} strokeWidth={1.5} aria-hidden style={{ flexShrink: 0 }} />}
       sx={{
         width,
         height: size.control,

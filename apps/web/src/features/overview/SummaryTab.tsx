@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Menu from '@mui/material/Menu';
 import Typography from '@mui/material/Typography';
-import { Calendar, Check, ChevronDown, GitPullRequest, Inbox, ListTodo, Users, type LucideIcon } from 'lucide-react';
+import { BacklogIcon, CheckIcon, ChevronDownIcon, DateIcon, InboxIcon, PeopleIcon, PullRequestIcon, type IconComponent } from '../../components/icons';
 import { Fragment, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink } from 'react-router';
@@ -74,7 +74,7 @@ export function SummaryTab({ space }: { space: Space }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
-        <Button kind="secondary" startIcon={<Calendar size={16} strokeWidth={1.5} aria-hidden />} endIcon={<ChevronDown size={16} strokeWidth={1.5} aria-hidden />} aria-haspopup="menu" onClick={(event) => setAnchor(event.currentTarget)}>
+        <Button kind="secondary" startIcon={<DateIcon size={16} strokeWidth={1.5} aria-hidden />} endIcon={<ChevronDownIcon size={16} strokeWidth={1.5} aria-hidden />} aria-haspopup="menu" onClick={(event) => setAnchor(event.currentTarget)}>
           {periodName(period, summary.data)}
         </Button>
         <Menu open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)} slotProps={{ paper: { sx: { minWidth: 260 } } }}>
@@ -89,7 +89,7 @@ export function SummaryTab({ space }: { space: Space }) {
                   onClick={() => { setPeriod(value); setAnchor(null); }}
                   sx={value === period ? { color: sem('text-accent'), backgroundColor: sem('bg-selected') } : undefined}
                 >
-                  <span className="flex w-4 shrink-0" aria-hidden>{value === period && <Check size={16} strokeWidth={1.5} />}</span>
+                  <span className="flex w-4 shrink-0" aria-hidden>{value === period && <CheckIcon size={16} strokeWidth={1.5} />}</span>
                   {periodName(value, value === 'currentSprint' ? summary.data : undefined)}
                 </MenuItem>
               ))}
@@ -104,11 +104,11 @@ export function SummaryTab({ space }: { space: Space }) {
       {summary.data && (
         <>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-            <Kpi icon={Users} label={t('overview.members')} value={summary.data.members} note={t('overview.membersAdded', { count: summary.data.membersAddedInPeriod, period: inPeriod })} />
-            <Kpi icon={ListTodo} label={t('overview.issues')} value={summary.data.issues.total} to={issuesPath} note={t('overview.createdIn', { count: summary.data.issues.createdInPeriod, period: inPeriod })} />
-            <Kpi icon={Inbox} label={t('overview.open')} value={summary.data.issues.toDo + summary.data.issues.inProgress} to={withStatuses([0, 1])} note={inProgressNote(summary.data, t)} />
-            <Kpi icon={Check} label={t('overview.done')} value={summary.data.issues.done} to={withStatuses([2])} note={t('overview.ofAll', { percent: percent(summary.data.issues.done, summary.data.issues.total) })} />
-            <Kpi icon={GitPullRequest} label={t('overview.pullRequests')} value={summary.data.pullRequests.total} note={t('overview.pullRequestsNote', { open: summary.data.pullRequests.open, merged: summary.data.pullRequests.merged })} />
+            <Kpi icon={PeopleIcon} label={t('overview.members')} value={summary.data.members} note={t('overview.membersAdded', { count: summary.data.membersAddedInPeriod, period: inPeriod })} />
+            <Kpi icon={BacklogIcon} label={t('overview.issues')} value={summary.data.issues.total} to={issuesPath} note={t('overview.createdIn', { count: summary.data.issues.createdInPeriod, period: inPeriod })} />
+            <Kpi icon={InboxIcon} label={t('overview.open')} value={summary.data.issues.toDo + summary.data.issues.inProgress} to={withStatuses([0, 1])} note={inProgressNote(summary.data, t)} />
+            <Kpi icon={CheckIcon} label={t('overview.done')} value={summary.data.issues.done} to={withStatuses([2])} note={t('overview.ofAll', { percent: percent(summary.data.issues.done, summary.data.issues.total) })} />
+            <Kpi icon={PullRequestIcon} label={t('overview.pullRequests')} value={summary.data.pullRequests.total} note={t('overview.pullRequestsNote', { open: summary.data.pullRequests.open, merged: summary.data.pullRequests.merged })} />
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -255,7 +255,7 @@ function Card({ title, meta, action, children }: { title: string; meta?: string;
   );
 }
 
-function Kpi({ icon: Icon, label, value, note, to }: { icon: LucideIcon; label: string; value: number; note: string; to?: string }) {
+function Kpi({ icon: Icon, label, value, note, to }: { icon: IconComponent; label: string; value: number; note: string; to?: string }) {
   const number = <span style={{ fontSize: font.size.xl, fontWeight: font.weight.semibold, color: sem('text-primary') }}>{value}</span>;
   return (
     <section className="sb-card flex flex-col gap-1 p-4" style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card, backgroundColor: 'var(--sb-card-bg)' }}>

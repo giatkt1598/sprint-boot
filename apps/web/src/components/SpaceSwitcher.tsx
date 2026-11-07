@@ -1,5 +1,5 @@
 import ButtonBase from '@mui/material/ButtonBase';
-import { ChevronsUpDown } from 'lucide-react';
+import { ExpandCollapseIcon } from './icons';
 import type { MouseEvent } from 'react';
 import { font, radius, sem } from '../theme/tokens';
 import { SpaceLogo } from './SpaceLogo';
@@ -29,7 +29,7 @@ export function SpaceSwitcher({ spaceKey, logoUrl, name, label, onClick }: Space
         {name}
       </span>
       <span className="sr-only">{label}</span>
-      <ChevronsUpDown size={16} strokeWidth={1.5} aria-hidden style={{ flexShrink: 0 }} />
+      <ExpandCollapseIcon size={16} strokeWidth={1.5} aria-hidden style={{ flexShrink: 0 }} />
     </ButtonBase>
   );
 }

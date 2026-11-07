@@ -1,5 +1,5 @@
 import Typography from '@mui/material/Typography';
-import { TriangleAlert } from 'lucide-react';
+import { WarningIcon } from './icons';
 import { Component, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ThemedIllustration } from '../theme/ThemedIllustration';
@@ -33,7 +33,7 @@ function CrashPage() {
             className="mb-2 flex size-12 items-center justify-center"
             style={{ backgroundColor: sem('bg-subtle'), borderRadius: radius.card, color: sem('text-secondary') }}
           >
-            <TriangleAlert size={24} strokeWidth={1.5} />
+            <WarningIcon size={24} strokeWidth={1.5} />
           </span>
         }
       />

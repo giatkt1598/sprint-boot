@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import { apiClient, unwrap } from '../../api';
 import IconButton from '@mui/material/IconButton';
-import { Paperclip, X } from 'lucide-react';
+import { AttachmentIcon, CloseIcon } from '../../components/icons';
 import { Button } from '../../components/Button';
 import { Checkbox } from '../../components/Checkbox';
 import { DatePicker } from '../../components/DatePicker';
@@ -266,7 +266,7 @@ export function CreateIssueDialog({ onClose, epic }: CreateIssueDialogProps) {
       {dateError && <Typography role="alert" color="error" variant="body2">{dateError}</Typography>}
       <div className="flex flex-col items-start gap-1">
         <input ref={fileInput} type="file" multiple hidden aria-label={t('issues.attachments')} onChange={addFiles} />
-        <Button kind="link" startIcon={<Paperclip size={16} strokeWidth={1.5} aria-hidden />} onClick={() => fileInput.current?.click()}>
+        <Button kind="link" startIcon={<AttachmentIcon size={16} strokeWidth={1.5} aria-hidden />} onClick={() => fileInput.current?.click()}>
           {t('issues.attachments')}
         </Button>
         {files.map((file, index) => (
@@ -277,7 +277,7 @@ export function CreateIssueDialog({ onClose, epic }: CreateIssueDialogProps) {
               aria-label={`${t('common.delete')} ${file.name}`}
               onClick={() => setFiles((current) => current.filter((_, position) => position !== index))}
             >
-              <X size={16} strokeWidth={1.5} aria-hidden />
+              <CloseIcon size={16} strokeWidth={1.5} aria-hidden />
             </IconButton>
           </div>
         ))}

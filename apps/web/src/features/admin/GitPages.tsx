@@ -1,7 +1,7 @@
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { TriangleAlert } from 'lucide-react';
+import { WarningIcon } from '../../components/icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useOutletContext, useParams } from 'react-router';
@@ -50,7 +50,7 @@ function Banner({ children }: { children: string }) {
       className="flex items-center gap-2 p-3"
       style={{ backgroundColor: sem('feedback-danger-bg'), color: sem('feedback-danger-text'), borderRadius: radius.card }}
     >
-      <TriangleAlert size={20} strokeWidth={1.5} aria-hidden />
+      <WarningIcon size={20} strokeWidth={1.5} aria-hidden />
       <Typography variant="body2" sx={{ color: 'inherit' }}>{children}</Typography>
     </div>
   );

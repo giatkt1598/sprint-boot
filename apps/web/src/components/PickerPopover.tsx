@@ -1,5 +1,5 @@
 import ButtonBase from '@mui/material/ButtonBase';
-import { Check } from 'lucide-react';
+import { CheckIcon } from './icons';
 import { useRef, useState, type ReactNode } from 'react';
 import { font, radius, sem } from '../theme/tokens';
 import { Popover, type PopoverWidth } from './Popover';
@@ -70,7 +70,7 @@ export function PickerPopover({ label, anchor, items, selectedId, searchLabel, o
               >
                 {item.icon && <span aria-hidden className="flex shrink-0">{item.icon}</span>}
                 <span className="min-w-0 flex-1">{item.label}</span>
-                {selected && <Check size={16} strokeWidth={1.5} color={sem('accent-default')} aria-hidden style={{ flexShrink: 0 }} />}
+                {selected && <CheckIcon size={16} strokeWidth={1.5} color={sem('accent-default')} aria-hidden style={{ flexShrink: 0 }} />}
               </ButtonBase>
             );
           })}

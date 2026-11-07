@@ -4,7 +4,7 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Eye, EyeOff, GripVertical, Trash2, TriangleAlert } from 'lucide-react';
+import { DeleteIcon, DragHandleIcon, HideIcon, ShowIcon, WarningIcon } from '../../components/icons';
 import { useEffect, useState } from 'react';
 import { DialogActions } from '../../components/Dialog';
 import { useTranslation } from 'react-i18next';
@@ -64,7 +64,7 @@ function ColumnRow({ column, canManage, free, nameOf, onChange, onRemove }: Colu
     >
       {canManage && (
         <IconButton size="small" aria-label={`${t('agile.moveColumn')} ${column.name}`} sx={{ cursor: 'grab' }} {...attributes} {...listeners}>
-          <GripVertical size={16} strokeWidth={1.5} aria-hidden />
+          <DragHandleIcon size={16} strokeWidth={1.5} aria-hidden />
         </IconButton>
       )}
       <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -104,12 +104,12 @@ function ColumnRow({ column, canManage, free, nameOf, onChange, onRemove }: Colu
         <>
           <Tooltip title={hideLabel}>
             <IconButton size="small" aria-label={hideLabel} onClick={() => onChange({ isHidden: !column.isHidden })}>
-              {column.isHidden ? <EyeOff size={16} strokeWidth={1.5} aria-hidden /> : <Eye size={16} strokeWidth={1.5} aria-hidden />}
+              {column.isHidden ? <HideIcon size={16} strokeWidth={1.5} aria-hidden /> : <ShowIcon size={16} strokeWidth={1.5} aria-hidden />}
             </IconButton>
           </Tooltip>
           <Tooltip title={`${t('spaces.remove')} ${column.name}`}>
             <IconButton size="small" aria-label={`${t('spaces.remove')} ${column.name}`} sx={{ color: sem('feedback-danger-text') }} onClick={onRemove}>
-              <Trash2 size={16} strokeWidth={1.5} aria-hidden />
+              <DeleteIcon size={16} strokeWidth={1.5} aria-hidden />
             </IconButton>
           </Tooltip>
         </>
@@ -206,7 +206,7 @@ export function ColumnsEditor({ space, canManage, onDone }: { space: Space; canM
           className="flex items-center gap-2 p-3"
           style={{ backgroundColor: sem('feedback-warning-bg'), color: sem('feedback-warning-text'), borderRadius: radius.control }}
         >
-          <TriangleAlert size={16} strokeWidth={1.5} aria-hidden />
+          <WarningIcon size={16} strokeWidth={1.5} aria-hidden />
           <Typography variant="body2">{message}</Typography>
         </div>
       ))}

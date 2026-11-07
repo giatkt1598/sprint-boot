@@ -3,7 +3,7 @@ import ButtonBase from '@mui/material/ButtonBase';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Bell } from 'lucide-react';
+import { NotificationsIcon } from '../../components/icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
@@ -94,10 +94,10 @@ export function NotificationBell() {
       >
         {count > 0 ? (
           <Badge color="error" badgeContent={count} max={99}>
-            <Bell size={20} strokeWidth={1.5} aria-hidden />
+            <NotificationsIcon size={20} strokeWidth={1.5} aria-hidden />
           </Badge>
         ) : (
-          <Bell size={20} strokeWidth={1.5} aria-hidden />
+          <NotificationsIcon size={20} strokeWidth={1.5} aria-hidden />
         )}
       </IconButton>
       <Popover width={508} open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}>

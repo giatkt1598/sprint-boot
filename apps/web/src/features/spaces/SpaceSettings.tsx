@@ -1,7 +1,7 @@
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft } from 'lucide-react';
+import { BackIcon } from '../../components/icons';
 import { useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Navigate, Outlet, useOutletContext, useParams } from 'react-router';
@@ -112,7 +112,7 @@ function BackHeader({ title, backTo }: { title: string; backTo: string }) {
   return (
     <div className="flex items-center gap-2 pb-2">
       <IconButton component={Link} to={appLocationOr(backTo)} size="small" aria-label={t('spaces.back')}>
-        <ArrowLeft size={16} strokeWidth={1.5} aria-hidden />
+        <BackIcon size={16} strokeWidth={1.5} aria-hidden />
       </IconButton>
       <Typography variant="h3">{title}</Typography>
     </div>

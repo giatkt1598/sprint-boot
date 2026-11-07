@@ -1,7 +1,7 @@
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { AddIcon, DeleteIcon, EditIcon } from '../../components/icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router';
@@ -81,7 +81,7 @@ export function AssistantPage() {
       <aside className="flex w-72 shrink-0 flex-col gap-2 overflow-y-auto p-4" style={{ borderRight: `1px solid ${sem('border-default')}` }}>
         <div className="flex items-center gap-2">
           <Typography variant="h2" component="h1" className="flex-1">{t('assistant.title')}</Typography>
-          <Button kind="secondary" startIcon={<Plus size={16} strokeWidth={1.5} aria-hidden />} onClick={() => void navigate('/assistant')}>
+          <Button kind="secondary" startIcon={<AddIcon size={16} strokeWidth={1.5} aria-hidden />} onClick={() => void navigate('/assistant')}>
             {t('assistant.new')}
           </Button>
         </div>
@@ -108,10 +108,10 @@ export function AssistantPage() {
                 </span>
               </Link>
               <IconButton size="small" aria-label={t('assistant.rename', { title: item.title })} onClick={() => setRenaming(item)}>
-                <Pencil size={16} strokeWidth={1.5} aria-hidden />
+                <EditIcon size={16} strokeWidth={1.5} aria-hidden />
               </IconButton>
               <IconButton size="small" aria-label={t('assistant.delete', { title: item.title })} onClick={() => setRemoving(item)}>
-                <Trash2 size={16} strokeWidth={1.5} aria-hidden />
+                <DeleteIcon size={16} strokeWidth={1.5} aria-hidden />
               </IconButton>
             </div>
           ))}

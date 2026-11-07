@@ -5,7 +5,7 @@ import Link from '@mui/material/Link';
 import MuiTextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Lock, Plus, X } from 'lucide-react';
+import { AddIcon, CloseIcon, LockedIcon } from '../../components/icons';
 import { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink } from 'react-router';
@@ -170,7 +170,7 @@ export function LinkedIssues({ issue, canEdit }: { issue: Issue; canEdit: boolea
       <div className="flex items-center pb-2">
         <Typography id={`links-${issue.id}`} variant="h2" component="h2" className="flex-1">{t('links.title')}</Typography>
         {canEdit && (
-          <Button kind="link" startIcon={<Plus size={16} strokeWidth={1.5} aria-hidden />} onClick={() => setAdding(true)}>
+          <Button kind="link" startIcon={<AddIcon size={16} strokeWidth={1.5} aria-hidden />} onClick={() => setAdding(true)}>
             {t('links.add')}
           </Button>
         )}
@@ -201,7 +201,7 @@ export function LinkedIssues({ issue, canEdit }: { issue: Issue; canEdit: boolea
                     </>
                   ) : (
                     <>
-                      <td className="pl-2 pr-3"><span className="flex" style={{ color: sem('text-secondary') }}><Lock size={16} strokeWidth={1.5} aria-hidden /></span></td>
+                      <td className="pl-2 pr-3"><span className="flex" style={{ color: sem('text-secondary') }}><LockedIcon size={16} strokeWidth={1.5} aria-hidden /></span></td>
                       <td colSpan={3} className="w-full pr-3">
                         <Typography variant="body2" color="textSecondary">{t('links.restricted')}</Typography>
                       </td>
@@ -215,7 +215,7 @@ export function LinkedIssues({ issue, canEdit }: { issue: Issue; canEdit: boolea
                         disabled={remove.isPending}
                         onClick={() => remove.mutate(link.id!)}
                       >
-                        <X size={16} strokeWidth={1.5} aria-hidden />
+                        <CloseIcon size={16} strokeWidth={1.5} aria-hidden />
                       </IconButton>
                     )}
                   </td>

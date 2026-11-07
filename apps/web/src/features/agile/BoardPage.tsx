@@ -18,7 +18,7 @@ import Menu from '@mui/material/Menu';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useQueryClient } from '@tanstack/react-query';
-import { Columns3, Ellipsis } from 'lucide-react';
+import { ColumnsIcon, MoreIcon } from '../../components/icons';
 import { createContext, memo, use, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useParams } from 'react-router';
@@ -298,11 +298,11 @@ export function BoardPage() {
           <>
             <Tooltip title={t('agile.boardMore')}>
               <IconButton size="small" aria-label={t('agile.boardMore')} onClick={(event) => setMenuAnchor(event.currentTarget)}>
-                <Ellipsis size={16} strokeWidth={1.5} aria-hidden />
+                <MoreIcon size={16} strokeWidth={1.5} aria-hidden />
               </IconButton>
             </Tooltip>
             <Menu open={Boolean(menuAnchor)} anchorEl={menuAnchor} onClose={() => setMenuAnchor(null)}>
-              <MenuItem icon={Columns3} onClick={() => { setMenuAnchor(null); setConfiguring(true); }}>{t('agile.configureColumns')}</MenuItem>
+              <MenuItem icon={ColumnsIcon} onClick={() => { setMenuAnchor(null); setConfiguring(true); }}>{t('agile.configureColumns')}</MenuItem>
             </Menu>
           </>
         )}

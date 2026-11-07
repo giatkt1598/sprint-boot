@@ -1,6 +1,6 @@
 import ButtonBase from '@mui/material/ButtonBase';
 import Chip from '@mui/material/Chip';
-import { ListFilter } from 'lucide-react';
+import { FilterIcon } from '../../components/icons';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Avatar } from '../../components/Avatar';
@@ -217,7 +217,7 @@ export function FilterControls({ filters, onChange }: { filters: IssueFilters; o
           ))}
         </Popover>
       </div>
-      <Button kind="secondary" startIcon={<ListFilter size={16} strokeWidth={1.5} aria-hidden />} onClick={(event) => setAnchor(event.currentTarget)}>
+      <Button kind="secondary" startIcon={<FilterIcon size={16} strokeWidth={1.5} aria-hidden />} onClick={(event) => setAnchor(event.currentTarget)}>
         {chips.length ? t('issues.filterCount', { count: chips.length }) : t('issues.filter')}
       </Button>
       <Popover width={508} open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}>

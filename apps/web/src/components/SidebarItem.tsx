@@ -1,12 +1,12 @@
 import ButtonBase from '@mui/material/ButtonBase';
-import type { LucideIcon } from 'lucide-react';
+import type { IconComponent } from './icons';
 import { NavLink } from 'react-router';
 import { font, radius, sem } from '../theme/tokens';
 
 export interface SidebarItemProps {
   to: string;
   label: string;
-  icon: LucideIcon;
+  icon: IconComponent;
 }
 
 export function SidebarItem({ to, label, icon: Icon }: SidebarItemProps) {

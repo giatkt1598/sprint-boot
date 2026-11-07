@@ -2,7 +2,7 @@ import ButtonBase from '@mui/material/ButtonBase';
 import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
-import { X } from 'lucide-react';
+import { CloseIcon } from '../../components/icons';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Checkbox } from '../../components/Checkbox';
@@ -185,7 +185,7 @@ function RuleList({ title, hint, keys, rules, onChange, children }: {
                 onChange(rules.filter((_, position) => position !== index));
               }}
             >
-              <X size={16} strokeWidth={1.5} aria-hidden />
+              <CloseIcon size={16} strokeWidth={1.5} aria-hidden />
             </IconButton>
           </div>
           {open === index && (

@@ -1,6 +1,6 @@
 import ButtonBase from '@mui/material/ButtonBase';
 import Typography, { type TypographyProps } from '@mui/material/Typography';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDownIcon, ChevronRightIcon } from './icons';
 import { radius } from '../theme/tokens';
 
 interface CollapseHeadingProps {
@@ -12,7 +12,7 @@ interface CollapseHeadingProps {
 
 /** A section heading that folds the section under it. */
 export function CollapseHeading({ label, open, variant = 'h3', onToggle }: CollapseHeadingProps) {
-  const Icon = open ? ChevronDown : ChevronRight;
+  const Icon = open ? ChevronDownIcon : ChevronRightIcon;
 
   return (
     <Typography variant={variant} component="h2">

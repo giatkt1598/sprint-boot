@@ -1,9 +1,6 @@
 import { EditorContent, useEditor, useEditorState, type Editor } from '@tiptap/react';
 import hljs from 'highlight.js/lib/common';
-import {
-  AtSign, Code2, Heading1, Heading2, Heading3, ImageIcon, Lightbulb, List, ListChecks, ListOrdered, Minus, Paperclip, Quote, Table, Type,
-  type LucideIcon,
-} from 'lucide-react';
+import { AttachmentIcon, CalloutIcon, CodeBlockIcon, Heading1Icon, Heading2Icon, Heading3Icon, ImageIcon, ListIcon, MentionIcon, MinusIcon, OrderedListIcon, QuoteIcon, TableIcon, TaskListIcon, TextIcon, type IconComponent } from '../../components/icons';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -41,22 +38,22 @@ const COMMIT_DELAY_MILLISECONDS = 200;
 const POPUP_WIDTH = 280;
 const POPUP_MAX_HEIGHT = 300;
 
-const SLASH_ICONS: Record<string, LucideIcon> = {
-  text: Type,
-  heading1: Heading1,
-  heading2: Heading2,
-  heading3: Heading3,
-  bullets: List,
-  numbers: ListOrdered,
-  tasks: ListChecks,
-  quote: Quote,
-  callout: Lightbulb,
-  codeBlock: Code2,
-  divider: Minus,
-  table: Table,
+const SLASH_ICONS: Record<string, IconComponent> = {
+  text: TextIcon,
+  heading1: Heading1Icon,
+  heading2: Heading2Icon,
+  heading3: Heading3Icon,
+  bullets: ListIcon,
+  numbers: OrderedListIcon,
+  tasks: TaskListIcon,
+  quote: QuoteIcon,
+  callout: CalloutIcon,
+  codeBlock: CodeBlockIcon,
+  divider: MinusIcon,
+  table: TableIcon,
   image: ImageIcon,
-  mention: AtSign,
-  attach: Paperclip,
+  mention: MentionIcon,
+  attach: AttachmentIcon,
 };
 
 /** Portaled so a dialog cannot clip it; it never takes focus, so typing keeps filtering. */
@@ -293,7 +290,7 @@ export function RichTextEditor({ label, initialValue = '', people, autoFocus, sh
           popup={slashPopup}
           rowKey={(item) => item.id}
           render={(item) => {
-            const Icon = SLASH_ICONS[item.id] ?? Type;
+            const Icon = SLASH_ICONS[item.id] ?? TextIcon;
             return (
               <>
                 <Icon size={16} strokeWidth={1.5} aria-hidden />

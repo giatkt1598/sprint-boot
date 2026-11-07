@@ -64,6 +64,7 @@ export const chinese = {
   font: 'notoSerif',
   decor: () => import('./decor/chinese'),
   illustrations: { notFound: picture(chinese404), error: picture(chinese500) },
+  icons: () => import('../icons/phosphor').then((module) => module.phosphorIcons('fill')),
 } satisfies ThemeDefinition<'chinese'>;
 
 const japaneseCard = '0 1px 2px rgba(28, 28, 30, 0.08)';
@@ -113,6 +114,7 @@ export const japanese = {
   font: 'notoSerifJp',
   decor: () => import('./decor/japanese'),
   illustrations: { notFound: picture(japanese404), error: picture(japanese500) },
+  icons: () => import('../icons/tabler').then((module) => module.tablerIcons(1)),
 } satisfies ThemeDefinition<'japanese'>;
 
 // Cards carry a faint gold rim.
@@ -165,6 +167,7 @@ export const vietnamese = {
   font: 'alegreya',
   decor: () => import('./decor/vietnamese'),
   illustrations: { notFound: picture(vietnamese404), error: picture(vietnamese500) },
+  icons: () => import('../icons/phosphor').then((module) => module.phosphorIcons('duotone')),
 } satisfies ThemeDefinition<'vietnamese'>;
 
 // Cards have a thin gold bottom edge.
@@ -218,4 +221,5 @@ export const european = {
   font: 'playfair',
   decor: () => import('./decor/european'),
   illustrations: { notFound: picture(european404), error: picture(european500) },
+  icons: () => import('../icons/iconoir').then((module) => module.iconoirIcons(1.25)),
 } satisfies ThemeDefinition<'european'>;

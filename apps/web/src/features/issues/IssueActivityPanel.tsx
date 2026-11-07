@@ -4,7 +4,7 @@ import type { PopoverActions } from '@mui/material/Popover';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Ellipsis, Link2, Pencil, Reply, SmilePlus, ThumbsUp, Trash2 } from 'lucide-react';
+import { DeleteIcon, EditIcon, LikeIcon, LinkIcon, MoreIcon, ReactionIcon, ReplyIcon } from '../../components/icons';
 import { useCallback, useEffect, useRef, useState, type ComponentProps } from 'react';
 import type { components } from '@sprint-boot/api-client';
 import { useTranslation } from 'react-i18next';
@@ -101,7 +101,7 @@ function EmojiPicker({ used, onPick, onResize }: { used: Set<string>; onPick: (e
       <div className="flex items-center gap-1">
         {QUICK_EMOJIS.map(emojiButton)}
         <ActionButton label={t('issues.moreReactions')} aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
-          <Ellipsis size={16} strokeWidth={1.5} aria-hidden />
+          <MoreIcon size={16} strokeWidth={1.5} aria-hidden />
         </ActionButton>
       </div>
       {expanded && <div className="flex max-h-48 flex-wrap gap-1 overflow-y-auto">{MORE_EMOJIS.map(emojiButton)}</div>}
@@ -252,7 +252,7 @@ function CommentItem({ comment, issue, replies, people, canEdit, canManage }: { 
         <div className="flex items-center gap-1">
           {canEdit && (
             <ActionButton label={t('issues.addReaction')} onClick={(event) => setEmojiAnchor(event.currentTarget)}>
-              <SmilePlus size={16} strokeWidth={1.5} aria-hidden />
+              <ReactionIcon size={16} strokeWidth={1.5} aria-hidden />
             </ActionButton>
           )}
           <Popover above width={360} action={emojiPopover} open={Boolean(emojiAnchor)} anchorEl={emojiAnchor} onClose={() => setEmojiAnchor(null)}>
@@ -265,7 +265,7 @@ function CommentItem({ comment, issue, replies, people, canEdit, canManage }: { 
           {/* A shortcut to the 👍 reaction, which shows with the others. */}
           {canEdit && !comment.reactions?.some((reaction) => reaction.reactedByMe) && (
             <ActionButton label={t('issues.like')} onClick={() => react.mutate(LIKE)}>
-              <ThumbsUp size={16} strokeWidth={1.5} aria-hidden />
+              <LikeIcon size={16} strokeWidth={1.5} aria-hidden />
             </ActionButton>
           )}
           {(comment.reactions ?? []).map((reaction) => (
@@ -287,19 +287,19 @@ function CommentItem({ comment, issue, replies, people, canEdit, canManage }: { 
           ))}
           {isMine && (
             <ActionButton label={t('common.edit')} onClick={() => setEditing(true)}>
-              <Pencil size={16} strokeWidth={1.5} aria-hidden />
+              <EditIcon size={16} strokeWidth={1.5} aria-hidden />
             </ActionButton>
           )}
           {canEdit && !comment.parentId && (
-            <Button kind="ghost" startIcon={<Reply size={16} strokeWidth={1.5} aria-hidden />} onClick={() => setReplying(true)}>{t('issues.reply')}</Button>
+            <Button kind="ghost" startIcon={<ReplyIcon size={16} strokeWidth={1.5} aria-hidden />} onClick={() => setReplying(true)}>{t('issues.reply')}</Button>
           )}
           <ActionButton label={t('issues.commentMore')} onClick={(event) => setMenuAnchor(event.currentTarget)}>
-            <Ellipsis size={16} strokeWidth={1.5} aria-hidden />
+            <MoreIcon size={16} strokeWidth={1.5} aria-hidden />
           </ActionButton>
           <Menu open={Boolean(menuAnchor)} anchorEl={menuAnchor} onClose={() => setMenuAnchor(null)}>
-            <MenuItem icon={Link2} onClick={() => void copyLink()}>{t('issues.copyLink')}</MenuItem>
+            <MenuItem icon={LinkIcon} onClick={() => void copyLink()}>{t('issues.copyLink')}</MenuItem>
             {(isMine || canManage) && (
-              <MenuItem icon={Trash2} danger onClick={() => { setMenuAnchor(null); remove.mutate(); }}>{t('common.delete')}</MenuItem>
+              <MenuItem icon={DeleteIcon} danger onClick={() => { setMenuAnchor(null); remove.mutate(); }}>{t('common.delete')}</MenuItem>
             )}
           </Menu>
         </div>
@@ -428,12 +428,12 @@ function WorkLogPanel({ issue, canEdit, canManage }: { issue: Issue; canEdit: bo
           <span className="flex-1 truncate">{log.note}</span>
           {log.author?.id === me.id && (
             <IconButton size="small" aria-label={t('common.edit')} onClick={() => setEditingLog(log)}>
-              <Pencil size={16} strokeWidth={1.5} aria-hidden />
+              <EditIcon size={16} strokeWidth={1.5} aria-hidden />
             </IconButton>
           )}
           {(log.author?.id === me.id || canManage) && (
             <IconButton size="small" aria-label={t('common.delete')} onClick={() => remove.mutate(log.id!)}>
-              <Trash2 size={16} strokeWidth={1.5} aria-hidden />
+              <DeleteIcon size={16} strokeWidth={1.5} aria-hidden />
             </IconButton>
           )}
         </div>

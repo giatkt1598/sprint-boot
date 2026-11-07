@@ -1,6 +1,6 @@
 import MenuList from '@mui/material/MenuList';
 import Typography from '@mui/material/Typography';
-import { Copy, Trash2 } from 'lucide-react';
+import { CopyIcon, DeleteIcon } from '../components/icons';
 import { RichTextEditor } from '../features/issues/RichTextEditor';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -118,8 +118,8 @@ export function DevUiPage() {
 
       <Section title={t('devUi.menu')}>
         <MenuList sx={{ width: 200 }}>
-          <MenuItem icon={Copy}>{t('devUi.copyLink')}</MenuItem>
-          <MenuItem icon={Trash2} danger>
+          <MenuItem icon={CopyIcon}>{t('devUi.copyLink')}</MenuItem>
+          <MenuItem icon={DeleteIcon} danger>
             {t('devUi.delete')}
           </MenuItem>
         </MenuList>

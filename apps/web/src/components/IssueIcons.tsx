@@ -1,24 +1,24 @@
-import { Bookmark, Bug, ChevronDown, ChevronsDown, ChevronsUp, ChevronUp, CornerDownRight, Equal, SquareCheck, Zap, type LucideIcon } from 'lucide-react';
+import { BugIcon, ChevronDownIcon, ChevronUpIcon, EpicIcon, PriorityHighestIcon, PriorityLowestIcon, PriorityMediumIcon, StoryIcon, SubtaskIcon, TaskIcon, type IconComponent } from './icons';
 import { useTranslation } from 'react-i18next';
 import { sem, type SemanticToken } from '../theme/tokens';
 
 export type IssueType = 'story' | 'task' | 'bug' | 'subtask' | 'epic';
 export type Priority = 'highest' | 'high' | 'medium' | 'low' | 'lowest';
 
-const issueTypes: Record<IssueType, [LucideIcon, SemanticToken]> = {
-  story: [Bookmark, 'type-story'],
-  task: [SquareCheck, 'type-task'],
-  bug: [Bug, 'type-bug'],
-  subtask: [CornerDownRight, 'type-subtask'],
-  epic: [Zap, 'type-epic'],
+const issueTypes: Record<IssueType, [IconComponent, SemanticToken]> = {
+  story: [StoryIcon, 'type-story'],
+  task: [TaskIcon, 'type-task'],
+  bug: [BugIcon, 'type-bug'],
+  subtask: [SubtaskIcon, 'type-subtask'],
+  epic: [EpicIcon, 'type-epic'],
 };
 
-const priorities: Record<Priority, [LucideIcon, SemanticToken]> = {
-  highest: [ChevronsUp, 'feedback-danger-text'],
-  high: [ChevronUp, 'feedback-danger-text'],
-  medium: [Equal, 'text-secondary'],
-  low: [ChevronDown, 'text-secondary'],
-  lowest: [ChevronsDown, 'text-secondary'],
+const priorities: Record<Priority, [IconComponent, SemanticToken]> = {
+  highest: [PriorityHighestIcon, 'feedback-danger-text'],
+  high: [ChevronUpIcon, 'feedback-danger-text'],
+  medium: [PriorityMediumIcon, 'text-secondary'],
+  low: [ChevronDownIcon, 'text-secondary'],
+  lowest: [PriorityLowestIcon, 'text-secondary'],
 };
 
 export function IssueTypeIcon({ type }: { type: IssueType }) {

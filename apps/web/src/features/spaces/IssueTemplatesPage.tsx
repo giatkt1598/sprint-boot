@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus } from 'lucide-react';
+import { AddIcon } from '../../components/icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOutletContext } from 'react-router';
@@ -218,7 +218,7 @@ export function SpaceIssueTemplatesPage() {
               {canManage && (
                 <Button
                   kind="ghost"
-                  startIcon={<Plus size={16} strokeWidth={1.5} aria-hidden />}
+                  startIcon={<AddIcon size={16} strokeWidth={1.5} aria-hidden />}
                   aria-label={t('templates.addFor', { type: typeName })}
                   onClick={() =>
                     setDraft({ issueTypeId: type.id!, name: '', content: '', mode: TemplateMode.fill, globalTemplateId: OWN, isDefault: own.length === 0 })

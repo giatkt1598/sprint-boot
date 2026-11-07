@@ -1,5 +1,5 @@
 import Typography from '@mui/material/Typography';
-import { FileText } from 'lucide-react';
+import { DocumentIcon } from '../../components/icons';
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router';
 import { Badge } from '../../components/Badge';
@@ -56,7 +56,7 @@ function DocsTab() {
   return (
     <section className="flex min-h-[50vh] flex-col items-center justify-center gap-2 px-4 text-center">
       <span aria-hidden className="mb-2 flex size-12 items-center justify-center" style={{ backgroundColor: sem('bg-subtle'), borderRadius: radius.card, color: sem('text-secondary') }}>
-        <FileText size={24} strokeWidth={1.5} />
+        <DocumentIcon size={24} strokeWidth={1.5} />
       </span>
       <Badge tone="info">{t('overview.comingSoon')}</Badge>
       <Typography variant="h2">{t('overview.docsTitle')}</Typography>

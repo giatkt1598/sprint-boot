@@ -1,5 +1,5 @@
 import ButtonBase from '@mui/material/ButtonBase';
-import { Check } from 'lucide-react';
+import { CheckIcon } from '../../components/icons';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs } from '../../components/Tabs';
@@ -81,7 +81,7 @@ function ThemeCard({ theme, accent, selected, onSelect }: { theme: ThemeDefiniti
             className="absolute right-2 top-2 flex size-5 items-center justify-center"
             style={{ borderRadius: radius.full, backgroundColor: sem('accent-default'), color: sem('text-on-accent'), boxShadow: shadow.popover }}
           >
-            <Check size={12} strokeWidth={2} />
+            <CheckIcon size={12} strokeWidth={2} />
           </span>
         )}
       </Miniature>

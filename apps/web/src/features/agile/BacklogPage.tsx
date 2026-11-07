@@ -7,7 +7,7 @@ import Menu from '@mui/material/Menu';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChevronDown, ChevronRight, Ellipsis, Pencil, Trash2 } from 'lucide-react';
+import { ChevronDownIcon, ChevronRightIcon, DeleteIcon, EditIcon, MoreIcon } from '../../components/icons';
 import { createContext, memo, use, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useParams } from 'react-router';
@@ -89,7 +89,7 @@ function RowBody({ card, onOpen, actions }: IssueRowProps) {
       <td>{actions && (
         <>
           <IconButton size="small" aria-label={t('agile.rowActions', { key: card.key })} onClick={(event) => setAnchor(event.currentTarget)}>
-            <Ellipsis size={16} strokeWidth={1.5} aria-hidden />
+            <MoreIcon size={16} strokeWidth={1.5} aria-hidden />
           </IconButton>
           <Menu open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}>
             <MenuItem onClick={() => run(() => actions.onNudge(card, -1))}>{t('agile.moveUp')}</MenuItem>
@@ -293,11 +293,11 @@ function SprintHeader({ sprint, issues, canManage, shown, futureSprints, project
       {canManage && (
         <>
           <IconButton size="small" aria-label={t('agile.sprintActions', { name: sprint.name })} onClick={(event) => setAnchor(event.currentTarget)}>
-            <Ellipsis size={16} strokeWidth={1.5} aria-hidden />
+            <MoreIcon size={16} strokeWidth={1.5} aria-hidden />
           </IconButton>
           <Menu open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}>
-            <MenuItem icon={Pencil} onClick={() => { setAnchor(null); setDialog('edit'); }}>{t('common.edit')}</MenuItem>
-            {!active && <MenuItem icon={Trash2} danger onClick={() => { setAnchor(null); setDialog('delete'); }}>{t('common.delete')}</MenuItem>}
+            <MenuItem icon={EditIcon} onClick={() => { setAnchor(null); setDialog('edit'); }}>{t('common.edit')}</MenuItem>
+            {!active && <MenuItem icon={DeleteIcon} danger onClick={() => { setAnchor(null); setDialog('delete'); }}>{t('common.delete')}</MenuItem>}
           </Menu>
         </>
       )}
@@ -521,7 +521,7 @@ export function BacklogPage() {
       {(backlog.data?.closedSprints?.length ?? 0) > 0 && (
         <section className="flex flex-col gap-1">
           <ButtonBase onClick={() => setClosedOpen(!closedOpen)} aria-expanded={closedOpen} className="flex h-8 items-center gap-2 px-2" sx={{ justifyContent: 'flex-start' }}>
-            {closedOpen ? <ChevronDown size={16} strokeWidth={1.5} aria-hidden /> : <ChevronRight size={16} strokeWidth={1.5} aria-hidden />}
+            {closedOpen ? <ChevronDownIcon size={16} strokeWidth={1.5} aria-hidden /> : <ChevronRightIcon size={16} strokeWidth={1.5} aria-hidden />}
             <Typography variant="h3" component="span">{t('agile.closedSprints')}</Typography>
             <Typography variant="body2" color="textSecondary" component="span">{t('agile.sprintCount', { count: backlog.data?.closedSprints?.length })}</Typography>
           </ButtonBase>

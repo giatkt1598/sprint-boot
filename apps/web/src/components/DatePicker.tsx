@@ -1,6 +1,6 @@
 import ButtonBase from '@mui/material/ButtonBase';
 import IconButton from '@mui/material/IconButton';
-import { CalendarDays, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, DateRangeIcon } from './icons';
 import { useMemo, useState, type MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { font, radius, sem } from '../theme/tokens';
@@ -85,7 +85,7 @@ export function DatePicker({ label, value, onChange, quiet, disabled }: DatePick
           '&:hover': { backgroundColor: sem('bg-hover') },
         }}
       >
-        {!quiet && <CalendarDays size={16} strokeWidth={1.5} aria-hidden />}
+        {!quiet && <DateRangeIcon size={16} strokeWidth={1.5} aria-hidden />}
         <span className="sr-only">{label}:</span>
         {shown}
       </ButtonBase>
@@ -96,7 +96,7 @@ export function DatePicker({ label, value, onChange, quiet, disabled }: DatePick
           onClick={() => onChange('')}
           sx={{ position: 'absolute', right: 4, top: 4 }}
         >
-          <X size={16} strokeWidth={1.5} aria-hidden />
+          <CloseIcon size={16} strokeWidth={1.5} aria-hidden />
         </IconButton>
       )}
       </div>
@@ -104,11 +104,11 @@ export function DatePicker({ label, value, onChange, quiet, disabled }: DatePick
         <div role="group" aria-label={label} className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <IconButton size="small" aria-label={t('common.previousMonth')} onClick={() => shift(-1)}>
-              <ChevronLeft size={16} strokeWidth={1.5} aria-hidden />
+              <ChevronLeftIcon size={16} strokeWidth={1.5} aria-hidden />
             </IconButton>
             <span aria-live="polite" className="flex-1" style={{ fontWeight: font.weight.medium }}>{title}</span>
             <IconButton size="small" aria-label={t('common.nextMonth')} onClick={() => shift(1)}>
-              <ChevronRight size={16} strokeWidth={1.5} aria-hidden />
+              <ChevronRightIcon size={16} strokeWidth={1.5} aria-hidden />
             </IconButton>
           </div>
           <div className="grid grid-cols-7 text-center">

@@ -1,6 +1,6 @@
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
-import { X } from 'lucide-react';
+import { CloseIcon } from '../../components/icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { shadow } from '../../theme/tokens';
@@ -14,7 +14,7 @@ export function IssuePanel({ issueKey, onClose }: { issueKey: string | null; onC
   const close = (
     <div className="flex justify-end">
       <IconButton size="small" aria-label={t('common.close')} onClick={onClose}>
-        <X size={16} strokeWidth={1.5} aria-hidden />
+        <CloseIcon size={16} strokeWidth={1.5} aria-hidden />
       </IconButton>
     </div>
   );

@@ -75,6 +75,7 @@ export const glass = {
     cardShadow: glassLift(24, 0.3),
   },
   illustrations: { notFound: picture(glass404), error: picture(glass500) },
+  icons: () => import('../icons/iconoir').then((module) => module.iconoirIcons(1.5)),
 } satisfies ThemeDefinition<'glass'>;
 
 const woodCard = '0 1px 0 rgba(92, 58, 30, 0.18), 0 3px 8px rgba(59, 36, 20, 0.18)';
@@ -127,6 +128,7 @@ export const wood = {
   font: 'lora',
   decor: () => import('./decor/wood'),
   illustrations: { notFound: picture(wood404), error: picture(wood500) },
+  icons: () => import('../icons/phosphor').then((module) => module.phosphorIcons('duotone')),
 } satisfies ThemeDefinition<'wood'>;
 
 const waterCard = '0 4px 14px rgba(7, 89, 133, 0.14)';
@@ -174,6 +176,7 @@ export const water = {
   },
   decor: () => import('./decor/water'),
   illustrations: { notFound: picture(water404), error: picture(water500) },
+  icons: () => import('../icons/heroicons').then((module) => module.heroIcons()),
 } satisfies ThemeDefinition<'water'>;
 
 // Cards carry a faint orange rim.
@@ -222,4 +225,5 @@ export const fire = {
   font: 'oswald',
   decor: () => import('./decor/fire'),
   illustrations: { notFound: picture(fire404), error: picture(fire500) },
+  icons: () => import('../icons/phosphor').then((module) => module.phosphorIcons('bold')),
 } satisfies ThemeDefinition<'fire'>;

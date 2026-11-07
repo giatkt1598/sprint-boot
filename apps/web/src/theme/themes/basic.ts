@@ -57,4 +57,5 @@ export const minimal = {
     popover: '0 0 0 1px rgba(24, 24, 27, 0.08), 0 4px 12px rgba(24, 24, 27, 0.08)',
     dialog: '0 0 0 1px rgba(24, 24, 27, 0.08), 0 8px 24px rgba(24, 24, 27, 0.12)',
   },
+  icons: () => import('../icons/tabler').then((module) => module.tablerIcons(1.25)),
 } satisfies ThemeDefinition<'minimal'>;
