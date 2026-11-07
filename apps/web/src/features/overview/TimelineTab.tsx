@@ -37,13 +37,11 @@ const BAR_HEIGHT = 24;
 const MAX_ISSUES = 500;
 const DAY_MS = 86_400_000;
 
-const TYPE_BARS: Record<string, SemanticToken> = {
-  story: 'type-story',
-  task: 'type-task',
-  bug: 'type-bug',
-  subtask: 'type-subtask',
-  epic: 'type-epic',
-};
+/** Types that have an icon; anything else shows an empty box. */
+const KNOWN_TYPES = ['story', 'task', 'bug', 'subtask', 'epic'];
+
+/** A bar takes the colour of its status group: To Do, In progress, Done. */
+const STATUS_BARS: SemanticToken[] = ['status-todo-text', 'accent-default', 'status-done-text'];
 
 /** Dates are plain calendar days; arithmetic happens on UTC midnights so time zones never shift a bar. */
 const toDay = (iso: string) => Date.parse(`${iso}T00:00:00Z`) / DAY_MS;
@@ -140,7 +138,7 @@ export function TimelineTab({ space }: { space: Space }) {
     <div className="flex h-full shrink-0 items-center gap-2 px-4" style={{ width: TITLE_WIDTH, fontSize: font.size.md }}>
       {/* Its own box, so a long title never squeezes the icon away. */}
       <span className="flex size-4 shrink-0 items-center justify-center">
-        {issue.type?.icon && issue.type.icon in TYPE_BARS ? <IssueTypeIcon type={issue.type.icon as IconType} /> : null}
+        {issue.type?.icon && KNOWN_TYPES.includes(issue.type.icon) ? <IssueTypeIcon type={issue.type.icon as IconType} /> : null}
       </span>
       {/* The key opens the full page; the title opens the side panel. */}
       <Link component={RouterLink} to={`/issues/${issue.key}`} underline="hover" className="shrink-0" sx={{ color: sem('text-secondary') }}>{issue.key}</Link>
@@ -184,7 +182,7 @@ export function TimelineTab({ space }: { space: Space }) {
           width: Math.max((to - from + 1) * dayWidth - (start < range.from ? 0 : 4) - (end > range.to ? 0 : 4), 6),
           top: (ROW_HEIGHT - BAR_HEIGHT) / 2,
           height: BAR_HEIGHT,
-          backgroundColor: sem(TYPE_BARS[issue.type?.icon ?? ''] ?? 'accent-default'),
+          backgroundColor: sem(STATUS_BARS[issue.status?.category ?? 0] ?? 'accent-default'),
           borderRadius: `${left}px ${right}px ${right}px ${left}px`,
         }}
       >
