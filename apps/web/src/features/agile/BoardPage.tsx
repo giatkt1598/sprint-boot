@@ -46,9 +46,6 @@ import { boardKey, useBacklog, useBoard, useBoardLive, type BoardView, type Card
 
 type Column = NonNullable<BoardView['columns']>[number];
 
-/** A card keeps this height; longer content scrolls inside it. */
-const CARD_MAX_HEIGHT = 160;
-
 /** Small enough for five columns beside the sidebar on a 1920px screen. */
 const COLUMN_MIN_WIDTH = 200;
 
@@ -60,7 +57,7 @@ function CardBody({ card }: { card: Card }) {
   const has = (field: string) => fields.includes(field);
 
   return (
-    <div className="flex min-w-0 flex-col gap-1 overflow-y-auto [&>*]:shrink-0 overflow-x-hidden p-2 text-left" style={{ maxHeight: CARD_MAX_HEIGHT, overflowWrap: 'anywhere' }}>
+    <div className="flex min-w-0 flex-col gap-1 p-2 text-left" style={{ overflowWrap: 'anywhere' }}>
       <span className="line-clamp-3" style={{ fontSize: font.size.md }}>{card.title}</span>
       {has('epic') && card.epicTitle && <span className="min-w-0 max-w-full self-start"><Badge tone="epic">{card.epicTitle}</Badge></span>}
       {has('labels') && (card.labels?.length ?? 0) > 0 && (
@@ -151,7 +148,7 @@ function ColumnView({ column, cards, total, canDrag, dragging, transitions, onOp
       ref={setNodeRef}
       aria-label={column.name ?? ''}
       data-testid={`column-${column.name}`}
-      className="flex min-w-0 flex-1 flex-col gap-2 p-2"
+      className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-2"
       style={{ minWidth: COLUMN_MIN_WIDTH, borderRadius: radius.card, backgroundColor: sem(warn ? 'feedback-warning-bg' : 'bg-page') }}
     >
       <div className="flex items-center gap-2 px-1 py-1" style={{ fontSize: font.size.xs, fontWeight: font.weight.medium, color: sem(warn ? 'feedback-warning-text' : 'text-secondary') }}>
@@ -167,7 +164,10 @@ function ColumnView({ column, cards, total, canDrag, dragging, transitions, onOp
           ))}
         </div>
       ) : (
-        cards.map((card) => <BoardCard key={card.id} card={card} canDrag={canDrag} onOpen={onOpen} />)
+        // The column keeps the height of the board and scrolls its own cards, so a long column never spills out.
+        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+          {cards.map((card) => <BoardCard key={card.id} card={card} canDrag={canDrag} onOpen={onOpen} />)}
+        </div>
       )}
     </section>
   );
