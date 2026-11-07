@@ -67,7 +67,8 @@ export const glass = {
     cardFilter: 'blur(4px) saturate(140%)',
     sheen: glassSheen,
     edge: glassEdge,
-    hover: 'rgb(255 255 255 / 0.06)',
+    // A hovered block looks like a card.
+    hover: alpha(glassTint, 0.32),
     cardShadow: glassLift(24, 0.3),
   },
   illustrations: { notFound: picture(glass404), error: picture(glass500) },

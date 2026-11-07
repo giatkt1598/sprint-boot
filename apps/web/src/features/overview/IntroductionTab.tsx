@@ -1,5 +1,4 @@
 import Box from '@mui/material/Box';
-import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Pencil } from 'lucide-react';
@@ -12,7 +11,7 @@ import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { formatRelative } from '../../lib/format';
 import { hasSelectedText } from '../../lib/selection';
-import { font, radius, sem } from '../../theme/tokens';
+import { font, hoverPane, radius, sem } from '../../theme/tokens';
 import { RichTextEditor, RichTextView } from '../issues/RichTextEditor';
 import { useMembers, type Space } from '../spaces/api';
 import { introductionKey, useIntroduction } from './api';
@@ -73,41 +72,35 @@ export function IntroductionTab({ space }: { space: Space }) {
         </>
       ) : content ? (
         canEdit ? (
-          <Tooltip
-            title={t('overview.clickToEdit')}
-            placement="top-end"
-            slotProps={{ tooltip: { sx: { backgroundColor: sem('text-primary'), fontSize: font.size.xs } } }}
+          <Box
+            role="button"
+            tabIndex={0}
+            aria-label={t('overview.editIntroduction')}
+            onClick={(event) => {
+              // A link opens, and a drag that selected text stays a selection; only a plain click edits.
+              if (!(event.target as HTMLElement).closest('a') && !hasSelectedText()) {
+                startEditing();
+              }
+            }}
+            onKeyDown={(event) => event.key === 'Enter' && startEditing()}
+            sx={{
+              position: 'relative',
+              // The frame is always there, only coloured on hover, so the text never moves.
+              margin: -2,
+              padding: 2,
+              border: '1px solid transparent',
+              borderRadius: `${radius.card}px`,
+              cursor: 'text',
+              '& .edit-mark': { opacity: 0 },
+              '&:hover, &:focus-visible': { ...hoverPane, borderColor: sem('border-default') },
+              '&:hover .edit-mark, &:focus-visible .edit-mark': { opacity: 1 },
+            }}
           >
-            <Box
-              role="button"
-              tabIndex={0}
-              aria-label={t('overview.editIntroduction')}
-              onClick={(event) => {
-                // A link opens, and a drag that selected text stays a selection; only a plain click edits.
-                if (!(event.target as HTMLElement).closest('a') && !hasSelectedText()) {
-                  startEditing();
-                }
-              }}
-              onKeyDown={(event) => event.key === 'Enter' && startEditing()}
-              sx={{
-                position: 'relative',
-                // The frame is always there, only coloured on hover, so the text never moves.
-                margin: -2,
-                padding: 2,
-                border: '1px solid transparent',
-                borderRadius: `${radius.card}px`,
-                cursor: 'text',
-                '& .edit-mark': { opacity: 0 },
-                '&:hover, &:focus-visible': { backgroundColor: sem('bg-page'), borderColor: sem('border-default') },
-                '&:hover .edit-mark, &:focus-visible .edit-mark': { opacity: 1 },
-              }}
-            >
-              <span className="edit-mark absolute right-3 top-3 flex" aria-hidden style={{ color: sem('text-secondary') }}>
-                <Pencil size={16} strokeWidth={1.5} />
-              </span>
-              <RichTextView html={content} />
-            </Box>
-          </Tooltip>
+            <span className="edit-mark absolute right-3 top-3 flex" aria-hidden style={{ color: sem('text-secondary') }}>
+              <Pencil size={16} strokeWidth={1.5} />
+            </span>
+            <RichTextView html={content} />
+          </Box>
         ) : (
           <RichTextView html={content} />
         )
@@ -122,7 +115,7 @@ export function IntroductionTab({ space }: { space: Space }) {
             border: `1px dashed ${sem('border-strong')}`,
             borderRadius: `${radius.card}px`,
             cursor: 'text',
-            '&:hover': { backgroundColor: sem('bg-page') },
+            '&:hover': hoverPane,
           }}
         >
           <Typography variant="h3" component="span">{t('overview.writeIntroduction')}</Typography>

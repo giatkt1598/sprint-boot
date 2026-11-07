@@ -34,7 +34,7 @@ import { NotFoundPage } from '../../pages/NotFoundPage';
 import { useRecordVisit } from './RecentsMenu';
 import { hasSelectedText } from '../../lib/selection';
 import { formatDateTime, formatRelative, formatSize } from '../../lib/format';
-import { font, radius, sem } from '../../theme/tokens';
+import { font, hoverPane, radius, sem } from '../../theme/tokens';
 import { useMembers, useSpace } from '../spaces/api';
 import { IssueActivityPanel } from './IssueActivityPanel';
 import { QuickAssignee, QuickStatus, QuickTitle, TitleEditor } from './QuickFields';
@@ -289,7 +289,7 @@ function IssueView({ issue, compact, panelHeader }: { issue: Issue; compact?: bo
                 sx={{
                   padding: 1,
                   borderRadius: `${radius.control}px`,
-                  '&:hover': { backgroundColor: 'var(--sb-hover-bg)', backgroundImage: 'var(--sb-surface-sheen)', boxShadow: 'var(--sb-surface-edge)' },
+                  '&:hover': hoverPane,
                 }}
               >
                 <RichTextView html={issue.description} />

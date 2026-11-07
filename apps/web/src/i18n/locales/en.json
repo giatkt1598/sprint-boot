@@ -1519,7 +1519,6 @@
       "logged": "logged {{time}} on"
     },
     "introduction": "Introduction",
-    "clickToEdit": "Click to edit",
     "editIntroduction": "Edit the introduction",
     "writeIntroduction": "Introduce this space",
     "writeIntroductionHint": "Say what the team works on, its goals and how it works. Click to start writing.",
