@@ -22,6 +22,11 @@ export function closeOpenMarkdown(text: string): string {
   }
 
   let closed = lines.join('\n');
+  // A link still being written would flash as brackets and then turn into a link: hold it back until it closes.
+  const openLink = /\[[^\]\n]*(\]\([^)\s]*)?$/.exec(closed);
+  if (openLink && !/\]\([^)\s]*\)$/.test(openLink[0])) {
+    closed = closed.slice(0, openLink.index);
+  }
   // Inline marks only span the current paragraph.
   const paragraph = closed.slice(closed.lastIndexOf('\n\n') + 1);
   const count = (mark: string) => paragraph.split(mark).length - 1;
@@ -45,7 +50,41 @@ export function renderStreamingMarkdown(text: string): string {
   }
   const html = marked.parse(closeOpenMarkdown(text), { gfm: true, breaks: true, async: false });
   // Model output: never trusted as HTML.
-  return DOMPurify.sanitize(html);
+  const root = DOMPurify.sanitize(html, { RETURN_DOM_FRAGMENT: true });
+  removeLayoutWhitespace(root);
+  const holder = document.createElement('div');
+  holder.append(root);
+  return holder.innerHTML;
+}
+
+/** Elements whose whitespace-only text is markup layout, not content. */
+const LAYOUT_PARENTS = new Set(['UL', 'OL', 'TABLE', 'THEAD', 'TBODY', 'TFOOT', 'TR', 'BLOCKQUOTE', 'DIV']);
+
+/**
+ * The newlines marked leaves between and inside blocks. `.rich-text` keeps white space as written, so each would show as
+ * an empty line that the server's rendering (RichTextMarkdown.RemoveLayoutWhitespace) does not have.
+ */
+function removeLayoutWhitespace(root: DocumentFragment) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const texts: Text[] = [];
+  while (walker.nextNode()) {
+    texts.push(walker.currentNode as Text);
+  }
+  for (const text of texts) {
+    const parent = text.parentNode;
+    if (!text.data.trim() && (parent === root || (parent instanceof Element && LAYOUT_PARENTS.has(parent.tagName)))) {
+      text.remove();
+      continue;
+    }
+    if (text.previousSibling instanceof Element && text.previousSibling.tagName === 'BR') {
+      text.data = text.data.replace(/^\n+/, '');
+    }
+    const next = text.nextSibling;
+    const lastInBlock = next === null || (next instanceof Element && (next.tagName === 'UL' || next.tagName === 'OL'));
+    if (parent instanceof Element && ['LI', 'P', 'TD', 'TH', 'CODE'].includes(parent.tagName) && lastInBlock) {
+      text.data = text.data.replace(/\n+$/, '');
+    }
+  }
 }
 
 /** Where the word that starts at or after `from` ends, or -1 when the text runs out first. */

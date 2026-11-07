@@ -14,6 +14,12 @@ describe('closeOpenMarkdown', () => {
     expect(closeOpenMarkdown('**Done** already')).toBe('**Done** already');
   });
 
+  it('holds back a link until it closes', () => {
+    expect(closeOpenMarkdown('See [SB-1](/issues/SB')).toBe('See ');
+    expect(closeOpenMarkdown('See [SB-1')).toBe('See ');
+    expect(closeOpenMarkdown('See [SB-1](/issues/SB-1)')).toBe('See [SB-1](/issues/SB-1)');
+  });
+
   it('holds back a table row still being written', () => {
     expect(closeOpenMarkdown('| Key | Title |\n| --- | --- |\n| SB-1 | Pay')).toBe('| Key | Title |\n| --- | --- |');
   });
@@ -24,6 +30,13 @@ describe('renderStreamingMarkdown', () => {
     const html = renderStreamingMarkdown('**Bold**\nnext\n\n| A |\n| - |\n| 1 |');
     expect(html).toContain('<strong>Bold</strong><br>');
     expect(html).toContain('<table>');
+  });
+
+  it('leaves no layout newlines that would show as empty lines', () => {
+    const html = renderStreamingMarkdown('Intro\nsecond line\n\n- a\n- b\n\n| A |\n| - |\n| 1 |\n\n```\ncode\n```\n\nEnd');
+    expect(html).toBe(
+      '<p>Intro<br>second line</p><ul><li>a</li><li>b</li></ul><table><thead><tr><th>A</th></tr></thead><tbody><tr><td>1</td></tr></tbody></table><pre><code>code</code></pre><p>End</p>',
+    );
   });
 
   it('strips scripts and event handlers from model output', () => {
