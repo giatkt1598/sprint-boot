@@ -363,7 +363,9 @@
       "fontFamily": "Font",
       "font": {
         "poppins": "SVN-Poppins",
-        "system": "System font"
+        "system": "System font",
+        "lora": "Lora headings, SVN-Poppins text",
+        "oswald": "Oswald headings, SVN-Poppins text"
       },
       "fontScale": "Text size",
       "background": "Background image",

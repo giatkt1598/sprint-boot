@@ -1,8 +1,10 @@
 import { useSyncExternalStore } from 'react';
 import { DEFAULT_THEME, isThemeId, themeById, type ThemeId } from './themes';
+import { FONT_CHOICES, type FontChoice } from './fonts';
 import type { Accent } from './tokens';
 
-export type FontChoice = 'poppins' | 'system';
+export type { FontChoice } from './fonts';
+
 export type MotionChoice = 'full' | 'reduced' | 'off';
 
 /** What the person chose, plus the image they uploaded. Kept in localStorage too, so the first paint already matches. */
@@ -48,7 +50,7 @@ export function normalizeAppearance(stored: Record<string, unknown> | null | und
   return {
     theme,
     accent: pick<Accent>('accent', ['blue', 'green', 'violet']),
-    fontFamily: pick<FontChoice>('fontFamily', ['poppins', 'system']),
+    fontFamily: pick<FontChoice>('fontFamily', FONT_CHOICES),
     fontScale: pick<number>('fontScale', FONT_SCALES),
     backgroundOpacity: typeof value.backgroundOpacity === 'number' ? value.backgroundOpacity : defaultAppearance.backgroundOpacity,
     backgroundUrl: typeof value.backgroundUrl === 'string' ? value.backgroundUrl : null,

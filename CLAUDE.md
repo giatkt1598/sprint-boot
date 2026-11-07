@@ -19,5 +19,5 @@ Self-hosted, Jira-style work management app. Requirements, plans and tasks live 
 - Colors and typography come from the MUI theme. Tailwind is for layout and spacing only.
 - Tokens live in `apps/web/src/theme/tokens.ts`, values come from Penpot. Minimum line-height is 1.4.
 - Themes live in `apps/web/src/theme/themes`, one definition each; components read semantic tokens and never branch on a theme. Dark is a theme, not a mode.
-- The font is SVN-Poppins, never mixed with stock Poppins. A theme may set a heading font (self-hosted, OFL, with Vietnamese glyphs); body text stays SVN-Poppins. Icons are Lucide with a 1.5px stroke.
+- The font is SVN-Poppins, never mixed with stock Poppins. A theme may suggest a heading font (self-hosted, OFL, with Vietnamese glyphs), which people can change in Preferences; body text stays SVN-Poppins. Icons are Lucide with a 1.5px stroke.
 - All UI strings live in the `en` and `vi` locale files.

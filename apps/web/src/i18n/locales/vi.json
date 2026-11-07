@@ -363,7 +363,9 @@
       "fontFamily": "Phông chữ",
       "font": {
         "poppins": "SVN-Poppins",
-        "system": "Phông chữ hệ thống"
+        "system": "Phông chữ hệ thống",
+        "lora": "Tiêu đề Lora, nội dung SVN-Poppins",
+        "oswald": "Tiêu đề Oswald, nội dung SVN-Poppins"
       },
       "fontScale": "Cỡ chữ",
       "background": "Hình nền",

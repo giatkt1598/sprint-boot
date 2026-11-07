@@ -1,4 +1,5 @@
 import { createTheme } from '@mui/material/styles';
+import { FONT_CHOICES, FONT_FAMILIES } from './fonts';
 import { THEMES, themeById, type ThemeDefinition } from './themes';
 import { font, motion, radius, sem, size, type Accent, type SemanticToken } from './tokens';
 
@@ -6,8 +7,6 @@ const focusRing = {
   outline: `2px solid ${sem('border-focus')}`,
   outlineOffset: 2,
 };
-
-const SYSTEM_FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
 const variables = (tokens: Record<string, string>) => Object.fromEntries(Object.entries(tokens).map(([token, value]) => [`--sb-${token}`, value]));
 
@@ -17,7 +16,7 @@ export const themeColors = (theme: ThemeDefinition, accent: Accent): Record<Sema
   ...theme.accents?.[accent],
 });
 
-/** What a theme sets besides colours: shadows, the page behind the app, the content area, surfaces and headings. */
+/** What a theme sets besides colours: shadows, the page behind the app, the content area and its surfaces. */
 const themeVariables = (theme: ThemeDefinition) => ({
   colorScheme: theme.base,
   ...variables(theme.tokens),
@@ -31,22 +30,25 @@ const themeVariables = (theme: ThemeDefinition) => ({
   '--sb-overlay-bg': theme.surfaces?.overlay ?? 'var(--sb-bg-surface)',
   '--sb-panel-bg': theme.surfaces?.panel ?? 'transparent',
   '--sb-board-card-shadow': theme.surfaces?.cardShadow ?? 'none',
-  '--sb-heading-font': theme.headingFont ?? 'var(--sb-font-family)',
 });
 
 /**
  * The variables the whole app reads. Attributes the preferences set on <html> pick the theme (data-app-theme), the
- * accent (data-accent) and the font (data-font), so a change never rebuilds a component. Every theme block also
+ * accent (data-accent) and the font (data-font), so a change never rebuilds a component. The font is the person's
+ * choice, not the theme's, so it lives outside the theme blocks. Every theme block also
  * matches any element carrying the attribute, so a gallery card can show a theme other than the one in use.
  */
 export const cssVariables = () => {
   const blocks: Record<string, Record<string, string>> = {
     ':root': {
-      '--sb-font-family': '"SVN-Poppins", sans-serif',
+      '--sb-font-family': FONT_FAMILIES.poppins.body,
+      '--sb-heading-font': FONT_FAMILIES.poppins.heading,
       ...themeVariables(themeById('classic')),
     },
-    ':root[data-font="system"]': { '--sb-font-family': SYSTEM_FONT },
   };
+  for (const choice of FONT_CHOICES.filter((choice) => choice !== 'poppins')) {
+    blocks[`:root[data-font="${choice}"]`] = { '--sb-font-family': FONT_FAMILIES[choice].body, '--sb-heading-font': FONT_FAMILIES[choice].heading };
+  }
   for (const theme of THEMES) {
     blocks[`:root[data-app-theme="${theme.id}"], [data-app-theme="${theme.id}"]`] = themeVariables(theme);
   }

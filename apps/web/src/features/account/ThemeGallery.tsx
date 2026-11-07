@@ -3,6 +3,7 @@ import { Check } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs } from '../../components/Tabs';
+import { FONT_FAMILIES } from '../../theme/fonts';
 import { THEME_CATEGORIES, THEMES, type ThemeCategory, type ThemeDefinition, type ThemeId } from '../../theme/themes';
 import { font, radius, sem, shadow, type Accent } from '../../theme/tokens';
 
@@ -63,7 +64,7 @@ function ThemeCard({ theme, accent, selected, onSelect }: { theme: ThemeDefiniti
           className="absolute left-2 top-2 max-w-[calc(100%-48px)] truncate px-2 py-0.5"
           style={{
             zIndex: 1,
-            fontFamily: 'var(--sb-heading-font)',
+            fontFamily: FONT_FAMILIES[theme.font ?? 'poppins'].heading,
             fontSize: font.size.xs,
             fontWeight: font.weight.semibold,
             color: sem('text-primary'),
@@ -118,7 +119,7 @@ function Miniature({ theme, accent, children }: { theme: ThemeDefinition; accent
           <span style={line('bg-subtle', '70%')} />
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-1.5 p-2" style={{ background: 'var(--sb-content-bg)' }}>
-          <span style={{ ...line('text-primary', '45%', 5), fontFamily: 'var(--sb-heading-font)' }} />
+          <span style={line('text-primary', '45%', 5)} />
           <span className="flex flex-col gap-1 p-1.5" style={{ backgroundColor: 'var(--sb-card-bg)', boxShadow: shadow.card, borderRadius: 4, border: `1px solid ${sem('border-default')}` }}>
             <span style={line('text-secondary', '75%', 3)} />
             <span className="flex gap-1">

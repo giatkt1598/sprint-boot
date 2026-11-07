@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import indexHtml from '../../index.html?raw';
 import en from '../i18n/locales/en.json';
 import { normalizeAppearance } from './appearance';
+import { FONT_CHOICES } from './fonts';
 import { cssVariables } from './theme';
 import { THEMES, themeById, type ThemeDefinition } from './themes';
 
@@ -41,6 +42,17 @@ describe('themes', () => {
     }
   });
 
+  it('suggest a font people can pick, and leave the font to the person', () => {
+    const blocks = cssVariables();
+    for (const theme of THEMES as readonly ThemeDefinition[]) {
+      expect(FONT_CHOICES, theme.id).toContain(theme.font ?? 'poppins');
+      expect(blocks[`:root[data-app-theme="${theme.id}"], [data-app-theme="${theme.id}"]`], theme.id).not.toHaveProperty('--sb-heading-font');
+    }
+    for (const choice of FONT_CHOICES.filter((choice) => choice !== 'poppins')) {
+      expect(blocks[`:root[data-font="${choice}"]`]).toHaveProperty('--sb-heading-font');
+    }
+  });
+
   it('fall back to Classic for an id nobody knows', () => {
     expect(themeById('retired').id).toBe('classic');
   });
@@ -56,5 +68,7 @@ describe('saved appearance', () => {
     expect(normalizeAppearance({ theme: 'minimal', colorMode: 'dark' }).theme).toBe('minimal');
     expect(normalizeAppearance({ theme: 'retired', fontScale: 105, motion: 'wild' })).toMatchObject({ theme: 'classic', fontScale: 100, motion: 'full' });
     expect(normalizeAppearance(null)).not.toHaveProperty('colorMode');
+    expect(normalizeAppearance({ theme: 'classic', fontFamily: 'oswald' }).fontFamily).toBe('oswald');
+    expect(normalizeAppearance({ fontFamily: 'comic' }).fontFamily).toBe('poppins');
   });
 });

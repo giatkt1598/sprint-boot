@@ -124,11 +124,11 @@ public class AuthTests(ApiFixture fixture)
         me.Preferences.Motion.ShouldBe("full");
         me.BackgroundUrl.ShouldBeNull();
 
-        var saved = await client.Http.PutAsJsonAsync("/api/v1/auth/preferences", new { theme = "minimal", accent = "green", fontFamily = "system", fontScale = 110, backgroundOpacity = 45, motion = "reduced" }, Token);
+        var saved = await client.Http.PutAsJsonAsync("/api/v1/auth/preferences", new { theme = "minimal", accent = "green", fontFamily = "oswald", fontScale = 110, backgroundOpacity = 45, motion = "reduced" }, Token);
         saved.StatusCode.ShouldBe(HttpStatusCode.OK, await saved.Content.ReadAsStringAsync(Token));
         var preferences = (await client.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!.Preferences;
         (preferences.Theme, preferences.Accent, preferences.FontFamily, preferences.FontScale, preferences.BackgroundOpacity, preferences.Motion)
-            .ShouldBe(("minimal", "green", "system", 110, 45, "reduced"));
+            .ShouldBe(("minimal", "green", "oswald", 110, 45, "reduced"));
 
         // Only the offered values are kept.
         foreach (var body in new object[]

@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import type { FontChoice } from '../fonts';
 import type { Accent, AccentTokens, ColorMode, SemanticToken, ShadowSet } from '../tokens';
 
 export type ThemeCategory = 'basic' | 'gradient' | 'element' | 'culture';
@@ -34,7 +35,7 @@ export interface SurfaceSet {
 
 /**
  * Everything a theme changes. Components keep reading the semantic tokens, so a theme reaches every screen without
- * touching it; the optional parts add what colours alone cannot: a page backdrop, frosted surfaces, a heading font,
+ * touching it; the optional parts add what colours alone cannot: a page backdrop, frosted surfaces, a suggested font,
  * an animated layer behind the app and its own pictures.
  */
 export interface ThemeDefinition<Id extends string = string> {
@@ -53,8 +54,8 @@ export interface ThemeDefinition<Id extends string = string> {
   /** backdrop-filter of surfaces (papers, sidebar, top bar), such as a blur for frosted glass. */
   surfaceFilter?: string;
   surfaces?: Partial<SurfaceSet>;
-  /** font-family for headings. Body text stays SVN-Poppins. The font must carry Vietnamese glyphs. */
-  headingFont?: string;
+  /** The font the theme suggests: choosing the theme picks it, and the person may choose another. Defaults to SVN-Poppins. */
+  font?: FontChoice;
   /** Marks the theme as a gradient one in the gallery. */
   gradient?: boolean;
   /** The animated layer behind the app, loaded only while the theme is in use. */

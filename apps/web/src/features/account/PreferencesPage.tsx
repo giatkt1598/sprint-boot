@@ -11,6 +11,7 @@ import { SelectField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { FONT_SCALES, MOTIONS, setAppearance, useAppearance, type Appearance } from '../../theme/appearance';
+import { FONT_CHOICES } from '../../theme/fonts';
 import { themeById } from '../../theme/themes';
 import { font, radius, sem } from '../../theme/tokens';
 import { ThemeGallery } from './ThemeGallery';
@@ -18,7 +19,6 @@ import { ThemeGallery } from './ThemeGallery';
 type Preferences = components['schemas']['PreferencesDto'];
 
 const ACCENTS = ['blue', 'green', 'violet'] as const;
-const FONTS = ['poppins', 'system'] as const;
 const MIN_OPACITY = 10;
 const OPACITY_STEP = 5;
 
@@ -96,7 +96,7 @@ export function PreferencesPage() {
           <Typography id="theme-heading" variant="h3" component="h2">{t('account.preferences.theme')}</Typography>
           <Typography variant="caption" color="textSecondary">{t('account.preferences.themeHint')}</Typography>
         </div>
-        <ThemeGallery value={appearance.theme} accent={appearance.accent} onChange={(theme) => change({ theme })} />
+        <ThemeGallery value={appearance.theme} accent={appearance.accent} onChange={(theme) => change({ theme, fontFamily: themeById(theme).font ?? 'poppins' })} />
       </section>
 
       <div className="flex max-w-md flex-col gap-4">
@@ -118,7 +118,7 @@ export function PreferencesPage() {
           label={t('account.preferences.fontFamily')}
           value={appearance.fontFamily}
           onChange={(event) => change({ fontFamily: event.target.value as Preferences['fontFamily'] })}
-          options={FONTS.map((value) => ({ value, label: t(`account.preferences.font.${value}`) }))}
+          options={FONT_CHOICES.map((value) => ({ value, label: t(`account.preferences.font.${value}`) }))}
         />
         <SelectField
           label={t('account.preferences.fontScale')}

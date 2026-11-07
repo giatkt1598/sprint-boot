@@ -1,5 +1,3 @@
-import '@fontsource/lora/600.css';
-import '@fontsource/oswald/600.css';
 import { semanticDark, semanticLight, shadowValues } from '../tokens';
 import fire404 from './art/fire-404.svg';
 import fire500 from './art/fire-500.svg';
@@ -107,7 +105,7 @@ export const wood = {
     panel: alpha('#FFFBF3', 0.94),
     cardShadow: woodCard,
   },
-  headingFont: '"Lora", "SVN-Poppins", serif',
+  font: 'lora',
   decor: () => import('./decor/wood'),
   illustrations: { notFound: picture(wood404), error: picture(wood500), empty: picture(woodEmpty, 160, 100) },
 } satisfies ThemeDefinition<'wood'>;
@@ -200,7 +198,7 @@ export const fire = {
     overlay: alpha('#1C1210', 0.98),
     cardShadow: fireCard,
   },
-  headingFont: '"Oswald", "SVN-Poppins", sans-serif',
+  font: 'oswald',
   decor: () => import('./decor/fire'),
   illustrations: { notFound: picture(fire404), error: picture(fire500), empty: picture(fireEmpty, 160, 100) },
 } satisfies ThemeDefinition<'fire'>;

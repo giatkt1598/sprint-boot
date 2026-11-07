@@ -93,7 +93,7 @@ public class PreferencesDto
     [RegularExpression("^(blue|green|violet)$")]
     public string Accent { get; set; } = "blue";
 
-    [RegularExpression("^(poppins|system)$")]
+    [RegularExpression("^(poppins|system|lora|oswald)$")]
     public string FontFamily { get; set; } = "poppins";
 
     /// <summary>Percent of the normal text size: 90, 100, 110 or 125.</summary>
