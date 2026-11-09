@@ -12,8 +12,9 @@ namespace SprintBoot.Agile;
 
 /// <summary>Gathers the Summary tab from issues, sprints, members and pull requests, each read through its owner.</summary>
 /// <remarks>
-/// For a sprint period the figures count the issues planned in those sprints, with their subtasks; epics are never in a
-/// sprint. For a calendar period they count the issues created or updated in it.
+/// For a sprint period the figures count the issues of those sprints, as the Board and Backlog show them: the ones still
+/// in a running sprint and the ones a closed sprint ended with. Subtasks and epics are not sprint issues, so they do not
+/// count. For a calendar period the figures count the issues created or updated in it.
 /// </remarks>
 [Authorize]
 public class ProjectOverviewAppService(
@@ -43,12 +44,19 @@ public class ProjectOverviewAppService(
         var to = range.To.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
         bool InRange(DateTime? at) => at >= from && at < to;
 
-        var issues = periodSprints.Count > 0
-            ? await InSprintsAsync(all, periodSprints)
-            : [.. all.Where(issue => InRange(issue.CreatedAt) || InRange(issue.UpdatedAt))];
-        var completed = issues.Where(issue => InRange(issue.CompletedAt)).ToList();
+        var bySprint = periodSprints.Count > 0;
+        var sprintWork = bySprint ? await SprintWorkAsync(periodSprints, boardSprints) : null;
+        List<IssueOverviewRow> issues = sprintWork is not null
+            ? [.. all.Where(issue => sprintWork.Planned.Contains(issue.Id))]
+            : all.Where(issue => InRange(issue.CreatedAt) || InRange(issue.UpdatedAt)).ToList();
+        // Done in the sprint counts whenever it happened, even after the planned end; by date, done in the period.
+        var completed = sprintWork is not null
+            ? issues.Where(sprintWork.IsDone).ToList()
+            : issues.Where(issue => InRange(issue.CompletedAt)).ToList();
 
-        var (velocity, velocitySprints) = await VelocityAsync(all, boardSprints);
+        var (velocity, velocitySprints) = sprintWork is not null
+            ? (VelocityOf(issues.Where(sprintWork.IsDone)), periodSprints.Count)
+            : (VelocityOf(all.Where(issue => issue.Category == StatusCategory.Done && InRange(issue.CompletedAt))), 0);
         var events = await issueFacts.GetRecentEventsAsync(projectId, RecentCount);
         var people = await userDirectory.GetByIdsAsync([.. velocity.Select(item => item.UserId), .. events.Select(item => item.ActorId)]);
         var pulls = await gitFacts.GetPullRequestCountsAsync(projectId);
@@ -83,7 +91,7 @@ public class ProjectOverviewAppService(
                 Completed = completed.Count,
                 LastCreatedAt = issues.Count == 0 ? null : issues.Max(issue => issue.CreatedAt),
                 LastUpdatedAt = issues.Count == 0 ? null : issues.Max(issue => issue.UpdatedAt),
-                LastCompletedAt = issues.Max(issue => issue.CompletedAt),
+                LastCompletedAt = completed.Max(issue => issue.CompletedAt),
             },
             PullRequests = new OverviewPullRequestsDto { Total = pulls.Total, Open = pulls.Open, Merged = pulls.Merged },
             Velocity = [.. velocity
@@ -149,48 +157,33 @@ public class ProjectOverviewAppService(
         }
     }
 
-    /// <summary>Issues planned in the sprints, still there or finished there, and the subtasks under them.</summary>
-    private async Task<List<IssueOverviewRow>> InSprintsAsync(List<IssueOverviewRow> all, List<Guid> sprintIds)
+    /// <summary>The issues of the sprints and which of them count as done there.</summary>
+    private sealed record SprintWork(HashSet<Guid> Planned, HashSet<Guid> Finished, HashSet<Guid> Running)
     {
-        var planned = (await sprintIssues.GetListAsync(row => sprintIds.Contains(row.SprintId) && (row.RemovedAt == null || row.Outcome != SprintOutcome.Open)))
-            .Select(row => row.IssueId)
-            .ToHashSet();
-        return [.. all.Where(issue => planned.Contains(issue.Id) || (issue.ParentId is { } parent && planned.Contains(parent) && issue.Hierarchy == IssueHierarchy.Subtask))];
+        /// <summary>A closed sprint counts what it completed; a running one counts what is done so far.</summary>
+        public bool IsDone(IssueOverviewRow issue) => Finished.Contains(issue.Id) || (Running.Contains(issue.Id) && issue.Category == StatusCategory.Done);
     }
 
     /// <summary>
-    /// Finished work per assignee over the last sprints. A closed sprint counts what it completed; the running one counts
-    /// what is done so far, so its velocity grows as the sprint goes.
+    /// Issues still in a running sprint, and the ones a closed sprint ended with, completed or not. An issue moved out of
+    /// a sprint before it ended is no longer one of its issues.
     /// </summary>
-    private async Task<(List<(Guid UserId, decimal Points, int Issues)> Rows, int Sprints)> VelocityAsync(List<IssueOverviewRow> issues, List<Sprint> boardSprints)
+    private async Task<SprintWork> SprintWorkAsync(List<Guid> sprintIds, List<Sprint> boardSprints)
     {
-        var recent = boardSprints
-            .Where(sprint => sprint.State is SprintState.Closed or SprintState.Active)
-            .OrderByDescending(sprint => sprint.StartDate ?? DateOnly.MinValue)
-            .ThenByDescending(sprint => sprint.CompletedAt)
-            .Take(SprintCount)
-            .ToList();
-        if (recent.Count == 0)
-        {
-            return ([], 0);
-        }
+        var closed = boardSprints.Where(sprint => sprintIds.Contains(sprint.Id) && sprint.State == SprintState.Closed).Select(sprint => sprint.Id).ToHashSet();
+        var rows = await sprintIssues.GetListAsync(row => sprintIds.Contains(row.SprintId) && (row.RemovedAt == null || row.Outcome != SprintOutcome.Open));
+        return new SprintWork(
+            [.. rows.Select(row => row.IssueId)],
+            [.. rows.Where(row => closed.Contains(row.SprintId) && row.Outcome == SprintOutcome.Completed).Select(row => row.IssueId)],
+            [.. rows.Where(row => !closed.Contains(row.SprintId) && row.RemovedAt == null).Select(row => row.IssueId)]);
+    }
 
-        var closedIds = recent.Where(sprint => sprint.State == SprintState.Closed).Select(sprint => sprint.Id).ToList();
-        var activeIds = recent.Where(sprint => sprint.State == SprintState.Active).Select(sprint => sprint.Id).ToList();
-        var finished = (await sprintIssues.GetListAsync(row => closedIds.Contains(row.SprintId) && row.Outcome == SprintOutcome.Completed))
-            .Select(row => row.IssueId)
-            .ToHashSet();
-        var running = (await sprintIssues.GetListAsync(row => activeIds.Contains(row.SprintId) && row.RemovedAt == null))
-            .Select(row => row.IssueId)
-            .ToHashSet();
-
-        var rows = issues
-            .Where(issue => issue.AssigneeId is not null && (finished.Contains(issue.Id) || (running.Contains(issue.Id) && issue.Category == StatusCategory.Done)))
+    /// <summary>Finished work per assignee: story points and issue count, most points first.</summary>
+    private static List<(Guid UserId, decimal Points, int Issues)> VelocityOf(IEnumerable<IssueOverviewRow> done) =>
+        [.. done
+            .Where(issue => issue.AssigneeId is not null)
             .GroupBy(issue => issue.AssigneeId!.Value)
             .Select(group => (group.Key, group.Sum(issue => issue.StoryPoints ?? 0), group.Count()))
             .OrderByDescending(item => item.Item2)
-            .ThenByDescending(item => item.Item3)
-            .ToList();
-        return (rows, recent.Count);
-    }
+            .ThenByDescending(item => item.Item3)];
 }

@@ -81,12 +81,12 @@ public class OverviewTests(ApiFixture fixture)
         running.Members.ShouldBe(1);
         running.MembersAddedInPeriod.ShouldBe(1);
 
-        // Only the sprint's issues and their subtasks count: the bug and the epic outside it do not.
-        running.Issues.Total.ShouldBe(3);
-        running.Issues.CreatedInPeriod.ShouldBe(3);
+        // Only the sprint's issues count, as the Board shows them: not its subtasks, nor the bug and the epic outside it.
+        running.Issues.Total.ShouldBe(2);
+        running.Issues.CreatedInPeriod.ShouldBe(2);
         running.Issues.Done.ShouldBe(1);
-        running.Issues.ToDo.ShouldBe(2);
-        running.ByType.Select(item => (item.Name, item.Count)).ShouldBe([("Task", 2), ("Subtask", 1)]);
+        running.Issues.ToDo.ShouldBe(1);
+        running.ByType.Select(item => (item.Name, item.Count)).ShouldBe([("Task", 2)]);
         running.Activity.Completed.ShouldBe(1);
         running.Activity.LastCompletedAt.ShouldNotBeNull();
         running.PullRequests.Total.ShouldBe(0);
@@ -107,11 +107,70 @@ public class OverviewTests(ApiFixture fixture)
         closed.Range.SprintName.ShouldBeNull();
         closed.Range.BySprint.ShouldBeFalse();
         closed.Issues.Total.ShouldBe(5);
-        closed.VelocitySprints.ShouldBe(1);
+        // A calendar period counts the work done in its dates, not the last sprints.
+        closed.VelocitySprints.ShouldBe(0);
         var velocity = closed.Velocity.ShouldHaveSingleItem();
         velocity.User.Id.ShouldBe(owner.UserId);
         velocity.Points.ShouldBe(5);
         velocity.Issues.ShouldBe(1);
+    }
+
+    private static async Task<SprintSummaryDto> SprintAsync(AuthClient client, ProjectDto project, string name, params IssueDto[] issues)
+    {
+        var response = await client.Http.PostAsJsonAsync("/api/v1/sprint", new { projectId = project.Id, name }, Token);
+        var sprint = (await response.Content.ReadFromJsonAsync<SprintSummaryDto>(Token))!;
+        foreach (var issue in issues)
+        {
+            (await client.Http.PostAsJsonAsync($"/api/v1/sprint/move-issue/{issue.Id}", new { sprintId = sprint.Id }, Token)).EnsureSuccessStatusCode();
+        }
+
+        return sprint;
+    }
+
+    private static async Task StartAsync(AuthClient client, SprintSummaryDto sprint, int startDaysAgo, int endInDays)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var response = await client.Http.PostAsJsonAsync(
+            $"/api/v1/sprint/{sprint.Id}/start",
+            new { name = sprint.Name, startDate = today.AddDays(-startDaysAgo).ToString("yyyy-MM-dd"), endDate = today.AddDays(endInDays).ToString("yyyy-MM-dd") },
+            Token);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, await response.Content.ReadAsStringAsync(Token));
+    }
+
+    [Fact]
+    public async Task Sprint_figures_follow_what_is_in_the_sprint_not_its_dates()
+    {
+        var owner = await fixture.CreateUserClientAsync(Token);
+        var project = await CreateProjectAsync(owner);
+        var earlier = await CreateIssueAsync(owner, project, "Task", owner.UserId, 5);
+        var first = await SprintAsync(owner, project, "Sprint 1", earlier);
+        await StartAsync(owner, first, 20, -10);
+        await FinishAsync(owner, earlier);
+        (await owner.Http.PostAsJsonAsync($"/api/v1/sprint/{first.Id}/complete", new { toBacklog = true }, Token)).EnsureSuccessStatusCode();
+
+        var late = await CreateIssueAsync(owner, project, "Task", owner.UserId, 3);
+        var movedOut = await CreateIssueAsync(owner, project, "Bug", owner.UserId, 8);
+        var second = await SprintAsync(owner, project, "Sprint 2", late, movedOut);
+        // The planned end has passed, but the sprint still runs.
+        await StartAsync(owner, second, 9, -2);
+        (await owner.Http.PostAsJsonAsync($"/api/v1/sprint/move-issue/{movedOut.Id}", new { sprintId = (Guid?)null }, Token)).EnsureSuccessStatusCode();
+        await FinishAsync(owner, late);
+
+        var current = await SummaryAsync(owner, project);
+        current.Range.SprintName.ShouldBe("Sprint 2");
+        // The issue moved back to the backlog no longer counts; the one done after the planned end does.
+        current.Issues.Total.ShouldBe(1);
+        current.Issues.Done.ShouldBe(1);
+        current.Activity.Completed.ShouldBe(1);
+        // Velocity is the running sprint's alone, not the closed sprint's before it.
+        current.VelocitySprints.ShouldBe(1);
+        current.Velocity.ShouldHaveSingleItem().Points.ShouldBe(3);
+
+        var lastSprints = await SummaryAsync(owner, project, OverviewPeriod.LastThreeSprints);
+        lastSprints.Issues.Total.ShouldBe(2);
+        lastSprints.Activity.Completed.ShouldBe(2);
+        lastSprints.VelocitySprints.ShouldBe(2);
+        lastSprints.Velocity.ShouldHaveSingleItem().Points.ShouldBe(8);
     }
 
     [Fact]

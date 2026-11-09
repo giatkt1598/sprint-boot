@@ -139,8 +139,10 @@ public class OverviewSummaryDto
     public required OverviewPullRequestsDto PullRequests { get; set; }
 
     /// <summary>Finished work per assignee over the last three sprints, the running one included at its progress so far, most first.</summary>
+    /// <summary>Finished work per assignee in the period: in its sprints for a sprint period, done in its dates otherwise.</summary>
     public required List<OverviewVelocityDto> Velocity { get; set; }
 
+    /// <summary>How many sprints the velocity covers; 0 for a calendar period.</summary>
     public required int VelocitySprints { get; set; }
 
     public required List<OverviewEventDto> Recent { get; set; }

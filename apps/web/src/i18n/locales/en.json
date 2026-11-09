@@ -1506,6 +1506,7 @@
     "velocity": "Velocity by member",
     "velocityMeta_one": "Story points, latest sprint",
     "velocityMeta_other": "Story points, last {{count}} sprints",
+    "velocityMetaPeriod": "Story points, {{period}}",
     "points_one": "{{count}} pt",
     "points_other": "{{count}} pts",
     "noVelocity": "Velocity shows once work is done in a sprint.",
@@ -1561,7 +1562,7 @@
       "sprints": "Sprints",
       "calendar": "Calendar"
     },
-    "membersAdded": "+{{count}} {{period}}",
+    "membersAdded": "+{{count}} joined {{period}}",
     "inStatus": "{{count}} {{status}}",
     "ago": {
       "now": "Just now",

@@ -61,6 +61,9 @@ export function SummaryTab({ space }: { space: Space }) {
   const inPeriod = sprintName ? t('overview.inSprint', { name: sprintName }) : t(`overview.inPeriod.${period}`);
   // Card headers name the period briefly: the sprint itself when one is running.
   const periodTag = sprintName ?? t(`overview.period.${period}`);
+  // Velocity follows the period: the running sprint by name, the last sprints by count, or the dates.
+  const velocitySprints = summary.data?.velocitySprints ?? 0;
+  const velocityMeta = sprintName || velocitySprints === 0 ? t('overview.velocityMetaPeriod', { period: periodTag }) : t('overview.velocityMeta', { count: velocitySprints });
 
   // Every type of the space shows, in a fixed order, so a zero reads as zero rather than as missing.
   const counted = summary.data?.byType ?? [];
@@ -140,7 +143,7 @@ export function SummaryTab({ space }: { space: Space }) {
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <Card title={t('overview.velocity')} meta={t('overview.velocityMeta', { count: summary.data.velocitySprints })}>
+            <Card title={t('overview.velocity')} meta={velocityMeta}>
               {velocity.length === 0 ? <EmptyState title={t('overview.noVelocity')} /> : (
                 <div className="flex flex-col gap-3">
                   {velocity.map((item) => (
