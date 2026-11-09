@@ -34,5 +34,7 @@ describe('themed icons', () => {
         unmount();
       }
     },
+    // The first import of a whole icon library is slow while the other test files run beside it.
+    60_000,
   );
 });

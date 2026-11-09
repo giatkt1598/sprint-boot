@@ -35,7 +35,7 @@ import { useToast } from '../../components/ToastHost';
 import { swallowClickAfterDrag } from '../../lib/drag';
 import { useErrorMessage } from '../../lib/errors';
 import { font, radius, sem, shadow } from '../../theme/tokens';
-import { FilterChips, FilterControls, useIssueFilters } from '../issues/IssueFilters';
+import { FilterChips, FilterControls, useIssueFilters, useSearchText } from '../issues/IssueFilters';
 import { TransitionDialog, type Available } from '../issues/TransitionControl';
 import { priorityLevel } from '../issues/api';
 import { SpacePermission, useSpace } from '../spaces/api';
@@ -186,7 +186,7 @@ export function BoardPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
   const filters = useIssueFilters(projectId);
-  const [text, setText] = useState('');
+  const [text, setText] = useSearchText();
   const [openIssue, setOpenIssue] = useState<string | null>(null);
   const [dragging, setDragging] = useState<Card | null>(null);
   const [transitions, setTransitions] = useState<Available[]>([]);

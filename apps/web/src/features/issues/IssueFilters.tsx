@@ -1,8 +1,9 @@
 import ButtonBase from '@mui/material/ButtonBase';
 import Chip from '@mui/material/Chip';
 import { FilterIcon } from '../../components/icons';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router';
 import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
 import { Checkbox } from '../../components/Checkbox';
@@ -53,15 +54,97 @@ function rangeToQuery({ preset, from, to }: DateRange): { from?: string; to?: st
   return { from: start.toISOString() };
 }
 
+const VALUE_FILTERS = Object.keys(NO_VALUES) as ValueFilter[];
+const PRESETS: DatePreset[] = ['today', 'last7', 'last30'];
+
+/** A date filter in the address: a preset name, or "from~to" for a custom range. */
+export function readRange(raw: string | null): DateRange {
+  if (!raw) {
+    return ANY_TIME;
+  }
+  if (PRESETS.includes(raw as DatePreset)) {
+    return { preset: raw as DatePreset, from: '', to: '' };
+  }
+  const [from = '', to = ''] = raw.split('~');
+  const day = /^\d{4}-\d{2}-\d{2}$/;
+  return (from && !day.test(from)) || (to && !day.test(to)) || (!from && !to) ? ANY_TIME : { preset: 'custom', from, to };
+}
+
+export function writeRange(range: DateRange): string | null {
+  if (range.preset === 'any') {
+    return null;
+  }
+  return range.preset === 'custom' ? `${range.from}~${range.to}` : range.preset;
+}
+
+/**
+ * The search box text of a list, kept in the address with the filters, so it survives opening an issue and coming
+ * back, a reload, or a copied link.
+ */
+export function useSearchText(): [string, (text: string) => void] {
+  const [params, setParams] = useSearchParams();
+  const setText = useCallback(
+    (text: string) =>
+      setParams(
+        (current) => {
+          const next = new URLSearchParams(current);
+          if (text) next.set('text', text);
+          else next.delete('text');
+          return next;
+        },
+        { replace: true },
+      ),
+    [setParams],
+  );
+  return [params.get('text') ?? '', setText];
+}
+
 const inRange = (value: string | undefined, range: { from?: string; to?: string }) =>
   (!range.from || (value ?? '') >= range.from) && (!range.to || (value ?? '') <= range.to);
 
-/** `initial` preselects values, such as those a link to the issue list carries. */
-export function useIssueFilters(projectId: string | undefined, sprints?: { value: string; label: string }[], initial?: Partial<Record<ValueFilter, string[]>>) {
+/**
+ * The filters of an issue list. They live in the address (assignee=…&type=…&created=last7), so they survive opening an
+ * issue and coming back, a reload, or a copied link, and other parameters of the page are left alone. Changes replace
+ * the history entry instead of adding one, so Back still leaves the page.
+ */
+export function useIssueFilters(projectId: string | undefined, sprints?: { value: string; label: string }[]) {
   const { t } = useTranslation();
-  const [values, setValues] = useState(() => ({ ...NO_VALUES, ...initial }));
-  const [created, setCreated] = useState(ANY_TIME);
-  const [updated, setUpdated] = useState(ANY_TIME);
+  const [params, setParams] = useSearchParams();
+  const raw = useMemo(
+    () => Object.fromEntries(VALUE_FILTERS.map((filter) => [filter, params.getAll(filter)])) as Record<ValueFilter, string[]>,
+    [params],
+  );
+  const created = useMemo(() => readRange(params.get('created')), [params]);
+  const updated = useMemo(() => readRange(params.get('updated')), [params]);
+
+  const write = useCallback(
+    (change: (next: URLSearchParams) => void) =>
+      setParams(
+        (current) => {
+          const next = new URLSearchParams(current);
+          change(next);
+          return next;
+        },
+        { replace: true },
+      ),
+    [setParams],
+  );
+  const setValues = (update: (current: Record<ValueFilter, string[]>) => Record<ValueFilter, string[]>) =>
+    write((next) => {
+      const values = update(raw);
+      for (const filter of VALUE_FILTERS) {
+        next.delete(filter);
+        values[filter].forEach((value) => next.append(filter, value));
+      }
+    });
+  const setRange = (key: DateFilter) => (range: DateRange) =>
+    write((next) => {
+      const value = writeRange(range);
+      if (value) next.set(key, value);
+      else next.delete(key);
+    });
+  const setCreated = setRange('created');
+  const setUpdated = setRange('updated');
 
   const members = useMembers(projectId);
   const types = useIssueTypes(projectId);
@@ -81,6 +164,12 @@ export function useIssueFilters(projectId: string | undefined, sprints?: { value
     label: (labels.data ?? []).map((label) => ({ value: label, label })),
     sprint: sprints ?? [],
   };
+
+  // A value the address carries but the space no longer has, such as a deleted label or a member who left, is ignored
+  // once the options have loaded, so an old link never empties the list.
+  const values = Object.fromEntries(
+    VALUE_FILTERS.map((filter) => [filter, options[filter].length === 0 ? raw[filter] : raw[filter].filter((value) => options[filter].some((option) => option.value === value))]),
+  ) as Record<ValueFilter, string[]>;
 
   const filterLabels: Record<ValueFilter | DateFilter, string> = {
     assignee: t('issues.assignee'),
@@ -113,11 +202,10 @@ export function useIssueFilters(projectId: string | undefined, sprints?: { value
     ...(updated.preset !== 'any' ? [{ key: 'updated', label: filterLabels.updated, remove: () => setUpdated(ANY_TIME) }] : []),
   ];
 
-  const clearAll = () => {
-    setValues(NO_VALUES);
-    setCreated(ANY_TIME);
-    setUpdated(ANY_TIME);
-  };
+  const clearAll = () =>
+    write((next) => {
+      [...VALUE_FILTERS, 'created', 'updated'].forEach((key) => next.delete(key));
+    });
 
   const createdRange = rangeToQuery(created);
   const updatedRange = rangeToQuery(updated);

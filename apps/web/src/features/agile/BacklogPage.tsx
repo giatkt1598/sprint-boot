@@ -24,7 +24,7 @@ import type { PickerUser } from '../../components/UserPicker';
 import { swallowClickAfterDrag } from '../../lib/drag';
 import { useErrorMessage } from '../../lib/errors';
 import { font, radius, sem, shadow, type SemanticToken } from '../../theme/tokens';
-import { FilterChips, FilterControls, useIssueFilters } from '../issues/IssueFilters';
+import { FilterChips, FilterControls, useIssueFilters, useSearchText } from '../issues/IssueFilters';
 import { QuickAssignee, QuickPriority, QuickStatus } from '../issues/QuickFields';
 import { useMembers, useSpace } from '../spaces/api';
 import { IssuePanel } from './IssuePanel';
@@ -356,7 +356,7 @@ export function BacklogPage() {
     [backlog.data],
   );
   const filters = useIssueFilters(projectId, scrum ? sprintOptions : undefined);
-  const [text, setText] = useState('');
+  const [text, setText] = useSearchText();
   const [openIssue, setOpenIssue] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [closedOpen, setClosedOpen] = useState(false);

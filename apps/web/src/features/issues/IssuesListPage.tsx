@@ -3,7 +3,7 @@ import Typography from '@mui/material/Typography';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link as RouterLink, useParams, useSearchParams } from 'react-router';
+import { Link as RouterLink, useParams } from 'react-router';
 import { apiClient, unwrap } from '../../api';
 import { Avatar } from '../../components/Avatar';
 import { IssueTypeIcon, type IssueType as IconType } from '../../components/IssueIcons';
@@ -13,7 +13,7 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/StateView
 import { Table, useTableSort } from '../../components/Table';
 import { formatDate } from '../../lib/format';
 import { useMembers, useSpace } from '../spaces/api';
-import { FilterChips, FilterControls, useIssueFilters } from './IssueFilters';
+import { FilterChips, FilterControls, useIssueFilters, useSearchText } from './IssueFilters';
 import { QuickAssignee, QuickPriority, QuickStatus } from './QuickFields';
 import type { IssueSummary } from './api';
 
@@ -26,19 +26,17 @@ const PERSON_MAX = 200;
 export function IssuesListPage() {
   const { t, i18n } = useTranslation();
   const { spaceKey } = useParams();
-  const [params] = useSearchParams();
   const space = useSpace(spaceKey);
   const projectId = space.data?.id;
-  // The overview links here with the types or statuses a figure counted.
-  const [initialFilters] = useState(() => ({ type: params.getAll('type'), status: params.getAll('status') }));
-  const filters = useIssueFilters(projectId, undefined, initialFilters);
+  // The overview links here with the types or statuses a figure counted; the filters read them from the address.
+  const filters = useIssueFilters(projectId);
   const members = useMembers(projectId);
   const people = (members.data ?? []).map((member) => member.user!);
   // Search across spaces has no single space to check, so its rows stay read-only.
   const canEdit = space.data?.permissions?.includes('Issue.Edit') ?? false;
   const { values, createdRange, updatedRange } = filters;
 
-  const [text, setText] = useState(params.get('text') ?? '');
+  const [text, setText] = useSearchText();
   const [skip, setSkip] = useState(0);
   const { sort, toggle } = useTableSort();
   const sorting = sort ? `${sort.key} ${sort.direction}` : undefined;
