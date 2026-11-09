@@ -122,6 +122,11 @@ public class TicketSummaryDto
     /// <summary>The epic of a standard ticket, or the ticket a subtask belongs to.</summary>
     public Guid? ParentId { get; set; }
 
+    /// <summary>The epic above the ticket: its parent, or for a subtask its parent's parent.</summary>
+    public Guid? EpicId { get; set; }
+
+    public string? EpicTitle { get; set; }
+
     public DateOnly? StartDate { get; set; }
 
     public DateOnly? DueDate { get; set; }
@@ -201,6 +206,9 @@ public class TicketSearchInput : PagedResultRequestDto, ISortedResultRequest
     public Guid[]? ReporterIds { get; set; }
 
     public Guid[]? ParentIds { get; set; }
+
+    /// <summary>Tickets of these sprints, as their board and backlog show them.</summary>
+    public Guid[]? SprintIds { get; set; }
 
     public string[]? Labels { get; set; }
 

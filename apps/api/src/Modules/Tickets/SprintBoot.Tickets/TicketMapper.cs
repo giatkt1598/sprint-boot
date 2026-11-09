@@ -45,6 +45,7 @@ public class TicketMapper(
         var users = await userDirectory.GetByIdsAsync(
             list.SelectMany(ticket => new[] { ticket.AssigneeId, ticket.ReporterId }).Where(id => id.HasValue).Select(id => id!.Value).Distinct());
         var sprints = await sprintNames.GetAsync([.. list.Select(ticket => ticket.Id)]);
+        var epics = await EpicsAsync(list);
 
         return [.. list.Select(ticket => new TicketSummaryDto
         {
@@ -59,12 +60,46 @@ public class TicketMapper(
             Reporter = ticket.ReporterId is { } reporterId ? users.GetValueOrDefault(reporterId) : null,
             SprintName = sprints.GetValueOrDefault(ticket.Id),
             ParentId = ticket.ParentId,
+            EpicId = epics.GetValueOrDefault(ticket.Id)?.Id,
+            EpicTitle = epics.GetValueOrDefault(ticket.Id)?.Title,
             StartDate = ticket.StartDate,
             DueDate = ticket.DueDate,
             CreatedAt = ticket.CreationTime,
             UpdatedAt = ticket.LastModificationTime ?? ticket.CreationTime,
             ConcurrencyStamp = ticket.ConcurrencyStamp,
         })];
+    }
+
+    /// <summary>The epic of each ticket, found one or two parents up.</summary>
+    private async Task<Dictionary<Guid, Ticket>> EpicsAsync(IReadOnlyCollection<Ticket> list)
+    {
+        var parentIds = list.Where(ticket => ticket.ParentId.HasValue).Select(ticket => ticket.ParentId!.Value).Distinct().ToList();
+        var parents = (await tickets.GetListAsync(ticket => parentIds.Contains(ticket.Id))).ToDictionary(ticket => ticket.Id);
+        var grandIds = parents.Values.Where(ticket => ticket.ParentId.HasValue).Select(ticket => ticket.ParentId!.Value)
+            .Except(parents.Keys).Distinct().ToList();
+        foreach (var grand in await tickets.GetListAsync(ticket => grandIds.Contains(ticket.Id)))
+        {
+            parents[grand.Id] = grand;
+        }
+
+        var typeIds = parents.Values.Select(ticket => ticket.TypeId).Distinct().ToList();
+        var epicTypes = (await types.GetListAsync(type => typeIds.Contains(type.Id) && type.Hierarchy == TicketHierarchy.Epic))
+            .Select(type => type.Id).ToHashSet();
+        Ticket? EpicOf(Guid? id, int depth) =>
+            id is { } parentId && depth < 2 && parents.TryGetValue(parentId, out var parent)
+                ? epicTypes.Contains(parent.TypeId) ? parent : EpicOf(parent.ParentId, depth + 1)
+                : null;
+
+        var result = new Dictionary<Guid, Ticket>();
+        foreach (var ticket in list)
+        {
+            if (EpicOf(ticket.ParentId, 0) is { } epic)
+            {
+                result[ticket.Id] = epic;
+            }
+        }
+
+        return result;
     }
 
     public async Task<TicketDto> ToDtoAsync(Ticket ticket)

@@ -18993,6 +18993,17 @@
             }
           },
           {
+            "name": "SprintIds",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          },
+          {
             "name": "Labels",
             "in": "query",
             "schema": {
@@ -30558,6 +30569,15 @@
           "parentId": {
             "type": "string",
             "format": "uuid",
+            "nullable": true
+          },
+          "epicId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "epicTitle": {
+            "type": "string",
             "nullable": true
           },
           "startDate": {

@@ -1,7 +1,7 @@
 import ButtonBase from '@mui/material/ButtonBase';
 import Chip from '@mui/material/Chip';
 import { FilterIcon } from '../../components/icons';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
 import { Avatar } from '../../components/Avatar';
@@ -90,8 +90,22 @@ export function writeRange(range: DateRange): string | null {
  */
 export function useSearchText(): [string, (text: string) => void] {
   const [params, setParams] = useSearchParams();
+  const inAddress = params.get('text') ?? '';
+  // The box shows its own copy, updated as each key lands. Bound to the address it lagged a render behind, and
+  // Vietnamese input methods, which rewrite the last letters as you type ("bo" + "o" -> "bô"), then doubled them.
+  const [draft, setDraft] = useState(inAddress);
+  const written = useRef(inAddress);
+  useEffect(() => {
+    // Only a change made elsewhere (Back, a link, clearing the filters) replaces what is being typed.
+    if (inAddress !== written.current) {
+      written.current = inAddress;
+      setDraft(inAddress);
+    }
+  }, [inAddress]);
   const setText = useCallback(
-    (text: string) =>
+    (text: string) => {
+      setDraft(text);
+      written.current = text;
       setParams(
         (current) => {
           const next = new URLSearchParams(current);
@@ -100,10 +114,11 @@ export function useSearchText(): [string, (text: string) => void] {
           return next;
         },
         { replace: true },
-      ),
+      );
+    },
     [setParams],
   );
-  return [params.get('text') ?? '', setText];
+  return [draft, setText];
 }
 
 /** Compared as instants: the API's timestamps and the range's ISO strings need not be written alike. */

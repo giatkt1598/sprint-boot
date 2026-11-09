@@ -39,7 +39,8 @@ public partial class TicketAppService(
     WatcherStore watcherStore,
     RichTextSanitizer sanitizer,
     RichTextFileStore richTextFiles,
-    TicketSorting sorting)
+    TicketSorting sorting,
+    ITicketSprintNames sprintNames)
     : ApplicationService, ITicketAppService
 {
     [GeneratedRegex("^([A-Z][A-Z0-9]{1,9})-([0-9]+)$")]
@@ -219,6 +220,13 @@ public partial class TicketAppService(
         }
 
         query = ApplyFilters(query, input);
+        if (input.SprintIds is { Length: > 0 } sprintIds)
+        {
+            // Sprints live in the Agile module, so their tickets come back as ids through its contract.
+            var inSprints = (await sprintNames.GetTicketIdsAsync(sprintIds)).ToList();
+            query = query.Where(ticket => inSprints.Contains(ticket.Id));
+        }
+
         if (input.Labels is { Length: > 0 } names)
         {
             var labelQuery = await labels.GetQueryableAsync();

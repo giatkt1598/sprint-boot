@@ -49,6 +49,15 @@ public interface ITicketSprintNames
 {
     /// <summary>The current sprint of each ticket; tickets in no sprint are left out.</summary>
     Task<Dictionary<Guid, string>> GetAsync(IReadOnlyCollection<Guid> ticketIds);
+
+    /// <summary>
+    /// The place of each ticket's current sprint in time, earliest first: closed sprints by start, then the running one,
+    /// then planned ones in their backlog order. Tickets in no sprint are left out.
+    /// </summary>
+    Task<Dictionary<Guid, int>> GetRanksAsync(IReadOnlyCollection<Guid> ticketIds);
+
+    /// <summary>The tickets of the sprints, as their board and backlog show them: still in a running or planned sprint, or what a closed one ended with.</summary>
+    Task<HashSet<Guid>> GetTicketIdsAsync(IReadOnlyCollection<Guid> sprintIds);
 }
 
 public record TicketRef(Guid TicketId, Guid ProjectId);

@@ -17,9 +17,10 @@ public class TicketSorting(
     IRepository<Priority, Guid> priorities,
     IStatusLookup statusLookup,
     IUserDirectory userDirectory,
-    IProjectAccess projectAccess) : Volo.Abp.DependencyInjection.ITransientDependency
+    IProjectAccess projectAccess,
+    ITicketSprintNames sprintNames) : Volo.Abp.DependencyInjection.ITransientDependency
 {
-    public static readonly string[] Fields = ["key", "title", "status", "priority", "assignee", "reporter", "created", "updated"];
+    public static readonly string[] Fields = ["key", "title", "status", "priority", "assignee", "reporter", "sprint", "created", "updated"];
 
     public async Task<IOrderedQueryable<Ticket>> ApplyAsync(IQueryable<Ticket> query, string? sorting)
     {
@@ -39,6 +40,8 @@ public class TicketSorting(
                 .ThenBy(ByRank(ticket => ticket.AssigneeId, await PersonRanksAsync(query, ticket => ticket.AssigneeId)), descending),
             "reporter" => query.OrderBy(ticket => ticket.ReporterId == null)
                 .ThenBy(ByRank(ticket => ticket.ReporterId, await PersonRanksAsync(query, ticket => ticket.ReporterId)), descending),
+            // Sprints in time order; tickets in no sprint come last whichever way the list runs.
+            "sprint" => await BySprintAsync(query, descending),
             _ => throw new BusinessException(TicketErrors.InvalidSorting).WithData("field", field),
         };
         return ordered.ThenBy(ticket => ticket.Id);
@@ -88,6 +91,31 @@ public class TicketSorting(
         var ids = await query.Select(person).Where(id => id != null).Distinct().ToListAsync();
         var people = await userDirectory.GetByIdsAsync(ids.Select(id => id!.Value));
         return Ranks(people.Values.OrderBy(user => user.Name, StringComparer.CurrentCultureIgnoreCase).Select(user => user.Id));
+    }
+
+    /// <summary>
+    /// Sprints live in the Agile module, so each ticket's sprint comes back as a rank through its contract. The tickets
+    /// of one sprint share one IN list, so the CASE has a branch per sprint rather than per ticket.
+    /// </summary>
+    private async Task<IOrderedQueryable<Ticket>> BySprintAsync(IQueryable<Ticket> query, bool descending)
+    {
+        var ids = await query.Select(ticket => ticket.Id).ToListAsync();
+        var ranks = await sprintNames.GetRanksAsync(ids);
+        var parameter = Expression.Parameter(typeof(Ticket), "ticket");
+        var id = Expression.Property(parameter, nameof(Ticket.Id));
+        var contains = typeof(Enumerable).GetMethods()
+            .First(method => method.Name == nameof(Enumerable.Contains) && method.GetParameters().Length == 2)
+            .MakeGenericMethod(typeof(Guid));
+        Expression body = Expression.Constant(int.MaxValue);
+        foreach (var group in ranks.GroupBy(item => item.Value).OrderByDescending(group => group.Key))
+        {
+            var members = group.Select(item => item.Key).ToList();
+            body = Expression.Condition(Expression.Call(contains, Expression.Constant(members), id), Expression.Constant(group.Key), body);
+        }
+
+        var ranked = ranks.Keys.ToList();
+        return query.OrderBy(ticket => !ranked.Contains(ticket.Id))
+            .ThenBy(Expression.Lambda<Func<Ticket, int>>(body, parameter), descending);
     }
 
     private static Dictionary<Guid, int> Ranks(IEnumerable<Guid> ordered) =>

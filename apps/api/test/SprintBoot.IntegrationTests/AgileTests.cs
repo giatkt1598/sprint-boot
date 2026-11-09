@@ -372,4 +372,62 @@ public class AgileTests(ApiFixture fixture)
         var kept = await client.Http.PutAsJsonAsync($"/api/v1/board/columns/{project.Id}", new { columns }, Token);
         (await kept.Content.ReadFromJsonAsync<BoardViewDto>(Token))!.CardFields.ShouldBe(["key", "epic"]);
     }
+
+    [Fact]
+    public async Task Ticket_search_filters_by_sprint_and_sorts_by_sprint_in_time_order()
+    {
+        var client = await fixture.CreateUserClientAsync(Token);
+        var project = await CreateProjectAsync(client);
+        var tickets = await CreateTicketsAsync(client, project, 4);
+        var running = await CreateSprintAsync(client, project, "Running");
+        var planned = await CreateSprintAsync(client, project, "Planned");
+        await AddAsync(client, running, tickets[0]);
+        await AddAsync(client, running, tickets[1]);
+        await AddAsync(client, planned, tickets[2]);
+        (await StartAsync(client, running)).EnsureSuccessStatusCode();
+
+        async Task<List<string>> KeysAsync(string query)
+        {
+            var result = await client.Http.GetFromJsonAsync<TicketSearchResultDto>($"/api/v1/ticket/search?projectId={project.Id}&{query}", Token);
+            return [.. result!.Items.Select(item => item.Key)];
+        }
+
+        (await KeysAsync($"sprintIds={running.Id}")).ShouldBe([tickets[0].Key, tickets[1].Key], ignoreOrder: true);
+        (await KeysAsync($"sprintIds={running.Id}&sprintIds={planned.Id}")).Count.ShouldBe(3);
+
+        // The running sprint comes before the planned one; tickets in no sprint come last either way.
+        var ascending = await KeysAsync("sorting=sprint");
+        ascending[..2].ShouldBe([tickets[0].Key, tickets[1].Key], ignoreOrder: true);
+        ascending[2..].ShouldBe([tickets[2].Key, tickets[3].Key]);
+        var descending = await KeysAsync("sorting=sprint%20desc");
+        descending[0].ShouldBe(tickets[2].Key);
+        descending[^1].ShouldBe(tickets[3].Key);
+    }
+
+    [Fact]
+    public async Task Ticket_search_names_the_epic_of_tickets_and_of_their_subtasks()
+    {
+        var client = await fixture.CreateUserClientAsync(Token);
+        var project = await CreateProjectAsync(client);
+        var types = (await client.Http.GetFromJsonAsync<List<TicketTypeDto>>($"/api/v1/ticket/types/{project.Id}", Token))!;
+        async Task<TicketDto> CreateAsync(string type, string title, Guid? parentId)
+        {
+            var response = await client.Http.PostAsJsonAsync(
+                "/api/v1/ticket", new { projectId = project.Id, typeId = types.Single(item => item.Name == type).Id, title, parentId }, Token);
+            response.StatusCode.ShouldBe(HttpStatusCode.OK, await response.Content.ReadAsStringAsync(Token));
+            return (await response.Content.ReadFromJsonAsync<TicketDto>(Token))!;
+        }
+
+        var epic = await CreateAsync("Epic", "Checkout", null);
+        var story = await CreateAsync("Task", "Pay by card", epic.Id);
+        await CreateAsync("Subtask", "Card form", story.Id);
+        await CreateAsync("Task", "Loose", null);
+
+        var result = await client.Http.GetFromJsonAsync<TicketSearchResultDto>($"/api/v1/ticket/search?projectId={project.Id}", Token);
+        var epics = result!.Items.ToDictionary(item => item.Title, item => item.EpicTitle);
+        epics["Pay by card"].ShouldBe("Checkout");
+        epics["Card form"].ShouldBe("Checkout");
+        epics["Loose"].ShouldBeNull();
+        epics["Checkout"].ShouldBeNull();
+    }
 }

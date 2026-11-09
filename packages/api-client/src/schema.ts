@@ -14537,6 +14537,7 @@ export interface paths {
                     AssigneeIds?: string[];
                     ReporterIds?: string[];
                     ParentIds?: string[];
+                    SprintIds?: string[];
                     Labels?: string[];
                     CreatedFrom?: string;
                     CreatedTo?: string;
@@ -20682,6 +20683,9 @@ export interface components {
             sprintName: string | null;
             /** Format: uuid */
             parentId?: string | null;
+            /** Format: uuid */
+            epicId?: string | null;
+            epicTitle?: string | null;
             /** Format: date */
             startDate?: string | null;
             /** Format: date */

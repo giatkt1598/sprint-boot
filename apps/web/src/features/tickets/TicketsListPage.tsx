@@ -1,17 +1,19 @@
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useParams } from 'react-router';
 import { apiClient, unwrap } from '../../api';
 import { Avatar } from '../../components/Avatar';
+import { Badge } from '../../components/Badge';
 import { TicketTypeIcon, type TicketType as IconType } from '../../components/TicketIcons';
 import { Pagination } from '../../components/Pagination';
 import { SearchInput } from '../../components/SearchInput';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
 import { Table, useTableSort } from '../../components/Table';
 import { formatDate } from '../../lib/format';
+import { useBacklog } from '../agile/api';
 import { useMembers, useSpace } from '../spaces/api';
 import { FilterChips, FilterControls, useTicketFilters, useSearchText } from './TicketFilters';
 import { QuickAssignee, QuickPriority, QuickStatus } from './QuickFields';
@@ -29,7 +31,19 @@ export function TicketsListPage() {
   const space = useSpace(spaceKey);
   const projectId = space.data?.id;
   // The overview links here with the types or statuses a figure counted; the filters read them from the address.
-  const filters = useTicketFilters(projectId);
+  // Only a Scrum space has sprints to filter by; closed ones stay listed, after the open ones.
+  const backlog = useBacklog(projectId);
+  const sprintOptions = useMemo(
+    () =>
+      backlog.data?.type === 0
+        ? [
+            ...(backlog.data.sprints ?? []).map((item) => ({ value: item.sprint!.id!, label: item.sprint!.name! })),
+            ...(backlog.data.closedSprints ?? []).map((sprint) => ({ value: sprint.id!, label: t('agile.closedSprint', { name: sprint.name }) })),
+          ]
+        : undefined,
+    [backlog.data, t],
+  );
+  const filters = useTicketFilters(projectId, sprintOptions);
   const members = useMembers(projectId);
   const people = (members.data ?? []).map((member) => member.user!);
   // Search across spaces has no single space to check, so its rows stay read-only.
@@ -59,6 +73,7 @@ export function TicketsListPage() {
               PriorityIds: values.priority,
               ParentIds: values.epic,
               Labels: values.label,
+              SprintIds: values.sprint,
               CreatedFrom: createdRange.from,
               CreatedTo: createdRange.to,
               UpdatedFrom: updatedRange.from,
@@ -140,7 +155,17 @@ export function TicketsListPage() {
                   ),
               },
               {
-                key: 'sprint',
+                key: 'epic',
+                header: t('tickets.epic'),
+                render: (ticket) =>
+                  ticket.epicTitle && (
+                    <span title={ticket.epicTitle} className="block truncate" style={{ maxWidth: PERSON_MAX }}>
+                      <Badge tone="epic">{ticket.epicTitle}</Badge>
+                    </span>
+                  ),
+              },
+              {
+                key: 'sprint', sortable: true,
                 header: t('agile.sprint'),
                 render: (ticket) => <span title={ticket.sprintName ?? undefined} className="block truncate" style={{ maxWidth: PERSON_MAX }}>{ticket.sprintName}</span>,
               },
