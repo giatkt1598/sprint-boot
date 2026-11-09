@@ -79,7 +79,7 @@ export function SprintDialog({ mode, projectId, sprint, onClose }: SprintFormPro
     },
     onSuccess: async () => {
       queryClient.removeQueries({ queryKey: ['sprints', projectId, 'new-defaults'] });
-      await queryClient.invalidateQueries({ queryKey: ['issues'] });
+      await queryClient.invalidateQueries({ queryKey: ['tickets'] });
       onClose();
     },
   });
@@ -97,7 +97,7 @@ export function SprintDialog({ mode, projectId, sprint, onClose }: SprintFormPro
     >
       <TextField label={t('account.name')} autoFocus value={name} onChange={(event) => setName(event.target.value)} />
       <div className="grid grid-cols-2 gap-4">
-        <DatePicker label={t('issues.startDate')} value={startDate} onChange={pickStart} />
+        <DatePicker label={t('tickets.startDate')} value={startDate} onChange={pickStart} />
         <DatePicker label={t('agile.endDate')} value={endDate} onChange={setEndDate} />
       </div>
       <TextField label={t('agile.goal')} value={goal} onChange={(event) => setGoal(event.target.value)} />
@@ -127,7 +127,7 @@ export function CompleteSprintDialog({ sprint, futureSprints, onClose }: { sprin
         }),
       ),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['issues'] });
+      await queryClient.invalidateQueries({ queryKey: ['tickets'] });
       onClose();
     },
   });

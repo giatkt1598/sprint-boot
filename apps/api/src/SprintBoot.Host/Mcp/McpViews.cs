@@ -1,6 +1,6 @@
 using SprintBoot.Agile;
 using SprintBoot.Identity;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 
 namespace SprintBoot.Host.Mcp;
 
@@ -10,7 +10,7 @@ public static class McpViews
     public static string? Person(UserRefDto? user) =>
         user is null ? null : string.IsNullOrEmpty(user.Email) ? user.Name : $"{user.Name} <{user.Email}>";
 
-    public static object Card(IssueCardDto card) => new
+    public static object Card(TicketCardDto card) => new
     {
         card.Key,
         card.Title,
@@ -23,12 +23,12 @@ public static class McpViews
         card.StoryPoints,
     };
 
-    public static object Ref(IssueRefDto issue) => new
+    public static object Ref(TicketRefDto ticket) => new
     {
-        issue.Key,
-        issue.Title,
-        Status = issue.Status.Name,
-        Assignee = Person(issue.Assignee),
+        ticket.Key,
+        ticket.Title,
+        Status = ticket.Status.Name,
+        Assignee = Person(ticket.Assignee),
     };
 
     public static object Sprint(SprintSummaryDto sprint) => new
@@ -38,7 +38,7 @@ public static class McpViews
         sprint.Goal,
         sprint.StartDate,
         sprint.EndDate,
-        sprint.IssueCount,
+        sprint.TicketCount,
         sprint.TotalPoints,
         sprint.DonePoints,
     };
@@ -54,7 +54,7 @@ public static class McpViews
         Replies = replies,
     };
 
-    /// <summary>Replies sit under their parent, as the issue page shows them.</summary>
+    /// <summary>Replies sit under their parent, as the ticket page shows them.</summary>
     public static List<object> Thread(List<CommentDto> comments)
     {
         var byParent = comments.Where(comment => comment.ParentId is not null).ToLookup(comment => comment.ParentId!.Value);

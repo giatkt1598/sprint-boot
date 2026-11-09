@@ -103,7 +103,7 @@ export function AssistantPage() {
               >
                 <span className="truncate" style={{ fontSize: font.size.md }}>{item.title || t('assistant.untitled')}</span>
                 <span className="flex items-center gap-1" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>
-                  {item.issueKey && <Badge tone="subtle">{item.issueKey}</Badge>}
+                  {item.ticketKey && <Badge tone="subtle">{item.ticketKey}</Badge>}
                   {formatDateTime(item.updatedAt, i18n.language)}
                 </span>
               </Link>
@@ -118,10 +118,10 @@ export function AssistantPage() {
         </nav>
       </aside>
       <section className="flex min-w-0 flex-1 flex-col" aria-label={selected?.title || t('assistant.new')}>
-        {selected?.issueKey && (
+        {selected?.ticketKey && (
           <div className="px-4 py-2" style={{ borderBottom: `1px solid ${sem('border-default')}` }}>
             <Typography variant="body2" color="textSecondary">
-              {t('assistant.aboutIssue')} <Link to={`/issues/${selected.issueKey}`}>{selected.issueKey}</Link>
+              {t('assistant.aboutTicket')} <Link to={`/tickets/${selected.ticketKey}`}>{selected.ticketKey}</Link>
             </Typography>
           </div>
         )}

@@ -13,16 +13,16 @@ vi.mock('../../api', () => ({
 }));
 vi.mock('../../auth/oidc', () => ({ getAccessToken: () => Promise.resolve('token') }));
 
-const { AssistantButton, AssistantHost, useViewingIssue } = await import('./AssistantPanel');
+const { AssistantButton, AssistantHost, useViewingTicket } = await import('./AssistantPanel');
 
 Element.prototype.scrollIntoView = () => undefined;
 
-const conversation = (id: string, title: string, issueId: string | null = null) => ({
-  id, title, issueId, issueKey: issueId ? 'SB-1' : null, createdAt: '2026-11-01T00:00:00Z', updatedAt: '2026-11-01T00:00:00Z',
+const conversation = (id: string, title: string, ticketId: string | null = null) => ({
+  id, title, ticketId, ticketKey: ticketId ? 'SB-1' : null, createdAt: '2026-11-01T00:00:00Z', updatedAt: '2026-11-01T00:00:00Z',
 });
 
-function OnIssue() {
-  useViewingIssue({ id: 'i1', key: 'SB-1' });
+function OnTicket() {
+  useViewingTicket({ id: 'i1', key: 'SB-1' });
   return <AssistantButton />;
 }
 
@@ -41,7 +41,7 @@ describe('AssistantPanel', () => {
     vi.unstubAllGlobals();
   });
 
-  it('starts new, lists the issue conversations first, and asks about the issue on screen', async () => {
+  it('starts new, lists the ticket conversations first, and asks about the ticket on screen', async () => {
     get.mockImplementation((path: string) => Promise.resolve(
       path === '/api/v1/assistant/status'
         ? { available: true }
@@ -53,7 +53,7 @@ describe('AssistantPanel', () => {
     const fetch = vi.fn(() => Promise.resolve(new Response('data: {"type":"done"}\n\n', { headers: { 'content-type': 'text/event-stream' } })));
     vi.stubGlobal('fetch', fetch);
 
-    renderHost(<OnIssue />);
+    renderHost(<OnTicket />);
     fireEvent.click(await screen.findByRole('button', { name: /assistant/i }));
 
     await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Ask the assistant' })));
@@ -68,7 +68,7 @@ describe('AssistantPanel', () => {
 
     fireEvent.click(within(recent).getByRole('button', { name: 'View all (2 more)' }));
     const history = await screen.findByRole('dialog', { name: 'History' });
-    within(history).getByText('About this issue');
+    within(history).getByText('About this ticket');
     await waitFor(() => expect(document.activeElement).toBe(within(history).getByRole('textbox', { name: 'Search conversations' })));
     fireEvent.change(within(history).getByRole('textbox', { name: 'Search conversations' }), { target: { value: 'old' } });
     expect(within(history).getAllByRole('button').map((item) => item.textContent)).toEqual([expect.stringMatching(/^Older[^s]/), expect.stringMatching(/^Oldest/)]);
@@ -77,10 +77,10 @@ describe('AssistantPanel', () => {
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Summarize this page' }));
     });
-    await waitFor(() => expect(post).toHaveBeenCalledWith('/api/v1/assistant', { body: { issueId: 'i1' } }));
+    await waitFor(() => expect(post).toHaveBeenCalledWith('/api/v1/assistant', { body: { ticketId: 'i1' } }));
     await waitFor(() => expect(fetch).toHaveBeenCalled());
     const [, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
-    expect(JSON.parse(init.body as string)).toEqual({ text: 'Summarize this page', issueId: 'i1' });
+    expect(JSON.parse(init.body as string)).toEqual({ text: 'Summarize this page', ticketId: 'i1' });
   });
 
   it('leaves the page usable beside it and keeps the chat until closed', async () => {
@@ -112,7 +112,7 @@ describe('AssistantPanel', () => {
     await waitFor(() => expect(screen.queryByRole('textbox', { name: 'Ask the assistant' })).toBeNull());
   });
 
-  it('offers no issue suggestions away from an issue', async () => {
+  it('offers no ticket suggestions away from a ticket', async () => {
     get.mockImplementation((path: string) => Promise.resolve(path === '/api/v1/assistant/status' ? { available: true } : []));
     renderHost(<AssistantButton />);
     fireEvent.click(await screen.findByRole('button', { name: /assistant/i }));

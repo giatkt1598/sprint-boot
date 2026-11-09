@@ -28,7 +28,7 @@ import { useSpaces } from '../spaces/api';
 import { SettingsFrame, SettingsMenuItem } from '../spaces/SpaceSettings';
 
 type User = components['schemas']['UserSummaryDto'];
-type DeletedIssue = components['schemas']['DeletedIssueDto'];
+type DeletedTicket = components['schemas']['DeletedTicketDto'];
 type UserSpace = components['schemas']['UserSpaceDto'];
 type SignInMethod = components['schemas']['SignInMethodDto'];
 
@@ -37,14 +37,14 @@ const PAGE_SIZE = 20;
 export function AdminLayout() {
   const { t } = useTranslation();
   const canManageUsers = useCan('SprintBoot.Users.Manage');
-  const canRestore = useCan('SprintBoot.Issues.Restore');
+  const canRestore = useCan('SprintBoot.Tickets.Restore');
   const canManageWorkflows = useCan('SprintBoot.Workflows.Manage');
   const canManageSchemes = useCan('SprintBoot.NotificationSchemes.Manage');
   const canManageInvitations = useCan('SprintBoot.Invitations.Manage');
   const canManageSso = useCan('SprintBoot.Sso.Manage');
   const canManageEmail = useCan('SprintBoot.Email.Manage');
-  const canManageLinkTypes = useCan('SprintBoot.IssueLinkTypes.Manage');
-  const canManageTemplates = useCan('SprintBoot.IssueTemplates.Manage');
+  const canManageLinkTypes = useCan('SprintBoot.TicketLinkTypes.Manage');
+  const canManageTemplates = useCan('SprintBoot.TicketTemplates.Manage');
   const canManageAi = useCan('SprintBoot.Ai.Manage');
 
   if (!canManageAi && !canManageTemplates && !canManageLinkTypes && !canManageEmail && !canManageUsers && !canRestore && !canManageWorkflows && !canManageSchemes && !canManageInvitations && !canManageSso) {
@@ -64,10 +64,10 @@ export function AdminLayout() {
           {canManageEmail && <SettingsMenuItem to="email" label={t('email.title')} />}
           {canManageAi && <SettingsMenuItem to="ai" label={t('assistantAdmin.title')} />}
           {canManageWorkflows && <SettingsMenuItem to="workflows" label={t('workflows.title')} />}
-          {canManageLinkTypes && <SettingsMenuItem to="issue-link-types" label={t('linkTypes.title')} />}
-          {canManageTemplates && <SettingsMenuItem to="issue-templates" label={t('globalTemplates.title')} />}
+          {canManageLinkTypes && <SettingsMenuItem to="ticket-link-types" label={t('linkTypes.title')} />}
+          {canManageTemplates && <SettingsMenuItem to="ticket-templates" label={t('globalTemplates.title')} />}
           {canManageSchemes && <SettingsMenuItem to="notification-schemes" label={t('topBar.notifications')} />}
-          {canRestore && <SettingsMenuItem to="deleted-issues" label={t('admin.deletedIssues')} />}
+          {canRestore && <SettingsMenuItem to="deleted-tickets" label={t('admin.deletedTickets')} />}
         </>
       }
     />
@@ -474,7 +474,7 @@ export function ManageUserPage() {
   );
 }
 
-export function DeletedIssuesPage() {
+export function DeletedTicketsPage() {
   const { t, i18n } = useTranslation();
   const toMessage = useErrorMessage();
   const toast = useToast();
@@ -485,11 +485,11 @@ export function DeletedIssuesPage() {
     queryKey: ['admin', 'deleted', skip],
     placeholderData: keepPreviousData,
     queryFn: () =>
-      unwrap(apiClient.GET('/api/v1/issue/deleted-list', { params: { query: { SkipCount: skip, MaxResultCount: PAGE_SIZE } } })),
+      unwrap(apiClient.GET('/api/v1/ticket/deleted-list', { params: { query: { SkipCount: skip, MaxResultCount: PAGE_SIZE } } })),
   });
 
   const restore = useMutation({
-    mutationFn: (id: string) => unwrap(apiClient.POST('/api/v1/issue/{id}/restore', { params: { path: { id } } })),
+    mutationFn: (id: string) => unwrap(apiClient.POST('/api/v1/ticket/{id}/restore', { params: { path: { id } } })),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin', 'deleted'] });
       toast('success', t('admin.restored'));
@@ -499,28 +499,28 @@ export function DeletedIssuesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Typography variant="h1">{t('admin.deletedIssues')}</Typography>
+      <Typography variant="h1">{t('admin.deletedTickets')}</Typography>
       {list.isPending && <LoadingState />}
       {list.isError && <ErrorState onRetry={() => void list.refetch()} />}
       {list.data && list.data.totalCount === 0 && <EmptyState title={t('admin.noDeleted')} />}
       {list.data && (list.data.totalCount ?? 0) > 0 && (
         <>
-          <Table<DeletedIssue>
-            label={t('admin.deletedIssues')}
+          <Table<DeletedTicket>
+            label={t('admin.deletedTickets')}
             rows={list.data.items ?? []}
-            rowKey={(issue) => issue.id!}
+            rowKey={(ticket) => ticket.id!}
             columns={[
-              { key: 'key', header: t('issues.key'), render: (issue) => issue.key },
-              { key: 'title', header: t('issues.titleField'), render: (issue) => issue.title },
-              { key: 'space', header: t('admin.spaceColumn'), render: (issue) => issue.projectName },
-              { key: 'subtasks', header: t('admin.subtasks'), render: (issue) => issue.subtaskCount },
-              { key: 'by', header: t('admin.deletedBy'), render: (issue) => issue.deletedBy?.name },
-              { key: 'at', header: t('admin.deletedAt'), render: (issue) => formatDate(issue.deletedAt, i18n.language) },
+              { key: 'key', header: t('tickets.key'), render: (ticket) => ticket.key },
+              { key: 'title', header: t('tickets.titleField'), render: (ticket) => ticket.title },
+              { key: 'space', header: t('admin.spaceColumn'), render: (ticket) => ticket.projectName },
+              { key: 'subtasks', header: t('admin.subtasks'), render: (ticket) => ticket.subtaskCount },
+              { key: 'by', header: t('admin.deletedBy'), render: (ticket) => ticket.deletedBy?.name },
+              { key: 'at', header: t('admin.deletedAt'), render: (ticket) => formatDate(ticket.deletedAt, i18n.language) },
               {
                 key: 'restore',
                 header: '',
-                render: (issue) => (
-                  <Button kind="ghost" aria-label={`${t('admin.restore')} ${issue.key}`} onClick={() => restore.mutate(issue.id!)}>
+                render: (ticket) => (
+                  <Button kind="ghost" aria-label={`${t('admin.restore')} ${ticket.key}`} onClick={() => restore.mutate(ticket.id!)}>
                     {t('admin.restore')}
                   </Button>
                 ),

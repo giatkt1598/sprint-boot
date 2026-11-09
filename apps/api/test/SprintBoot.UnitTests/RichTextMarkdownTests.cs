@@ -1,7 +1,7 @@
 using ModelContextProtocol;
 using Shouldly;
 using SprintBoot.Host.Mcp;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using Xunit;
 
 namespace SprintBoot.UnitTests;
@@ -108,7 +108,7 @@ public class RichTextMarkdownTests
     [InlineData("<ul data-type=\"taskList\"><li data-type=\"taskItem\" data-checked=\"true\"><label><input type=\"checkbox\" checked=\"checked\"><span></span></label><div><p>done</p></div></li></ul>")]
     [InlineData("<div data-type=\"callout\" class=\"callout\"><p>Careful</p></div>")]
     [InlineData("<p><span style=\"color: #B91C1C\">red</span> and <mark data-color=\"#FEE2E2\" style=\"background-color: #FEE2E2; color: inherit\">marked</mark></p>")]
-    [InlineData("<pre><code class=\"language-sql\">select * from issues where a_b = 1;</code></pre>")]
+    [InlineData("<pre><code class=\"language-sql\">select * from tickets where a_b = 1;</code></pre>")]
     [InlineData("<p>Ask <span data-type=\"mention\" class=\"mention\" data-id=\"0b9a3f44-58a5-4c3e-9a4f-3f1f2d7f6a11\" data-label=\"Ann\">@Ann</span></p>")]
     [InlineData("<p>Costs 5 * 3 &lt;b&gt; [x](y) a_b</p>")]
     [InlineData("<p><img src=\"https://x.test/a.png\" alt=\"chart\" width=\"320\" height=\"180\"></p>")]

@@ -12,7 +12,7 @@ using Volo.Abp.Uow;
 
 namespace SprintBoot.Workflows;
 
-/// <summary>Sends stored webhooks with exponential backoff. Failures are logged and never touch the issue.</summary>
+/// <summary>Sends stored webhooks with exponential backoff. Failures are logged and never touch the ticket.</summary>
 public class WebhookDeliveryWorker : AsyncPeriodicBackgroundWorkerBase
 {
     public const int MaxAttempts = 5;
@@ -80,7 +80,7 @@ public class WebhookDeliveryWorker : AsyncPeriodicBackgroundWorkerBase
     }
 }
 
-/// <summary>Moves issues of queued migrations in batches, each in its own transaction.</summary>
+/// <summary>Moves tickets of queued migrations in batches, each in its own transaction.</summary>
 public class WorkflowMigrationWorker : AsyncPeriodicBackgroundWorkerBase
 {
     public WorkflowMigrationWorker(AbpAsyncTimer timer, IServiceScopeFactory scopeFactory, IConfiguration configuration)
@@ -99,7 +99,7 @@ public class WorkflowMigrationWorker : AsyncPeriodicBackgroundWorkerBase
         }
 
         var migrations = services.GetRequiredService<IRepository<WorkflowMigration, Guid>>();
-        var issues = services.GetRequiredService<IWorkflowIssueGateway>();
+        var tickets = services.GetRequiredService<IWorkflowTicketGateway>();
         var unitOfWork = services.GetRequiredService<IUnitOfWorkManager>();
 
         using var uow = unitOfWork.Begin(requiresNew: true);
@@ -109,9 +109,9 @@ public class WorkflowMigrationWorker : AsyncPeriodicBackgroundWorkerBase
             return;
         }
 
-        var scope = JsonSerializer.Deserialize<IssueScope>(migration.ScopeJson)!;
+        var scope = JsonSerializer.Deserialize<TicketScope>(migration.ScopeJson)!;
         var mappings = JsonSerializer.Deserialize<Dictionary<Guid, Guid>>(migration.MappingJson)!;
-        var moved = await issues.MigrateBatchAsync(scope, migration.ToVersionId, mappings, IssueMigrator.BatchSize);
+        var moved = await tickets.MigrateBatchAsync(scope, migration.ToVersionId, mappings, TicketMigrator.BatchSize);
         migration.Processed += moved;
         if (moved == 0)
         {

@@ -252,12 +252,12 @@ export function TokensPage() {
 
 const MCP_TOOLS: { name: string; write: boolean }[] = [
   { name: 'list_spaces', write: false },
-  { name: 'search_issues', write: false },
-  { name: 'get_issue', write: false },
+  { name: 'search_tickets', write: false },
+  { name: 'get_ticket', write: false },
   { name: 'list_transitions', write: false },
-  { name: 'create_issue', write: true },
-  { name: 'update_issue', write: true },
-  { name: 'transition_issue', write: true },
+  { name: 'create_ticket', write: true },
+  { name: 'update_ticket', write: true },
+  { name: 'transition_ticket', write: true },
   { name: 'add_comment', write: true },
 ];
 

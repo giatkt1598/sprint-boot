@@ -78,13 +78,13 @@ public class Notification : Entity<Guid>
     /// <summary>With UserId this is unique, so a redelivered event cannot notify twice.</summary>
     public Guid EventId { get; private set; }
 
-    public Guid? IssueId { get; private set; }
+    public Guid? TicketId { get; private set; }
 
     public Guid? ProjectId { get; private set; }
 
     public Guid ActorId { get; private set; }
 
-    public string? IssueKey { get; private set; }
+    public string? TicketKey { get; private set; }
 
     public string? Title { get; private set; }
 
@@ -102,17 +102,17 @@ public class Notification : Entity<Guid>
     {
     }
 
-    public Notification(Guid id, Guid userId, string eventType, Guid eventId, Guid? issueId, Guid? projectId, Guid actorId,
-        string? issueKey, string? title, string? actorName, string? detail, DateTime createdAt)
+    public Notification(Guid id, Guid userId, string eventType, Guid eventId, Guid? ticketId, Guid? projectId, Guid actorId,
+        string? ticketKey, string? title, string? actorName, string? detail, DateTime createdAt)
         : base(id)
     {
         UserId = userId;
         EventType = eventType;
         EventId = eventId;
-        IssueId = issueId;
+        TicketId = ticketId;
         ProjectId = projectId;
         ActorId = actorId;
-        IssueKey = issueKey;
+        TicketKey = ticketKey;
         Title = title;
         ActorName = actorName;
         Detail = detail;

@@ -261,7 +261,7 @@ public class AuthAppService(
         };
         if (home.ProjectId is { } space)
         {
-            await projectAccess.CheckAsync(space, ProjectPermissions.ViewIssues);
+            await projectAccess.CheckAsync(space, ProjectPermissions.ViewTickets);
         }
 
         var user = await userManager.GetByIdAsync(CurrentUser.GetId());
@@ -391,7 +391,7 @@ public class AuthAppService(
     private async Task<CurrentUserDto> ToDtoAsync(IdentityUser user)
     {
         var permissions = new List<string>();
-        foreach (var permission in new[] { SprintBootPermissions.ManageUsers, SprintBootPermissions.RestoreIssues, SprintBootPermissions.ManageWorkflows, SprintBootPermissions.ManageNotificationSchemes, SprintBootPermissions.ManageSso, SprintBootPermissions.ManageEmail, SprintBootPermissions.ManageInvitations, SprintBootPermissions.ManageGit, SprintBootPermissions.ManageIssueLinkTypes, SprintBootPermissions.ManageIssueTemplates, SprintBootPermissions.ManageAi })
+        foreach (var permission in new[] { SprintBootPermissions.ManageUsers, SprintBootPermissions.RestoreTickets, SprintBootPermissions.ManageWorkflows, SprintBootPermissions.ManageNotificationSchemes, SprintBootPermissions.ManageSso, SprintBootPermissions.ManageEmail, SprintBootPermissions.ManageInvitations, SprintBootPermissions.ManageGit, SprintBootPermissions.ManageTicketLinkTypes, SprintBootPermissions.ManageTicketTemplates, SprintBootPermissions.ManageAi })
         {
             if (await AuthorizationService.IsGrantedAsync(permission))
             {

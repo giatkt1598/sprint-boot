@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Shouldly;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Projects;
 using Xunit;
 
@@ -19,7 +19,7 @@ public class RichTextFileTests(ApiFixture fixture)
         var client = await fixture.CreateUserClientAsync(Token);
         var key = $"F{Random.Shared.Next(100000, 999999)}";
         var project = (await (await client.Http.PostAsJsonAsync("/api/v1/project", new { name = "Files", key, type = 0 }, Token)).Content.ReadFromJsonAsync<ProjectDto>(Token))!;
-        var types = await client.Http.GetFromJsonAsync<List<IssueTypeDto>>($"/api/v1/issue/types/{project.Id}", Token);
+        var types = await client.Http.GetFromJsonAsync<List<TicketTypeDto>>($"/api/v1/ticket/types/{project.Id}", Token);
         return (client, project, types!.Single(type => type.Name == "Task").Id);
     }
 
@@ -41,13 +41,13 @@ public class RichTextFileTests(ApiFixture fixture)
     {
         var (client, project, typeId) = await SpaceAsync();
         var file = await UploadAsync(client, project.Id);
-        var created = await client.Http.PostAsJsonAsync("/api/v1/issue", new { projectId = project.Id, typeId, title = "Pic", description = $"<p>x</p><img src=\"{file.Url}\">" }, Token);
-        var issue = (await created.Content.ReadFromJsonAsync<IssueDto>(Token))!;
+        var created = await client.Http.PostAsJsonAsync("/api/v1/ticket", new { projectId = project.Id, typeId, title = "Pic", description = $"<p>x</p><img src=\"{file.Url}\">" }, Token);
+        var ticket = (await created.Content.ReadFromJsonAsync<TicketDto>(Token))!;
 
-        issue.Description.ShouldContain("/content?t=");
+        ticket.Description.ShouldContain("/content?t=");
         (await FetchAsync(file.Url)).StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var update = await client.Http.PutAsJsonAsync($"/api/v1/issue/{issue.Id}", new { concurrencyStamp = issue.ConcurrencyStamp, fields = new { description = "<p>gone</p>" } }, Token);
+        var update = await client.Http.PutAsJsonAsync($"/api/v1/ticket/{ticket.Id}", new { concurrencyStamp = ticket.ConcurrencyStamp, fields = new { description = "<p>gone</p>" } }, Token);
         update.StatusCode.ShouldBe(HttpStatusCode.OK, await update.Content.ReadAsStringAsync(Token));
 
         (await FetchAsync(file.Url)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -58,10 +58,10 @@ public class RichTextFileTests(ApiFixture fixture)
     {
         var (client, project, typeId) = await SpaceAsync();
         var file = await UploadAsync(client, project.Id);
-        var created = await client.Http.PostAsJsonAsync("/api/v1/issue", new { projectId = project.Id, typeId, title = "Pic", description = $"<img src=\"{file.Url}\">" }, Token);
-        var issue = (await created.Content.ReadFromJsonAsync<IssueDto>(Token))!;
+        var created = await client.Http.PostAsJsonAsync("/api/v1/ticket", new { projectId = project.Id, typeId, title = "Pic", description = $"<img src=\"{file.Url}\">" }, Token);
+        var ticket = (await created.Content.ReadFromJsonAsync<TicketDto>(Token))!;
 
-        var saved = await client.Http.PutAsJsonAsync($"/api/v1/issue/{issue.Id}", new { concurrencyStamp = issue.ConcurrencyStamp, fields = new { description = issue.Description } }, Token);
+        var saved = await client.Http.PutAsJsonAsync($"/api/v1/ticket/{ticket.Id}", new { concurrencyStamp = ticket.ConcurrencyStamp, fields = new { description = ticket.Description } }, Token);
         saved.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await FetchAsync(file.Url)).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
@@ -70,11 +70,11 @@ public class RichTextFileTests(ApiFixture fixture)
     public async Task Deleting_a_comment_removes_its_files_and_replies_files()
     {
         var (client, project, typeId) = await SpaceAsync();
-        var issue = (await (await client.Http.PostAsJsonAsync("/api/v1/issue", new { projectId = project.Id, typeId, title = "C" }, Token)).Content.ReadFromJsonAsync<IssueDto>(Token))!;
+        var ticket = (await (await client.Http.PostAsJsonAsync("/api/v1/ticket", new { projectId = project.Id, typeId, title = "C" }, Token)).Content.ReadFromJsonAsync<TicketDto>(Token))!;
         var first = await UploadAsync(client, project.Id);
         var second = await UploadAsync(client, project.Id);
-        var comment = (await (await client.Http.PostAsJsonAsync("/api/v1/comment", new { issueId = issue.Id, body = $"<img src=\"{first.Url}\">" }, Token)).Content.ReadFromJsonAsync<CommentDto>(Token))!;
-        (await client.Http.PostAsJsonAsync("/api/v1/comment", new { issueId = issue.Id, parentId = comment.Id, body = $"<img src=\"{second.Url}\">" }, Token)).EnsureSuccessStatusCode();
+        var comment = (await (await client.Http.PostAsJsonAsync("/api/v1/comment", new { ticketId = ticket.Id, body = $"<img src=\"{first.Url}\">" }, Token)).Content.ReadFromJsonAsync<CommentDto>(Token))!;
+        (await client.Http.PostAsJsonAsync("/api/v1/comment", new { ticketId = ticket.Id, parentId = comment.Id, body = $"<img src=\"{second.Url}\">" }, Token)).EnsureSuccessStatusCode();
 
         (await client.Http.DeleteAsync($"/api/v1/comment/{comment.Id}", Token)).EnsureSuccessStatusCode();
 
@@ -88,7 +88,7 @@ public class RichTextFileTests(ApiFixture fixture)
         var (client, project, typeId) = await SpaceAsync();
         var abandoned = await UploadAsync(client, project.Id);
         var used = await UploadAsync(client, project.Id);
-        (await client.Http.PostAsJsonAsync("/api/v1/issue", new { projectId = project.Id, typeId, title = "U", description = $"<img src=\"{used.Url}\">" }, Token)).EnsureSuccessStatusCode();
+        (await client.Http.PostAsJsonAsync("/api/v1/ticket", new { projectId = project.Id, typeId, title = "U", description = $"<img src=\"{used.Url}\">" }, Token)).EnsureSuccessStatusCode();
 
         await fixture.CleanRichTextFilesAsync(DateTime.Now.AddMinutes(1));
 

@@ -12,15 +12,15 @@ import { useTranslation } from 'react-i18next';
 import { Link as RouterLink } from 'react-router';
 import { apiClient, unwrap } from '../../api';
 import { Button } from '../../components/Button';
-import { IssueTypeIcon, type IssueType as IconType } from '../../components/IssueIcons';
+import { TicketTypeIcon, type TicketType as IconType } from '../../components/TicketIcons';
 import { Avatar, UnassignedAvatar } from '../../components/Avatar';
 import { MenuItem } from '../../components/Menu';
 import { TruncatedText } from '../../components/TruncatedText';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
 import { font, radius, sem, shadow, type SemanticToken } from '../../theme/tokens';
-import { IssuePanel } from '../agile/IssuePanel';
+import { TicketPanel } from '../agile/TicketPanel';
 import { useBacklog } from '../agile/api';
-import { useIssueFilters, type IssueFilters, type ValueFilter } from '../issues/IssueFilters';
+import { useTicketFilters, type TicketFilters, type ValueFilter } from '../tickets/TicketFilters';
 import type { Space } from '../spaces/api';
 
 type View = 'sprint' | 'week' | 'month' | 'quarter';
@@ -29,12 +29,12 @@ type Range = { from: number; to: number };
 const DAY_WIDTH: Record<View, number> = { sprint: 60, week: 120, month: 40, quarter: 14 };
 const TITLE_WIDTH = 400;
 const ASSIGNEE_WIDTH = 48;
-/** The pinned columns on the left: the issue, then its assignee. */
+/** The pinned columns on the left: the ticket, then its assignee. */
 const LABEL_WIDTH = TITLE_WIDTH + ASSIGNEE_WIDTH;
 const HEADER_HEIGHT = 40;
 const ROW_HEIGHT = 41;
 const BAR_HEIGHT = 24;
-const MAX_ISSUES = 500;
+const MAX_TICKETS = 500;
 const DAY_MS = 86_400_000;
 
 /** Types that have an icon; anything else shows an empty box. */
@@ -64,20 +64,20 @@ function rangeOf(view: Exclude<View, 'sprint'>, anchor: number): Range {
   return { from: Date.UTC(date.getUTCFullYear(), quarter, 1) / DAY_MS, to: Date.UTC(date.getUTCFullYear(), quarter + 3, 0) / DAY_MS };
 }
 
-/** Issues with a start and a due date as bars on a calendar; the sprint's issues missing one are listed after them. */
+/** Tickets with a start and a due date as bars on a calendar; the sprint's tickets missing one are listed after them. */
 export function TimelineTab({ space }: { space: Space }) {
   const { t, i18n } = useTranslation();
   const backlog = useBacklog(space.id);
-  const filters = useIssueFilters(space.id);
-  const [openIssue, setOpenIssue] = useState<string | null>(null);
+  const filters = useTicketFilters(space.id);
+  const [openTicket, setOpenTicket] = useState<string | null>(null);
   const active = backlog.data?.sprints?.map((item) => item.sprint!).find((sprint) => sprint.state === 1 && sprint.startDate && sprint.endDate);
   const [chosenView, setView] = useState<View | null>(null);
   const view: View = chosenView ?? (active ? 'sprint' : 'week');
   const [shift, setShift] = useState(0);
 
-  const issues = useQuery({
-    queryKey: ['issues', 'timeline', space.id],
-    queryFn: () => unwrap(apiClient.GET('/api/v1/issue/search', { params: { query: { ProjectId: space.id, MaxResultCount: MAX_ISSUES } } })),
+  const tickets = useQuery({
+    queryKey: ['tickets', 'timeline', space.id],
+    queryFn: () => unwrap(apiClient.GET('/api/v1/ticket/search', { params: { query: { ProjectId: space.id, MaxResultCount: MAX_TICKETS } } })),
   });
 
   const sprintFrom = active ? toDay(active.startDate!) : 0;
@@ -101,14 +101,14 @@ export function TimelineTab({ space }: { space: Space }) {
 
   const rows = useMemo(() => {
     // Subtasks stay off the timeline: their parent's bar already covers the work.
-    const visible = (issues.data?.items ?? []).filter((issue) => issue.type?.hierarchy !== 0 && filters.matches({ ...issue, epicId: issue.parentId }));
+    const visible = (tickets.data?.items ?? []).filter((ticket) => ticket.type?.hierarchy !== 0 && filters.matches({ ...ticket, epicId: ticket.parentId }));
     const dated = visible
-      .filter((issue) => issue.startDate && issue.dueDate && toDay(issue.startDate) <= range.to && toDay(issue.dueDate) >= range.from)
+      .filter((ticket) => ticket.startDate && ticket.dueDate && toDay(ticket.startDate) <= range.to && toDay(ticket.dueDate) >= range.from)
       .sort((a, b) => toDay(a.startDate!) - toDay(b.startDate!) || toDay(a.dueDate!) - toDay(b.dueDate!));
     // Missing a date matters for the work planned now, so the list keeps to the running sprint.
-    const undated = active ? visible.filter((issue) => issue.sprintName === active.name && (!issue.startDate || !issue.dueDate)) : [];
+    const undated = active ? visible.filter((ticket) => ticket.sprintName === active.name && (!ticket.startDate || !ticket.dueDate)) : [];
     return { dated, undated };
-  }, [issues.data, filters, range.from, range.to, active]);
+  }, [tickets.data, filters, range.from, range.to, active]);
 
   const short = (options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(i18n.language, { ...options, timeZone: 'UTC' });
   const dayLabel = (day: number) => {
@@ -133,36 +133,36 @@ export function TimelineTab({ space }: { space: Space }) {
   const isWeekend = (day: number) => [0, 6].includes(fromDay(day).getUTCDay()) && view !== 'quarter';
   const gridWidth = days * dayWidth;
 
-  const issueLabel = (issue: Issue, faded: boolean) => (
+  const ticketLabel = (ticket: Ticket, faded: boolean) => (
     <div className="sticky left-0 z-10 flex h-full shrink-0" style={{ width: LABEL_WIDTH, backgroundColor: sem('bg-surface'), opacity: faded ? 0.5 : 1 }}>
     <div className="flex h-full shrink-0 items-center gap-2 px-4" style={{ width: TITLE_WIDTH, fontSize: font.size.md }}>
       {/* Its own box, so a long title never squeezes the icon away. */}
       <span className="flex size-4 shrink-0 items-center justify-center">
-        {issue.type?.icon && KNOWN_TYPES.includes(issue.type.icon) ? <IssueTypeIcon type={issue.type.icon as IconType} /> : null}
+        {ticket.type?.icon && KNOWN_TYPES.includes(ticket.type.icon) ? <TicketTypeIcon type={ticket.type.icon as IconType} /> : null}
       </span>
       {/* The key opens the full page; the title opens the side panel. */}
-      <Link component={RouterLink} to={`/issues/${issue.key}`} underline="hover" className="shrink-0" sx={{ color: sem('text-secondary') }}>{issue.key}</Link>
+      <Link component={RouterLink} to={`/tickets/${ticket.key}`} underline="hover" className="shrink-0" sx={{ color: sem('text-secondary') }}>{ticket.key}</Link>
       <ButtonBase
-        onClick={() => setOpenIssue(issue.key!)}
+        onClick={() => setOpenTicket(ticket.key!)}
         className="h-full min-w-0 flex-1"
         sx={{ justifyContent: 'flex-start', fontSize: font.size.md, textAlign: 'left' }}
       >
-        <TruncatedText text={issue.title ?? ''} style={{ color: sem('text-primary') }} />
+        <TruncatedText text={ticket.title ?? ''} style={{ color: sem('text-primary') }} />
       </ButtonBase>
     </div>
     <span className="flex shrink-0 items-center justify-center" style={{ width: ASSIGNEE_WIDTH }}>
-      <Tooltip title={issue.assignee?.name ?? t('common.unassigned')} disableInteractive>
+      <Tooltip title={ticket.assignee?.name ?? t('common.unassigned')} disableInteractive>
         <span className="flex">
-          {issue.assignee ? <Avatar name={issue.assignee.name ?? ''} src={issue.assignee.avatarUrl} noTitle /> : <UnassignedAvatar noTitle />}
+          {ticket.assignee ? <Avatar name={ticket.assignee.name ?? ''} src={ticket.assignee.avatarUrl} noTitle /> : <UnassignedAvatar noTitle />}
         </span>
       </Tooltip>
     </span>
     </div>
   );
 
-  const bar = (issue: Issue) => {
-    const start = toDay(issue.startDate!);
-    const end = toDay(issue.dueDate!);
+  const bar = (ticket: Ticket) => {
+    const start = toDay(ticket.startDate!);
+    const end = toDay(ticket.dueDate!);
     const from = Math.max(start, range.from);
     const to = Math.min(end, range.to);
     // A bar that runs past the view is cut square at that edge.
@@ -170,24 +170,24 @@ export function TimelineTab({ space }: { space: Space }) {
     const right = end > range.to ? 0 : radius.control;
     return (
       <ButtonBase
-        onClick={() => setOpenIssue(issue.key!)}
-        aria-label={`${issue.key} ${issue.title}`}
+        onClick={() => setOpenTicket(ticket.key!)}
+        aria-label={`${ticket.key} ${ticket.title}`}
         className="absolute flex items-center overflow-hidden px-2"
         sx={{
           justifyContent: 'flex-start',
           // A light To Do bar takes dark text; the other two are dark enough for white.
-          color: sem(issue.status?.category ? 'text-on-accent' : 'text-primary'),
+          color: sem(ticket.status?.category ? 'text-on-accent' : 'text-primary'),
           fontSize: font.size.xs,
           fontWeight: font.weight.medium,
           left: (from - range.from) * dayWidth + (start < range.from ? 0 : 4),
           width: Math.max((to - from + 1) * dayWidth - (start < range.from ? 0 : 4) - (end > range.to ? 0 : 4), 6),
           top: (ROW_HEIGHT - BAR_HEIGHT) / 2,
           height: BAR_HEIGHT,
-          backgroundColor: sem(STATUS_BARS[issue.status?.category ?? 0] ?? 'accent-default'),
+          backgroundColor: sem(STATUS_BARS[ticket.status?.category ?? 0] ?? 'accent-default'),
           borderRadius: `${left}px ${right}px ${right}px ${left}px`,
         }}
       >
-        <TruncatedText text={issue.title ?? ''} />
+        <TruncatedText text={ticket.title ?? ''} />
       </ButtonBase>
     );
   };
@@ -225,14 +225,14 @@ export function TimelineTab({ space }: { space: Space }) {
         </div>
       </div>
 
-      {issues.isPending && <LoadingState />}
-      {issues.isError && <ErrorState onRetry={() => void issues.refetch()} />}
-      {issues.data && (
+      {tickets.isPending && <LoadingState />}
+      {tickets.isError && <ErrorState onRetry={() => void tickets.refetch()} />}
+      {tickets.data && (
         <div className="overflow-x-auto" style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}>
           <div style={{ width: LABEL_WIDTH + gridWidth, minWidth: '100%' }}>
             <div className="relative flex" style={{ height: HEADER_HEIGHT, backgroundColor: sem('bg-page'), borderBottom: `1px solid ${sem('border-default')}` }}>
               <span className="sticky left-0 z-10 flex shrink-0" style={{ width: LABEL_WIDTH, backgroundColor: sem('bg-page'), fontSize: font.size.xs, color: sem('text-secondary') }}>
-                <span className="flex items-center px-4" style={{ width: TITLE_WIDTH }}>{t('overview.timeline.issue')}</span>
+                <span className="flex items-center px-4" style={{ width: TITLE_WIDTH }}>{t('overview.timeline.ticket')}</span>
                 <span className="sr-only">{t('overview.timeline.assignee')}</span>
               </span>
               {Array.from({ length: days }, (_, index) => (
@@ -251,10 +251,10 @@ export function TimelineTab({ space }: { space: Space }) {
               {rows.dated.length === 0 && rows.undated.length === 0 && (
                 <div className="sticky left-0 p-4" style={{ width: LABEL_WIDTH + 320 }}><EmptyState title={t('overview.timeline.empty')} /></div>
               )}
-              {rows.dated.map((issue) => (
-                <div key={issue.id} className="relative flex" style={{ height: ROW_HEIGHT, borderBottom: `1px solid ${sem('border-default')}` }}>
-                  {issueLabel(issue, false)}
-                  <div className="relative shrink-0" style={{ width: gridWidth }}>{bar(issue)}</div>
+              {rows.dated.map((ticket) => (
+                <div key={ticket.id} className="relative flex" style={{ height: ROW_HEIGHT, borderBottom: `1px solid ${sem('border-default')}` }}>
+                  {ticketLabel(ticket, false)}
+                  <div className="relative shrink-0" style={{ width: gridWidth }}>{bar(ticket)}</div>
                 </div>
               ))}
             </div>
@@ -265,9 +265,9 @@ export function TimelineTab({ space }: { space: Space }) {
                   {t('overview.timeline.noDatesGroup')}
                   <span>{rows.undated.length}</span>
                 </div>
-                {rows.undated.map((issue, index) => (
-                  <div key={issue.id} className="flex" style={{ height: ROW_HEIGHT, borderBottom: index < rows.undated.length - 1 ? `1px solid ${sem('border-default')}` : undefined }}>
-                    {issueLabel(issue, true)}
+                {rows.undated.map((ticket, index) => (
+                  <div key={ticket.id} className="flex" style={{ height: ROW_HEIGHT, borderBottom: index < rows.undated.length - 1 ? `1px solid ${sem('border-default')}` : undefined }}>
+                    {ticketLabel(ticket, true)}
                   </div>
                 ))}
               </>
@@ -275,12 +275,12 @@ export function TimelineTab({ space }: { space: Space }) {
           </div>
         </div>
       )}
-      <IssuePanel issueKey={openIssue} onClose={() => setOpenIssue(null)} />
+      <TicketPanel ticketKey={openTicket} onClose={() => setOpenTicket(null)} />
     </div>
   );
 }
 
-type Issue = components['schemas']['IssueSummaryDto'];
+type Ticket = components['schemas']['TicketSummaryDto'];
 
 /** Day lines, weekend shading and the today line, drawn behind the dated rows. */
 function DayGrid({ days, dayWidth, from, today, weekend }: { days: number; dayWidth: number; from: number; today: number; weekend: (day: number) => boolean }) {
@@ -303,7 +303,7 @@ function DayGrid({ days, dayWidth, from, today, weekend }: { days: number; dayWi
 }
 
 /** One filter as its own button, as the timeline toolbar shows them. */
-function FilterButton({ filters, filter, label }: { filters: IssueFilters; filter: ValueFilter; label: string }) {
+function FilterButton({ filters, filter, label }: { filters: TicketFilters; filter: ValueFilter; label: string }) {
   const { t } = useTranslation();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const chosen = filters.values[filter];

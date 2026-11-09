@@ -15,7 +15,7 @@ import { apiClient, unwrap } from '../../api';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { DialogConfirm } from '../../components/Dialog';
-import { IssueTypeIcon, type IssueType as IconType } from '../../components/IssueIcons';
+import { TicketTypeIcon, type TicketType as IconType } from '../../components/TicketIcons';
 import { MenuItem } from '../../components/Menu';
 import { SearchInput } from '../../components/SearchInput';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
@@ -24,10 +24,10 @@ import type { PickerUser } from '../../components/UserPicker';
 import { swallowClickAfterDrag } from '../../lib/drag';
 import { useErrorMessage } from '../../lib/errors';
 import { font, radius, sem, shadow, type SemanticToken } from '../../theme/tokens';
-import { FilterChips, FilterControls, useIssueFilters, useSearchText } from '../issues/IssueFilters';
-import { QuickAssignee, QuickPriority, QuickStatus } from '../issues/QuickFields';
+import { FilterChips, FilterControls, useTicketFilters, useSearchText } from '../tickets/TicketFilters';
+import { QuickAssignee, QuickPriority, QuickStatus } from '../tickets/QuickFields';
 import { useMembers, useSpace } from '../spaces/api';
-import { IssuePanel } from './IssuePanel';
+import { TicketPanel } from './TicketPanel';
 import { CompleteSprintDialog, SprintDialog } from './SprintDialogs';
 import { backlogKey, useBacklog, useBoardLive, type Backlog, type Card, type SprintSummary } from './api';
 
@@ -42,14 +42,14 @@ interface RowActions {
   lists: { id: string; name: string }[];
 }
 
-interface IssueRowProps {
+interface TicketRowProps {
   card: Card;
   onOpen: (key: string) => void;
   actions?: RowActions;
 }
 
 /** One backlog line. Drag is pointer only; the row menu offers the same moves to keyboards. */
-function RowBody({ card, onOpen, actions }: IssueRowProps) {
+function RowBody({ card, onOpen, actions }: TicketRowProps) {
   const { t } = useTranslation();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const { canEdit, people } = use(RowEditing);
@@ -61,10 +61,10 @@ function RowBody({ card, onOpen, actions }: IssueRowProps) {
 
   return (
     <>
-      <td className="pl-2"><span className="flex"><IssueTypeIcon type={card.type?.icon as IconType} /></span></td>
+      <td className="pl-2"><span className="flex"><TicketTypeIcon type={card.type?.icon as IconType} /></span></td>
       <td><Link
         component={RouterLink}
-        to={`/issues/${card.key}`}
+        to={`/tickets/${card.key}`}
         draggable={false}
         sx={{ width: 96, flexShrink: 0, fontSize: font.size.xs, color: sem('text-accent') }}
       >
@@ -76,7 +76,7 @@ function RowBody({ card, onOpen, actions }: IssueRowProps) {
         </ButtonBase>
       </td>
       <td className="truncate pr-3">{card.epicTitle && <Badge tone="epic">{card.epicTitle}</Badge>}</td>
-      <td><QuickStatus issue={card} canEdit={canEdit} people={people} /></td>
+      <td><QuickStatus ticket={card} canEdit={canEdit} people={people} /></td>
       <td className="pr-1">{card.storyPoints != null && (
         <Tooltip title={t('agile.storyPoints', { count: card.storyPoints })}>
           <span className="inline-flex">
@@ -84,8 +84,8 @@ function RowBody({ card, onOpen, actions }: IssueRowProps) {
           </span>
         </Tooltip>
       )}</td>
-      <td><QuickPriority issue={card} canEdit={canEdit} /></td>
-      <td className="overflow-hidden py-1 pr-3"><QuickAssignee issue={card} canEdit={canEdit} people={people} showName /></td>
+      <td><QuickPriority ticket={card} canEdit={canEdit} /></td>
+      <td className="overflow-hidden py-1 pr-3"><QuickAssignee ticket={card} canEdit={canEdit} people={people} showName /></td>
       <td>{actions && (
         <>
           <IconButton size="small" aria-label={t('agile.rowActions', { key: card.key })} onClick={(event) => setAnchor(event.currentTarget)}>
@@ -108,14 +108,14 @@ function RowBody({ card, onOpen, actions }: IssueRowProps) {
 
 const RowCells = memo(RowBody);
 
-const IssueColumns: { width?: number }[] = [{ width: 32 }, { width: 96 }, {}, { width: 144 }, { width: 120 }, { width: 48 }, { width: 40 }, { width: 248 }, { width: 40 }];
+const TicketColumns: { width?: number }[] = [{ width: 32 }, { width: 96 }, {}, { width: 144 }, { width: 120 }, { width: 48 }, { width: 40 }, { width: 248 }, { width: 40 }];
 
 /** Fixed columns, so sprints and the backlog line up with each other. */
-function IssueTable({ extraColumn, children }: { extraColumn?: boolean; children: ReactNode }) {
+function TicketTable({ extraColumn, children }: { extraColumn?: boolean; children: ReactNode }) {
   return (
     <table className="w-full" style={{ tableLayout: 'fixed', borderCollapse: 'collapse' }}>
       <colgroup>
-        {IssueColumns.map((column, index) => <col key={index} style={{ width: column.width }} />)}
+        {TicketColumns.map((column, index) => <col key={index} style={{ width: column.width }} />)}
         {extraColumn && <col style={{ width: 128 }} />}
       </colgroup>
       <tbody>{children}</tbody>
@@ -123,13 +123,13 @@ function IssueTable({ extraColumn, children }: { extraColumn?: boolean; children
   );
 }
 
-/** Rows that only open their issue, for lists outside the backlog such as a closed sprint. */
-export function StaticIssueList({ cards, onOpen }: { cards: Card[]; onOpen: (key: string) => void }) {
+/** Rows that only open their ticket, for lists outside the backlog such as a closed sprint. */
+export function StaticTicketList({ cards, onOpen }: { cards: Card[]; onOpen: (key: string) => void }) {
   return (
     <div style={{ borderTop: `1px solid ${sem('border-default')}` }}>
-      <IssueTable>
+      <TicketTable>
         {cards.map((card) => <Box key={card.id} component="tr" sx={rowStyles}><RowCells card={card} onOpen={onOpen} /></Box>)}
-      </IssueTable>
+      </TicketTable>
     </div>
   );
 }
@@ -137,7 +137,7 @@ export function StaticIssueList({ cards, onOpen }: { cards: Card[]; onOpen: (key
 /** Neighbouring rows share a line; the list draws the one above the first row. */
 const rowStyles = {
   height: 36,
-  // One line per issue: whatever does not fit its column is cut off, never wrapped.
+  // One line per ticket: whatever does not fit its column is cut off, never wrapped.
   '& > td': { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
   // Rows take the card under them, so a see-through card stays see-through.
   backgroundColor: 'transparent',
@@ -156,7 +156,7 @@ export function SectionCard({ children }: { children: ReactNode }) {
   );
 }
 
-function DraggableRow({ card, onOpen, actions, canDrag }: IssueRowProps & { canDrag: boolean }) {
+function DraggableRow({ card, onOpen, actions, canDrag }: TicketRowProps & { canDrag: boolean }) {
   const { listeners, setNodeRef: dragRef, transform, isDragging } = useDraggable({ id: card.id!, disabled: !canDrag });
   const { setNodeRef: dropRef, isOver } = useDroppable({ id: `row:${card.id}` });
   return (
@@ -190,7 +190,7 @@ interface ListProps {
   empty: string;
 }
 
-function IssueList({ id, cards, canDrag, onOpen, actions, empty }: ListProps) {
+function TicketList({ id, cards, canDrag, onOpen, actions, empty }: ListProps) {
   const { setNodeRef, isOver } = useDroppable({ id: `list:${id}` });
 
   return (
@@ -200,11 +200,11 @@ function IssueList({ id, cards, canDrag, onOpen, actions, empty }: ListProps) {
       style={{ minHeight: 40, borderTop: `1px solid ${sem('border-default')}`, backgroundColor: isOver ? sem('bg-selected') : undefined }}
     >
       {cards.length > 0 && (
-        <IssueTable>
+        <TicketTable>
           {cards.map((card) => (
             <DraggableRow key={card.id} card={card} canDrag={canDrag} onOpen={onOpen} actions={actions} />
           ))}
-        </IssueTable>
+        </TicketTable>
       )}
       {cards.length === 0 && (
         <Typography variant="body2" color="textSecondary" className="px-2 py-2">{empty}</Typography>
@@ -228,13 +228,13 @@ const STATUS_GROUPS: { category: number; label: string; background: SemanticToke
   { category: 2, label: 'agile.countDone', background: 'status-done-bg', color: 'status-done-text' },
 ];
 
-function StatusCounters({ issues }: { issues: Card[] }) {
+function StatusCounters({ tickets }: { tickets: Card[] }) {
   const { t } = useTranslation();
 
   return (
     <div className="flex items-center gap-1">
       {STATUS_GROUPS.map((group) => {
-        const count = issues.filter((issue) => issue.status?.category === group.category).length;
+        const count = tickets.filter((ticket) => ticket.status?.category === group.category).length;
         return (
           <Tooltip key={group.category} title={t(group.label)}>
             <span
@@ -259,7 +259,7 @@ function StatusCounters({ issues }: { issues: Card[] }) {
   );
 }
 
-function SprintHeader({ sprint, issues, canManage, shown, futureSprints, projectId }: { sprint: SprintSummary; issues: Card[]; canManage: boolean; shown: number; futureSprints: SprintSummary[]; projectId: string }) {
+function SprintHeader({ sprint, tickets, canManage, shown, futureSprints, projectId }: { sprint: SprintSummary; tickets: Card[]; canManage: boolean; shown: number; futureSprints: SprintSummary[]; projectId: string }) {
   const { t, i18n } = useTranslation();
   const toMessage = useErrorMessage();
   const toast = useToast();
@@ -270,7 +270,7 @@ function SprintHeader({ sprint, issues, canManage, shown, futureSprints, project
 
   const remove = useMutation({
     mutationFn: () => unwrap(apiClient.DELETE('/api/v1/sprint/{id}', { params: { path: { id: sprint.id! } } })),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['issues'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tickets'] }),
     onError: (failure) => toast('error', toMessage(failure)),
     onSettled: () => setDialog(null),
   });
@@ -278,16 +278,16 @@ function SprintHeader({ sprint, issues, canManage, shown, futureSprints, project
   const date = (value?: string | null) =>
     value ? new Intl.DateTimeFormat(i18n.language, { month: 'short', day: 'numeric' }).format(new Date(`${value}T00:00:00`)) : '';
   const range = sprint.startDate && sprint.endDate ? `${date(sprint.startDate)} – ${date(sprint.endDate)}` : '';
-  const total = sprint.issueCount ?? 0;
+  const total = sprint.ticketCount ?? 0;
   const length = sprint.startDate && sprint.endDate ? sprintLength(sprint.startDate, sprint.endDate, t) : '';
-  const count = shown === total ? t('agile.issueCount', { count: total }) : t('agile.issueCountFiltered', { shown, total });
+  const count = shown === total ? t('agile.ticketCount', { count: total }) : t('agile.ticketCountFiltered', { shown, total });
   const points = t('agile.pointsProgress', { done: sprint.donePoints, total: sprint.totalPoints });
 
   return (
     <div className="flex items-center gap-2 px-2">
       <Typography variant="h3" component="h2">{sprint.name}</Typography>
       <Typography variant="body2" color="textSecondary" className="flex-1">{[range, length, count, points].filter(Boolean).join(' · ')}</Typography>
-      <StatusCounters issues={issues} />
+      <StatusCounters tickets={tickets} />
       {canManage && active && <Button kind="ghost" onClick={() => setDialog('complete')}>{t('agile.completeSprint')}</Button>}
       {canManage && !active && <Button kind="ghost" onClick={() => setDialog('start')}>{t('agile.startSprint')}</Button>}
       {canManage && (
@@ -325,7 +325,7 @@ function moveInCache(data: Backlog, card: Card, listId: string, index: number): 
     backlog: listId === BACKLOG_LIST ? insert(without(data.backlog)) : without(data.backlog),
     sprints: (data.sprints ?? []).map((item) => ({
       ...item,
-      issues: item.sprint?.id === listId ? insert(without(item.issues)) : without(item.issues),
+      tickets: item.sprint?.id === listId ? insert(without(item.tickets)) : without(item.tickets),
     })),
   };
 }
@@ -345,7 +345,7 @@ export function BacklogPage() {
   const canManage = space.data?.permissions?.includes('Sprint.Manage') ?? false;
   const scrum = backlog.data?.type === 0;
   const members = useMembers(projectId);
-  const canEdit = space.data?.permissions?.includes('Issue.Edit') ?? false;
+  const canEdit = space.data?.permissions?.includes('Ticket.Edit') ?? false;
   const rowEditing = useMemo(
     () => ({ canEdit, people: (members.data ?? []).map((member) => member.user!) }),
     [canEdit, members.data],
@@ -355,9 +355,9 @@ export function BacklogPage() {
     () => (backlog.data?.sprints ?? []).map((item) => ({ value: item.sprint!.id!, label: item.sprint!.name! })),
     [backlog.data],
   );
-  const filters = useIssueFilters(projectId, scrum ? sprintOptions : undefined);
+  const filters = useTicketFilters(projectId, scrum ? sprintOptions : undefined);
   const [text, setText] = useSearchText();
-  const [openIssue, setOpenIssue] = useState<string | null>(null);
+  const [openTicket, setOpenTicket] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [closedOpen, setClosedOpen] = useState(false);
 
@@ -372,9 +372,9 @@ export function BacklogPage() {
   const move = useMutation({
     mutationFn: ({ card, listId, after, before }: { card: Card; listId: string; after?: string; before?: string }) =>
       unwrap(
-        apiClient.POST('/api/v1/sprint/move-issue/{issueId}', {
-          params: { path: { issueId: card.id! } },
-          body: { sprintId: listId === BACKLOG_LIST ? null : listId, afterIssueId: after ?? null, beforeIssueId: before ?? null },
+        apiClient.POST('/api/v1/sprint/move-ticket/{ticketId}', {
+          params: { path: { ticketId: card.id! } },
+          body: { sprintId: listId === BACKLOG_LIST ? null : listId, afterTicketId: after ?? null, beforeTicketId: before ?? null },
         }),
       ),
     onError: (failure) => toast('error', toMessage(failure)),
@@ -383,7 +383,7 @@ export function BacklogPage() {
 
   const pull = useMutation({
     mutationFn: (card: Card) =>
-      unwrap(apiClient.POST('/api/v1/board/set-entry', { params: { query: { projectId, issueId: card.id } }, body: { onBoard: true } })),
+      unwrap(apiClient.POST('/api/v1/board/set-entry', { params: { query: { projectId, ticketId: card.id } }, body: { onBoard: true } })),
     onSuccess: () => toast('success', t('agile.movedToBoard')),
     onError: (failure) => toast('error', toMessage(failure)),
     onSettled: refresh,
@@ -392,7 +392,7 @@ export function BacklogPage() {
   const cardsOf = (listId: string) =>
     listId === BACKLOG_LIST
       ? (backlog.data?.backlog ?? [])
-      : (backlog.data?.sprints?.find((item) => item.sprint?.id === listId)?.issues ?? []);
+      : (backlog.data?.sprints?.find((item) => item.sprint?.id === listId)?.tickets ?? []);
 
   const place = (card: Card, listId: string, index: number) => {
     const others = cardsOf(listId).filter((item) => item.id !== card.id);
@@ -403,13 +403,13 @@ export function BacklogPage() {
   };
 
   const listOf = (card: Card) =>
-    backlog.data?.sprints?.find((item) => item.issues?.some((issue) => issue.id === card.id))?.sprint?.id ?? BACKLOG_LIST;
+    backlog.data?.sprints?.find((item) => item.tickets?.some((ticket) => ticket.id === card.id))?.sprint?.id ?? BACKLOG_LIST;
 
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     if (!over) {
       return;
     }
-    const all = [...(backlog.data?.backlog ?? []), ...(backlog.data?.sprints ?? []).flatMap((item) => item.issues ?? [])];
+    const all = [...(backlog.data?.backlog ?? []), ...(backlog.data?.sprints ?? []).flatMap((item) => item.tickets ?? [])];
     const card = all.find((item) => item.id === active.id);
     if (!card) {
       return;
@@ -463,7 +463,7 @@ export function BacklogPage() {
       <div className="flex items-center gap-2">
         <Typography variant="h1" className="flex-1">{t('agile.backlog')}</Typography>
         <FilterControls filters={filters} />
-        <SearchInput label={t('issues.search')} value={text} onChange={(event) => setText(event.target.value)} />
+        <SearchInput label={t('tickets.search')} value={text} onChange={(event) => setText(event.target.value)} />
         {scrum && canManage && <Button kind="secondary" onClick={() => setCreating(true)}>{t('agile.createSprint')}</Button>}
       </div>
       <FilterChips filters={filters} />
@@ -481,11 +481,11 @@ export function BacklogPage() {
           onDragCancel={swallowClickAfterDrag}
         >
           {(backlog.data.sprints ?? []).map((item) => {
-            const cards = visible(item.issues);
+            const cards = visible(item.tickets);
             return (
               <SectionCard key={item.sprint!.id}>
-                <SprintHeader sprint={item.sprint!} issues={item.issues ?? []} canManage={canManage} shown={cards.length} futureSprints={futureSprints} projectId={projectId} />
-                <IssueList id={item.sprint!.id!} cards={cards} canDrag={canRank} onOpen={setOpenIssue} actions={actions} empty={t('agile.sprintEmpty')} />
+                <SprintHeader sprint={item.sprint!} tickets={item.tickets ?? []} canManage={canManage} shown={cards.length} futureSprints={futureSprints} projectId={projectId} />
+                <TicketList id={item.sprint!.id!} cards={cards} canDrag={canRank} onOpen={setOpenTicket} actions={actions} empty={t('agile.sprintEmpty')} />
               </SectionCard>
             );
           })}
@@ -493,22 +493,22 @@ export function BacklogPage() {
             <div className="flex items-center gap-2 px-2">
               <Typography variant="h3" component="h2">{t('agile.backlog')}</Typography>
               <Typography variant="body2" color="textSecondary">
-                {backlogCards.length === backlogTotal ? t('agile.issueCount', { count: backlogTotal }) : t('agile.issueCountFiltered', { shown: backlogCards.length, total: backlogTotal })}
+                {backlogCards.length === backlogTotal ? t('agile.ticketCount', { count: backlogTotal }) : t('agile.ticketCountFiltered', { shown: backlogCards.length, total: backlogTotal })}
               </Typography>
             </div>
             {scrum ? (
-              <IssueList id={BACKLOG_LIST} cards={backlogCards} canDrag={canRank} onOpen={setOpenIssue} actions={actions} empty={t('agile.backlogEmpty')} />
+              <TicketList id={BACKLOG_LIST} cards={backlogCards} canDrag={canRank} onOpen={setOpenTicket} actions={actions} empty={t('agile.backlogEmpty')} />
             ) : (
               <div style={{ borderTop: `1px solid ${sem('border-default')}` }}>
                 {backlogCards.length > 0 && (
-                  <IssueTable extraColumn={canRank}>
+                  <TicketTable extraColumn={canRank}>
                     {backlogCards.map((card) => (
                       <Box key={card.id} component="tr" sx={rowStyles}>
-                        <RowCells card={card} onOpen={setOpenIssue} />
+                        <RowCells card={card} onOpen={setOpenTicket} />
                         {canRank && <td><Button kind="link" aria-label={t('agile.moveToBoardFor', { key: card.key })} onClick={() => pull.mutate(card)}>{t('agile.moveToBoard')}</Button></td>}
                       </Box>
                     ))}
-                  </IssueTable>
+                  </TicketTable>
                 )}
                 {backlogCards.length === 0 && <EmptyState title={t('agile.backlogEmpty')} />}
               </div>
@@ -532,7 +532,7 @@ export function BacklogPage() {
       )}
 
       {creating && projectId && <SprintDialog mode="create" projectId={projectId} onClose={() => setCreating(false)} />}
-      <IssuePanel issueKey={openIssue} onClose={() => setOpenIssue(null)} />
+      <TicketPanel ticketKey={openTicket} onClose={() => setOpenTicket(null)} />
     </div>
   );
 }

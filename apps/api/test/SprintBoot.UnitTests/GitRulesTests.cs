@@ -17,7 +17,7 @@ public class GitRulesTests
     [InlineData("SB-0", false, "")]
     public void Scanner_finds_only_known_keys(string text, bool ignoreCase, string expected)
     {
-        var found = IssueKeyScanner.Scan(text, Keys, ignoreCase);
+        var found = TicketKeyScanner.Scan(text, Keys, ignoreCase);
 
         found.OrderBy(key => key, StringComparer.Ordinal).ShouldBe(expected.Split(',', StringSplitOptions.RemoveEmptyEntries).OrderBy(key => key, StringComparer.Ordinal));
     }
@@ -25,11 +25,11 @@ public class GitRulesTests
     [Theory]
     [InlineData(null, "SB-123", "Sửa lỗi đăng nhập!", "feature/SB-123-sua-loi-dang-nhap")]
     [InlineData("bug/{key}", "SB-1", "Anything", "bug/SB-1")]
-    [InlineData("feature/{issue_key}", "DOC-123", "Anything", "feature/DOC-123")]
-    [InlineData("feature/{issue_key}-{issue_title}", "DOC-123", "Sửa lỗi", "feature/DOC-123-sua-loi")]
+    [InlineData("feature/{ticket_key}", "DOC-123", "Anything", "feature/DOC-123")]
+    [InlineData("feature/{ticket_key}-{ticket_title}", "DOC-123", "Sửa lỗi", "feature/DOC-123-sua-loi")]
     public void Branch_names_follow_the_template(string? template, string key, string title, string expected)
     {
-        IssueKeyScanner.BranchName(template, key, title).ShouldBe(expected);
+        TicketKeyScanner.BranchName(template, key, title).ShouldBe(expected);
     }
 
     [Theory]

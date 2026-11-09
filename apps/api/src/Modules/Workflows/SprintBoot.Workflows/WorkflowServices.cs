@@ -21,7 +21,7 @@ public class StatusAppService(
     IRepository<Status, Guid> statuses,
     IRepository<WorkflowStep, Guid> steps,
     IRepository<WorkflowVersion, Guid> versions,
-    IWorkflowIssueGateway issues,
+    IWorkflowTicketGateway tickets,
     IProjectAccess projectAccess,
     IWorkflowRuntime runtime,
     StatusRemover remover)
@@ -35,7 +35,7 @@ public class StatusAppService(
             return [.. items.OrderBy(status => status.Order).Select(StatusMapping.ToDto)];
         }
 
-        await projectAccess.CheckAsync(id, ProjectPermissions.ViewIssues);
+        await projectAccess.CheckAsync(id, ProjectPermissions.ViewTickets);
 
         // Pickers in a space follow its workflows; statuses no workflow uses come after.
         var flow = (await runtime.GetProjectStatusIdsAsync(id)).Select((statusId, index) => (statusId, index)).ToDictionary(item => item.statusId, item => item.index);
@@ -65,7 +65,7 @@ public class StatusAppService(
         var active = (await versions.GetListAsync(version => version.State == WorkflowVersionState.Published));
         var activeIds = active.Select(version => version.Id).ToList();
         var activeSteps = await steps.GetListAsync(step => activeIds.Contains(step.VersionId));
-        var counts = await issues.CountByStatusAsync();
+        var counts = await tickets.CountByStatusAsync();
 
         return [.. items.OrderBy(status => status.Order).Select(status => new StatusAdminDto
         {
@@ -74,7 +74,7 @@ public class StatusAppService(
             Category = status.Category,
             ProjectId = status.ProjectId,
             WorkflowCount = activeSteps.Count(step => step.StatusId == status.Id),
-            IssueCount = counts.GetValueOrDefault(status.Id),
+            TicketCount = counts.GetValueOrDefault(status.Id),
             UpdatedAt = status.LastModificationTime ?? status.CreationTime,
         })];
     }
@@ -227,7 +227,7 @@ public class WorkflowStore(
     }
 }
 
-/// <summary>Rejects definitions that would strand issues or reference unknown things.</summary>
+/// <summary>Rejects definitions that would strand tickets or reference unknown things.</summary>
 public class WorkflowDefinitionValidator(IRepository<Status, Guid> statuses, RuleRegistry registry) : ITransientDependency
 {
     public async Task EnsureValidAsync(WorkflowDefinitionDto definition, Guid? projectId)
@@ -293,18 +293,18 @@ public class WorkflowDefinitionValidator(IRepository<Status, Guid> statuses, Rul
     }
 }
 
-/// <summary>Moves issues to a version: inline when few, queued when many.</summary>
-public class IssueMigrator(
-    IWorkflowIssueGateway issues,
+/// <summary>Moves tickets to a version: inline when few, queued when many.</summary>
+public class TicketMigrator(
+    IWorkflowTicketGateway tickets,
     IRepository<WorkflowMigration, Guid> migrations,
     IGuidGenerator guids,
     IConfiguration configuration) : ITransientDependency
 {
     public const int BatchSize = 500;
 
-    public async Task<bool> RunAsync(IssueScope scope, Guid toVersionId, HashSet<Guid> newSteps, Dictionary<Guid, Guid> mappings)
+    public async Task<bool> RunAsync(TicketScope scope, Guid toVersionId, HashSet<Guid> newSteps, Dictionary<Guid, Guid> mappings)
     {
-        var usage = await issues.CountByStatusAsync(scope);
+        var usage = await tickets.CountByStatusAsync(scope);
         var orphaned = usage.Where(item => item.Value > 0 && !newSteps.Contains(item.Key)).Select(item => item.Key).ToList();
         var unmapped = orphaned.Where(id => !mappings.TryGetValue(id, out var target) || !newSteps.Contains(target)).ToList();
         if (unmapped.Count > 0)
@@ -313,10 +313,10 @@ public class IssueMigrator(
                 .WithData("statuses", string.Join(",", unmapped));
         }
 
-        var pending = await issues.CountPendingAsync(scope, toVersionId);
+        var pending = await tickets.CountPendingAsync(scope, toVersionId);
         if (pending <= configuration.GetValue("Workflows:Migration:SyncLimit", 1000))
         {
-            while (await issues.MigrateBatchAsync(scope, toVersionId, mappings, BatchSize) > 0)
+            while (await tickets.MigrateBatchAsync(scope, toVersionId, mappings, BatchSize) > 0)
             {
             }
 
@@ -337,7 +337,7 @@ public class WorkflowAppService(
     IRepository<ProjectWorkflowMapping, Guid> mappings,
     WorkflowStore store,
     WorkflowDefinitionValidator validator,
-    IssueMigrator migrator,
+    TicketMigrator migrator,
     IProjectAccess projectAccess)
     : ApplicationService, IWorkflowAppService
 {
@@ -513,7 +513,7 @@ public class WorkflowAppService(
         await validator.EnsureValidAsync(definition, owner);
 
         var previous = await versions.GetListAsync(version => version.WorkflowId == id && version.Id != draft.Id);
-        var scope = new IssueScope([.. previous.Select(version => version.Id)]);
+        var scope = new TicketScope([.. previous.Select(version => version.Id)]);
         var queued = previous.Count > 0
             && await migrator.RunAsync(scope, draft.Id, [.. definition.StatusIds], input.StatusMappings);
 
@@ -540,18 +540,18 @@ public class ProjectWorkflowAppService(
     IRepository<WorkflowVersion, Guid> versions,
     IProjectAccess projectAccess,
     WorkflowStore store,
-    IssueMigrator migrator)
+    TicketMigrator migrator)
     : ApplicationService, IProjectWorkflowAppService
 {
     public async Task<List<ProjectWorkflowDto>> GetListAsync(Guid projectId)
     {
-        await projectAccess.CheckAsync(projectId, ProjectPermissions.ViewIssues);
+        await projectAccess.CheckAsync(projectId, ProjectPermissions.ViewTickets);
         var list = await mappings.GetListAsync(mapping => mapping.ProjectId == projectId);
         var ids = list.Select(mapping => mapping.WorkflowId).ToList();
         var names = (await workflows.GetListAsync(workflow => ids.Contains(workflow.Id))).ToDictionary(workflow => workflow.Id, workflow => workflow.Name);
         return [.. list.Select(mapping => new ProjectWorkflowDto
         {
-            IssueTypeId = mapping.IssueTypeId,
+            TicketTypeId = mapping.TicketTypeId,
             WorkflowId = mapping.WorkflowId,
             WorkflowName = names[mapping.WorkflowId],
         })];
@@ -570,15 +570,15 @@ public class ProjectWorkflowAppService(
         var target = await store.FindPublishedAsync(input.WorkflowId) ?? throw new BusinessException(WorkflowErrors.NotPublished);
         var definition = await store.LoadAsync(target);
 
-        // Every older version of any workflow may hold this project's issues.
+        // Every older version of any workflow may hold this project's tickets.
         var all = await versions.GetListAsync(version => version.Id != target.Id);
-        var scope = new IssueScope([.. all.Select(version => version.Id)], input.ProjectId, input.IssueTypeId);
+        var scope = new TicketScope([.. all.Select(version => version.Id)], input.ProjectId, input.TicketTypeId);
         var queued = await migrator.RunAsync(scope, target.Id, [.. definition.StatusIds], input.StatusMappings);
 
-        var mapping = await mappings.FirstOrDefaultAsync(item => item.ProjectId == input.ProjectId && item.IssueTypeId == input.IssueTypeId);
+        var mapping = await mappings.FirstOrDefaultAsync(item => item.ProjectId == input.ProjectId && item.TicketTypeId == input.TicketTypeId);
         if (mapping is null)
         {
-            await mappings.InsertAsync(new ProjectWorkflowMapping(GuidGenerator.Create(), input.ProjectId, input.IssueTypeId, input.WorkflowId));
+            await mappings.InsertAsync(new ProjectWorkflowMapping(GuidGenerator.Create(), input.ProjectId, input.TicketTypeId, input.WorkflowId));
         }
         else
         {
@@ -593,9 +593,9 @@ public class ProjectWorkflowAppService(
 public class WorkflowRuntime(IRepository<ProjectWorkflowMapping, Guid> mappings, WorkflowStore store)
     : IWorkflowRuntime, ITransientDependency
 {
-    public async Task<InitialState> GetInitialStateAsync(Guid projectId, Guid issueTypeId)
+    public async Task<InitialState> GetInitialStateAsync(Guid projectId, Guid ticketTypeId)
     {
-        var mapping = await mappings.FirstOrDefaultAsync(item => item.ProjectId == projectId && item.IssueTypeId == issueTypeId);
+        var mapping = await mappings.FirstOrDefaultAsync(item => item.ProjectId == projectId && item.TicketTypeId == ticketTypeId);
         var workflowId = mapping?.WorkflowId ?? WorkflowsDataSeedContributor.DefaultWorkflowId;
         var version = await store.FindPublishedAsync(workflowId) ?? throw new BusinessException(WorkflowErrors.NotPublished);
         return new InitialState(version.InitialStatusId, version.Id);
@@ -627,7 +627,7 @@ public class TransitionAppService(
     IRepository<WorkflowStep, Guid> steps,
     IRepository<Transition, Guid> transitions,
     IRepository<TransitionRule, Guid> rules,
-    IWorkflowIssueGateway issues,
+    IWorkflowTicketGateway tickets,
     IProjectAccess projectAccess,
     IStatusLookup statusLookup,
     ICurrentActor currentActor,
@@ -635,11 +635,11 @@ public class TransitionAppService(
     IDistributedEventBus eventBus)
     : ApplicationService, ITransitionAppService
 {
-    public async Task<List<AvailableTransitionDto>> GetAvailableAsync(Guid issueId)
+    public async Task<List<AvailableTransitionDto>> GetAvailableAsync(Guid ticketId)
     {
-        var subject = await issues.GetSubjectAsync(issueId);
-        await projectAccess.CheckAsync(subject.ProjectId, ProjectPermissions.ViewIssues);
-        if (!await projectAccess.IsGrantedAsync(subject.ProjectId, ProjectPermissions.TransitionIssues))
+        var subject = await tickets.GetSubjectAsync(ticketId);
+        await projectAccess.CheckAsync(subject.ProjectId, ProjectPermissions.ViewTickets);
+        if (!await projectAccess.IsGrantedAsync(subject.ProjectId, ProjectPermissions.TransitionTickets))
         {
             return [];
         }
@@ -675,14 +675,14 @@ public class TransitionAppService(
         return [.. result.OrderBy(item => order[item.ToStatus.Id].DefaultIfEmpty(int.MaxValue).First())];
     }
 
-    public async Task ExecuteAsync(Guid issueId, ExecuteTransitionInput input)
+    public async Task ExecuteAsync(Guid ticketId, ExecuteTransitionInput input)
     {
-        var subject = await issues.GetSubjectAsync(issueId);
-        await projectAccess.CheckAsync(subject.ProjectId, ProjectPermissions.TransitionIssues);
+        var subject = await tickets.GetSubjectAsync(ticketId);
+        await projectAccess.CheckAsync(subject.ProjectId, ProjectPermissions.TransitionTickets);
 
         if (subject.ConcurrencyStamp != input.ConcurrencyStamp)
         {
-            throw new AbpDbConcurrencyException("The issue was changed by someone else.");
+            throw new AbpDbConcurrencyException("The ticket was changed by someone else.");
         }
 
         var candidates = await GetCandidatesAsync(subject);
@@ -698,10 +698,10 @@ public class TransitionAppService(
 
         foreach (var (field, value) in input.Fields)
         {
-            await issues.SetFieldAsync(issueId, field, value);
+            await tickets.SetFieldAsync(ticketId, field, value);
         }
 
-        subject = await issues.GetSubjectAsync(issueId);
+        subject = await tickets.GetSubjectAsync(ticketId);
         var context = Context(subject, statuses, toStatus.Id, input.Comment);
         var problems = await ValidateAsync(item, context);
         if (problems.Count > 0)
@@ -710,11 +710,11 @@ public class TransitionAppService(
                 .WithData("problems", string.Join(",", problems.Select(problem => problem.Field ?? problem.Code)));
         }
 
-        await issues.MoveAsync(issueId, toStatus.Id, statuses[subject.StatusId].Name, toStatus.Name);
+        await tickets.MoveAsync(ticketId, toStatus.Id, statuses[subject.StatusId].Name, toStatus.Name);
 
         if (!string.IsNullOrWhiteSpace(input.Comment))
         {
-            await issues.AddCommentAsync(issueId, input.Comment);
+            await tickets.AddCommentAsync(ticketId, input.Comment);
         }
 
         foreach (var rule in item.Rules.Where(rule => rule.Kind == RuleKind.PostFunction))
@@ -723,12 +723,12 @@ public class TransitionAppService(
         }
 
         await eventBus.PublishAsync(
-            new IssueTransitionedEto
+            new TicketTransitionedEto
             {
                 EventId = GuidGenerator.Create(),
                 ActorId = currentActor.Actor.Id,
                 ToStatusName = toStatus.Name,
-                IssueId = issueId,
+                TicketId = ticketId,
                 ProjectId = subject.ProjectId,
                 FromStatusId = subject.StatusId,
                 ToStatusId = toStatus.Id,
@@ -793,7 +793,7 @@ public class WorkflowsDataSeedContributor(
     IRepository<Workflow, Guid> workflows,
     IRepository<WorkflowVersion, Guid> versions,
     WorkflowStore store,
-    IWorkflowIssueGateway issues,
+    IWorkflowTicketGateway tickets,
     IGuidGenerator guids) : IDataSeedContributor, ITransientDependency
 {
     public static readonly Guid ToDoId = new("6f1b1a10-0000-4000-8000-000000000001");
@@ -834,8 +834,8 @@ public class WorkflowsDataSeedContributor(
         version.State = WorkflowVersionState.Published;
         await versions.UpdateAsync(version, autoSave: true);
 
-        // Issues created before workflows existed join the default workflow.
-        await issues.MigrateBatchAsync(new IssueScope([]), version.Id, new Dictionary<Guid, Guid>(), int.MaxValue);
+        // Tickets created before workflows existed join the default workflow.
+        await tickets.MigrateBatchAsync(new TicketScope([]), version.Id, new Dictionary<Guid, Guid>(), int.MaxValue);
     }
 }
 
@@ -883,7 +883,7 @@ public static class WorkflowsModelBuilderExtensions
         builder.Entity<ProjectWorkflowMapping>(b =>
         {
             b.ToTable("project_workflow_mappings", Schema);
-            b.HasIndex(mapping => new { mapping.ProjectId, mapping.IssueTypeId }).IsUnique();
+            b.HasIndex(mapping => new { mapping.ProjectId, mapping.TicketTypeId }).IsUnique();
         });
         builder.Entity<WorkflowMigration>(b =>
         {

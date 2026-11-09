@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Projects;
 using SprintBoot.Workflows;
 using Volo.Abp.Application.Services;
@@ -41,7 +41,7 @@ public class BoardViewDto
     /// <summary>What cards show besides the title, in the keys of <see cref="BoardCardFields"/>.</summary>
     public required List<string> CardFields { get; set; }
 
-    public required List<IssueCardDto> Cards { get; set; }
+    public required List<TicketCardDto> Cards { get; set; }
 
     /// <summary>Workflow statuses no column shows.</summary>
     public required List<StatusDto> UnmappedStatuses { get; set; }
@@ -98,7 +98,7 @@ public class SprintSummaryDto
 
     public required DateTime? CompletedAt { get; set; }
 
-    public required int IssueCount { get; set; }
+    public required int TicketCount { get; set; }
 
     public required decimal TotalPoints { get; set; }
 
@@ -117,11 +117,11 @@ public class SprintDefaultsDto
     public required int LengthDays { get; set; }
 }
 
-public class SprintWithIssuesDto
+public class SprintWithTicketsDto
 {
     public required SprintSummaryDto Sprint { get; set; }
 
-    public required List<IssueCardDto> Issues { get; set; }
+    public required List<TicketCardDto> Tickets { get; set; }
 }
 
 public class BacklogDto
@@ -130,9 +130,9 @@ public class BacklogDto
 
     public required BoardType Type { get; set; }
 
-    public required List<SprintWithIssuesDto> Sprints { get; set; }
+    public required List<SprintWithTicketsDto> Sprints { get; set; }
 
-    public required List<IssueCardDto> Backlog { get; set; }
+    public required List<TicketCardDto> Backlog { get; set; }
 
     public required List<SprintSummaryDto> ClosedSprints { get; set; }
 }
@@ -141,9 +141,9 @@ public class ClosedSprintDto
 {
     public required SprintSummaryDto Sprint { get; set; }
 
-    public required List<IssueCardDto> Completed { get; set; }
+    public required List<TicketCardDto> Completed { get; set; }
 
-    public required List<IssueCardDto> NotCompleted { get; set; }
+    public required List<TicketCardDto> NotCompleted { get; set; }
 }
 
 public class SaveSprintInput
@@ -167,7 +167,7 @@ public class CreateSprintInput : SaveSprintInput
 
 public class CompleteSprintInput
 {
-    /// <summary>Where unfinished issues go. Required as a choice: null is the backlog only with ToBacklog set.</summary>
+    /// <summary>Where unfinished tickets go. Required as a choice: null is the backlog only with ToBacklog set.</summary>
     public Guid? TargetSprintId { get; set; }
 
     public bool ToBacklog { get; set; }
@@ -180,22 +180,22 @@ public class CompleteSprintPreviewDto
     public required int OpenCount { get; set; }
 }
 
-public class MoveIssueInput
+public class MoveTicketInput
 {
     /// <summary>Destination sprint; null is the backlog.</summary>
     public Guid? SprintId { get; set; }
 
     /// <summary>Neighbours in the destination list, for rank. Both null keeps the rank.</summary>
-    public Guid? AfterIssueId { get; set; }
+    public Guid? AfterTicketId { get; set; }
 
-    public Guid? BeforeIssueId { get; set; }
+    public Guid? BeforeTicketId { get; set; }
 }
 
-public class RankIssueInput
+public class RankTicketInput
 {
-    public Guid? AfterIssueId { get; set; }
+    public Guid? AfterTicketId { get; set; }
 
-    public Guid? BeforeIssueId { get; set; }
+    public Guid? BeforeTicketId { get; set; }
 }
 
 public class SetBoardEntryInput
@@ -209,10 +209,10 @@ public interface IBoardAppService : IApplicationService
 
     Task<BoardViewDto> UpdateColumnsAsync(Guid projectId, SaveBoardInput input);
 
-    /// <summary>Kanban only: puts an issue on the board or back in the backlog.</summary>
-    Task SetEntryAsync(Guid projectId, Guid issueId, SetBoardEntryInput input);
+    /// <summary>Kanban only: puts a ticket on the board or back in the backlog.</summary>
+    Task SetEntryAsync(Guid projectId, Guid ticketId, SetBoardEntryInput input);
 
-    Task RankAsync(Guid issueId, RankIssueInput input);
+    Task RankAsync(Guid ticketId, RankTicketInput input);
 }
 
 public interface ISprintAppService : IApplicationService
@@ -235,9 +235,9 @@ public interface ISprintAppService : IApplicationService
 
     Task<ClosedSprintDto> GetClosedAsync(Guid id);
 
-    Task MoveIssueAsync(Guid issueId, MoveIssueInput input);
+    Task MoveTicketAsync(Guid ticketId, MoveTicketInput input);
 
-    Task<SprintSummaryDto?> GetForIssueAsync(Guid issueId);
+    Task<SprintSummaryDto?> GetForTicketAsync(Guid ticketId);
 }
 
 [Volo.Abp.EventBus.EventName("SprintBoot.Agile.SprintStateChanged")]
@@ -264,5 +264,5 @@ public static class AgileErrors
     public const string CompletionTargetRequired = "SprintBoot:CompletionTargetRequired";
     public const string StatusInTwoColumns = "SprintBoot:StatusInTwoColumns";
     public const string KanbanHasNoSprints = "SprintBoot:KanbanHasNoSprints";
-    public const string NotPlannable = "SprintBoot:IssueNotPlannable";
+    public const string NotPlannable = "SprintBoot:TicketNotPlannable";
 }

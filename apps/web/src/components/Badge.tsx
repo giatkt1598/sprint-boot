@@ -45,5 +45,5 @@ const statusTones: Record<StatusCategory, BadgeTone> = {
 /** Pass label for a workflow status; its name is admin data and takes priority over the category. */
 export function StatusBadge({ status, label }: { status: StatusCategory; label?: string | null }) {
   const { t } = useTranslation();
-  return <Badge tone={statusTones[status]}>{label ?? t(`issue.status.${status}`)}</Badge>;
+  return <Badge tone={statusTones[status]}>{label ?? t(`ticket.status.${status}`)}</Badge>;
 }

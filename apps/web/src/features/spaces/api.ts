@@ -6,7 +6,7 @@ export type Space = components['schemas']['ProjectDto'];
 export type SpaceMember = components['schemas']['ProjectMemberDto'];
 
 export const SpacePermission = {
-  edit: 'Issue.Edit',
+  edit: 'Ticket.Edit',
   manage: 'Project.Manage',
   manageMembers: 'Project.Members.Manage',
 } as const;

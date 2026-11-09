@@ -122,7 +122,7 @@ public enum SpaceView
 {
     Backlog = 0,
     Board = 1,
-    Issues = 2,
+    Tickets = 2,
     Epics = 3,
 }
 

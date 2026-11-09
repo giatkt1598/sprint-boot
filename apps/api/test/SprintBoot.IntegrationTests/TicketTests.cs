@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Shouldly;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Projects;
 using Xunit;
 
@@ -29,26 +29,26 @@ public class TicketTests(ApiFixture fixture)
 
     private static async Task<Guid> TypeIdAsync(AuthClient client, Guid projectId, string name)
     {
-        var types = await client.Http.GetFromJsonAsync<List<IssueTypeDto>>(
-            $"/api/v1/issue/types/{projectId}", Token);
+        var types = await client.Http.GetFromJsonAsync<List<TicketTypeDto>>(
+            $"/api/v1/ticket/types/{projectId}", Token);
         return types!.Single(type => type.Name == name).Id;
     }
 
-    private static async Task<HttpResponseMessage> PostIssueAsync(
-        AuthClient client, Guid projectId, Guid typeId, string title = "Issue", Guid? parentId = null) =>
+    private static async Task<HttpResponseMessage> PostTicketAsync(
+        AuthClient client, Guid projectId, Guid typeId, string title = "Ticket", Guid? parentId = null) =>
         await client.Http.PostAsJsonAsync(
-            "/api/v1/issue", new { projectId, typeId, title, parentId }, Token);
+            "/api/v1/ticket", new { projectId, typeId, title, parentId }, Token);
 
-    private static async Task<IssueDto> CreateIssueAsync(AuthClient client, ProjectDto project, string title = "Issue")
+    private static async Task<TicketDto> CreateTicketAsync(AuthClient client, ProjectDto project, string title = "Ticket")
     {
-        var response = await PostIssueAsync(client, project.Id, await TypeIdAsync(client, project.Id, "Task"), title);
+        var response = await PostTicketAsync(client, project.Id, await TypeIdAsync(client, project.Id, "Task"), title);
         response.StatusCode.ShouldBe(HttpStatusCode.OK, await response.Content.ReadAsStringAsync(Token));
-        return (await response.Content.ReadFromJsonAsync<IssueDto>(Token))!;
+        return (await response.Content.ReadFromJsonAsync<TicketDto>(Token))!;
     }
 
-    private static Task<HttpResponseMessage> PatchAsync(AuthClient client, IssueDto issue, object fields) =>
+    private static Task<HttpResponseMessage> PatchAsync(AuthClient client, TicketDto ticket, object fields) =>
         client.Http.PutAsJsonAsync(
-            $"/api/v1/issue/{issue.Id}", new { concurrencyStamp = issue.ConcurrencyStamp, fields }, Token);
+            $"/api/v1/ticket/{ticket.Id}", new { concurrencyStamp = ticket.ConcurrencyStamp, fields }, Token);
 
     [Fact]
     public async Task Concurrent_creates_get_distinct_consecutive_keys()
@@ -57,13 +57,13 @@ public class TicketTests(ApiFixture fixture)
         var project = await CreateProjectAsync(client);
         var typeId = await TypeIdAsync(client, project.Id, "Task");
 
-        var responses = await Task.WhenAll(Enumerable.Range(0, 20).Select(_ => PostIssueAsync(client, project.Id, typeId)));
+        var responses = await Task.WhenAll(Enumerable.Range(0, 20).Select(_ => PostTicketAsync(client, project.Id, typeId)));
 
         responses.ShouldAllBe(response => response.StatusCode == HttpStatusCode.OK);
         var keys = new List<string>();
         foreach (var response in responses)
         {
-            keys.Add((await response.Content.ReadFromJsonAsync<IssueDto>(Token))!.Key);
+            keys.Add((await response.Content.ReadFromJsonAsync<TicketDto>(Token))!.Key);
         }
 
         keys.Distinct().Count().ShouldBe(20);
@@ -76,34 +76,34 @@ public class TicketTests(ApiFixture fixture)
         var client = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(client);
 
-        var response = await PostIssueAsync(client, project.Id, await TypeIdAsync(client, project.Id, "Subtask"));
+        var response = await PostTicketAsync(client, project.Id, await TypeIdAsync(client, project.Id, "Subtask"));
 
-        (await response.Content.ReadAsStringAsync(Token)).ShouldContain(IssueErrors.ParentRequired);
+        (await response.Content.ReadAsStringAsync(Token)).ShouldContain(TicketErrors.ParentRequired);
     }
 
     [Fact]
     public async Task Update_api_cannot_change_status()
     {
         var client = await fixture.CreateUserClientAsync(Token);
-        var issue = await CreateIssueAsync(client, await CreateProjectAsync(client));
+        var ticket = await CreateTicketAsync(client, await CreateProjectAsync(client));
 
-        var response = await PatchAsync(client, issue, new { status = Guid.NewGuid() });
+        var response = await PatchAsync(client, ticket, new { status = Guid.NewGuid() });
 
-        (await response.Content.ReadAsStringAsync(Token)).ShouldContain(IssueErrors.FieldNotWritable);
+        (await response.Content.ReadAsStringAsync(Token)).ShouldContain(TicketErrors.FieldNotWritable);
     }
 
     [Fact]
     public async Task Each_field_change_writes_exactly_one_activity_row()
     {
         var client = await fixture.CreateUserClientAsync(Token);
-        var issue = await CreateIssueAsync(client, await CreateProjectAsync(client));
+        var ticket = await CreateTicketAsync(client, await CreateProjectAsync(client));
 
-        (await PatchAsync(client, issue, new { title = "Renamed", storyPoints = 3, labels = new[] { "api" } }))
+        (await PatchAsync(client, ticket, new { title = "Renamed", storyPoints = 3, labels = new[] { "api" } }))
             .EnsureSuccessStatusCode();
 
-        var activity = await client.Http.GetFromJsonAsync<List<IssueActivityDto>>($"/api/v1/issue/{issue.Id}/activity", Token);
+        var activity = await client.Http.GetFromJsonAsync<List<TicketActivityDto>>($"/api/v1/ticket/{ticket.Id}/activity", Token);
         activity!.Select(item => item.Field).ShouldBe(["title", "storyPoints", "labels"], ignoreOrder: true);
-        activity.Single(item => item.Field == "title").OldValue.ShouldBe("Issue");
+        activity.Single(item => item.Field == "title").OldValue.ShouldBe("Ticket");
         activity.Single(item => item.Field == "title").NewValue.ShouldBe("Renamed");
     }
 
@@ -112,16 +112,16 @@ public class TicketTests(ApiFixture fixture)
     {
         var client = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(client);
-        var created = await PostIssueAsync(client, project.Id, await TypeIdAsync(client, project.Id, "Epic"), "Parent");
-        var parent = (await created.Content.ReadFromJsonAsync<IssueDto>(Token))!;
-        var issue = await CreateIssueAsync(client, project);
-        var priorities = (await client.Http.GetFromJsonAsync<List<PriorityDto>>("/api/v1/issue/priorities", Token))!;
+        var created = await PostTicketAsync(client, project.Id, await TypeIdAsync(client, project.Id, "Epic"), "Parent");
+        var parent = (await created.Content.ReadFromJsonAsync<TicketDto>(Token))!;
+        var ticket = await CreateTicketAsync(client, project);
+        var priorities = (await client.Http.GetFromJsonAsync<List<PriorityDto>>("/api/v1/ticket/priorities", Token))!;
         var high = priorities.Single(item => item.Name == "High");
 
-        var patched = await PatchAsync(client, issue, new { assignee = client.UserId, priority = high.Id, parent = parent.Id });
+        var patched = await PatchAsync(client, ticket, new { assignee = client.UserId, priority = high.Id, parent = parent.Id });
         patched.StatusCode.ShouldBe(HttpStatusCode.OK, await patched.Content.ReadAsStringAsync(Token));
 
-        var activity = (await client.Http.GetFromJsonAsync<List<IssueActivityDto>>($"/api/v1/issue/{issue.Id}/activity", Token))!;
+        var activity = (await client.Http.GetFromJsonAsync<List<TicketActivityDto>>($"/api/v1/ticket/{ticket.Id}/activity", Token))!;
         activity.Single(item => item.Field == "assignee").NewValue.ShouldEndWith("@test.local");
         activity.Single(item => item.Field == "priority").OldValue.ShouldBe("Medium");
         activity.Single(item => item.Field == "priority").NewValue.ShouldBe("High");
@@ -132,48 +132,48 @@ public class TicketTests(ApiFixture fixture)
     public async Task Saving_the_same_value_writes_no_activity()
     {
         var client = await fixture.CreateUserClientAsync(Token);
-        var issue = await CreateIssueAsync(client, await CreateProjectAsync(client));
+        var ticket = await CreateTicketAsync(client, await CreateProjectAsync(client));
 
-        (await PatchAsync(client, issue, new { title = issue.Title })).EnsureSuccessStatusCode();
+        (await PatchAsync(client, ticket, new { title = ticket.Title })).EnsureSuccessStatusCode();
 
-        var activity = await client.Http.GetFromJsonAsync<List<IssueActivityDto>>($"/api/v1/issue/{issue.Id}/activity", Token);
+        var activity = await client.Http.GetFromJsonAsync<List<TicketActivityDto>>($"/api/v1/ticket/{ticket.Id}/activity", Token);
         activity.ShouldBeEmpty();
     }
 
     [Fact]
-    public async Task Outsider_cannot_read_an_issue_by_url_or_search()
+    public async Task Outsider_cannot_read_an_ticket_by_url_or_search()
     {
         var owner = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(owner);
-        var issue = await CreateIssueAsync(owner, project, "Secret roadmap");
+        var ticket = await CreateTicketAsync(owner, project, "Secret roadmap");
         var outsider = await fixture.CreateUserClientAsync(Token);
 
-        (await outsider.Http.GetAsync($"/api/v1/issue/by-key?key={issue.Key}", Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
-        (await outsider.Http.GetAsync($"/api/v1/issue/{issue.Id}/activity", Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await outsider.Http.GetAsync($"/api/v1/ticket/by-key?key={ticket.Key}", Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await outsider.Http.GetAsync($"/api/v1/ticket/{ticket.Id}/activity", Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await outsider.Http.GetAsync($"/api/v1/project/{project.Id}", Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
-        var byText = await outsider.Http.GetFromJsonAsync<IssueSearchResultDto>("/api/v1/issue/search?text=roadmap", Token);
+        var byText = await outsider.Http.GetFromJsonAsync<TicketSearchResultDto>("/api/v1/ticket/search?text=roadmap", Token);
         byText!.TotalCount.ShouldBe(0);
 
-        var byKey = await outsider.Http.GetFromJsonAsync<IssueSearchResultDto>($"/api/v1/issue/search?text={issue.Key}", Token);
+        var byKey = await outsider.Http.GetFromJsonAsync<TicketSearchResultDto>($"/api/v1/ticket/search?text={ticket.Key}", Token);
         byKey!.ExactKey.ShouldBeNull();
         byKey.TotalCount.ShouldBe(0);
     }
 
     [Fact]
-    public async Task Exact_issue_key_resolves_directly_and_text_search_finds_words()
+    public async Task Exact_ticket_key_resolves_directly_and_text_search_finds_words()
     {
         var client = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(client);
-        var issue = await CreateIssueAsync(client, project, "Tối ưu đăng nhập");
+        var ticket = await CreateTicketAsync(client, project, "Tối ưu đăng nhập");
 
-        var byKey = await client.Http.GetFromJsonAsync<IssueSearchResultDto>(
-            $"/api/v1/issue/search?text={issue.Key.ToLowerInvariant()}", Token);
-        byKey!.ExactKey.ShouldBe(issue.Key);
+        var byKey = await client.Http.GetFromJsonAsync<TicketSearchResultDto>(
+            $"/api/v1/ticket/search?text={ticket.Key.ToLowerInvariant()}", Token);
+        byKey!.ExactKey.ShouldBe(ticket.Key);
 
-        var byText = await client.Http.GetFromJsonAsync<IssueSearchResultDto>(
-            $"/api/v1/issue/search?projectId={project.Id}&text=đăng nhập", Token);
-        byText!.Items.Single().Key.ShouldBe(issue.Key);
+        var byText = await client.Http.GetFromJsonAsync<TicketSearchResultDto>(
+            $"/api/v1/ticket/search?projectId={project.Id}&text=đăng nhập", Token);
+        byText!.Items.Single().Key.ShouldBe(ticket.Key);
     }
 
     [Fact]
@@ -181,19 +181,19 @@ public class TicketTests(ApiFixture fixture)
     {
         var client = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(client);
-        var banana = await CreateIssueAsync(client, project, "Banana");
-        await CreateIssueAsync(client, project, "apple");
-        var cherry = await CreateIssueAsync(client, project, "Cherry");
+        var banana = await CreateTicketAsync(client, project, "Banana");
+        await CreateTicketAsync(client, project, "apple");
+        var cherry = await CreateTicketAsync(client, project, "Cherry");
 
-        var priorities = (await client.Http.GetFromJsonAsync<List<PriorityDto>>("/api/v1/issue/priorities", Token))!
+        var priorities = (await client.Http.GetFromJsonAsync<List<PriorityDto>>("/api/v1/ticket/priorities", Token))!
             .OrderBy(priority => priority.Order).ToList();
         (await PatchAsync(client, cherry, new { priority = priorities[0].Id })).EnsureSuccessStatusCode();
         (await PatchAsync(client, banana, new { priority = priorities[^1].Id, assignee = client.UserId })).EnsureSuccessStatusCode();
 
         async Task<List<string>> TitlesAsync(string sorting)
         {
-            var result = await client.Http.GetFromJsonAsync<IssueSearchResultDto>(
-                $"/api/v1/issue/search?projectId={project.Id}&sorting={Uri.EscapeDataString(sorting)}", Token);
+            var result = await client.Http.GetFromJsonAsync<TicketSearchResultDto>(
+                $"/api/v1/ticket/search?projectId={project.Id}&sorting={Uri.EscapeDataString(sorting)}", Token);
             return [.. result!.Items.Select(item => item.Title)];
         }
 
@@ -208,30 +208,30 @@ public class TicketTests(ApiFixture fixture)
         (await TitlesAsync("assignee desc"))[0].ShouldBe("Banana");
         (await TitlesAsync("created desc")).ShouldBe(["Cherry", "apple", "Banana"]);
 
-        var invalid = await client.Http.GetAsync($"/api/v1/issue/search?projectId={project.Id}&sorting=description", Token);
+        var invalid = await client.Http.GetAsync($"/api/v1/ticket/search?projectId={project.Id}&sorting=description", Token);
         invalid.IsSuccessStatusCode.ShouldBeFalse();
-        (await invalid.Content.ReadAsStringAsync(Token)).ShouldContain(IssueErrors.InvalidSorting);
+        (await invalid.Content.ReadAsStringAsync(Token)).ShouldContain(TicketErrors.InvalidSorting);
     }
 
     [Fact]
     public async Task Oversized_attachment_is_rejected_with_a_clear_error()
     {
         var client = await fixture.CreateUserClientAsync(Token);
-        var issue = await CreateIssueAsync(client, await CreateProjectAsync(client));
+        var ticket = await CreateTicketAsync(client, await CreateProjectAsync(client));
         var file = new SampleFile(2 * 1024 * 1024);
 
-        var response = await client.Http.PostAsync($"/api/v1/attachment/upload/{issue.Id}", file.Content, Token);
+        var response = await client.Http.PostAsync($"/api/v1/attachment/upload/{ticket.Id}", file.Content, Token);
 
-        (await response.Content.ReadAsStringAsync(Token)).ShouldContain(IssueErrors.AttachmentTooLarge);
+        (await response.Content.ReadAsStringAsync(Token)).ShouldContain(TicketErrors.AttachmentTooLarge);
     }
 
     [Fact]
     public async Task Attachment_round_trips_and_outsiders_cannot_download()
     {
         var client = await fixture.CreateUserClientAsync(Token);
-        var issue = await CreateIssueAsync(client, await CreateProjectAsync(client));
+        var ticket = await CreateTicketAsync(client, await CreateProjectAsync(client));
 
-        var response = await client.Http.PostAsync($"/api/v1/attachment/upload/{issue.Id}", new SampleFile(1024).Content, Token);
+        var response = await client.Http.PostAsync($"/api/v1/attachment/upload/{ticket.Id}", new SampleFile(1024).Content, Token);
         response.StatusCode.ShouldBe(HttpStatusCode.OK, await response.Content.ReadAsStringAsync(Token));
         var attachment = (await response.Content.ReadFromJsonAsync<AttachmentDto>(Token))!;
 
@@ -247,15 +247,15 @@ public class TicketTests(ApiFixture fixture)
     public async Task Work_log_totals_update_and_zero_minutes_is_rejected()
     {
         var client = await fixture.CreateUserClientAsync(Token);
-        var issue = await CreateIssueAsync(client, await CreateProjectAsync(client));
+        var ticket = await CreateTicketAsync(client, await CreateProjectAsync(client));
         var workDate = "2026-11-01";
 
-        (await client.Http.PostAsJsonAsync("/api/v1/work-log", new { issueId = issue.Id, minutes = 90, workDate }, Token)).EnsureSuccessStatusCode();
-        (await client.Http.PostAsJsonAsync("/api/v1/work-log", new { issueId = issue.Id, minutes = 30, workDate }, Token)).EnsureSuccessStatusCode();
-        var zero = await client.Http.PostAsJsonAsync("/api/v1/work-log", new { issueId = issue.Id, minutes = 0, workDate }, Token);
+        (await client.Http.PostAsJsonAsync("/api/v1/work-log", new { ticketId = ticket.Id, minutes = 90, workDate }, Token)).EnsureSuccessStatusCode();
+        (await client.Http.PostAsJsonAsync("/api/v1/work-log", new { ticketId = ticket.Id, minutes = 30, workDate }, Token)).EnsureSuccessStatusCode();
+        var zero = await client.Http.PostAsJsonAsync("/api/v1/work-log", new { ticketId = ticket.Id, minutes = 0, workDate }, Token);
 
-        (await zero.Content.ReadAsStringAsync(Token)).ShouldContain(IssueErrors.WorkLogInvalidTime);
-        var list = await client.Http.GetFromJsonAsync<WorkLogListDto>($"/api/v1/work-log?issueId={issue.Id}", Token);
+        (await zero.Content.ReadAsStringAsync(Token)).ShouldContain(TicketErrors.WorkLogInvalidTime);
+        var list = await client.Http.GetFromJsonAsync<WorkLogListDto>($"/api/v1/work-log?ticketId={ticket.Id}", Token);
         list!.TotalMinutes.ShouldBe(120);
     }
 
@@ -263,10 +263,10 @@ public class TicketTests(ApiFixture fixture)
     public async Task Stale_concurrency_stamp_returns_409()
     {
         var client = await fixture.CreateUserClientAsync(Token);
-        var issue = await CreateIssueAsync(client, await CreateProjectAsync(client));
+        var ticket = await CreateTicketAsync(client, await CreateProjectAsync(client));
 
-        (await PatchAsync(client, issue, new { title = "First" })).EnsureSuccessStatusCode();
-        var stale = await PatchAsync(client, issue, new { title = "Second" });
+        (await PatchAsync(client, ticket, new { title = "First" })).EnsureSuccessStatusCode();
+        var stale = await PatchAsync(client, ticket, new { title = "Second" });
 
         stale.StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
@@ -275,11 +275,11 @@ public class TicketTests(ApiFixture fixture)
     public async Task Dangerous_html_is_cleaned_and_plain_text_is_kept()
     {
         var client = await fixture.CreateUserClientAsync(Token);
-        var issue = await CreateIssueAsync(client, await CreateProjectAsync(client));
+        var ticket = await CreateTicketAsync(client, await CreateProjectAsync(client));
 
         var response = await client.Http.PostAsJsonAsync("/api/v1/comment", new
         {
-            issueId = issue.Id,
+            ticketId = ticket.Id,
             body = "<p onclick=\"steal()\">Hello<script>alert(1)</script></p>",
         }, Token);
 
@@ -291,19 +291,19 @@ public class TicketTests(ApiFixture fixture)
     public async Task Reply_to_a_reply_is_rejected()
     {
         var client = await fixture.CreateUserClientAsync(Token);
-        var issue = await CreateIssueAsync(client, await CreateProjectAsync(client));
-        var top = await PostCommentAsync(client, issue.Id, null);
-        var reply = await PostCommentAsync(client, issue.Id, top.Id);
+        var ticket = await CreateTicketAsync(client, await CreateProjectAsync(client));
+        var top = await PostCommentAsync(client, ticket.Id, null);
+        var reply = await PostCommentAsync(client, ticket.Id, top.Id);
 
         var nested = await client.Http.PostAsJsonAsync(
-            "/api/v1/comment", new { issueId = issue.Id, parentId = reply.Id, body = "<p>x</p>" }, Token);
+            "/api/v1/comment", new { ticketId = ticket.Id, parentId = reply.Id, body = "<p>x</p>" }, Token);
 
-        (await nested.Content.ReadAsStringAsync(Token)).ShouldContain(IssueErrors.ReplyDepth);
+        (await nested.Content.ReadAsStringAsync(Token)).ShouldContain(TicketErrors.ReplyDepth);
     }
 
-    private static async Task<CommentDto> PostCommentAsync(AuthClient client, Guid issueId, Guid? parentId)
+    private static async Task<CommentDto> PostCommentAsync(AuthClient client, Guid ticketId, Guid? parentId)
     {
-        var response = await client.Http.PostAsJsonAsync("/api/v1/comment", new { issueId, parentId, body = "<p>x</p>" }, Token);
+        var response = await client.Http.PostAsJsonAsync("/api/v1/comment", new { ticketId, parentId, body = "<p>x</p>" }, Token);
         return (await response.Content.ReadFromJsonAsync<CommentDto>(Token))!;
     }
 
@@ -312,19 +312,19 @@ public class TicketTests(ApiFixture fixture)
     {
         var owner = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(owner);
-        var issue = await CreateIssueAsync(owner, project);
+        var ticket = await CreateTicketAsync(owner, project);
         var member = await fixture.CreateUserClientAsync(Token);
         (await owner.Http.PostAsJsonAsync(
             $"/api/v1/project/{project.Id}/member", new { userId = member.UserId, role = ProjectRoleNames.Member }, Token))
             .EnsureSuccessStatusCode();
-        var comment = await PostCommentAsync(owner, issue.Id, null);
+        var comment = await PostCommentAsync(owner, ticket.Id, null);
 
         (await member.Http.PostAsJsonAsync($"/api/v1/comment/{comment.Id}/toggle-reaction", new { emoji = "👍" }, Token)).EnsureSuccessStatusCode();
         await Task.Delay(20, Token);
         (await owner.Http.PostAsJsonAsync($"/api/v1/comment/{comment.Id}/toggle-reaction", new { emoji = "👍" }, Token)).EnsureSuccessStatusCode();
         (await owner.Http.PostAsJsonAsync($"/api/v1/comment/{comment.Id}/toggle-reaction", new { emoji = "🎉" }, Token)).EnsureSuccessStatusCode();
 
-        var reactions = (await owner.Http.GetFromJsonAsync<List<CommentDto>>($"/api/v1/comment?issueId={issue.Id}", Token))!.Single().Reactions;
+        var reactions = (await owner.Http.GetFromJsonAsync<List<CommentDto>>($"/api/v1/comment?ticketId={ticket.Id}", Token))!.Single().Reactions;
         var like = reactions.Single(item => item.Emoji == "👍");
         like.Count.ShouldBe(2);
         like.Users.Select(user => user.Id).ShouldBe([member.UserId, owner.UserId]);
@@ -332,7 +332,7 @@ public class TicketTests(ApiFixture fixture)
 
         // Taking a reaction back takes the person off its list.
         (await member.Http.PostAsJsonAsync($"/api/v1/comment/{comment.Id}/toggle-reaction", new { emoji = "👍" }, Token)).EnsureSuccessStatusCode();
-        var after = (await owner.Http.GetFromJsonAsync<List<CommentDto>>($"/api/v1/comment?issueId={issue.Id}", Token))!.Single().Reactions;
+        var after = (await owner.Http.GetFromJsonAsync<List<CommentDto>>($"/api/v1/comment?ticketId={ticket.Id}", Token))!.Single().Reactions;
         after.Single(item => item.Emoji == "👍").Users.Select(user => user.Id).ShouldBe([owner.UserId]);
     }
 
@@ -341,20 +341,20 @@ public class TicketTests(ApiFixture fixture)
     {
         var owner = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(owner);
-        var issue = await CreateIssueAsync(owner, project);
+        var ticket = await CreateTicketAsync(owner, project);
         var viewer = await fixture.CreateUserClientAsync(Token);
         (await owner.Http.PostAsJsonAsync(
             $"/api/v1/project/{project.Id}/member", new { userId = viewer.UserId, role = ProjectRoleNames.Viewer }, Token))
             .EnsureSuccessStatusCode();
 
-        (await viewer.Http.GetAsync($"/api/v1/issue/by-key?key={issue.Key}", Token)).StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await PatchAsync(viewer, issue, new { title = "Nope" })).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        (await viewer.Http.PostAsJsonAsync("/api/v1/comment", new { issueId = issue.Id, body = "<p>x</p>" }, Token))
+        (await viewer.Http.GetAsync($"/api/v1/ticket/by-key?key={ticket.Key}", Token)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await PatchAsync(viewer, ticket, new { title = "Nope" })).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await viewer.Http.PostAsJsonAsync("/api/v1/comment", new { ticketId = ticket.Id, body = "<p>x</p>" }, Token))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     [Fact]
-    public async Task Member_deletes_own_issue_only_and_admin_restores_with_subtasks()
+    public async Task Member_deletes_own_ticket_only_and_admin_restores_with_subtasks()
     {
         var owner = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(owner);
@@ -363,26 +363,26 @@ public class TicketTests(ApiFixture fixture)
             $"/api/v1/project/{project.Id}/member", new { userId = member.UserId, role = ProjectRoleNames.Member }, Token))
             .EnsureSuccessStatusCode();
 
-        var ownersIssue = await CreateIssueAsync(owner, project);
-        var membersIssue = await CreateIssueAsync(member, project);
-        var subtaskResponse = await PostIssueAsync(
-            member, project.Id, await TypeIdAsync(member, project.Id, "Subtask"), "Sub", membersIssue.Id);
-        var subtask = (await subtaskResponse.Content.ReadFromJsonAsync<IssueDto>(Token))!;
+        var ownersTicket = await CreateTicketAsync(owner, project);
+        var membersTicket = await CreateTicketAsync(member, project);
+        var subtaskResponse = await PostTicketAsync(
+            member, project.Id, await TypeIdAsync(member, project.Id, "Subtask"), "Sub", membersTicket.Id);
+        var subtask = (await subtaskResponse.Content.ReadFromJsonAsync<TicketDto>(Token))!;
 
-        (await member.Http.DeleteAsync($"/api/v1/issue/{ownersIssue.Id}", Token)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        (await member.Http.DeleteAsync($"/api/v1/issue/{membersIssue.Id}", Token)).EnsureSuccessStatusCode();
-        (await member.Http.GetAsync($"/api/v1/issue/by-key?key={subtask.Key}", Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
-        (await member.Http.PostAsync($"/api/v1/issue/{membersIssue.Id}/restore", null, Token)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await member.Http.DeleteAsync($"/api/v1/ticket/{ownersTicket.Id}", Token)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await member.Http.DeleteAsync($"/api/v1/ticket/{membersTicket.Id}", Token)).EnsureSuccessStatusCode();
+        (await member.Http.GetAsync($"/api/v1/ticket/by-key?key={subtask.Key}", Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await member.Http.PostAsync($"/api/v1/ticket/{membersTicket.Id}/restore", null, Token)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
         var admin = new AuthClient(fixture);
         await admin.SignInAsync(ApiFixture.AdminEmail, ApiFixture.AdminPassword, Token);
-        var deleted = await admin.Http.GetFromJsonAsync<JsonDocument>("/api/v1/issue/deleted-list?maxResultCount=50", Token);
+        var deleted = await admin.Http.GetFromJsonAsync<JsonDocument>("/api/v1/ticket/deleted-list?maxResultCount=50", Token);
         var row = deleted!.RootElement.GetProperty("items").EnumerateArray()
-            .Single(item => item.GetProperty("id").GetGuid() == membersIssue.Id);
+            .Single(item => item.GetProperty("id").GetGuid() == membersTicket.Id);
         row.GetProperty("subtaskCount").GetInt32().ShouldBe(1);
 
-        (await admin.Http.PostAsync($"/api/v1/issue/{membersIssue.Id}/restore", null, Token)).EnsureSuccessStatusCode();
-        (await member.Http.GetAsync($"/api/v1/issue/by-key?key={subtask.Key}", Token)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await admin.Http.PostAsync($"/api/v1/ticket/{membersTicket.Id}/restore", null, Token)).EnsureSuccessStatusCode();
+        (await member.Http.GetAsync($"/api/v1/ticket/by-key?key={subtask.Key}", Token)).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     [Fact]
@@ -390,10 +390,10 @@ public class TicketTests(ApiFixture fixture)
     {
         var client = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(client);
-        var first = await CreateIssueAsync(client, project);
+        var first = await CreateTicketAsync(client, project);
 
-        (await client.Http.DeleteAsync($"/api/v1/issue/{first.Id}", Token)).EnsureSuccessStatusCode();
-        var second = await CreateIssueAsync(client, project);
+        (await client.Http.DeleteAsync($"/api/v1/ticket/{first.Id}", Token)).EnsureSuccessStatusCode();
+        var second = await CreateTicketAsync(client, project);
 
         second.Key.ShouldBe($"{project.Key}-2");
     }

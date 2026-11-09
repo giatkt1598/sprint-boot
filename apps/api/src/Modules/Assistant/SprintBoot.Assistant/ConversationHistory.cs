@@ -4,13 +4,13 @@ using System.Text.RegularExpressions;
 
 namespace SprintBoot.Assistant;
 
-/// <summary>How an issue goes with a question: tagged with a version, so the same content is sent only once.</summary>
-public static partial class IssueContext
+/// <summary>How a ticket goes with a question: tagged with a version, so the same content is sent only once.</summary>
+public static partial class TicketContext
 {
     public static string Block(string key, string content)
     {
         var version = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(content)))[..12];
-        return $"<issue key=\"{key}\" version=\"{version}\">\n{content}\n</issue>";
+        return $"<ticket key=\"{key}\" version=\"{version}\">\n{content}\n</ticket>";
     }
 
     /// <summary>The opening tag, which finds earlier questions that already carried this exact content.</summary>
@@ -19,7 +19,7 @@ public static partial class IssueContext
     public static string Unchanged(string block)
     {
         var match = Opening().Match(block);
-        return $"<issue key=\"{match.Groups[1].Value}\" version=\"{match.Groups[2].Value}\" unchanged=\"true\">The content is the same as the earlier copy with this version above.</issue>";
+        return $"<ticket key=\"{match.Groups[1].Value}\" version=\"{match.Groups[2].Value}\" unchanged=\"true\">The content is the same as the earlier copy with this version above.</ticket>";
     }
 
     /// <summary>Full copies in a text, by version.</summary>
@@ -30,13 +30,13 @@ public static partial class IssueContext
     public static IEnumerable<(string Version, string Reference)> References(string text) =>
         Reference().Matches(text).Select(match => (match.Groups[2].Value, match.Value));
 
-    [GeneratedRegex("""^<issue key="([^"]+)" version="([0-9a-f]+)">""")]
+    [GeneratedRegex("""^<ticket key="([^"]+)" version="([0-9a-f]+)">""")]
     private static partial Regex Opening();
 
-    [GeneratedRegex("""<issue key="([^"]+)" version="([0-9a-f]+)">\n.*?\n</issue>""", RegexOptions.Singleline)]
+    [GeneratedRegex("""<ticket key="([^"]+)" version="([0-9a-f]+)">\n.*?\n</ticket>""", RegexOptions.Singleline)]
     private static partial Regex Full();
 
-    [GeneratedRegex("""<issue key="([^"]+)" version="([0-9a-f]+)" unchanged="true">.*?</issue>""", RegexOptions.Singleline)]
+    [GeneratedRegex("""<ticket key="([^"]+)" version="([0-9a-f]+)" unchanged="true">.*?</ticket>""", RegexOptions.Singleline)]
     private static partial Regex Reference();
 }
 
@@ -48,7 +48,7 @@ public static class ConversationHistory
     /// <summary>
     /// Everything when it fits. Otherwise the first exchange and as many of the latest as fit, whole: a question with every
     /// step and tool result after it, so no tool call ever loses its result. The latest exchange always goes, even alone
-    /// over the budget. Issue copies that only a left-out turn carried are put back where they are referred to.
+    /// over the budget. Ticket copies that only a left-out turn carried are put back where they are referred to.
     /// </summary>
     public static List<ConversationMessage> Fit(List<ConversationMessage> history, int? budget)
     {
@@ -104,13 +104,13 @@ public static class ConversationHistory
         return Restore(result, dropped);
     }
 
-    /// <summary>Marks the first kept question after the gap, and gives back issue copies only left-out turns had.</summary>
+    /// <summary>Marks the first kept question after the gap, and gives back ticket copies only left-out turns had.</summary>
     private static List<ConversationMessage> Restore(List<ConversationMessage> kept, List<ConversationMessage> dropped)
     {
         var copies = new Dictionary<string, string>();
         foreach (var message in dropped.Where(item => item.Role == ConversationRole.User && item.Prompt is not null))
         {
-            foreach (var (version, block) in IssueContext.Copies(message.Prompt!))
+            foreach (var (version, block) in TicketContext.Copies(message.Prompt!))
             {
                 copies[version] = block;
             }
@@ -118,7 +118,7 @@ public static class ConversationHistory
 
         var present = kept
             .Where(item => item.Role == ConversationRole.User && item.Prompt is not null)
-            .SelectMany(item => IssueContext.Copies(item.Prompt!).Select(copy => copy.Version))
+            .SelectMany(item => TicketContext.Copies(item.Prompt!).Select(copy => copy.Version))
             .ToHashSet();
         var firstDropped = dropped.Min(item => item.Sequence);
         var marked = false;
@@ -132,7 +132,7 @@ public static class ConversationHistory
             }
 
             var prompt = message.Prompt ?? message.Text;
-            foreach (var (version, reference) in IssueContext.References(prompt).ToList())
+            foreach (var (version, reference) in TicketContext.References(prompt).ToList())
             {
                 if (!present.Contains(version) && copies.TryGetValue(version, out var block))
                 {

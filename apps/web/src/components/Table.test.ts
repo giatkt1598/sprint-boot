@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { compareValues } from './Table';
 
 describe('compareValues', () => {
-  it('sorts issue keys by their number, not character by character', () => {
+  it('sorts ticket keys by their number, not character by character', () => {
     expect(['SB-10', 'SB-9', 'SB-1'].sort((a, b) => compareValues(a, b, 'asc'))).toEqual(['SB-1', 'SB-9', 'SB-10']);
   });
 

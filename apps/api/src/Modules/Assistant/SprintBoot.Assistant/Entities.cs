@@ -37,12 +37,12 @@ public class AiConnection : AuditedAggregateRoot<Guid>
     }
 }
 
-/// <summary>A person's chat with the assistant, private to them; optionally about one issue.</summary>
+/// <summary>A person's chat with the assistant, private to them; optionally about one ticket.</summary>
 public class Conversation : Entity<Guid>
 {
     public Guid OwnerId { get; private set; }
 
-    public Guid? IssueId { get; private set; }
+    public Guid? TicketId { get; private set; }
 
     public string Title { get; set; } = null!;
 
@@ -56,11 +56,11 @@ public class Conversation : Entity<Guid>
     {
     }
 
-    public Conversation(Guid id, Guid ownerId, Guid? issueId, string title, DateTime createdAt)
+    public Conversation(Guid id, Guid ownerId, Guid? ticketId, string title, DateTime createdAt)
         : base(id)
     {
         OwnerId = ownerId;
-        IssueId = issueId;
+        TicketId = ticketId;
         Title = title;
         CreatedAt = createdAt;
         UpdatedAt = createdAt;
@@ -106,7 +106,7 @@ public class ConversationMessage : Entity<Guid>
     /// <summary>What the person typed, or the assistant's visible text, as Markdown.</summary>
     public string Text { get; private set; } = string.Empty;
 
-    /// <summary>User turns: the text sent to the model, which also carries the issue as context.</summary>
+    /// <summary>User turns: the text sent to the model, which also carries the ticket as context.</summary>
     public string? Prompt { get; private set; }
 
     /// <summary>Assistant turns: tool calls as JSON. Tool result turns: the results as JSON.</summary>
@@ -228,7 +228,7 @@ public static class AssistantModelBuilderExtensions
             b.ConfigureByConvention();
             b.Property(item => item.Title).HasMaxLength(AssistantConsts.MaxTitleLength).IsRequired();
             b.HasIndex(item => new { item.OwnerId, item.UpdatedAt });
-            b.HasIndex(item => item.IssueId);
+            b.HasIndex(item => item.TicketId);
             b.HasIndex(item => item.TitleState);
         });
 

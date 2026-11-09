@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using SprintBoot.Identity;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Content;
@@ -20,7 +20,7 @@ public class ProjectAppService(
     IRepository<ProjectRolePermission, Guid> rolePermissions,
     ProjectAccess access,
     IUserDirectory userDirectory,
-    IIssueProjectStats issueStats,
+    ITicketProjectStats ticketStats,
     ILocalEventBus localEventBus,
     IDistributedEventBus eventBus,
     SpaceLogos logos)
@@ -39,7 +39,7 @@ public class ProjectAppService(
 
     public async Task<ProjectDto> GetAsync(Guid id)
     {
-        await access.CheckAsync(id, ProjectPermissions.ViewIssues);
+        await access.CheckAsync(id, ProjectPermissions.ViewTickets);
         return (await ToDtosAsync([await projects.GetAsync(id)])).Single();
     }
 
@@ -113,7 +113,7 @@ public class ProjectAppService(
 
     public async Task<List<ProjectMemberDto>> GetMembersAsync(Guid id)
     {
-        await access.CheckAsync(id, ProjectPermissions.ViewIssues);
+        await access.CheckAsync(id, ProjectPermissions.ViewTickets);
         var list = await members.GetListAsync(member => member.ProjectId == id);
         var users = await userDirectory.GetByIdsAsync(list.Select(member => member.UserId));
         return [.. list
@@ -196,7 +196,7 @@ public class ProjectAppService(
     {
         var items = list.ToList();
         var leads = await userDirectory.GetByIdsAsync(items.Where(p => p.LeadId.HasValue).Select(p => p.LeadId!.Value));
-        var stats = await issueStats.GetAsync(items.Select(project => project.Id));
+        var stats = await ticketStats.GetAsync(items.Select(project => project.Id));
 
         var result = new List<ProjectDto>();
         foreach (var project in items)
@@ -211,7 +211,7 @@ public class ProjectAppService(
                 BranchNameTemplate = project.BranchNameTemplate,
                 SprintLengthDays = project.SprintLengthDays,
                 Lead = project.LeadId is { } leadId ? leads.GetValueOrDefault(leadId) : null,
-                IssueCount = stat?.Count ?? 0,
+                TicketCount = stat?.Count ?? 0,
                 UpdatedAt = stat?.UpdatedAt ?? project.LastModificationTime ?? project.CreationTime,
                 Permissions = [.. await access.GetPermissionsAsync(project.Id)],
                 LogoUrl = SpaceLogos.Url(project),

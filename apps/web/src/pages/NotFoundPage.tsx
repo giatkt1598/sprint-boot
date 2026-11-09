@@ -10,7 +10,7 @@ import { radius, sem } from '../theme/tokens';
 const hasHistory = () => ((window.history.state as { idx?: number } | null)?.idx ?? 0) > 0;
 
 /**
- * One screen for everything that cannot be found, from a mistyped address to an issue the person may not see.
+ * One screen for everything that cannot be found, from a mistyped address to a ticket the person may not see.
  * Missing and forbidden read the same, so the page never tells whether something exists.
  */
 export function NotFoundPage({ title, description }: { title?: string; description?: string }) {

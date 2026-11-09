@@ -12,10 +12,10 @@ public class AgileTools(McpRunner runner, McpResolver resolver, ISprintAppServic
     private const int MaxBacklogRows = 100;
 
     [McpServerTool(Name = "get_backlog", ReadOnly = true), Description(
-        "Reads the planning view of a space: open sprints with their issues in rank order, then the backlog.")]
+        "Reads the planning view of a space: open sprints with their tickets in rank order, then the backlog.")]
     public Task<string> GetBacklog(
         [Description("Space key.")] string space,
-        [Description("Most backlog issues to return, at most 100.")] int limit = 50) => runner.ReadAsync(async () =>
+        [Description("Most backlog tickets to return, at most 100.")] int limit = 50) => runner.ReadAsync(async () =>
     {
         var project = await resolver.SpaceAsync(space);
         var view = await sprints.GetBacklogAsync(project.Id);
@@ -24,14 +24,14 @@ public class AgileTools(McpRunner runner, McpResolver resolver, ISprintAppServic
         {
             Space = project.Key,
             Board = view.Type.ToString(),
-            Sprints = view.Sprints.Select(item => new { Sprint = McpViews.Sprint(item.Sprint), Issues = item.Issues.Select(McpViews.Card) }),
+            Sprints = view.Sprints.Select(item => new { Sprint = McpViews.Sprint(item.Sprint), Tickets = item.Tickets.Select(McpViews.Card) }),
             BacklogTotal = view.Backlog.Count,
             Backlog = view.Backlog.Take(take).Select(McpViews.Card),
             ClosedSprints = view.ClosedSprints.Count == 0 ? null : view.ClosedSprints.Select(sprint => sprint.Name),
         };
     });
 
-    [McpServerTool(Name = "get_board", ReadOnly = true), Description("Reads the board of a space: each column with its issues.")]
+    [McpServerTool(Name = "get_board", ReadOnly = true), Description("Reads the board of a space: each column with its tickets.")]
     public Task<string> GetBoard([Description("Space key.")] string space) => runner.ReadAsync(async () =>
     {
         var project = await resolver.SpaceAsync(space);
@@ -49,46 +49,46 @@ public class AgileTools(McpRunner runner, McpResolver resolver, ISprintAppServic
                     column.Name,
                     Statuses = column.Statuses.Select(status => status.Name),
                     Limit = column.MaxLimit,
-                    Issues = board.Cards.Where(card => statusIds.Contains(card.Status.Id)).Select(McpViews.Card),
+                    Tickets = board.Cards.Where(card => statusIds.Contains(card.Status.Id)).Select(McpViews.Card),
                 };
             }),
         };
     });
 
     [McpServerTool(Name = "move_to_sprint", Destructive = false, Idempotent = true), Description(
-        "Puts issues into a sprint or back in the backlog, optionally ranked after or before another issue. Epics and subtasks are not planned.")]
+        "Puts tickets into a sprint or back in the backlog, optionally ranked after or before another ticket. Epics and subtasks are not planned.")]
     public Task<string> MoveToSprint(
-        [Description("Issue keys, all in one space.")] List<string> keys,
+        [Description("Ticket keys, all in one space.")] List<string> keys,
         [Description("Sprint name, active for the running sprint, or backlog.")] string sprint,
-        [Description("Rank the issues right after this issue key.")] string? after = null,
-        [Description("Rank the issues right before this issue key.")] string? before = null) => runner.WriteAsync(async () =>
+        [Description("Rank the tickets right after this ticket key.")] string? after = null,
+        [Description("Rank the tickets right before this ticket key.")] string? before = null) => runner.WriteAsync(async () =>
     {
         if (keys.Count == 0)
         {
-            throw new McpException("Give at least one issue key.");
+            throw new McpException("Give at least one ticket key.");
         }
 
-        var first = await resolver.IssueAsync(keys[0]);
+        var first = await resolver.TicketAsync(keys[0]);
         var target = await resolver.SprintAsync(first.ProjectId, sprint);
-        Guid? afterId = after is null ? null : (await resolver.IssueAsync(after)).Id;
-        Guid? beforeId = before is null ? null : (await resolver.IssueAsync(before)).Id;
+        Guid? afterId = after is null ? null : (await resolver.TicketAsync(after)).Id;
+        Guid? beforeId = before is null ? null : (await resolver.TicketAsync(before)).Id;
         var moved = new List<string>();
         foreach (var key in keys)
         {
-            var issue = await resolver.IssueAsync(key);
-            if (issue.ProjectId != first.ProjectId)
+            var ticket = await resolver.TicketAsync(key);
+            if (ticket.ProjectId != first.ProjectId)
             {
-                throw new McpException($"{issue.Key} is in another space than {first.Key}.");
+                throw new McpException($"{ticket.Key} is in another space than {first.Key}.");
             }
 
-            // Each moved issue goes after the previous one, so the list keeps the order given.
-            await sprints.MoveIssueAsync(issue.Id, new MoveIssueInput { SprintId = target.Id, AfterIssueId = afterId, BeforeIssueId = afterId is null ? beforeId : null });
+            // Each moved ticket goes after the previous one, so the list keeps the order given.
+            await sprints.MoveTicketAsync(ticket.Id, new MoveTicketInput { SprintId = target.Id, AfterTicketId = afterId, BeforeTicketId = afterId is null ? beforeId : null });
             if (afterId is not null || beforeId is not null)
             {
-                afterId = issue.Id;
+                afterId = ticket.Id;
             }
 
-            moved.Add(issue.Key);
+            moved.Add(ticket.Key);
         }
 
         return new { Sprint = target.Name, Moved = moved };

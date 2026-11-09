@@ -15,7 +15,7 @@ public record MentionTarget(Guid Id, string Name);
 
 /// <summary>
 /// Converts between Markdown, which agents read and write, and the HTML the web editor stores.
-/// Output follows the editor schema in apps/web/src/features/issues/richTextExtensions.ts;
+/// Output follows the editor schema in apps/web/src/features/tickets/richTextExtensions.ts;
 /// whatever Markdown cannot express (colors, alignment) stays as inline HTML so nothing is lost.
 /// </summary>
 public static partial class RichTextMarkdown

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Projects;
 using SprintBoot.Workflows;
 using Volo.Abp.DependencyInjection;
@@ -24,7 +24,7 @@ public class BoardHub(IProjectAccess projectAccess, ICurrentPrincipalAccessor pr
         using (principal.Change(Context.User!))
         using (var uow = unitOfWork.Begin(requiresNew: true))
         {
-            await projectAccess.CheckAsync(projectId, ProjectPermissions.ViewIssues);
+            await projectAccess.CheckAsync(projectId, ProjectPermissions.ViewTickets);
             await uow.CompleteAsync();
         }
 
@@ -42,14 +42,14 @@ public class BoardNotifier(IHubContext<BoardHub> hub) : ITransientDependency
 }
 
 public class BoardChangeHandler(BoardNotifier notifier) :
-    IDistributedEventHandler<IssueCreatedEto>,
-    IDistributedEventHandler<IssueUpdatedEto>,
-    IDistributedEventHandler<IssueTransitionedEto>,
+    IDistributedEventHandler<TicketCreatedEto>,
+    IDistributedEventHandler<TicketUpdatedEto>,
+    IDistributedEventHandler<TicketTransitionedEto>,
     ITransientDependency
 {
-    public Task HandleEventAsync(IssueCreatedEto eventData) => notifier.ChangedAsync(eventData.ProjectId);
+    public Task HandleEventAsync(TicketCreatedEto eventData) => notifier.ChangedAsync(eventData.ProjectId);
 
-    public Task HandleEventAsync(IssueUpdatedEto eventData) => notifier.ChangedAsync(eventData.ProjectId);
+    public Task HandleEventAsync(TicketUpdatedEto eventData) => notifier.ChangedAsync(eventData.ProjectId);
 
-    public Task HandleEventAsync(IssueTransitionedEto eventData) => notifier.ChangedAsync(eventData.ProjectId);
+    public Task HandleEventAsync(TicketTransitionedEto eventData) => notifier.ChangedAsync(eventData.ProjectId);
 }

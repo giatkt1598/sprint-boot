@@ -27,7 +27,7 @@ public class ProjectDto
 
     public required UserRefDto? Lead { get; set; }
 
-    public required int IssueCount { get; set; }
+    public required int TicketCount { get; set; }
 
     public required DateTime UpdatedAt { get; set; }
 
@@ -177,8 +177,8 @@ public interface IProjectAccess
     /// <summary>The caller's role name in the project, null for outsiders.</summary>
     Task<string?> GetCurrentRoleAsync(Guid projectId);
 
-    /// <summary>Takes the next issue number atomically; numbers are never reused.</summary>
-    Task<int> NextIssueNumberAsync(Guid projectId);
+    /// <summary>Takes the next ticket number atomically; numbers are never reused.</summary>
+    Task<int> NextTicketNumberAsync(Guid projectId);
 }
 
 /// <summary>Adds someone without a calling Project Admin, for invitations already authorized.</summary>

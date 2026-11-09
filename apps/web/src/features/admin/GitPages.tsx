@@ -219,9 +219,9 @@ function ConnectionDialog({ projectId, connection, onClose }: { projectId: strin
   );
 }
 
-const BRANCH_TEMPLATE_PLACEHOLDER = 'feature/{issue_key}-{issue_title}';
+const BRANCH_TEMPLATE_PLACEHOLDER = 'feature/{ticket_key}-{ticket_title}';
 
-/** How the branch name for an issue is suggested; it lives with the Git settings, not with the space's general ones. */
+/** How the branch name for a ticket is suggested; it lives with the Git settings, not with the space's general ones. */
 function BranchTemplateSection({ space }: { space: Space }) {
   const { t } = useTranslation();
   const toast = useToast();

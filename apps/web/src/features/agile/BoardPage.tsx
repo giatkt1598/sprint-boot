@@ -27,7 +27,7 @@ import { Avatar, UnassignedAvatar } from '../../components/Avatar';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { Dialog } from '../../components/Dialog';
-import { IssueTypeIcon, PriorityIcon, type IssueType as IconType } from '../../components/IssueIcons';
+import { TicketTypeIcon, PriorityIcon, type TicketType as IconType } from '../../components/TicketIcons';
 import { MenuItem } from '../../components/Menu';
 import { SearchInput } from '../../components/SearchInput';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
@@ -35,12 +35,12 @@ import { useToast } from '../../components/ToastHost';
 import { swallowClickAfterDrag } from '../../lib/drag';
 import { useErrorMessage } from '../../lib/errors';
 import { font, radius, sem, shadow } from '../../theme/tokens';
-import { FilterChips, FilterControls, useIssueFilters, useSearchText } from '../issues/IssueFilters';
-import { TransitionDialog, type Available } from '../issues/TransitionControl';
-import { priorityLevel } from '../issues/api';
+import { FilterChips, FilterControls, useTicketFilters, useSearchText } from '../tickets/TicketFilters';
+import { TransitionDialog, type Available } from '../tickets/TransitionControl';
+import { priorityLevel } from '../tickets/api';
 import { SpacePermission, useSpace } from '../spaces/api';
 import { ColumnsEditor } from './ColumnsEditor';
-import { IssuePanel } from './IssuePanel';
+import { TicketPanel } from './TicketPanel';
 import { CompleteSprintDialog } from './SprintDialogs';
 import { boardKey, useBacklog, useBoard, useBoardLive, type BoardView, type Card } from './api';
 
@@ -64,7 +64,7 @@ function CardBody({ card }: { card: Card }) {
         <span style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>{card.labels?.join(', ')}</span>
       )}
       <span className="flex items-center gap-2">
-        {has('type') && <IssueTypeIcon type={card.type?.icon as IconType} />}
+        {has('type') && <TicketTypeIcon type={card.type?.icon as IconType} />}
         <span className="flex-1" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>{has('key') && card.key}</span>
         {has('points') && card.storyPoints != null && <span style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>{card.storyPoints}</span>}
         {has('priority') && <PriorityIcon priority={priorityLevel(card.priority)} />}
@@ -185,9 +185,9 @@ export function BoardPage() {
   const toMessage = useErrorMessage();
   const toast = useToast();
   const queryClient = useQueryClient();
-  const filters = useIssueFilters(projectId);
+  const filters = useTicketFilters(projectId);
   const [text, setText] = useSearchText();
-  const [openIssue, setOpenIssue] = useState<string | null>(null);
+  const [openTicket, setOpenTicket] = useState<string | null>(null);
   const [dragging, setDragging] = useState<Card | null>(null);
   const [transitions, setTransitions] = useState<Available[]>([]);
   const [dialog, setDialog] = useState<{ card: Card; transition: Available } | null>(null);
@@ -195,7 +195,7 @@ export function BoardPage() {
   const [configuring, setConfiguring] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
-  const canTransition = space.data?.permissions?.includes('Issue.Transition') ?? false;
+  const canTransition = space.data?.permissions?.includes('Ticket.Transition') ?? false;
   const canRank = space.data?.permissions?.includes('Backlog.Rank') ?? false;
   const canManage = space.data?.permissions?.includes('Sprint.Manage') ?? false;
   const canConfigure = space.data?.permissions?.includes(SpacePermission.manage) ?? false;
@@ -221,7 +221,7 @@ export function BoardPage() {
     setDragging(card);
     setTransitions([]);
     if (card) {
-      const available = await unwrap(apiClient.GET('/api/v1/transition/available/{issueId}', { params: { path: { issueId: card.id! } } })).catch(() => []);
+      const available = await unwrap(apiClient.GET('/api/v1/transition/available/{ticketId}', { params: { path: { ticketId: card.id! } } })).catch(() => []);
       setTransitions(available);
     }
   };
@@ -232,8 +232,8 @@ export function BoardPage() {
     );
     try {
       await unwrap(
-        apiClient.POST('/api/v1/transition/execute/{issueId}', {
-          params: { path: { issueId: card.id! } },
+        apiClient.POST('/api/v1/transition/execute/{ticketId}', {
+          params: { path: { ticketId: card.id! } },
           body: { transitionId: transition.id!, concurrencyStamp: card.concurrencyStamp! },
         }),
       );
@@ -271,9 +271,9 @@ export function BoardPage() {
         const others = siblings.filter((item) => item.id !== card.id);
         const position = others.findIndex((item) => item.id === targetId);
         void unwrap(
-          apiClient.POST('/api/v1/board/rank/{issueId}', {
-            params: { path: { issueId: card.id! } },
-            body: { afterIssueId: others[position - 1]?.id ?? null, beforeIssueId: targetId },
+          apiClient.POST('/api/v1/board/rank/{ticketId}', {
+            params: { path: { ticketId: card.id! } },
+            body: { afterTicketId: others[position - 1]?.id ?? null, beforeTicketId: targetId },
           }),
         )
           .catch((failure: unknown) => toast('error', toMessage(failure)))
@@ -292,7 +292,7 @@ export function BoardPage() {
       <div className="flex items-center gap-2">
         <Typography variant="h1" className="flex-1">{scrum ? (sprint?.name ?? t('agile.board')) : t('agile.board')}</Typography>
         <FilterControls filters={filters} />
-        <SearchInput label={t('issues.search')} value={text} onChange={(event) => setText(event.target.value)} />
+        <SearchInput label={t('tickets.search')} value={text} onChange={(event) => setText(event.target.value)} />
         {scrum && sprint && canManage && <Button kind="secondary" onClick={() => setCompleting(true)}>{t('agile.completeSprint')}</Button>}
         {canConfigure && (
           <>
@@ -341,7 +341,7 @@ export function BoardPage() {
                 canDrag={canTransition}
                 dragging={dragging}
                 transitions={transitions}
-                onOpen={setOpenIssue}
+                onOpen={setOpenTicket}
               />
             ))}
           </div>
@@ -363,7 +363,7 @@ export function BoardPage() {
       )}
       {dialog && (
         <TransitionDialog
-          issue={dialog.card}
+          ticket={dialog.card}
           transition={dialog.transition}
           people={filters.people}
           onConflict={() => toast('error', t('agile.movedByOther'))}
@@ -371,7 +371,7 @@ export function BoardPage() {
         />
       )}
       {completing && sprint && <CompleteSprintDialog sprint={sprint} futureSprints={futureSprints} onClose={() => setCompleting(false)} />}
-      <IssuePanel issueKey={openIssue} onClose={() => setOpenIssue(null)} />
+      <TicketPanel ticketKey={openTicket} onClose={() => setOpenTicket(null)} />
     </div>
   );
 }

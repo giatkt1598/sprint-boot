@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Projects;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Uow;
@@ -19,14 +19,14 @@ public class UploadTests(ApiFixture fixture)
 
     private static readonly long PartSize = ApiFixture.UploadPartSizeKb * 1024L;
 
-    private async Task<(AuthClient Client, ProjectDto Project, IssueDto Issue)> IssueAsync()
+    private async Task<(AuthClient Client, ProjectDto Project, TicketDto Ticket)> TicketAsync()
     {
         var client = await fixture.CreateUserClientAsync(Token);
         var key = $"U{Random.Shared.Next(100000, 999999)}";
         var project = (await (await client.Http.PostAsJsonAsync("/api/v1/project", new { name = "Uploads", key, type = 0 }, Token)).Content.ReadFromJsonAsync<ProjectDto>(Token))!;
-        var types = await client.Http.GetFromJsonAsync<List<IssueTypeDto>>($"/api/v1/issue/types/{project.Id}", Token);
-        var created = await client.Http.PostAsJsonAsync("/api/v1/issue", new { projectId = project.Id, typeId = types!.Single(type => type.Name == "Task").Id, title = "Files" }, Token);
-        return (client, project, (await created.Content.ReadFromJsonAsync<IssueDto>(Token))!);
+        var types = await client.Http.GetFromJsonAsync<List<TicketTypeDto>>($"/api/v1/ticket/types/{project.Id}", Token);
+        var created = await client.Http.PostAsJsonAsync("/api/v1/ticket", new { projectId = project.Id, typeId = types!.Single(type => type.Name == "Task").Id, title = "Files" }, Token);
+        return (client, project, (await created.Content.ReadFromJsonAsync<TicketDto>(Token))!);
     }
 
     private static byte[] Bytes(long size) => [.. Enumerable.Range(0, (int)size).Select(index => (byte)(index % 251))];
@@ -70,10 +70,10 @@ public class UploadTests(ApiFixture fixture)
     [Fact]
     public async Task An_attachment_goes_up_in_parts_and_reads_back_whole()
     {
-        var (client, _, issue) = await IssueAsync();
+        var (client, _, ticket) = await TicketAsync();
         var file = Bytes((PartSize * 2) + 123);
 
-        var session = await StartOkAsync(client, new { purpose = UploadPurpose.Attachment, issueId = issue.Id, fileName = "build.zip", contentType = "application/zip", size = file.Length });
+        var session = await StartOkAsync(client, new { purpose = UploadPurpose.Attachment, ticketId = ticket.Id, fileName = "build.zip", contentType = "application/zip", size = file.Length });
         session.Parts.Count.ShouldBe(3);
         session.PartSize.ShouldBe(PartSize);
 
@@ -92,7 +92,7 @@ public class UploadTests(ApiFixture fixture)
     [Fact]
     public async Task A_rich_text_file_goes_up_in_parts()
     {
-        var (client, project, _) = await IssueAsync();
+        var (client, project, _) = await TicketAsync();
         var file = Bytes(PartSize + 1);
 
         var session = await StartOkAsync(client, new { purpose = UploadPurpose.RichText, projectId = project.Id, fileName = "clip.mp4", contentType = "video/mp4", size = file.Length });
@@ -107,16 +107,16 @@ public class UploadTests(ApiFixture fixture)
     [Fact]
     public async Task Wrong_sizes_missing_parts_and_oversized_files_are_refused()
     {
-        var (client, _, issue) = await IssueAsync();
+        var (client, _, ticket) = await TicketAsync();
         var file = Bytes(PartSize + 10);
 
-        var tooLarge = await StartAsync(client, new { purpose = UploadPurpose.Attachment, issueId = issue.Id, fileName = "big.bin", size = 2L * 1024 * 1024 });
-        (await tooLarge.Content.ReadAsStringAsync(Token)).ShouldContain(IssueErrors.AttachmentTooLarge);
+        var tooLarge = await StartAsync(client, new { purpose = UploadPurpose.Attachment, ticketId = ticket.Id, fileName = "big.bin", size = 2L * 1024 * 1024 });
+        (await tooLarge.Content.ReadAsStringAsync(Token)).ShouldContain(TicketErrors.AttachmentTooLarge);
 
         var noTarget = await StartAsync(client, new { purpose = UploadPurpose.Attachment, fileName = "a.bin", size = 10 });
         (await noTarget.Content.ReadAsStringAsync(Token)).ShouldContain(UploadErrors.TargetMissing);
 
-        var session = await StartOkAsync(client, new { purpose = UploadPurpose.Attachment, issueId = issue.Id, fileName = "a.bin", size = file.Length });
+        var session = await StartOkAsync(client, new { purpose = UploadPurpose.Attachment, ticketId = ticket.Id, fileName = "a.bin", size = file.Length });
         // Every part but the last is full; the last holds exactly the rest.
         (await (await PartAsync(client, session.Id, 1, file[..10])).Content.ReadAsStringAsync(Token)).ShouldContain(UploadErrors.PartInvalid);
         (await (await PartAsync(client, session.Id, 3, file[..10])).Content.ReadAsStringAsync(Token)).ShouldContain(UploadErrors.PartInvalid);
@@ -136,12 +136,12 @@ public class UploadTests(ApiFixture fixture)
     [Fact]
     public async Task Only_people_who_edit_the_space_upload_and_sessions_stay_private()
     {
-        var (owner, project, issue) = await IssueAsync();
+        var (owner, project, ticket) = await TicketAsync();
         var outsider = await fixture.CreateUserClientAsync(Token);
-        (await StartAsync(outsider, new { purpose = UploadPurpose.Attachment, issueId = issue.Id, fileName = "a.bin", size = 10 })).IsSuccessStatusCode.ShouldBeFalse();
+        (await StartAsync(outsider, new { purpose = UploadPurpose.Attachment, ticketId = ticket.Id, fileName = "a.bin", size = 10 })).IsSuccessStatusCode.ShouldBeFalse();
         (await StartAsync(outsider, new { purpose = UploadPurpose.RichText, projectId = project.Id, fileName = "a.bin", size = 10 })).IsSuccessStatusCode.ShouldBeFalse();
 
-        var session = await StartOkAsync(owner, new { purpose = UploadPurpose.Attachment, issueId = issue.Id, fileName = "a.bin", size = 10 });
+        var session = await StartOkAsync(owner, new { purpose = UploadPurpose.Attachment, ticketId = ticket.Id, fileName = "a.bin", size = 10 });
         (await PartAsync(outsider, session.Id, 1, Bytes(10))).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await outsider.Http.PostAsync($"/api/v1/upload/{session.Id}/renew", null, Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
@@ -152,8 +152,8 @@ public class UploadTests(ApiFixture fixture)
     [Fact]
     public async Task Expired_sessions_refuse_parts_and_are_cleaned_up()
     {
-        var (client, _, issue) = await IssueAsync();
-        var session = await StartOkAsync(client, new { purpose = UploadPurpose.Attachment, issueId = issue.Id, fileName = "a.bin", size = 10 });
+        var (client, _, ticket) = await TicketAsync();
+        var session = await StartOkAsync(client, new { purpose = UploadPurpose.Attachment, ticketId = ticket.Id, fileName = "a.bin", size = 10 });
         (await PartAsync(client, session.Id, 1, Bytes(10))).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         using (var scope = fixture.Factory.Services.CreateScope())

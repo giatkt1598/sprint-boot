@@ -3,7 +3,7 @@
     <PackageReference Include="Volo.Abp.Ddd.Application.Contracts" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Issues\SprintBoot.Issues.Contracts\SprintBoot.Issues.Contracts.csproj" />
+    <ProjectReference Include="..\..\Tickets\SprintBoot.Tickets.Contracts\SprintBoot.Tickets.Contracts.csproj" />
     <ProjectReference Include="..\..\Projects\SprintBoot.Projects.Contracts\SprintBoot.Projects.Contracts.csproj" />
     <ProjectReference Include="..\..\Workflows\SprintBoot.Workflows.Contracts\SprintBoot.Workflows.Contracts.csproj" />
   </ItemGroup>

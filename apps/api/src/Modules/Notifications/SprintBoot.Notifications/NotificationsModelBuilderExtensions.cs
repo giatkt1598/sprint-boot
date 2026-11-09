@@ -35,7 +35,7 @@ public static class NotificationsModelBuilderExtensions
             b.ToTable("notifications", Schema);
             b.ConfigureByConvention();
             b.Property(item => item.EventType).HasMaxLength(64).IsRequired();
-            b.Property(item => item.IssueKey).HasMaxLength(32);
+            b.Property(item => item.TicketKey).HasMaxLength(32);
             b.Property(item => item.Title).HasMaxLength(255);
             b.Property(item => item.ActorName).HasMaxLength(128);
             b.Property(item => item.Detail).HasMaxLength(512);

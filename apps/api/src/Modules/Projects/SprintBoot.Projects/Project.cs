@@ -16,7 +16,7 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public BoardType DefaultBoardType { get; private set; }
 
-    public int NextIssueNumber { get; private set; } = 1;
+    public int NextTicketNumber { get; private set; } = 1;
 
     public string? BranchNameTemplate { get; set; }
 

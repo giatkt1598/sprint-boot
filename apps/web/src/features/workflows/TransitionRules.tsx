@@ -34,7 +34,7 @@ const KEYS: Record<number, string[]> = {
 };
 const ROLES = ['Admin', 'Member', 'Viewer'];
 const PEOPLE = ['assignee', 'reporter'];
-const PERMISSIONS = ['Project.Manage', 'Project.Members.Manage', 'Issue.Edit', 'Issue.Transition', 'Sprint.Manage'];
+const PERMISSIONS = ['Project.Manage', 'Project.Members.Manage', 'Ticket.Edit', 'Ticket.Transition', 'Sprint.Manage'];
 const REQUIRED_FIELDS = ['assignee', 'reporter', 'description', 'labels', 'storyPoints', 'startDate', 'dueDate', 'parent'];
 const SETTABLE_FIELDS = ['assignee', 'priority', 'labels', 'storyPoints', 'dueDate'];
 const ASSIGN_TO = ['reporter', 'actor'];

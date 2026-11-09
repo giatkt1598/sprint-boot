@@ -234,7 +234,7 @@ public class AuthTests(ApiFixture fixture)
     }
 
     [Fact]
-    public async Task Authorization_code_flow_with_pkce_issues_tokens_that_call_the_api()
+    public async Task Authorization_code_flow_with_pkce_tickets_tokens_that_call_the_api()
     {
         var client = new AuthClient(fixture);
 
@@ -351,15 +351,15 @@ public class AuthTests(ApiFixture fixture)
         var key = $"D{Random.Shared.Next(100000, 999999)}";
         var space = (await (await admin.Http.PostAsJsonAsync("/api/v1/project", new { name = "Del", key, type = 0 }, Token)).Content.ReadFromJsonAsync<ProjectDto>(Token))!;
         (await admin.Http.PostAsJsonAsync($"/api/v1/project/{space.Id}/member", new { userId = gone.UserId, role = ProjectRoleNames.Member }, Token)).EnsureSuccessStatusCode();
-        var types = (await admin.Http.GetFromJsonAsync<List<SprintBoot.Issues.IssueTypeDto>>($"/api/v1/issue/types/{space.Id}", Token))!;
-        var issue = (await (await admin.Http.PostAsJsonAsync("/api/v1/issue", new { projectId = space.Id, typeId = types.Single(type => type.Name == "Task").Id, title = "Theirs", assigneeId = gone.UserId }, Token)).Content.ReadFromJsonAsync<SprintBoot.Issues.IssueDto>(Token))!;
+        var types = (await admin.Http.GetFromJsonAsync<List<SprintBoot.Tickets.TicketTypeDto>>($"/api/v1/ticket/types/{space.Id}", Token))!;
+        var ticket = (await (await admin.Http.PostAsJsonAsync("/api/v1/ticket", new { projectId = space.Id, typeId = types.Single(type => type.Name == "Task").Id, title = "Theirs", assigneeId = gone.UserId }, Token)).Content.ReadFromJsonAsync<SprintBoot.Tickets.TicketDto>(Token))!;
 
         var me = (await admin.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!;
         var self = await admin.Http.DeleteAsync($"/api/v1/user-admin/{me.Id}", Token);
         (await self.Content.ReadAsStringAsync(Token)).ShouldContain(AuthErrors.CannotDeleteSelf);
         (await admin.Http.DeleteAsync($"/api/v1/user-admin/{gone.UserId}", Token)).EnsureSuccessStatusCode();
 
-        var read = (await admin.Http.GetFromJsonAsync<SprintBoot.Issues.IssueDto>($"/api/v1/issue/by-key?key={issue.Key}", Token))!;
+        var read = (await admin.Http.GetFromJsonAsync<SprintBoot.Tickets.TicketDto>($"/api/v1/ticket/by-key?key={ticket.Key}", Token))!;
         read.Assignee!.Name.ShouldBe(UserDirectory.DeactivatedName);
         read.Assignee.IsDeactivated.ShouldBeTrue();
         read.Assignee.Email.ShouldBeEmpty();

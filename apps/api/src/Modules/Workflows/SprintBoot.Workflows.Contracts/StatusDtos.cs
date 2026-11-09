@@ -25,7 +25,7 @@ public class StatusAdminDto : StatusDto
 {
     public required int WorkflowCount { get; set; }
 
-    public required int IssueCount { get; set; }
+    public required int TicketCount { get; set; }
 
     public required DateTime UpdatedAt { get; set; }
 }
@@ -43,8 +43,8 @@ public class DeleteStatusInput
 
 public class StatusUsageDto
 {
-    /// <summary>Issues and epics alike, deleted ones included so a restore cannot strand them.</summary>
-    public required int IssueCount { get; set; }
+    /// <summary>Tickets and epics alike, deleted ones included so a restore cannot strand them.</summary>
+    public required int TicketCount { get; set; }
 
     public required int WorkflowCount { get; set; }
 

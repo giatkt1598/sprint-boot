@@ -1,5 +1,5 @@
 using Shouldly;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using Xunit;
 
 namespace SprintBoot.UnitTests;

@@ -182,9 +182,9 @@ public class GitPullRequest : Entity<Guid>
 }
 
 /// <summary>Keeps the project so branch pickers can favour repositories already used in a space.</summary>
-public class IssueGitLink : Entity<Guid>
+public class TicketGitLink : Entity<Guid>
 {
-    public Guid IssueId { get; private set; }
+    public Guid TicketId { get; private set; }
 
     public Guid ProjectId { get; private set; }
 
@@ -192,14 +192,14 @@ public class IssueGitLink : Entity<Guid>
 
     public Guid TargetId { get; private set; }
 
-    protected IssueGitLink()
+    protected TicketGitLink()
     {
     }
 
-    public IssueGitLink(Guid id, Guid issueId, Guid projectId, GitLinkTarget targetType, Guid targetId)
+    public TicketGitLink(Guid id, Guid ticketId, Guid projectId, GitLinkTarget targetType, Guid targetId)
         : base(id)
     {
-        IssueId = issueId;
+        TicketId = ticketId;
         ProjectId = projectId;
         TargetType = targetType;
         TargetId = targetId;
@@ -316,11 +316,11 @@ public static class GitModelBuilderExtensions
             b.Property(item => item.HeadSha).HasMaxLength(64).IsRequired();
             b.HasIndex(item => new { item.RepositoryId, item.Number }).IsUnique();
         });
-        builder.Entity<IssueGitLink>(b =>
+        builder.Entity<TicketGitLink>(b =>
         {
-            b.ToTable("issue_links", Schema);
+            b.ToTable("ticket_links", Schema);
             b.ConfigureByConvention();
-            b.HasIndex(item => new { item.IssueId, item.TargetType, item.TargetId }).IsUnique();
+            b.HasIndex(item => new { item.TicketId, item.TargetType, item.TargetId }).IsUnique();
             b.HasIndex(item => item.ProjectId);
         });
         builder.Entity<CiStatus>(b =>

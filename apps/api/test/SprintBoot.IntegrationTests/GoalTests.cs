@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Shouldly;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Projects;
 using Xunit;
 

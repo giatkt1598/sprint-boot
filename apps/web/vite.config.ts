@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     port: Number(process.env.WEB_PORT ?? 5173),
-    // Keep the browser's host so the auth server issues same-origin URLs and cookies.
+    // Keep the browser's host so the auth server tickets same-origin URLs and cookies.
     proxy: Object.fromEntries(
       ['/api', '/connect', '/.well-known', '/hubs', '/swagger', '/mcp'].map((path) => [
         path,

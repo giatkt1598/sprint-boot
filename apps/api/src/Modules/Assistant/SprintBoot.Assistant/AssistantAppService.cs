@@ -4,7 +4,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Projects;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -25,7 +25,7 @@ public class AssistantAppService(
     IRepository<ConversationMessage, Guid> messages,
     IRepository<AssistantAction, Guid> actions,
     IRepository<AiConnection, Guid> connections,
-    IIssuePlanningGateway issues,
+    ITicketPlanningGateway tickets,
     IProjectAccess projectAccess,
     IAssistantToolbox toolbox,
     ISettingProvider settings)
@@ -36,10 +36,10 @@ public class AssistantAppService(
         Available = await settings.IsTrueAsync(AssistantSettings.Enabled) && await connections.AnyAsync(item => item.IsDefault),
     };
 
-    public async Task<List<ConversationDto>> GetListAsync(Guid? issueId)
+    public async Task<List<ConversationDto>> GetListAsync(Guid? ticketId)
     {
         var owner = CurrentUser.GetId();
-        var list = await conversations.GetListAsync(item => item.OwnerId == owner && (issueId == null || item.IssueId == issueId));
+        var list = await conversations.GetListAsync(item => item.OwnerId == owner && (ticketId == null || item.TicketId == ticketId));
         return await ToDtosAsync(list.OrderByDescending(item => item.UpdatedAt).ToList());
     }
 
@@ -57,13 +57,13 @@ public class AssistantAppService(
 
     public async Task<ConversationDto> CreateAsync(CreateConversationInput input)
     {
-        if (input.IssueId is { } issueId)
+        if (input.TicketId is { } ticketId)
         {
-            var card = await issues.FindCardAsync(issueId) ?? throw new EntityNotFoundException(typeof(IssueCardDto), issueId);
-            await projectAccess.CheckAsync(await issues.GetProjectIdAsync(card.Id), ProjectPermissions.ViewIssues);
+            var card = await tickets.FindCardAsync(ticketId) ?? throw new EntityNotFoundException(typeof(TicketCardDto), ticketId);
+            await projectAccess.CheckAsync(await tickets.GetProjectIdAsync(card.Id), ProjectPermissions.ViewTickets);
         }
 
-        var conversation = new Conversation(GuidGenerator.Create(), CurrentUser.GetId(), input.IssueId, string.Empty, Clock.Now);
+        var conversation = new Conversation(GuidGenerator.Create(), CurrentUser.GetId(), input.TicketId, string.Empty, Clock.Now);
         await conversations.InsertAsync(conversation, autoSave: true);
         return (await ToDtosAsync([conversation])).Single();
     }
@@ -96,17 +96,17 @@ public class AssistantAppService(
     private async Task<List<ConversationDto>> ToDtosAsync(List<Conversation> list)
     {
         var keys = new Dictionary<Guid, string?>();
-        foreach (var issueId in list.Where(item => item.IssueId != null).Select(item => item.IssueId!.Value).Distinct())
+        foreach (var ticketId in list.Where(item => item.TicketId != null).Select(item => item.TicketId!.Value).Distinct())
         {
-            keys[issueId] = (await issues.FindCardAsync(issueId))?.Key;
+            keys[ticketId] = (await tickets.FindCardAsync(ticketId))?.Key;
         }
 
         return [.. list.Select(item => new ConversationDto
         {
             Id = item.Id,
             Title = item.Title,
-            IssueId = item.IssueId,
-            IssueKey = item.IssueId is { } issue ? keys.GetValueOrDefault(issue) : null,
+            TicketId = item.TicketId,
+            TicketKey = item.TicketId is { } ticket ? keys.GetValueOrDefault(ticket) : null,
             CreatedAt = item.CreatedAt,
             UpdatedAt = item.UpdatedAt,
         })];
@@ -169,12 +169,12 @@ public static partial class AssistantViews
     public static List<AssistantToolCall> ToolCalls(ConversationMessage message) =>
         message.ToolsJson is null ? [] : JsonSerializer.Deserialize<List<AssistantToolCall>>(message.ToolsJson, Json) ?? [];
 
-    /// <summary>Issues the text links, in the order it first mentions them.</summary>
+    /// <summary>Tickets the text links, in the order it first mentions them.</summary>
     public static List<string> Sources(string text) =>
-        [.. IssueLink().Matches(text).Select(match => match.Groups[1].Value).Distinct()];
+        [.. TicketLink().Matches(text).Select(match => match.Groups[1].Value).Distinct()];
 
-    [GeneratedRegex(@"/issues/([A-Z][A-Z0-9_]*-\d+)")]
-    private static partial Regex IssueLink();
+    [GeneratedRegex(@"/tickets/([A-Z][A-Z0-9_]*-\d+)")]
+    private static partial Regex TicketLink();
 }
 
 /// <summary>
@@ -189,7 +189,7 @@ public class AssistantChatAppService(
     IRepository<ConversationMessage, Guid> messages,
     IRepository<AssistantAction, Guid> actions,
     IRepository<AiConnection, Guid> connections,
-    IIssuePlanningGateway issues,
+    ITicketPlanningGateway tickets,
     IAssistantToolbox toolbox,
     ChatProviders providers,
     ISettingProvider settings,
@@ -204,16 +204,16 @@ public class AssistantChatAppService(
     private const int TitleLength = 60;
 
     public const string SystemPrompt = """
-        You are the assistant of Sprint Boot, a work management app where teams track issues in spaces.
-        You help the person you are talking with find issues, understand them, summarize them, explain the terms they use,
+        You are the assistant of Sprint Boot, a work management app where teams track tickets in spaces.
+        You help the person you are talking with find tickets, understand them, summarize them, explain the terms they use,
         and, when asked, change them.
 
-        - Use the tools to look things up before you answer anything about issues, spaces, sprints or people. Never guess
-          issue content, keys, statuses or names.
-        - Link every issue you mention as a Markdown link [KEY](/issues/KEY), so the person can open it and check.
+        - Use the tools to look things up before you answer anything about tickets, spaces, sprints or people. Never guess
+          ticket content, keys, statuses or names.
+        - Link every ticket you mention as a Markdown link [KEY](/tickets/KEY), so the person can open it and check.
         - When the tools find nothing, or the data you need is missing or out of your reach, say so plainly and say what you
           looked at. Do not fill gaps with assumptions.
-        - Tools run with the person's own permissions. An issue you cannot read does not exist for you.
+        - Tools run with the person's own permissions. A ticket you cannot read does not exist for you.
         - Tools that change data only run after the person confirms them in the app. Propose such a change only when the
           person asked for it, and never say it happened until the tool result confirms it.
         - Answer in the language the person writes in. Keep answers short and use Markdown lists and tables where they help.
@@ -251,7 +251,7 @@ public class AssistantChatAppService(
         }
 
         var text = input.Text.Trim();
-        var prompt = $"{await ContextAsync(conversation, input.IssueId, cancellationToken)}{text}";
+        var prompt = $"{await ContextAsync(conversation, input.TicketId, cancellationToken)}{text}";
         using (var uow = unitOfWork.Begin(requiresNew: true))
         {
             var question = ConversationMessage.FromUser(GuidGenerator.Create(), conversationId, text, prompt, Clock.Now);
@@ -498,23 +498,23 @@ public class AssistantChatAppService(
     }
 
     /// <summary>
-    /// Today, and the issues as they are now: the one the conversation is about and the one the person has open, so the
+    /// Today, and the tickets as they are now: the one the conversation is about and the one the person has open, so the
     /// model never has to ask which ticket "this" is.
     /// </summary>
-    private async Task<string> ContextAsync(Conversation conversation, Guid? viewingIssueId, CancellationToken cancellationToken)
+    private async Task<string> ContextAsync(Conversation conversation, Guid? viewingTicketId, CancellationToken cancellationToken)
     {
         var parts = new List<string> { $"Today is {Clock.Now:yyyy-MM-dd}." };
-        if (conversation.IssueId is { } issueId)
+        if (conversation.TicketId is { } ticketId)
         {
-            var (key, content) = await ReadIssueAsync(conversation.Id, issueId, cancellationToken);
+            var (key, content) = await ReadTicketAsync(conversation.Id, ticketId, cancellationToken);
             parts.Add(key is null
-                ? "The issue this conversation was about no longer exists."
+                ? "The ticket this conversation was about no longer exists."
                 : content is null
-                    ? $"This conversation is about issue {key}, which the person can no longer open."
-                    : $"This conversation is about issue [{key}](/issues/{key}) (id {issueId}).");
-            if (content is not null && (viewingIssueId is null || viewingIssueId == issueId))
+                    ? $"This conversation is about ticket {key}, which the person can no longer open."
+                    : $"This conversation is about ticket [{key}](/tickets/{key}) (id {ticketId}).");
+            if (content is not null && (viewingTicketId is null || viewingTicketId == ticketId))
             {
-                parts.Add($"When the person says \"this issue\", \"this ticket\" or \"this page\", they mean {key}.");
+                parts.Add($"When the person says \"this ticket\", \"this issue\" or \"this page\", they mean {key}.");
             }
 
             if (content is not null)
@@ -523,13 +523,13 @@ public class AssistantChatAppService(
             }
         }
 
-        if (viewingIssueId is { } viewing && viewing != conversation.IssueId)
+        if (viewingTicketId is { } viewing && viewing != conversation.TicketId)
         {
-            // An issue the person cannot read is left out, without even its key.
-            var (key, content) = await ReadIssueAsync(conversation.Id, viewing, cancellationToken);
+            // A ticket the person cannot read is left out, without even its key.
+            var (key, content) = await ReadTicketAsync(conversation.Id, viewing, cancellationToken);
             if (key is not null && content is not null)
             {
-                parts.Add($"The person has issue [{key}](/issues/{key}) (id {viewing}) open now, so \"this issue\", \"this ticket\" or \"this page\" means {key}. Its current content:\n{content}");
+                parts.Add($"The person has ticket [{key}](/tickets/{key}) (id {viewing}) open now, so \"this ticket\", \"this issue\" or \"this page\" means {key}. Its current content:\n{content}");
             }
         }
 
@@ -537,16 +537,16 @@ public class AssistantChatAppService(
     }
 
     /// <summary>
-    /// The key, and the content the get_issue tool gives the person, or null when they cannot read it. Content already sent
+    /// The key, and the content the get_ticket tool gives the person, or null when they cannot read it. Content already sent
     /// in this conversation, unchanged, is replaced by a pointer to it: the whole history goes with every request, and an
-    /// issue repeated with every question was what made long issue chats too large for some providers.
+    /// ticket repeated with every question was what made long ticket chats too large for some providers.
     /// </summary>
-    private async Task<(string? Key, string? Content)> ReadIssueAsync(Guid conversationId, Guid issueId, CancellationToken cancellationToken)
+    private async Task<(string? Key, string? Content)> ReadTicketAsync(Guid conversationId, Guid ticketId, CancellationToken cancellationToken)
     {
         string? key;
         using (var uow = unitOfWork.Begin(requiresNew: true))
         {
-            key = (await issues.FindCardAsync(issueId))?.Key;
+            key = (await tickets.FindCardAsync(ticketId))?.Key;
             await uow.CompleteAsync();
         }
 
@@ -555,29 +555,29 @@ public class AssistantChatAppService(
             return (null, null);
         }
 
-        var issue = await toolbox.InvokeAsync("get_issue", Parse(JsonSerializer.Serialize(new { key, includeComments = true })), cancellationToken);
-        if (issue.IsError)
+        var ticket = await toolbox.InvokeAsync("get_ticket", Parse(JsonSerializer.Serialize(new { key, includeComments = true })), cancellationToken);
+        if (ticket.IsError)
         {
             return (key, null);
         }
 
-        var block = IssueContext.Block(key, Clip(issue.Content));
+        var block = TicketContext.Block(key, Clip(ticket.Content));
         bool seen;
         using (var uow = unitOfWork.Begin(requiresNew: true))
         {
-            var marker = IssueContext.Marker(block);
+            var marker = TicketContext.Marker(block);
             seen = await messages.AnyAsync(item => item.ConversationId == conversationId && item.Role == ConversationRole.User && item.Prompt != null && item.Prompt.Contains(marker));
             await uow.CompleteAsync();
         }
 
-        return (key, seen ? IssueContext.Unchanged(block) : block);
+        return (key, seen ? TicketContext.Unchanged(block) : block);
     }
 
     /// <summary>At most <see cref="AssistantConsts.MaxToolResultLength"/> characters, telling the model what was cut.</summary>
     public static string Clip(string content) =>
         content.Length <= AssistantConsts.MaxToolResultLength
             ? content
-            : $"{content[..AssistantConsts.MaxToolResultLength]}\n…truncated: {content.Length - AssistantConsts.MaxToolResultLength} more characters. Narrow the query (filters, a smaller limit, one issue) to see the rest.";
+            : $"{content[..AssistantConsts.MaxToolResultLength]}\n…truncated: {content.Length - AssistantConsts.MaxToolResultLength} more characters. Narrow the query (filters, a smaller limit, one ticket) to see the rest.";
 
     /// <summary>What the history may weigh, in bytes, once the system prompt and tools are counted; null for no limit.</summary>
     private static int? Budget(AiConnection connection, IReadOnlyList<AssistantTool> tools) =>

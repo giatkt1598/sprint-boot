@@ -164,9 +164,9 @@ public class ConversationDto
 
     public required string Title { get; set; }
 
-    public Guid? IssueId { get; set; }
+    public Guid? TicketId { get; set; }
 
-    public string? IssueKey { get; set; }
+    public string? TicketKey { get; set; }
 
     public required DateTime CreatedAt { get; set; }
 
@@ -215,7 +215,7 @@ public class AssistantMessageDto
 
     public required List<AssistantActionDto> Actions { get; set; }
 
-    /// <summary>Issue keys the message links to.</summary>
+    /// <summary>Ticket keys the message links to.</summary>
     public required List<string> Sources { get; set; }
 
     /// <summary>Set when the model stopped for another reason than finishing, such as a refusal or the length limit.</summary>
@@ -233,8 +233,8 @@ public class ConversationDetailDto
 
 public class CreateConversationInput
 {
-    /// <summary>Ties the conversation to an issue, whose content then goes with every question.</summary>
-    public Guid? IssueId { get; set; }
+    /// <summary>Ties the conversation to a ticket, whose content then goes with every question.</summary>
+    public Guid? TicketId { get; set; }
 }
 
 public class RenameConversationInput
@@ -251,10 +251,10 @@ public class SendAssistantMessageInput
     public required string Text { get; set; }
 
     /// <summary>
-    /// The issue the person has open while asking, so "this ticket" or "this page" means something. Its content goes with
+    /// The ticket the person has open while asking, so "this ticket" or "this page" means something. Its content goes with
     /// the question when they can read it.
     /// </summary>
-    public Guid? IssueId { get; set; }
+    public Guid? TicketId { get; set; }
 }
 
 public class AssistantStatusDto
@@ -267,7 +267,7 @@ public interface IAssistantAppService : IApplicationService
 {
     Task<AssistantStatusDto> GetStatusAsync();
 
-    Task<List<ConversationDto>> GetListAsync(Guid? issueId);
+    Task<List<ConversationDto>> GetListAsync(Guid? ticketId);
 
     Task<ConversationDetailDto> GetAsync(Guid id);
 
@@ -307,7 +307,7 @@ public static class AssistantConsts
     public const int MinRequestKb = 64;
 
     /// <summary>
-    /// The most of one tool result, or of one issue sent as context, that goes to the model. Every request carries the whole
+    /// The most of one tool result, or of one ticket sent as context, that goes to the model. Every request carries the whole
     /// history, so one large search would otherwise weigh on every later question.
     /// </summary>
     public const int MaxToolResultLength = 12_000;

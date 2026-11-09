@@ -6,7 +6,7 @@ using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using SprintBoot.GitIntegration;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Projects;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Uow;
@@ -98,25 +98,25 @@ public class GitIntegrationTests(ApiFixture fixture)
         },
     };
 
-    private async Task<(AuthClient Client, ProjectDto Project, IssueDto Issue)> IssueAsync()
+    private async Task<(AuthClient Client, ProjectDto Project, TicketDto Ticket)> TicketAsync()
     {
         var client = await fixture.CreateUserClientAsync(Token);
         var key = $"G{Random.Shared.Next(100000, 999999)}";
         var project = (await (await client.Http.PostAsJsonAsync("/api/v1/project", new { name = "Git", key, type = 0 }, Token)).Content.ReadFromJsonAsync<ProjectDto>(Token))!;
-        var types = await client.Http.GetFromJsonAsync<List<IssueTypeDto>>($"/api/v1/issue/types/{project.Id}", Token);
-        var typeId = types!.First(type => type.Hierarchy == IssueHierarchy.Standard).Id;
-        var created = await client.Http.PostAsJsonAsync("/api/v1/issue", new { projectId = project.Id, typeId, title = "Đăng nhập" }, Token);
-        return (client, project, (await created.Content.ReadFromJsonAsync<IssueDto>(Token))!);
+        var types = await client.Http.GetFromJsonAsync<List<TicketTypeDto>>($"/api/v1/ticket/types/{project.Id}", Token);
+        var typeId = types!.First(type => type.Hierarchy == TicketHierarchy.Standard).Id;
+        var created = await client.Http.PostAsJsonAsync("/api/v1/ticket", new { projectId = project.Id, typeId, title = "Đăng nhập" }, Token);
+        return (client, project, (await created.Content.ReadFromJsonAsync<TicketDto>(Token))!);
     }
 
-    private static Task<DevelopmentDto?> DevelopmentAsync(AuthClient client, IssueDto issue) =>
-        client.Http.GetFromJsonAsync<DevelopmentDto>($"/api/v1/git-issue/development/{issue.Id}", Token);
+    private static Task<DevelopmentDto?> DevelopmentAsync(AuthClient client, TicketDto ticket) =>
+        client.Http.GetFromJsonAsync<DevelopmentDto>($"/api/v1/git-ticket/development/{ticket.Id}", Token);
 
-    private static async Task<DevelopmentDto> WaitAsync(AuthClient client, IssueDto issue, Func<DevelopmentDto, bool> done)
+    private static async Task<DevelopmentDto> WaitAsync(AuthClient client, TicketDto ticket, Func<DevelopmentDto, bool> done)
     {
         for (var attempt = 0; attempt < 100; attempt++)
         {
-            var development = (await DevelopmentAsync(client, issue))!;
+            var development = (await DevelopmentAsync(client, ticket))!;
             if (done(development))
             {
                 return development;
@@ -135,7 +135,7 @@ public class GitIntegrationTests(ApiFixture fixture)
     [InlineData(GitProviderType.Gitea)]
     public async Task Connecting_syncs_repositories_and_never_returns_the_token(GitProviderType provider)
     {
-        var (admin, project, _) = await IssueAsync();
+        var (admin, project, _) = await TicketAsync();
 
         var harness = await ConnectAsync(admin, project, provider);
 
@@ -150,14 +150,14 @@ public class GitIntegrationTests(ApiFixture fixture)
     [InlineData(GitProviderType.Gitea)]
     public async Task A_wrong_signature_is_refused_and_writes_nothing(GitProviderType provider)
     {
-        var (client, project, issue) = await IssueAsync();
+        var (client, project, ticket) = await TicketAsync();
         var harness = await ConnectAsync(client, project, provider);
 
-        var response = await SendAsync(harness, "push", Push("main", Guid.NewGuid().ToString("N"), $"{issue.Key} tampered"), badSignature: true);
+        var response = await SendAsync(harness, "push", Push("main", Guid.NewGuid().ToString("N"), $"{ticket.Key} tampered"), badSignature: true);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
         await Task.Delay(1000, Token);
-        (await DevelopmentAsync(client, issue))!.Commits.ShouldBeEmpty();
+        (await DevelopmentAsync(client, ticket))!.Commits.ShouldBeEmpty();
     }
 
     [Theory]
@@ -165,66 +165,66 @@ public class GitIntegrationTests(ApiFixture fixture)
     [InlineData(GitProviderType.Gitea)]
     public async Task A_commit_links_once_even_when_the_delivery_repeats(GitProviderType provider)
     {
-        var (client, project, issue) = await IssueAsync();
+        var (client, project, ticket) = await TicketAsync();
         var harness = await ConnectAsync(client, project, provider);
         var sha = Guid.NewGuid().ToString("N");
         var delivery = Guid.NewGuid().ToString();
 
-        (await SendAsync(harness, "push", Push("main", sha, $"{issue.Key} works"), delivery)).EnsureSuccessStatusCode();
-        (await SendAsync(harness, "push", Push("main", sha, $"{issue.Key} works"), delivery)).EnsureSuccessStatusCode();
+        (await SendAsync(harness, "push", Push("main", sha, $"{ticket.Key} works"), delivery)).EnsureSuccessStatusCode();
+        (await SendAsync(harness, "push", Push("main", sha, $"{ticket.Key} works"), delivery)).EnsureSuccessStatusCode();
 
-        var development = await WaitAsync(client, issue, item => item.Commits.Count > 0);
+        var development = await WaitAsync(client, ticket, item => item.Commits.Count > 0);
         await Task.Delay(1000, Token);
-        (await DevelopmentAsync(client, issue))!.Commits.Count.ShouldBe(1);
+        (await DevelopmentAsync(client, ticket))!.Commits.Count.ShouldBe(1);
         development.Commits.Single().Sha.ShouldBe(sha);
     }
 
     [Theory]
     [InlineData(GitProviderType.GitHub)]
     [InlineData(GitProviderType.Gitea)]
-    public async Task A_key_without_an_issue_links_nothing(GitProviderType provider)
+    public async Task A_key_without_an_ticket_links_nothing(GitProviderType provider)
     {
-        var (client, project, issue) = await IssueAsync();
+        var (client, project, ticket) = await TicketAsync();
         var harness = await ConnectAsync(client, project, provider);
         var marker = Guid.NewGuid().ToString("N");
 
         (await SendAsync(harness, "push", Push("main", Guid.NewGuid().ToString("N"), $"{project.Key}-99999 nothing {marker}"))).EnsureSuccessStatusCode();
-        (await SendAsync(harness, "push", Push("main", marker, $"{issue.Key} marker"))).EnsureSuccessStatusCode();
+        (await SendAsync(harness, "push", Push("main", marker, $"{ticket.Key} marker"))).EnsureSuccessStatusCode();
 
-        var development = await WaitAsync(client, issue, item => item.Commits.Count > 0);
+        var development = await WaitAsync(client, ticket, item => item.Commits.Count > 0);
         development.Commits.ShouldAllBe(commit => commit.Sha == marker);
     }
 
     [Theory]
     [InlineData(GitProviderType.GitHub)]
     [InlineData(GitProviderType.Gitea)]
-    public async Task Pull_requests_and_ci_status_update_the_issue(GitProviderType provider)
+    public async Task Pull_requests_and_ci_status_update_the_ticket(GitProviderType provider)
     {
-        var (client, project, issue) = await IssueAsync();
+        var (client, project, ticket) = await TicketAsync();
         var harness = await ConnectAsync(client, project, provider);
         var sha = Guid.NewGuid().ToString("N");
         var number = Random.Shared.Next(1, 100000);
         object Pull(string state, bool merged) => new
         {
             number,
-            pull_request = new { title = $"{issue.Key} work", body = "body", state, merged, html_url = $"http://git.fake/pr/{number}", head = new { sha, @ref = "topic" } },
+            pull_request = new { title = $"{ticket.Key} work", body = "body", state, merged, html_url = $"http://git.fake/pr/{number}", head = new { sha, @ref = "topic" } },
         };
 
         (await SendAsync(harness, "pull_request", Pull("open", merged: false))).EnsureSuccessStatusCode();
-        await WaitAsync(client, issue, item => item.PullRequests.Any(pull => pull.State == GitPullRequestState.Open));
+        await WaitAsync(client, ticket, item => item.PullRequests.Any(pull => pull.State == GitPullRequestState.Open));
 
         (await SendAsync(harness, "status", new { sha, context = "ci/build", state = "pending", target_url = "http://ci/1" })).EnsureSuccessStatusCode();
-        await WaitAsync(client, issue, item => item.Builds.FirstOrDefault()?.State == GitCiState.Pending);
+        await WaitAsync(client, ticket, item => item.Builds.FirstOrDefault()?.State == GitCiState.Pending);
         (await SendAsync(harness, "status", new { sha, context = "ci/build", state = "success", target_url = "http://ci/1" })).EnsureSuccessStatusCode();
-        var built = await WaitAsync(client, issue, item => item.Builds.FirstOrDefault()?.State == GitCiState.Success);
+        var built = await WaitAsync(client, ticket, item => item.Builds.FirstOrDefault()?.State == GitCiState.Success);
         built.Builds[0].Url.ShouldBe("http://ci/1");
 
         (await SendAsync(harness, "pull_request", Pull("closed", merged: true))).EnsureSuccessStatusCode();
-        await WaitAsync(client, issue, item => item.PullRequests.Single().State == GitPullRequestState.Merged);
+        await WaitAsync(client, ticket, item => item.PullRequests.Single().State == GitPullRequestState.Merged);
 
         using var scope = fixture.Factory.Services.CreateScope();
         using var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true);
-        (await scope.ServiceProvider.GetRequiredService<IIssueGitFacts>().HasPullRequestAsync(issue.Id)).ShouldBeTrue();
+        (await scope.ServiceProvider.GetRequiredService<ITicketGitFacts>().HasPullRequestAsync(ticket.Id)).ShouldBeTrue();
     }
 
     [Theory]
@@ -232,37 +232,37 @@ public class GitIntegrationTests(ApiFixture fixture)
     [InlineData(GitProviderType.Gitea)]
     public async Task Creating_a_branch_links_it_and_a_taken_name_is_reported(GitProviderType provider)
     {
-        var (client, project, issue) = await IssueAsync();
+        var (client, project, ticket) = await TicketAsync();
         var harness = await ConnectAsync(client, project, provider);
 
-        var options = await client.Http.GetFromJsonAsync<BranchOptionsDto>($"/api/v1/git-issue/branch-options/{issue.Id}", Token);
-        options!.SuggestedName.ShouldBe($"feature/{issue.Key}-dang-nhap");
+        var options = await client.Http.GetFromJsonAsync<BranchOptionsDto>($"/api/v1/git-ticket/branch-options/{ticket.Id}", Token);
+        options!.SuggestedName.ShouldBe($"feature/{ticket.Key}-dang-nhap");
         var name = $"{options.SuggestedName}-{Guid.NewGuid():N}";
 
-        var created = await client.Http.PostAsJsonAsync($"/api/v1/git-issue/branch/{issue.Id}", CreateBranchBody(harness.Repository, name), Token);
+        var created = await client.Http.PostAsJsonAsync($"/api/v1/git-ticket/branch/{ticket.Id}", CreateBranchBody(harness.Repository, name), Token);
         created.StatusCode.ShouldBe(HttpStatusCode.OK, await created.Content.ReadAsStringAsync(Token));
-        (await DevelopmentAsync(client, issue))!.Branches.Single().Name.ShouldBe(name);
+        (await DevelopmentAsync(client, ticket))!.Branches.Single().Name.ShouldBe(name);
 
-        var again = await client.Http.PostAsJsonAsync($"/api/v1/git-issue/branch/{issue.Id}", CreateBranchBody(harness.Repository, name), Token);
+        var again = await client.Http.PostAsJsonAsync($"/api/v1/git-ticket/branch/{ticket.Id}", CreateBranchBody(harness.Repository, name), Token);
         (await again.Content.ReadAsStringAsync(Token)).ShouldContain(GitErrors.BranchExists);
     }
 
     [Fact]
-    public async Task Only_people_who_can_edit_the_issue_create_branches()
+    public async Task Only_people_who_can_edit_the_ticket_create_branches()
     {
-        var (client, project, issue) = await IssueAsync();
+        var (client, project, ticket) = await TicketAsync();
         var harness = await ConnectAsync(client, project, GitProviderType.Gitea);
         var outsider = await fixture.CreateUserClientAsync(Token);
 
-        var response = await outsider.Http.PostAsJsonAsync($"/api/v1/git-issue/branch/{issue.Id}", CreateBranchBody(harness.Repository, "x"), Token);
+        var response = await outsider.Http.PostAsJsonAsync($"/api/v1/git-ticket/branch/{ticket.Id}", CreateBranchBody(harness.Repository, "x"), Token);
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]
-    public async Task Revoked_token_flags_the_connection_and_a_provider_outage_leaves_the_issue_page_working()
+    public async Task Revoked_token_flags_the_connection_and_a_provider_outage_leaves_the_ticket_page_working()
     {
-        var (client, project, issue) = await IssueAsync();
+        var (client, project, ticket) = await TicketAsync();
         var harness = await ConnectAsync(client, project, GitProviderType.Gitea);
 
         var update = await client.Http.PutAsJsonAsync($"/api/v1/git-connection/{harness.Connection.Id}", new
@@ -278,8 +278,8 @@ public class GitIntegrationTests(ApiFixture fixture)
         FakeGitServer.Instance.Down = true;
         try
         {
-            (await client.Http.GetAsync($"/api/v1/git-issue/development/{issue.Id}", Token)).StatusCode.ShouldBe(HttpStatusCode.OK);
-            var branch = await client.Http.PostAsJsonAsync($"/api/v1/git-issue/branch/{issue.Id}", CreateBranchBody(harness.Repository, "down"), Token);
+            (await client.Http.GetAsync($"/api/v1/git-ticket/development/{ticket.Id}", Token)).StatusCode.ShouldBe(HttpStatusCode.OK);
+            var branch = await client.Http.PostAsJsonAsync($"/api/v1/git-ticket/branch/{ticket.Id}", CreateBranchBody(harness.Repository, "down"), Token);
             (await branch.Content.ReadAsStringAsync(Token)).ShouldContain(GitErrors.ProviderUnavailable);
         }
         finally
@@ -291,24 +291,24 @@ public class GitIntegrationTests(ApiFixture fixture)
     [Fact]
     public async Task Connections_belong_to_a_space()
     {
-        var (owner, project, _) = await IssueAsync();
+        var (owner, project, _) = await TicketAsync();
         var harness = await ConnectAsync(owner, project, GitProviderType.Gitea);
         var outsider = await fixture.CreateUserClientAsync(Token);
 
         (await outsider.Http.GetAsync($"/api/v1/git-connection?projectId={project.Id}", Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await outsider.Http.GetAsync($"/api/v1/git-connection/{harness.Connection.Id}", Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
-        var (other, _, otherIssue) = await IssueAsync();
-        (await SendAsync(harness, "push", Push("main", Guid.NewGuid().ToString("N"), $"{otherIssue.Key} from another space"))).EnsureSuccessStatusCode();
+        var (other, _, otherTicket) = await TicketAsync();
+        (await SendAsync(harness, "push", Push("main", Guid.NewGuid().ToString("N"), $"{otherTicket.Key} from another space"))).EnsureSuccessStatusCode();
         await Task.Delay(1500, Token);
-        (await DevelopmentAsync(other, otherIssue))!.Commits.ShouldBeEmpty();
-        (await DevelopmentAsync(other, otherIssue))!.CanCreateBranch.ShouldBeFalse();
+        (await DevelopmentAsync(other, otherTicket))!.Commits.ShouldBeEmpty();
+        (await DevelopmentAsync(other, otherTicket))!.CanCreateBranch.ShouldBeFalse();
     }
 
     [Fact]
     public async Task A_space_can_limit_a_connection_to_selected_repositories()
     {
-        var (client, project, issue) = await IssueAsync();
+        var (client, project, ticket) = await TicketAsync();
         var harness = await ConnectAsync(client, project, GitProviderType.Gitea);
         harness.Connection.RepositoryAccess.ShouldBe(GitRepositoryAccess.All);
         harness.Repository.IsSelected.ShouldBeTrue();
@@ -323,17 +323,17 @@ public class GitIntegrationTests(ApiFixture fixture)
         (await left.Content.ReadFromJsonAsync<GitRepositoryDto>(Token))!.IsSelected.ShouldBeFalse();
         (await client.Http.GetFromJsonAsync<GitConnectionDto>(connection, Token))!.RepositoryCount.ShouldBe(0);
 
-        (await client.Http.GetFromJsonAsync<BranchOptionsDto>($"/api/v1/git-issue/branch-options/{issue.Id}", Token))!.Repositories.ShouldBeEmpty();
-        var refused = await client.Http.PostAsJsonAsync($"/api/v1/git-issue/branch/{issue.Id}", CreateBranchBody(harness.Repository, $"feature/{Guid.NewGuid():N}"), Token);
+        (await client.Http.GetFromJsonAsync<BranchOptionsDto>($"/api/v1/git-ticket/branch-options/{ticket.Id}", Token))!.Repositories.ShouldBeEmpty();
+        var refused = await client.Http.PostAsJsonAsync($"/api/v1/git-ticket/branch/{ticket.Id}", CreateBranchBody(harness.Repository, $"feature/{Guid.NewGuid():N}"), Token);
         (await refused.Content.ReadAsStringAsync(Token)).ShouldContain(GitErrors.InvalidConnection);
 
-        (await SendAsync(harness, "push", Push("main", Guid.NewGuid().ToString("N"), $"{issue.Key} ignored"))).EnsureSuccessStatusCode();
+        (await SendAsync(harness, "push", Push("main", Guid.NewGuid().ToString("N"), $"{ticket.Key} ignored"))).EnsureSuccessStatusCode();
         await Task.Delay(3000, Token);
-        (await DevelopmentAsync(client, issue))!.Commits.ShouldBeEmpty();
+        (await DevelopmentAsync(client, ticket))!.Commits.ShouldBeEmpty();
 
         // Back to every repository: the one left out is offered again.
         (await client.Http.PostAsJsonAsync($"{connection}/set-repository-access", new { repositoryAccess = GitRepositoryAccess.All }, Token)).EnsureSuccessStatusCode();
-        (await client.Http.GetFromJsonAsync<BranchOptionsDto>($"/api/v1/git-issue/branch-options/{issue.Id}", Token))!.Repositories.ShouldHaveSingleItem();
+        (await client.Http.GetFromJsonAsync<BranchOptionsDto>($"/api/v1/git-ticket/branch-options/{ticket.Id}", Token))!.Repositories.ShouldHaveSingleItem();
 
         var member = await fixture.CreateUserClientAsync(Token);
         (await client.Http.PostAsJsonAsync($"/api/v1/project/{project.Id}/member", new { userId = member.UserId, role = ProjectRoleNames.Member }, Token)).EnsureSuccessStatusCode();
@@ -344,7 +344,7 @@ public class GitIntegrationTests(ApiFixture fixture)
     [Fact]
     public async Task An_organization_address_limits_the_connection_to_that_organization()
     {
-        var (client, project, _) = await IssueAsync();
+        var (client, project, _) = await TicketAsync();
 
         var inside = await ConnectAsync(client, project, GitProviderType.Gitea, $"{FakeGitServer.GiteaUrl}/acme");
         inside.Connection.BaseUrl.ShouldBe($"{FakeGitServer.GiteaUrl}/acme");
@@ -366,18 +366,18 @@ public class GitIntegrationTests(ApiFixture fixture)
     [Fact]
     public async Task A_connection_without_a_space_stays_out_of_every_space_until_moved()
     {
-        var (owner, project, issue) = await IssueAsync();
+        var (owner, project, ticket) = await TicketAsync();
         var harness = await ConnectAsync(owner, project, GitProviderType.Gitea);
         await fixture.DetachGitConnectionAsync(harness.Connection.Id);
 
         (await owner.Http.GetFromJsonAsync<List<GitConnectionDto>>($"/api/v1/git-connection?projectId={project.Id}", Token))!.ShouldBeEmpty();
-        (await DevelopmentAsync(owner, issue))!.CanCreateBranch.ShouldBeFalse();
+        (await DevelopmentAsync(owner, ticket))!.CanCreateBranch.ShouldBeFalse();
 
         var admin = new AuthClient(fixture);
         await admin.SignInAsync(ApiFixture.AdminEmail, ApiFixture.AdminPassword, Token);
         var moved = await admin.Http.PostAsJsonAsync($"/api/v1/git-connection/{harness.Connection.Id}/assign", new { projectId = project.Id }, Token);
         moved.StatusCode.ShouldBe(HttpStatusCode.OK, await moved.Content.ReadAsStringAsync(Token));
-        (await DevelopmentAsync(owner, issue))!.CanCreateBranch.ShouldBeTrue();
+        (await DevelopmentAsync(owner, ticket))!.CanCreateBranch.ShouldBeTrue();
     }
 
     private static object ListedCommit(string sha, string message) => new
@@ -398,32 +398,32 @@ public class GitIntegrationTests(ApiFixture fixture)
         head = new { sha, @ref = "topic" },
     };
 
-    private static Task RefreshAsync(AuthClient client, IssueDto issue) =>
-        client.Http.PostAsync($"/api/v1/git-issue/refresh/{issue.Id}", null, Token);
+    private static Task RefreshAsync(AuthClient client, TicketDto ticket) =>
+        client.Http.PostAsync($"/api/v1/git-ticket/refresh/{ticket.Id}", null, Token);
 
     [Theory]
     [InlineData(GitProviderType.GitHub)]
     [InlineData(GitProviderType.Gitea)]
-    public async Task Opening_an_issue_finds_work_no_webhook_reported_and_leaves_the_webhook_state_alone(GitProviderType provider)
+    public async Task Opening_an_ticket_finds_work_no_webhook_reported_and_leaves_the_webhook_state_alone(GitProviderType provider)
     {
-        var (client, project, issue) = await IssueAsync();
+        var (client, project, ticket) = await TicketAsync();
         var harness = await ConnectAsync(client, project, provider);
         var sha = Guid.NewGuid().ToString("N");
         var fake = FakeGitServer.Instance;
         fake.ResetPolling();
-        fake.AddBranch($"feature/{issue.Key.ToLowerInvariant()}-work");
-        fake.Commits.Add(ListedCommit(sha, $"{issue.Key} polled"));
+        fake.AddBranch($"feature/{ticket.Key.ToLowerInvariant()}-work");
+        fake.Commits.Add(ListedCommit(sha, $"{ticket.Key} polled"));
 
-        // History the branch inherited from main is not work on this issue.
+        // History the branch inherited from main is not work on this ticket.
         fake.Commits.Add(ListedCommit("inherited", "Initial commit"));
         fake.MainCommits.Add(ListedCommit("inherited", "Initial commit"));
-        fake.Pulls.Add(ListedPull(9, $"{issue.Key} polled pull", sha));
-        fake.Pulls.Add(ListedPull(10, $"{issue.Key} merged pull", sha, "closed", DateTime.UtcNow));
+        fake.Pulls.Add(ListedPull(9, $"{ticket.Key} polled pull", sha));
+        fake.Pulls.Add(ListedPull(10, $"{ticket.Key} merged pull", sha, "closed", DateTime.UtcNow));
         fake.Statuses.Add(new { context = "ci/build", status = "success", state = "success", target_url = "http://ci/9" });
 
-        await RefreshAsync(client, issue);
+        await RefreshAsync(client, ticket);
 
-        var found = await WaitAsync(client, issue, item => item.Builds.Count > 0);
+        var found = await WaitAsync(client, ticket, item => item.Builds.Count > 0);
         found.Branches.ShouldHaveSingleItem();
         found.Commits.Single().Sha.ShouldBe(sha);
         found.Commits.Single().RepositoryName.ShouldBe("acme/web");
@@ -437,22 +437,22 @@ public class GitIntegrationTests(ApiFixture fixture)
 
         // Within the interval nobody calls the provider again.
         var calls = fake.PollCalls;
-        await RefreshAsync(client, issue);
+        await RefreshAsync(client, ticket);
         await Task.Delay(1000, Token);
         fake.PollCalls.ShouldBe(calls);
     }
 
     [Fact]
-    public async Task A_provider_outage_leaves_refresh_and_the_issue_working()
+    public async Task A_provider_outage_leaves_refresh_and_the_ticket_working()
     {
-        var (client, project, issue) = await IssueAsync();
+        var (client, project, ticket) = await TicketAsync();
         var harness = await ConnectAsync(client, project, GitProviderType.Gitea);
         FakeGitServer.Instance.Down = true;
         try
         {
-            (await client.Http.PostAsync($"/api/v1/git-issue/refresh/{issue.Id}", null, Token)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+            (await client.Http.PostAsync($"/api/v1/git-ticket/refresh/{ticket.Id}", null, Token)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
             await fixture.PollRepositoryAsync(harness.Repository.Id);
-            (await client.Http.GetAsync($"/api/v1/git-issue/development/{issue.Id}", Token)).StatusCode.ShouldBe(HttpStatusCode.OK);
+            (await client.Http.GetAsync($"/api/v1/git-ticket/development/{ticket.Id}", Token)).StatusCode.ShouldBe(HttpStatusCode.OK);
         }
         finally
         {
@@ -463,7 +463,7 @@ public class GitIntegrationTests(ApiFixture fixture)
     [Fact]
     public async Task A_refused_token_flags_the_connection_during_a_poll()
     {
-        var (client, project, _) = await IssueAsync();
+        var (client, project, _) = await TicketAsync();
         var harness = await ConnectAsync(client, project, GitProviderType.Gitea);
         (await client.Http.PutAsJsonAsync($"/api/v1/git-connection/{harness.Connection.Id}", new { name = "n", authType = GitAuthType.AccessToken }, Token)).EnsureSuccessStatusCode();
         await fixture.ReplaceGitTokenAsync(harness.Connection.Id, "revoked");
@@ -477,30 +477,30 @@ public class GitIntegrationTests(ApiFixture fixture)
     [Fact]
     public async Task A_poll_drops_a_deleted_branch_and_ignores_other_spaces_and_organizations()
     {
-        var (client, project, issue) = await IssueAsync();
-        var (other, _, otherIssue) = await IssueAsync();
+        var (client, project, ticket) = await TicketAsync();
+        var (other, _, otherTicket) = await TicketAsync();
         var harness = await ConnectAsync(client, project, GitProviderType.Gitea);
         var fake = FakeGitServer.Instance;
         fake.ResetPolling();
-        var name = $"feature/{issue.Key}-a";
+        var name = $"feature/{ticket.Key}-a";
         fake.AddBranch(name);
-        fake.AddBranch($"feature/{otherIssue.Key}-b");
+        fake.AddBranch($"feature/{otherTicket.Key}-b");
 
         await fixture.PollRepositoryAsync(harness.Repository.Id);
-        (await DevelopmentAsync(client, issue))!.Branches.Single().Name.ShouldBe(name);
-        (await DevelopmentAsync(other, otherIssue))!.Branches.ShouldBeEmpty();
+        (await DevelopmentAsync(client, ticket))!.Branches.Single().Name.ShouldBe(name);
+        (await DevelopmentAsync(other, otherTicket))!.Branches.ShouldBeEmpty();
 
         fake.RemoveBranch(name);
         await fixture.PollRepositoryAsync(harness.Repository.Id);
-        (await DevelopmentAsync(client, issue))!.Branches.ShouldBeEmpty();
+        (await DevelopmentAsync(client, ticket))!.Branches.ShouldBeEmpty();
 
         // Scoped to another organization, the repository is not this connection's business.
         var scoped = await ConnectAsync(client, project, GitProviderType.Gitea, $"{FakeGitServer.GiteaUrl}/acme");
         await fixture.RestrictGitOwnerAsync(scoped.Connection.Id, "elsewhere");
         var calls = fake.PollCalls;
-        fake.Commits.Add(ListedCommit(Guid.NewGuid().ToString("N"), $"{issue.Key} not ours"));
+        fake.Commits.Add(ListedCommit(Guid.NewGuid().ToString("N"), $"{ticket.Key} not ours"));
         await fixture.PollRepositoryAsync(scoped.Repository.Id);
-        (await DevelopmentAsync(client, issue))!.Commits.ShouldBeEmpty();
+        (await DevelopmentAsync(client, ticket))!.Commits.ShouldBeEmpty();
         fake.PollCalls.ShouldBe(calls);
     }
 }

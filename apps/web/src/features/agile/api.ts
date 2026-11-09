@@ -5,13 +5,13 @@ import type { components } from '@sprint-boot/api-client';
 import { apiClient, unwrap } from '../../api';
 import { getAccessToken } from '../../auth/oidc';
 
-export type Card = components['schemas']['IssueCardDto'];
+export type Card = components['schemas']['TicketCardDto'];
 export type BoardView = components['schemas']['BoardViewDto'];
 export type Backlog = components['schemas']['BacklogDto'];
 export type SprintSummary = components['schemas']['SprintSummaryDto'];
 
-export const boardKey = (projectId?: string) => ['issues', 'board', projectId];
-export const backlogKey = (projectId?: string) => ['issues', 'backlog', projectId];
+export const boardKey = (projectId?: string) => ['tickets', 'board', projectId];
+export const backlogKey = (projectId?: string) => ['tickets', 'backlog', projectId];
 
 export const useBoard = (projectId: string | undefined) =>
   useQuery({

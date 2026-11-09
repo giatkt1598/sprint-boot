@@ -1,6 +1,6 @@
 import MuiPopover, { type PopoverProps as MuiPopoverProps } from '@mui/material/Popover';
 
-/** 132 is for short pickers such as issue types, whose labels are a word or two. */
+/** 132 is for short pickers such as ticket types, whose labels are a word or two. */
 export type PopoverWidth = 132 | 200 | 264 | 360 | 508;
 
 export interface PopoverProps extends Omit<MuiPopoverProps, 'anchorOrigin'> {

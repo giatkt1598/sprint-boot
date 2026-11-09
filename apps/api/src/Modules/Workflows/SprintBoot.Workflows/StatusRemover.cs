@@ -6,7 +6,7 @@ using Volo.Abp.EventBus.Local;
 namespace SprintBoot.Workflows;
 
 /// <summary>
-/// Takes a status out of the system. Published versions and issues cannot lose a status,
+/// Takes a status out of the system. Published versions and tickets cannot lose a status,
 /// so while they use it a replacement takes its place everywhere.
 /// </summary>
 public class StatusRemover(
@@ -16,25 +16,25 @@ public class StatusRemover(
     IRepository<Transition, Guid> transitions,
     IRepository<TransitionRule, Guid> rules,
     IRepository<WorkflowMigration, Guid> migrations,
-    IWorkflowIssueGateway issues,
+    IWorkflowTicketGateway tickets,
     ILocalEventBus localEventBus)
     : ITransientDependency
 {
     public async Task<StatusUsageDto> GetUsageAsync(Guid id)
     {
-        var issueCount = await issues.CountWithStatusAsync(id);
+        var ticketCount = await tickets.CountWithStatusAsync(id);
         var workflowCount = (await PublishedVersionsUsingAsync(id)).Select(version => version.WorkflowId).Distinct().Count();
         return new StatusUsageDto
         {
-            IssueCount = issueCount,
+            TicketCount = ticketCount,
             WorkflowCount = workflowCount,
-            ReplacementRequired = issueCount > 0 || workflowCount > 0,
+            ReplacementRequired = ticketCount > 0 || workflowCount > 0,
         };
     }
 
     public async Task RemoveAsync(Status status, Guid? replacementId)
     {
-        // A queued migration may still move issues onto this status.
+        // A queued migration may still move tickets onto this status.
         if (await migrations.AnyAsync(migration => migration.State == MigrationState.Pending))
         {
             throw new BusinessException(WorkflowErrors.MigrationRunning);
@@ -52,7 +52,7 @@ public class StatusRemover(
         await RewriteVersionsAsync(status.Id, replacementId);
         if (replacementId is { } replacement)
         {
-            await issues.ReplaceStatusAsync(status.Id, replacement);
+            await tickets.ReplaceStatusAsync(status.Id, replacement);
         }
 
         await localEventBus.PublishAsync(new StatusRemovedEvent(status.Id, replacementId), onUnitOfWorkComplete: false);

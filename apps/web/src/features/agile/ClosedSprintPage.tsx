@@ -12,8 +12,8 @@ import { formatDate } from '../../lib/format';
 import { NotFoundPage } from '../../pages/NotFoundPage';
 import { font, sem } from '../../theme/tokens';
 import { useSpace } from '../spaces/api';
-import { SectionCard, StaticIssueList } from './BacklogPage';
-import { IssuePanel } from './IssuePanel';
+import { SectionCard, StaticTicketList } from './BacklogPage';
+import { TicketPanel } from './TicketPanel';
 import { useBacklog, type Card } from './api';
 
 /** A closed sprint on its own address, so it can be shared, reloaded and left with the browser's Back. */
@@ -22,7 +22,7 @@ export function ClosedSprintPage() {
   const { spaceKey, sprintId } = useParams();
   const space = useSpace(spaceKey);
   const backlog = useBacklog(space.data?.id);
-  const [openIssue, setOpenIssue] = useState<string | null>(null);
+  const [openTicket, setOpenTicket] = useState<string | null>(null);
   // Only the sprints this space lists as closed open here: a running sprint or one of another space does not.
   const listed = backlog.data?.closedSprints?.some((item) => item.id === sprintId) ?? false;
   const closed = useQuery({
@@ -78,9 +78,9 @@ export function ClosedSprintPage() {
         </div>
       )}
 
-      <Group title={t('agile.completed')} cards={closed.data!.completed ?? []} empty={t('agile.noneCompleted')} onOpen={setOpenIssue} />
-      <Group title={t('agile.notCompleted')} cards={closed.data!.notCompleted ?? []} empty={t('agile.noneNotCompleted')} onOpen={setOpenIssue} />
-      <IssuePanel issueKey={openIssue} onClose={() => setOpenIssue(null)} />
+      <Group title={t('agile.completed')} cards={closed.data!.completed ?? []} empty={t('agile.noneCompleted')} onOpen={setOpenTicket} />
+      <Group title={t('agile.notCompleted')} cards={closed.data!.notCompleted ?? []} empty={t('agile.noneNotCompleted')} onOpen={setOpenTicket} />
+      <TicketPanel ticketKey={openTicket} onClose={() => setOpenTicket(null)} />
     </div>
   );
 }
@@ -92,9 +92,9 @@ function Group({ title, cards, empty, onOpen }: { title: string; cards: Card[]; 
     <SectionCard>
       <div className="flex items-center gap-2 px-2">
         <Typography variant="h3" component="h2">{title}</Typography>
-        <Typography variant="body2" color="textSecondary">{t('agile.issueCount', { count: cards.length })}</Typography>
+        <Typography variant="body2" color="textSecondary">{t('agile.ticketCount', { count: cards.length })}</Typography>
       </div>
-      {cards.length > 0 ? <StaticIssueList cards={cards} onOpen={onOpen} /> : <div className="px-2"><EmptyState title={empty} /></div>}
+      {cards.length > 0 ? <StaticTicketList cards={cards} onOpen={onOpen} /> : <div className="px-2"><EmptyState title={empty} /></div>}
     </SectionCard>
   );
 }

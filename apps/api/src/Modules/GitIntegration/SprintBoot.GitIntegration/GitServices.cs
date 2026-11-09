@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Projects;
 using Volo.Abp;
 using Volo.Abp.BackgroundWorkers;
@@ -38,7 +38,7 @@ public class GitCredentials
     public string? ClientSecret { get; set; }
 }
 
-public static partial class IssueKeyScanner
+public static partial class TicketKeyScanner
 {
     /// <summary>Only keys of known projects count. Branch names may be lower case; prose may not.</summary>
     public static HashSet<string> Scan(string? text, IReadOnlyCollection<string> projectKeys, bool ignoreCase)
@@ -64,9 +64,9 @@ public static partial class IssueKeyScanner
         var slug = Slug(title);
 
         // {key} and {slug} are the older spellings, kept for templates already saved.
-        var name = (string.IsNullOrWhiteSpace(template) ? "feature/{issue_key}-{issue_title}" : template)
-            .Replace("{issue_key}", key, StringComparison.Ordinal)
-            .Replace("{issue_title}", slug, StringComparison.Ordinal)
+        var name = (string.IsNullOrWhiteSpace(template) ? "feature/{ticket_key}-{ticket_title}" : template)
+            .Replace("{ticket_key}", key, StringComparison.Ordinal)
+            .Replace("{ticket_title}", slug, StringComparison.Ordinal)
             .Replace("{key}", key, StringComparison.Ordinal)
             .Replace("{slug}", slug, StringComparison.Ordinal);
         return name.TrimEnd('-', '/');
@@ -445,7 +445,7 @@ public class GitWebhookHandler(
 
 /// <summary>
 /// The fallback for webhooks that never arrive. It reads a repository's recent work and feeds it
-/// through the same processor, which already ignores what it has seen and links every issue of the space.
+/// through the same processor, which already ignores what it has seen and links every ticket of the space.
 /// </summary>
 public class GitPoller(
     IRepository<GitConnection, Guid> connections,
@@ -503,11 +503,11 @@ public class GitPoller(
         var shas = main.Take(1).Select(commit => commit.Sha).ToList();
         var inherited = main.Select(commit => commit.Sha).ToHashSet();
 
-        foreach (var name in names.Where(name => IssueKeyScanner.Scan(name, keys, ignoreCase: true).Count > 0))
+        foreach (var name in names.Where(name => TicketKeyScanner.Scan(name, keys, ignoreCase: true).Count > 0))
         {
             await ApplyAsync(new GitBranchEvent(info, name, Deleted: false));
 
-            // A branch lists the history it grew from too, which is not work on this issue.
+            // A branch lists the history it grew from too, which is not work on this ticket.
             var commits = (await provider.ListCommitsAsync(credential, repository.FullName, name)).Where(commit => !inherited.Contains(commit.Sha)).ToList();
             await ApplyAsync(new GitPushEvent(info, name, commits));
             shas.InsertRange(0, commits.Take(1).Select(commit => commit.Sha));
@@ -564,9 +564,9 @@ public class GitEventProcessor(
     IRepository<GitCommit, Guid> commits,
     IRepository<GitPullRequest, Guid> pullRequests,
     IRepository<CiStatus, Guid> statuses,
-    IRepository<IssueGitLink, Guid> links,
+    IRepository<TicketGitLink, Guid> links,
     IProjectAccess projects,
-    IIssueKeyResolver resolver,
+    ITicketKeyResolver resolver,
     IGuidGenerator guids,
     IClock clock) : ITransientDependency
 {
@@ -575,7 +575,7 @@ public class GitEventProcessor(
     {
         var connection = await connections.GetAsync(connectionId);
 
-        // Without a space there is nobody's issues to link to.
+        // Without a space there is nobody's tickets to link to.
         if (connection.ProjectId is not { } projectId || !connection.Covers(gitEvent.Repository.FullName))
         {
             return;
@@ -583,7 +583,7 @@ public class GitEventProcessor(
 
         var repository = await RepositoryAsync(connection, gitEvent.Repository, fromWebhook);
 
-        // Repositories the space left out are still tracked, but nothing they do reaches its issues.
+        // Repositories the space left out are still tracked, but nothing they do reaches its tickets.
         if (!connection.Uses(repository))
         {
             return;
@@ -639,19 +639,19 @@ public class GitEventProcessor(
         return await repositories.UpdateAsync(repository);
     }
 
-    private async Task<Dictionary<string, IssueRef>> ResolveAsync(IEnumerable<string> keys) =>
+    private async Task<Dictionary<string, TicketRef>> ResolveAsync(IEnumerable<string> keys) =>
         await resolver.ResolveAsync([.. keys.Distinct()]);
 
     private async Task ApplyPushAsync(GitRepository repository, GitPushEvent push, List<string> projectKeys)
     {
-        var branchKeys = IssueKeyScanner.Scan(push.Branch, projectKeys, ignoreCase: true);
+        var branchKeys = TicketKeyScanner.Scan(push.Branch, projectKeys, ignoreCase: true);
         var scanned = push.Commits
-            .Select(commit => (Commit: commit, Keys: IssueKeyScanner.Scan(commit.Message, projectKeys, ignoreCase: false).Union(branchKeys).ToList()))
+            .Select(commit => (Commit: commit, Keys: TicketKeyScanner.Scan(commit.Message, projectKeys, ignoreCase: false).Union(branchKeys).ToList()))
             .Where(item => item.Keys.Count > 0)
             .ToList();
-        var issues = await ResolveAsync(scanned.SelectMany(item => item.Keys).Union(branchKeys));
+        var tickets = await ResolveAsync(scanned.SelectMany(item => item.Keys).Union(branchKeys));
 
-        foreach (var key in branchKeys.Where(issues.ContainsKey))
+        foreach (var key in branchKeys.Where(tickets.ContainsKey))
         {
             await LinkBranchAsync(repository, push.Branch, projectKeys);
             break;
@@ -659,7 +659,7 @@ public class GitEventProcessor(
 
         foreach (var (commit, keys) in scanned)
         {
-            var targets = keys.Where(issues.ContainsKey).Select(key => issues[key]).ToList();
+            var targets = keys.Where(tickets.ContainsKey).Select(key => tickets[key]).ToList();
             if (targets.Count == 0)
             {
                 continue;
@@ -678,17 +678,17 @@ public class GitEventProcessor(
 
     private async Task LinkBranchAsync(GitRepository repository, string name, List<string> projectKeys)
     {
-        var issues = await ResolveAsync(IssueKeyScanner.Scan(name, projectKeys, ignoreCase: true));
-        if (issues.Count == 0)
+        var tickets = await ResolveAsync(TicketKeyScanner.Scan(name, projectKeys, ignoreCase: true));
+        if (tickets.Count == 0)
         {
             return;
         }
 
         var branch = await branches.FirstOrDefaultAsync(item => item.RepositoryId == repository.Id && item.Name == name)
             ?? await branches.InsertAsync(new GitBranch(guids.Create(), repository.Id, name), autoSave: true);
-        foreach (var issue in issues.Values)
+        foreach (var ticket in tickets.Values)
         {
-            await LinkAsync(issue, GitLinkTarget.Branch, branch.Id);
+            await LinkAsync(ticket, GitLinkTarget.Branch, branch.Id);
         }
     }
 
@@ -704,11 +704,11 @@ public class GitEventProcessor(
 
     private async Task ApplyPullRequestAsync(GitRepository repository, GitPullRequestEvent pull, List<string> projectKeys)
     {
-        var keys = IssueKeyScanner.Scan($"{pull.Title}\n{pull.Body}", projectKeys, ignoreCase: false)
-            .Union(IssueKeyScanner.Scan(pull.HeadBranch, projectKeys, ignoreCase: true));
-        var issues = await ResolveAsync(keys);
+        var keys = TicketKeyScanner.Scan($"{pull.Title}\n{pull.Body}", projectKeys, ignoreCase: false)
+            .Union(TicketKeyScanner.Scan(pull.HeadBranch, projectKeys, ignoreCase: true));
+        var tickets = await ResolveAsync(keys);
         var stored = await pullRequests.FirstOrDefaultAsync(item => item.RepositoryId == repository.Id && item.Number == pull.Number);
-        if (stored is null && issues.Count == 0)
+        if (stored is null && tickets.Count == 0)
         {
             return;
         }
@@ -725,9 +725,9 @@ public class GitEventProcessor(
             await pullRequests.UpdateAsync(stored);
         }
 
-        foreach (var issue in issues.Values)
+        foreach (var ticket in tickets.Values)
         {
-            await LinkAsync(issue, GitLinkTarget.PullRequest, stored.Id);
+            await LinkAsync(ticket, GitLinkTarget.PullRequest, stored.Id);
         }
     }
 
@@ -754,11 +754,11 @@ public class GitEventProcessor(
         await statuses.UpdateAsync(stored);
     }
 
-    public async Task LinkAsync(IssueRef issue, GitLinkTarget type, Guid targetId)
+    public async Task LinkAsync(TicketRef ticket, GitLinkTarget type, Guid targetId)
     {
-        if (!await links.AnyAsync(item => item.IssueId == issue.IssueId && item.TargetType == type && item.TargetId == targetId))
+        if (!await links.AnyAsync(item => item.TicketId == ticket.TicketId && item.TargetType == type && item.TargetId == targetId))
         {
-            await links.InsertAsync(new IssueGitLink(guids.Create(), issue.IssueId, issue.ProjectId, type, targetId), autoSave: true);
+            await links.InsertAsync(new TicketGitLink(guids.Create(), ticket.TicketId, ticket.ProjectId, type, targetId), autoSave: true);
         }
     }
 }

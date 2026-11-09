@@ -1,4 +1,4 @@
-import { Navigate, Outlet, Route, BrowserRouter, Routes } from 'react-router';
+import { Navigate, Outlet, Route, BrowserRouter, Routes, useLocation } from 'react-router';
 import { RequireAuth } from './auth/AuthProvider';
 import { AuthCallbackPage, AcceptInvitationPage, ForgotPasswordPage, LoginPage, ResetPasswordPage, SessionExpiredPage } from './auth/AuthPages';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -6,23 +6,23 @@ import { ToastHost } from './components/ToastHost';
 import { McpDocsPage, TokensPage } from './features/account/TokenPages';
 import { AccountIndex, AccountLayout, ProfilePage, SecurityPage } from './features/account/AccountPages';
 import { PreferencesPage } from './features/account/PreferencesPage';
-import { AdminIndex, AdminLayout, DeletedIssuesPage, ManageUserPage, UsersPage } from './features/admin/AdminPages';
+import { AdminIndex, AdminLayout, DeletedTicketsPage, ManageUserPage, UsersPage } from './features/admin/AdminPages';
 import { GitConnectionsPage, GitRepositoriesPage } from './features/admin/GitPages';
 import { EmailSettingsPage } from './features/admin/EmailSettingsPage';
 import { WorkflowDesignerPage } from './features/workflows/WorkflowDesignerPage';
 import { HomePage } from './features/spaces/HomePage';
 import { InvitationsPage } from './features/admin/InvitationPages';
 import { SsoPage, SsoProviderPage } from './features/admin/SsoPages';
-import { GlobalIssueTemplatesPage } from './features/admin/GlobalIssueTemplatesPage';
-import { IssueLinkTypesPage } from './features/admin/IssueLinkTypesPage';
+import { GlobalTicketTemplatesPage } from './features/admin/GlobalTicketTemplatesPage';
+import { TicketLinkTypesPage } from './features/admin/TicketLinkTypesPage';
 import { StatusesPage, WorkflowsPage } from './features/admin/WorkflowPages';
 import { BacklogPage } from './features/agile/BacklogPage';
 import { BoardPage } from './features/agile/BoardPage';
 import { ClosedSprintPage } from './features/agile/ClosedSprintPage';
 import { EpicsPage } from './features/agile/EpicsPage';
-import { IssuePage } from './features/issues/IssuePage';
+import { TicketPage } from './features/tickets/TicketPage';
 import { EditSchemePage, NotificationPreferencesPage, NotificationSchemesPage, NotificationsPage } from './features/notifications/NotificationPages';
-import { IssuesListPage } from './features/issues/IssuesListPage';
+import { TicketsListPage } from './features/tickets/TicketsListPage';
 import { OverviewPage } from './features/overview/OverviewPage';
 import { PeoplePage } from './features/people/PeoplePage';
 import { SpaceGeneralPage, SpaceMembersPage, SpaceSettingsIndex, SpaceSettingsLayout } from './features/spaces/SpaceSettings';
@@ -30,7 +30,7 @@ import { SpaceBoardPage } from './features/spaces/SpaceBoardPage';
 import { SpacesPage } from './features/spaces/SpacesPage';
 import { SpaceGuard } from './features/spaces/SpaceGuard';
 import { SpaceWorkflowsPage } from './features/spaces/SpaceWorkflowsPage';
-import { SpaceIssueTemplatesPage } from './features/spaces/IssueTemplatesPage';
+import { SpaceTicketTemplatesPage } from './features/spaces/TicketTemplatesPage';
 import { AssistantSettingsPage } from './features/admin/AssistantSettingsPage';
 import { AssistantPage } from './features/assistant/AssistantPage';
 import { AssistantHost } from './features/assistant/AssistantPanel';
@@ -76,12 +76,12 @@ export function App() {
                 <Route path="email" element={<EmailSettingsPage />} />
                 <Route path="ai" element={<AssistantSettingsPage />} />
                 <Route path="workflows" element={<WorkflowsPage />} />
-                <Route path="issue-link-types" element={<IssueLinkTypesPage />} />
-                <Route path="issue-templates" element={<GlobalIssueTemplatesPage />} />
+                <Route path="ticket-link-types" element={<TicketLinkTypesPage />} />
+                <Route path="ticket-templates" element={<GlobalTicketTemplatesPage />} />
                 <Route path="notification-schemes" element={<NotificationSchemesPage />} />
                 <Route path="notification-schemes/:schemeId" element={<EditSchemePage />} />
                 <Route path="statuses" element={<StatusesPage />} />
-                <Route path="deleted-issues" element={<DeletedIssuesPage />} />
+                <Route path="deleted-tickets" element={<DeletedTicketsPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
               <Route path="spaces/:spaceKey/settings" element={<SpaceSettingsLayout />}>
@@ -90,7 +90,7 @@ export function App() {
                 <Route path="members" element={<SpaceMembersPage />} />
                 <Route path="board" element={<SpaceBoardPage />} />
                 <Route path="workflows" element={<SpaceWorkflowsPage />} />
-                <Route path="issue-templates" element={<SpaceIssueTemplatesPage />} />
+                <Route path="ticket-templates" element={<SpaceTicketTemplatesPage />} />
                 <Route path="git" element={<GitConnectionsPage />} />
                 <Route path="git/:connectionId" element={<GitRepositoriesPage />} />
                 <Route path="*" element={<NotFoundPage />} />
@@ -106,13 +106,15 @@ export function App() {
                 <Route path="backlog" element={<BacklogPage />} />
                 <Route path="board" element={<BoardPage />} />
                 <Route path="epics" element={<EpicsPage />} />
-                <Route path="issues" element={<IssuesListPage />} />
+                <Route path="tickets" element={<TicketsListPage />} />
+                <Route path="issues" element={<RenamedToTickets />} />
                 <Route path="people" element={<PeoplePage />} />
                 <Route path="sprints/:sprintId" element={<ClosedSprintPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
-              <Route path="issues/:issueKey" element={<IssuePage />} />
-              <Route path="search" element={<IssuesListPage />} />
+              <Route path="tickets/:ticketKey" element={<TicketPage />} />
+              <Route path="issues/:ticketKey" element={<RenamedToTickets />} />
+              <Route path="search" element={<TicketsListPage />} />
               <Route path="notifications" element={<NotificationsPage />} />
               <Route path="assistant" element={<AssistantPage />} />
               <Route path="assistant/:conversationId" element={<AssistantPage />} />
@@ -124,4 +126,13 @@ export function App() {
       </ToastHost>
     </BrowserRouter>
   );
+}
+
+/**
+ * Issues were renamed tickets. Links written before, in comments, chats, emails or bookmarks, still say /issues: they
+ * land on the same page under its new address, query string and all.
+ */
+function RenamedToTickets() {
+  const location = useLocation();
+  return <Navigate to={location.pathname.replace(/\/issues(\/|$)/, '/tickets$1') + location.search + location.hash} replace />;
 }

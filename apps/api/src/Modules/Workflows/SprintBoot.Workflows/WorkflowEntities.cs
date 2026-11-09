@@ -141,7 +141,7 @@ public class ProjectWorkflowMapping : Entity<Guid>
 {
     public Guid ProjectId { get; private set; }
 
-    public Guid IssueTypeId { get; private set; }
+    public Guid TicketTypeId { get; private set; }
 
     public Guid WorkflowId { get; set; }
 
@@ -149,11 +149,11 @@ public class ProjectWorkflowMapping : Entity<Guid>
     {
     }
 
-    public ProjectWorkflowMapping(Guid id, Guid projectId, Guid issueTypeId, Guid workflowId)
+    public ProjectWorkflowMapping(Guid id, Guid projectId, Guid ticketTypeId, Guid workflowId)
         : base(id)
     {
         ProjectId = projectId;
-        IssueTypeId = issueTypeId;
+        TicketTypeId = ticketTypeId;
         WorkflowId = workflowId;
     }
 }
@@ -164,7 +164,7 @@ public enum MigrationState
     Completed = 1,
 }
 
-/// <summary>A queued move of many issues to a new workflow version.</summary>
+/// <summary>A queued move of many tickets to a new workflow version.</summary>
 public class WorkflowMigration : Entity<Guid>
 {
     public string ScopeJson { get; private set; } = null!;

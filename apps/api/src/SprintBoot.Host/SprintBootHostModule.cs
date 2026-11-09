@@ -9,7 +9,7 @@ using SprintBoot.Agile;
 using SprintBoot.EntityFrameworkCore;
 using SprintBoot.Identity;
 using SprintBoot.GitIntegration;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Assistant;
 using SprintBoot.Notifications;
 using SprintBoot.Projects;
@@ -53,7 +53,7 @@ public class SprintBootHostModule : AbpModule
         typeof(IdentityModule).Assembly,
         typeof(ProjectsModule).Assembly,
         typeof(WorkflowsModule).Assembly,
-        typeof(IssuesModule).Assembly,
+        typeof(TicketsModule).Assembly,
         typeof(AgileModule).Assembly,
         typeof(NotificationsModule).Assembly,
         typeof(GitIntegrationModule).Assembly,
@@ -121,7 +121,7 @@ public class SprintBootHostModule : AbpModule
         // Stateless, so every call runs as a plain request with its token's user.
         context.Services.AddMcpServer(options => options.ServerInstructions = McpInstructions.Text)
             .WithHttpTransport(options => options.Stateless = true)
-            .WithTools<IssueTools>()
+            .WithTools<TicketTools>()
             .WithTools<CommentTools>()
             .WithTools<AgileTools>()
             .WithTools<WorkTools>()

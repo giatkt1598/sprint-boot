@@ -1,7 +1,7 @@
 import MenuList from '@mui/material/MenuList';
 import Typography from '@mui/material/Typography';
 import { CopyIcon, DeleteIcon } from '../components/icons';
-import { RichTextEditor } from '../features/issues/RichTextEditor';
+import { RichTextEditor } from '../features/tickets/RichTextEditor';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Avatar } from '../components/Avatar';
@@ -10,7 +10,7 @@ import { BrandSignInButton } from '../components/BrandSignInButton';
 import { Button } from '../components/Button';
 import { Checkbox, Toggle } from '../components/Checkbox';
 import { Dialog, DialogConfirm, DialogFooter } from '../components/Dialog';
-import { IssueTypeIcon, PriorityIcon } from '../components/IssueIcons';
+import { TicketTypeIcon, PriorityIcon } from '../components/TicketIcons';
 import { MenuItem } from '../components/Menu';
 import { Popover } from '../components/Popover';
 import { SearchInput } from '../components/SearchInput';
@@ -97,11 +97,11 @@ export function DevUiPage() {
           <StatusBadge status="done" />
           <Badge tone="warning">{t('devUi.disabled')}</Badge>
           <Badge tone="danger">{t('devUi.danger')}</Badge>
-          <IssueTypeIcon type="story" />
-          <IssueTypeIcon type="task" />
-          <IssueTypeIcon type="bug" />
-          <IssueTypeIcon type="subtask" />
-          <IssueTypeIcon type="epic" />
+          <TicketTypeIcon type="story" />
+          <TicketTypeIcon type="task" />
+          <TicketTypeIcon type="bug" />
+          <TicketTypeIcon type="subtask" />
+          <TicketTypeIcon type="epic" />
           <PriorityIcon priority="high" />
           <PriorityIcon priority="medium" />
           <PriorityIcon priority="low" />

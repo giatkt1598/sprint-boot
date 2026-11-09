@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 using Shouldly;
 using SprintBoot.Agile;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Projects;
 using SprintBoot.Workflows;
 using Xunit;
@@ -25,16 +25,16 @@ public class AgileTests(ApiFixture fixture)
         return (await response.Content.ReadFromJsonAsync<ProjectDto>(Token))!;
     }
 
-    private static async Task<List<IssueDto>> CreateIssuesAsync(AuthClient client, ProjectDto project, int count)
+    private static async Task<List<TicketDto>> CreateTicketsAsync(AuthClient client, ProjectDto project, int count)
     {
-        var types = await client.Http.GetFromJsonAsync<List<IssueTypeDto>>($"/api/v1/issue/types/{project.Id}", Token);
+        var types = await client.Http.GetFromJsonAsync<List<TicketTypeDto>>($"/api/v1/ticket/types/{project.Id}", Token);
         var typeId = types!.Single(type => type.Name == "Task").Id;
-        var result = new List<IssueDto>();
+        var result = new List<TicketDto>();
         for (var index = 0; index < count; index++)
         {
-            var response = await client.Http.PostAsJsonAsync("/api/v1/issue", new { projectId = project.Id, typeId, title = $"Issue {index}" }, Token);
+            var response = await client.Http.PostAsJsonAsync("/api/v1/ticket", new { projectId = project.Id, typeId, title = $"Ticket {index}" }, Token);
             response.EnsureSuccessStatusCode();
-            result.Add((await response.Content.ReadFromJsonAsync<IssueDto>(Token))!);
+            result.Add((await response.Content.ReadFromJsonAsync<TicketDto>(Token))!);
         }
 
         return result;
@@ -53,41 +53,41 @@ public class AgileTests(ApiFixture fixture)
             new { name = sprint.Name, startDate = "2026-11-01", endDate = "2026-11-14" },
             Token);
 
-    private static async Task AddAsync(AuthClient client, SprintSummaryDto sprint, IssueDto issue) =>
-        (await client.Http.PostAsJsonAsync($"/api/v1/sprint/move-issue/{issue.Id}", new { sprintId = sprint.Id }, Token)).EnsureSuccessStatusCode();
+    private static async Task AddAsync(AuthClient client, SprintSummaryDto sprint, TicketDto ticket) =>
+        (await client.Http.PostAsJsonAsync($"/api/v1/sprint/move-ticket/{ticket.Id}", new { sprintId = sprint.Id }, Token)).EnsureSuccessStatusCode();
 
     private static Task<BacklogDto?> BacklogAsync(AuthClient client, ProjectDto project) =>
         client.Http.GetFromJsonAsync<BacklogDto>($"/api/v1/sprint/backlog/{project.Id}", Token);
 
-    private static async Task FinishAsync(AuthClient client, IssueDto issue)
+    private static async Task FinishAsync(AuthClient client, TicketDto ticket)
     {
-        var reloaded = await client.Http.GetFromJsonAsync<IssueDto>($"/api/v1/issue/by-key?key={issue.Key}", Token);
-        var available = await client.Http.GetFromJsonAsync<List<AvailableTransitionDto>>($"/api/v1/transition/available/{issue.Id}", Token);
+        var reloaded = await client.Http.GetFromJsonAsync<TicketDto>($"/api/v1/ticket/by-key?key={ticket.Key}", Token);
+        var available = await client.Http.GetFromJsonAsync<List<AvailableTransitionDto>>($"/api/v1/transition/available/{ticket.Id}", Token);
         var done = available!.Single(item => item.ToStatus.Category == StatusCategory.Done);
         (await client.Http.PostAsJsonAsync(
-            $"/api/v1/transition/execute/{issue.Id}",
+            $"/api/v1/transition/execute/{ticket.Id}",
             new { transitionId = done.Id, concurrencyStamp = reloaded!.ConcurrencyStamp },
             Token)).EnsureSuccessStatusCode();
     }
 
     [Fact]
-    public async Task New_issues_append_and_a_move_writes_only_the_moved_rank()
+    public async Task New_tickets_append_and_a_move_writes_only_the_moved_rank()
     {
         var client = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(client);
-        var issues = await CreateIssuesAsync(client, project, 4);
+        var tickets = await CreateTicketsAsync(client, project, 4);
 
-        (await BacklogAsync(client, project))!.Backlog.Select(card => card.Key).ShouldBe(issues.Select(issue => issue.Key));
+        (await BacklogAsync(client, project))!.Backlog.Select(card => card.Key).ShouldBe(tickets.Select(ticket => ticket.Key));
         var ranksBefore = await fixture.GetRanksAsync(project.Id);
 
         var response = await client.Http.PostAsJsonAsync(
-            $"/api/v1/board/rank/{issues[3].Id}", new { beforeIssueId = issues[0].Id }, Token);
+            $"/api/v1/board/rank/{tickets[3].Id}", new { beforeTicketId = tickets[0].Id }, Token);
         response.StatusCode.ShouldBe(HttpStatusCode.NoContent, await response.Content.ReadAsStringAsync(Token));
 
-        (await BacklogAsync(client, project))!.Backlog.First().Key.ShouldBe(issues[3].Key);
+        (await BacklogAsync(client, project))!.Backlog.First().Key.ShouldBe(tickets[3].Key);
         var ranksAfter = await fixture.GetRanksAsync(project.Id);
         ranksAfter.Count(pair => ranksBefore[pair.Key] != pair.Value).ShouldBe(1);
-        ranksAfter[issues[3].Id].ShouldNotBe(ranksBefore[issues[3].Id]);
+        ranksAfter[tickets[3].Id].ShouldNotBe(ranksBefore[tickets[3].Id]);
     }
 
     [Fact]
@@ -121,13 +121,13 @@ public class AgileTests(ApiFixture fixture)
     {
         var client = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(client);
-        var issues = await CreateIssuesAsync(client, project, 2);
+        var tickets = await CreateTicketsAsync(client, project, 2);
         var sprint = await CreateSprintAsync(client, project);
         var next = await CreateSprintAsync(client, project, "Sprint 2");
-        await AddAsync(client, sprint, issues[0]);
-        await AddAsync(client, sprint, issues[1]);
+        await AddAsync(client, sprint, tickets[0]);
+        await AddAsync(client, sprint, tickets[1]);
         (await StartAsync(client, sprint)).EnsureSuccessStatusCode();
-        await FinishAsync(client, issues[0]);
+        await FinishAsync(client, tickets[0]);
 
         var refused = await client.Http.PostAsJsonAsync($"/api/v1/sprint/{sprint.Id}/complete", new { }, Token);
         (await refused.Content.ReadAsStringAsync(Token)).ShouldContain(AgileErrors.CompletionTargetRequired);
@@ -135,27 +135,27 @@ public class AgileTests(ApiFixture fixture)
         (await client.Http.PostAsJsonAsync($"/api/v1/sprint/{sprint.Id}/complete", new { targetSprintId = next.Id }, Token)).EnsureSuccessStatusCode();
 
         var closed = await client.Http.GetFromJsonAsync<ClosedSprintDto>($"/api/v1/sprint/{sprint.Id}/closed", Token);
-        closed!.Completed.Single().Key.ShouldBe(issues[0].Key);
-        closed.NotCompleted.Single().Key.ShouldBe(issues[1].Key);
+        closed!.Completed.Single().Key.ShouldBe(tickets[0].Key);
+        closed.NotCompleted.Single().Key.ShouldBe(tickets[1].Key);
 
         var backlog = await BacklogAsync(client, project);
-        backlog!.Sprints.Single().Issues.Single().Key.ShouldBe(issues[1].Key);
+        backlog!.Sprints.Single().Tickets.Single().Key.ShouldBe(tickets[1].Key);
         backlog.ClosedSprints.Single().Id.ShouldBe(sprint.Id);
     }
 
     [Fact]
-    public async Task Deleting_a_future_sprint_returns_issues_to_the_backlog()
+    public async Task Deleting_a_future_sprint_returns_tickets_to_the_backlog()
     {
         var client = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(client);
-        var issues = await CreateIssuesAsync(client, project, 1);
+        var tickets = await CreateTicketsAsync(client, project, 1);
         var sprint = await CreateSprintAsync(client, project);
-        await AddAsync(client, sprint, issues[0]);
+        await AddAsync(client, sprint, tickets[0]);
         (await BacklogAsync(client, project))!.Backlog.ShouldBeEmpty();
 
         (await client.Http.DeleteAsync($"/api/v1/sprint/{sprint.Id}", Token)).EnsureSuccessStatusCode();
 
-        (await BacklogAsync(client, project))!.Backlog.Single().Key.ShouldBe(issues[0].Key);
+        (await BacklogAsync(client, project))!.Backlog.Single().Key.ShouldBe(tickets[0].Key);
     }
 
     [Fact]
@@ -163,13 +163,13 @@ public class AgileTests(ApiFixture fixture)
     {
         var client = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(client);
-        var issues = await CreateIssuesAsync(client, project, 1);
+        var tickets = await CreateTicketsAsync(client, project, 1);
         var sprint = await CreateSprintAsync(client, project);
         (await StartAsync(client, sprint)).EnsureSuccessStatusCode();
 
-        await AddAsync(client, sprint, issues[0]);
+        await AddAsync(client, sprint, tickets[0]);
 
-        var activity = await client.Http.GetFromJsonAsync<List<IssueActivityDto>>($"/api/v1/issue/{issues[0].Id}/activity", Token);
+        var activity = await client.Http.GetFromJsonAsync<List<TicketActivityDto>>($"/api/v1/ticket/{tickets[0].Id}/activity", Token);
         activity!.Single(item => item.Field == "sprint").NewValue.ShouldBe(sprint.Name);
     }
 
@@ -178,15 +178,15 @@ public class AgileTests(ApiFixture fixture)
     {
         var client = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(client);
-        var issues = await CreateIssuesAsync(client, project, 2);
+        var tickets = await CreateTicketsAsync(client, project, 2);
         var sprint = await CreateSprintAsync(client, project);
-        await AddAsync(client, sprint, issues[0]);
+        await AddAsync(client, sprint, tickets[0]);
         (await StartAsync(client, sprint)).EnsureSuccessStatusCode();
 
         var view = await client.Http.GetFromJsonAsync<BoardViewDto>($"/api/v1/board/view/{project.Id}", Token);
 
         view!.Columns.Select(column => column.Name).ShouldBe(["To Do", "In Progress", "Done"]);
-        view.Cards.Single().Key.ShouldBe(issues[0].Key);
+        view.Cards.Single().Key.ShouldBe(tickets[0].Key);
         view.UnmappedStatuses.ShouldBeEmpty();
 
         var columns = view.Columns.Take(2).Select(column => new
@@ -219,18 +219,18 @@ public class AgileTests(ApiFixture fixture)
     }
 
     [Fact]
-    public async Task Kanban_issues_stay_in_the_backlog_until_pulled_onto_the_board()
+    public async Task Kanban_tickets_stay_in_the_backlog_until_pulled_onto_the_board()
     {
         var client = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(client, type: 1);
-        var issues = await CreateIssuesAsync(client, project, 2);
+        var tickets = await CreateTicketsAsync(client, project, 2);
 
         (await client.Http.GetFromJsonAsync<BoardViewDto>($"/api/v1/board/view/{project.Id}", Token))!.Cards.ShouldBeEmpty();
 
-        (await client.Http.PostAsJsonAsync($"/api/v1/board/set-entry?projectId={project.Id}&issueId={issues[0].Id}", new { onBoard = true }, Token)).EnsureSuccessStatusCode();
+        (await client.Http.PostAsJsonAsync($"/api/v1/board/set-entry?projectId={project.Id}&ticketId={tickets[0].Id}", new { onBoard = true }, Token)).EnsureSuccessStatusCode();
 
-        (await client.Http.GetFromJsonAsync<BoardViewDto>($"/api/v1/board/view/{project.Id}", Token))!.Cards.Single().Key.ShouldBe(issues[0].Key);
-        (await BacklogAsync(client, project))!.Backlog.Single().Key.ShouldBe(issues[1].Key);
+        (await client.Http.GetFromJsonAsync<BoardViewDto>($"/api/v1/board/view/{project.Id}", Token))!.Cards.Single().Key.ShouldBe(tickets[0].Key);
+        (await BacklogAsync(client, project))!.Backlog.Single().Key.ShouldBe(tickets[1].Key);
 
         var sprint = await client.Http.PostAsJsonAsync("/api/v1/sprint", new { projectId = project.Id, name = "No" }, Token);
         (await sprint.Content.ReadAsStringAsync(Token)).ShouldContain(AgileErrors.KanbanHasNoSprints);
@@ -241,20 +241,20 @@ public class AgileTests(ApiFixture fixture)
     {
         var client = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(client);
-        var types = await client.Http.GetFromJsonAsync<List<IssueTypeDto>>($"/api/v1/issue/types/{project.Id}", Token);
-        var epicResponse = await client.Http.PostAsJsonAsync("/api/v1/issue", new { projectId = project.Id, typeId = types!.Single(type => type.Name == "Epic").Id, title = "Epic" }, Token);
-        var epic = (await epicResponse.Content.ReadFromJsonAsync<IssueDto>(Token))!;
+        var types = await client.Http.GetFromJsonAsync<List<TicketTypeDto>>($"/api/v1/ticket/types/{project.Id}", Token);
+        var epicResponse = await client.Http.PostAsJsonAsync("/api/v1/ticket", new { projectId = project.Id, typeId = types!.Single(type => type.Name == "Epic").Id, title = "Epic" }, Token);
+        var epic = (await epicResponse.Content.ReadFromJsonAsync<TicketDto>(Token))!;
         var taskType = types!.Single(type => type.Name == "Task").Id;
-        var children = new List<IssueDto>();
+        var children = new List<TicketDto>();
         for (var index = 0; index < 2; index++)
         {
-            var created = await client.Http.PostAsJsonAsync("/api/v1/issue", new { projectId = project.Id, typeId = taskType, title = "Child", parentId = epic.Id }, Token);
-            children.Add((await created.Content.ReadFromJsonAsync<IssueDto>(Token))!);
+            var created = await client.Http.PostAsJsonAsync("/api/v1/ticket", new { projectId = project.Id, typeId = taskType, title = "Child", parentId = epic.Id }, Token);
+            children.Add((await created.Content.ReadFromJsonAsync<TicketDto>(Token))!);
         }
 
         await FinishAsync(client, children[0]);
 
-        var row = (await client.Http.GetFromJsonAsync<List<EpicRowDto>>($"/api/v1/issue/epics/{project.Id}", Token))!.Single();
+        var row = (await client.Http.GetFromJsonAsync<List<EpicRowDto>>($"/api/v1/ticket/epics/{project.Id}", Token))!.Single();
         row.Total.ShouldBe(2);
         row.Done.ShouldBe(1);
     }
@@ -279,7 +279,7 @@ public class AgileTests(ApiFixture fixture)
     {
         var client = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(client);
-        var issues = await CreateIssuesAsync(client, project, 1);
+        var tickets = await CreateTicketsAsync(client, project, 1);
 
         await using var connection = fixture.CreateBoardConnection(client);
         var signal = new TaskCompletionSource<Guid>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -287,7 +287,7 @@ public class AgileTests(ApiFixture fixture)
         await connection.StartAsync(Token);
         await connection.InvokeAsync("Join", project.Id, Token);
 
-        await FinishAsync(client, issues[0]);
+        await FinishAsync(client, tickets[0]);
 
         (await signal.Task.WaitAsync(TimeSpan.FromSeconds(30), Token)).ShouldBe(project.Id);
     }
@@ -297,11 +297,11 @@ public class AgileTests(ApiFixture fixture)
     {
         var owner = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(owner);
-        var issues = await CreateIssuesAsync(owner, project, 1);
+        var tickets = await CreateTicketsAsync(owner, project, 1);
         var viewer = await fixture.CreateUserClientAsync(Token);
         (await owner.Http.PostAsJsonAsync($"/api/v1/project/{project.Id}/member", new { userId = viewer.UserId, role = ProjectRoleNames.Viewer }, Token)).EnsureSuccessStatusCode();
 
-        (await viewer.Http.PostAsJsonAsync($"/api/v1/board/rank/{issues[0].Id}", new { }, Token)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await viewer.Http.PostAsJsonAsync($"/api/v1/board/rank/{tickets[0].Id}", new { }, Token)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await viewer.Http.PostAsJsonAsync("/api/v1/sprint", new { projectId = project.Id, name = "X" }, Token)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
@@ -310,14 +310,14 @@ public class AgileTests(ApiFixture fixture)
     {
         var client = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(client);
-        var issues = await CreateIssuesAsync(client, project, 2);
+        var tickets = await CreateTicketsAsync(client, project, 2);
         var sprint = await (await client.Http.PostAsJsonAsync($"/api/v1/sprint", new { projectId = project.Id, name = "Named sprint" }, Token)).Content.ReadFromJsonAsync<SprintSummaryDto>(Token);
-        (await client.Http.PostAsJsonAsync($"/api/v1/sprint/move-issue/{issues[0].Id}", new { sprintId = sprint!.Id }, Token)).EnsureSuccessStatusCode();
+        (await client.Http.PostAsJsonAsync($"/api/v1/sprint/move-ticket/{tickets[0].Id}", new { sprintId = sprint!.Id }, Token)).EnsureSuccessStatusCode();
 
-        var found = await client.Http.GetFromJsonAsync<IssueSearchResultDto>($"/api/v1/issue/search?ProjectId={project.Id}", Token);
+        var found = await client.Http.GetFromJsonAsync<TicketSearchResultDto>($"/api/v1/ticket/search?ProjectId={project.Id}", Token);
 
-        found!.Items.Single(item => item.Id == issues[0].Id).SprintName.ShouldBe("Named sprint");
-        found.Items.Single(item => item.Id == issues[1].Id).SprintName.ShouldBeNull();
+        found!.Items.Single(item => item.Id == tickets[0].Id).SprintName.ShouldBe("Named sprint");
+        found.Items.Single(item => item.Id == tickets[1].Id).SprintName.ShouldBeNull();
         found.Items.ShouldAllBe(item => item.Reporter != null);
     }
 

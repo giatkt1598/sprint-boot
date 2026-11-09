@@ -16,7 +16,7 @@ import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { formatDate, formatDateTime, todayIso } from '../../lib/format';
 import { font, radius, sem } from '../../theme/tokens';
-import { RichTextEditor, RichTextView } from '../issues/RichTextEditor';
+import { RichTextEditor, RichTextView } from '../tickets/RichTextEditor';
 import { SpacePermission, useMembers, type Space } from '../spaces/api';
 import { goalsKey, useGoalUpdates, useGoals, type Goal } from './api';
 

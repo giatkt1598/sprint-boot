@@ -317,25 +317,25 @@ public class CreateBranchInput
     public required string Name { get; set; }
 }
 
-public interface IGitIssueAppService : IApplicationService
+public interface IGitTicketAppService : IApplicationService
 {
-    /// <summary>Reads stored data only, so a provider outage never reaches the issue page.</summary>
-    Task<DevelopmentDto> GetDevelopmentAsync(Guid issueId);
+    /// <summary>Reads stored data only, so a provider outage never reaches the ticket page.</summary>
+    Task<DevelopmentDto> GetDevelopmentAsync(Guid ticketId);
 
-    Task<BranchOptionsDto> GetBranchOptionsAsync(Guid issueId);
+    Task<BranchOptionsDto> GetBranchOptionsAsync(Guid ticketId);
 
-    Task<List<string>> GetBranchesAsync(Guid issueId, Guid repositoryId);
+    Task<List<string>> GetBranchesAsync(Guid ticketId, Guid repositoryId);
 
-    Task<GitBranchRowDto> CreateBranchAsync(Guid issueId, CreateBranchInput input);
+    Task<GitBranchRowDto> CreateBranchAsync(Guid ticketId, CreateBranchInput input);
 
     /// <summary>Asks providers for news, for repositories whose webhooks may not be reaching us. Never waits for them.</summary>
-    Task RefreshAsync(Guid issueId);
+    Task RefreshAsync(Guid ticketId);
 }
 
 /// <summary>Lets workflow rules ask about development work without touching Git tables.</summary>
-public interface IIssueGitFacts
+public interface ITicketGitFacts
 {
-    Task<bool> HasPullRequestAsync(Guid issueId);
+    Task<bool> HasPullRequestAsync(Guid ticketId);
 }
 
 public record PullRequestCounts(int Total, int Open, int Merged);
@@ -343,7 +343,7 @@ public record PullRequestCounts(int Total, int Open, int Merged);
 /// <summary>Lets the space overview count development work without touching Git tables.</summary>
 public interface IProjectGitFacts
 {
-    /// <summary>Pull requests linked to at least one issue of the space, each counted once.</summary>
+    /// <summary>Pull requests linked to at least one ticket of the space, each counted once.</summary>
     Task<PullRequestCounts> GetPullRequestCountsAsync(Guid projectId);
 }
 

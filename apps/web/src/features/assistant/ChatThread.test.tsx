@@ -186,15 +186,15 @@ describe('ChatThread', () => {
     const message = { id: 'm1', role: 'assistant', text: 'Done.', html: '<p>Done.</p>', tools: [], actions: [], sources: [] };
     get.mockResolvedValue({ conversation: { id: 'c5', title: 'Fix' }, messages: [] });
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(sse([
-      { type: 'action', action: { id: 'a1', tool: 'update_issue', arguments: '{}', state: 1 } },
+      { type: 'action', action: { id: 'a1', tool: 'update_ticket', arguments: '{}', state: 1 } },
       { type: 'delta', text: 'Done. ' },
       { type: 'message', message },
       { type: 'done' },
     ]))));
     const client = new QueryClient();
-    const issue = vi.fn(() => Promise.resolve({ key: 'SB-1' }));
+    const ticket = vi.fn(() => Promise.resolve({ key: 'SB-1' }));
     function Page() {
-      useQuery({ queryKey: ['issue', 'SB-1'], queryFn: issue });
+      useQuery({ queryKey: ['ticket', 'SB-1'], queryFn: ticket });
       return <ChatThread conversationId="c5" onConversation={() => undefined} />;
     }
     render(
@@ -204,7 +204,7 @@ describe('ChatThread', () => {
         </MemoryRouter>
       </QueryClientProvider>,
     );
-    await waitFor(() => expect(issue).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(ticket).toHaveBeenCalledTimes(1));
     get.mockResolvedValue({ conversation: { id: 'c5', title: 'Fix' }, messages: [{ id: 'u1', role: 'user', text: 'Fix it', tools: [], actions: [], sources: [] }, message] });
 
     const box = screen.getByRole('textbox', { name: 'Ask the assistant' });
@@ -213,7 +213,7 @@ describe('ChatThread', () => {
       fireEvent.keyDown(box, { key: 'Enter' });
     });
 
-    await waitFor(() => expect(issue).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(ticket).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeTruthy());
     expect(screen.getAllByText('Done.')).toHaveLength(1);
     expect(screen.getAllByText('Fix it')).toHaveLength(1);
@@ -271,11 +271,11 @@ describe('ChatThread', () => {
   });
 
   it('counts repeated tool runs on one badge, live and once saved', async () => {
-    const answer = { id: 'm3', role: 'assistant', text: 'Found them.', html: '<p>Found them.</p>', tools: ['search_issues'], actions: [], sources: [] };
+    const answer = { id: 'm3', role: 'assistant', text: 'Found them.', html: '<p>Found them.</p>', tools: ['search_tickets'], actions: [], sources: [] };
     const saved = [
       { id: 'u1', role: 'user', text: 'Find bugs', tools: [], actions: [], sources: [] },
-      { id: 'm1', role: 'assistant', text: '', tools: ['search_issues', 'search_issues'], actions: [], sources: [] },
-      { id: 'm2', role: 'assistant', text: '', tools: ['search_issues', 'get_issue'], actions: [], sources: [] },
+      { id: 'm1', role: 'assistant', text: '', tools: ['search_tickets', 'search_tickets'], actions: [], sources: [] },
+      { id: 'm2', role: 'assistant', text: '', tools: ['search_tickets', 'get_ticket'], actions: [], sources: [] },
       answer,
     ];
     get.mockResolvedValue({ conversation: { id: 'c7', title: 'Bugs' }, messages: [] });
@@ -286,7 +286,7 @@ describe('ChatThread', () => {
 `);
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(new ReadableStream<Uint8Array>({
       start(controller) {
-        for (const tool of ['search_issues', 'search_issues', 'search_issues', 'get_issue']) {
+        for (const tool of ['search_tickets', 'search_tickets', 'search_tickets', 'get_ticket']) {
           controller.enqueue(event({ type: 'tool', tool, state: 'running' }));
           controller.enqueue(event({ type: 'tool', tool, state: 'done' }));
         }
@@ -313,14 +313,14 @@ describe('ChatThread', () => {
       fireEvent.keyDown(box, { key: 'Enter' });
     });
 
-    expect(await screen.findByText('Used search_issues (3 times)')).toBeTruthy();
-    expect(screen.getByText('Used get_issue')).toBeTruthy();
+    expect(await screen.findByText('Used search_tickets (3 times)')).toBeTruthy();
+    expect(screen.getByText('Used get_ticket')).toBeTruthy();
 
     get.mockResolvedValue({ conversation: { id: 'c7', title: 'Bugs' }, messages: saved });
     await act(async () => release());
     await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeTruthy());
-    expect(screen.getAllByText(/Used search_issues/).map((badge) => badge.textContent)).toEqual(['Used search_issues (4 times)']);
-    expect(screen.getAllByText(/Used get_issue/)).toHaveLength(1);
+    expect(screen.getAllByText(/Used search_tickets/).map((badge) => badge.textContent)).toEqual(['Used search_tickets (4 times)']);
+    expect(screen.getAllByText(/Used get_ticket/)).toHaveLength(1);
   });
 
   it('gives the Send button back when the connection drops mid-answer', async () => {

@@ -138,13 +138,13 @@ public class PublishResultDto
 {
     public required int Version { get; set; }
 
-    /// <summary>True when issues are moved in the background because there are many.</summary>
+    /// <summary>True when tickets are moved in the background because there are many.</summary>
     public required bool MigrationQueued { get; set; }
 }
 
 public class ProjectWorkflowDto
 {
-    public required Guid IssueTypeId { get; set; }
+    public required Guid TicketTypeId { get; set; }
 
     public required Guid WorkflowId { get; set; }
 
@@ -155,7 +155,7 @@ public class SetProjectWorkflowInput
 {
     public required Guid ProjectId { get; set; }
 
-    public required Guid IssueTypeId { get; set; }
+    public required Guid TicketTypeId { get; set; }
 
     public required Guid WorkflowId { get; set; }
 
@@ -172,7 +172,7 @@ public class AvailableTransitionDto
 
     public required bool RequiresComment { get; set; }
 
-    /// <summary>Issue fields the validators require and that are still empty.</summary>
+    /// <summary>Ticket fields the validators require and that are still empty.</summary>
     public required string[] MissingFields { get; set; }
 
     /// <summary>Validator problems the dialog cannot fix, shown as the reason it is blocked.</summary>
@@ -188,7 +188,7 @@ public class ExecuteTransitionInput
 
     public string? Comment { get; set; }
 
-    /// <summary>Values entered in the transition dialog, by issue field key.</summary>
+    /// <summary>Values entered in the transition dialog, by ticket field key.</summary>
     public Dictionary<string, JsonElement> Fields { get; set; } = [];
 }
 
@@ -221,24 +221,24 @@ public interface IProjectWorkflowAppService : IApplicationService
 
 public interface ITransitionAppService : IApplicationService
 {
-    Task<List<AvailableTransitionDto>> GetAvailableAsync(Guid issueId);
+    Task<List<AvailableTransitionDto>> GetAvailableAsync(Guid ticketId);
 
-    Task ExecuteAsync(Guid issueId, ExecuteTransitionInput input);
+    Task ExecuteAsync(Guid ticketId, ExecuteTransitionInput input);
 }
 
 public record InitialState(Guid StatusId, Guid VersionId);
 
-/// <summary>Used by Issues to start a new issue in the right workflow.</summary>
+/// <summary>Used by Tickets to start a new ticket in the right workflow.</summary>
 public interface IWorkflowRuntime
 {
-    Task<InitialState> GetInitialStateAsync(Guid projectId, Guid issueTypeId);
+    Task<InitialState> GetInitialStateAsync(Guid projectId, Guid ticketTypeId);
 
     /// <summary>Every status the project's published workflows use, for board columns.</summary>
     Task<List<Guid>> GetProjectStatusIdsAsync(Guid projectId);
 }
 
 public record TransitionSubject(
-    Guid IssueId,
+    Guid TicketId,
     string Key,
     Guid ProjectId,
     Guid TypeId,
@@ -249,37 +249,37 @@ public record TransitionSubject(
     string ConcurrencyStamp,
     IReadOnlyDictionary<string, bool> FieldHasValue);
 
-/// <summary>Selects issues to move between workflow versions.</summary>
-public record IssueScope(Guid[] VersionIds, Guid? ProjectId = null, Guid? IssueTypeId = null);
+/// <summary>Selects tickets to move between workflow versions.</summary>
+public record TicketScope(Guid[] VersionIds, Guid? ProjectId = null, Guid? TicketTypeId = null);
 
 /// <summary>
-/// Implemented by Issues. This is the only path that changes an issue's status,
-/// and Workflows reaches issue data through it instead of touching their tables.
+/// Implemented by Tickets. This is the only path that changes a ticket's status,
+/// and Workflows reaches ticket data through it instead of touching their tables.
 /// </summary>
-public interface IWorkflowIssueGateway
+public interface IWorkflowTicketGateway
 {
-    Task<TransitionSubject> GetSubjectAsync(Guid issueId);
+    Task<TransitionSubject> GetSubjectAsync(Guid ticketId);
 
-    Task<List<Guid>> GetSubtaskStatusIdsAsync(Guid issueId);
+    Task<List<Guid>> GetSubtaskStatusIdsAsync(Guid ticketId);
 
-    Task MoveAsync(Guid issueId, Guid statusId, string fromName, string toName);
+    Task MoveAsync(Guid ticketId, Guid statusId, string fromName, string toName);
 
-    Task SetFieldAsync(Guid issueId, string field, JsonElement value);
+    Task SetFieldAsync(Guid ticketId, string field, JsonElement value);
 
-    Task SetResolutionAsync(Guid issueId, string? resolution);
+    Task SetResolutionAsync(Guid ticketId, string? resolution);
 
-    Task AddCommentAsync(Guid issueId, string body);
+    Task AddCommentAsync(Guid ticketId, string body);
 
-    Task<Dictionary<Guid, int>> CountByStatusAsync(IssueScope? scope = null);
+    Task<Dictionary<Guid, int>> CountByStatusAsync(TicketScope? scope = null);
 
-    Task<int> CountPendingAsync(IssueScope scope, Guid toVersionId);
+    Task<int> CountPendingAsync(TicketScope scope, Guid toVersionId);
 
     Task<int> CountWithStatusAsync(Guid statusId);
 
     Task ReplaceStatusAsync(Guid statusId, Guid replacementId);
 
-    /// <summary>Moves up to batchSize issues to the version and returns how many moved.</summary>
-    Task<int> MigrateBatchAsync(IssueScope scope, Guid toVersionId, IReadOnlyDictionary<Guid, Guid> statusMappings, int batchSize);
+    /// <summary>Moves up to batchSize tickets to the version and returns how many moved.</summary>
+    Task<int> MigrateBatchAsync(TicketScope scope, Guid toVersionId, IReadOnlyDictionary<Guid, Guid> statusMappings, int batchSize);
 }
 
 /// <summary>Raised by the Send notification post-function; recipients come from the scheme.</summary>
@@ -288,7 +288,7 @@ public class WorkflowNotificationEto
 {
     public Guid EventId { get; set; }
 
-    public Guid IssueId { get; set; }
+    public Guid TicketId { get; set; }
 
     public Guid ProjectId { get; set; }
 
@@ -297,8 +297,8 @@ public class WorkflowNotificationEto
     public string? Message { get; set; }
 }
 
-[EventName("SprintBoot.Workflows.IssueTransitioned")]
-public class IssueTransitionedEto
+[EventName("SprintBoot.Workflows.TicketTransitioned")]
+public class TicketTransitionedEto
 {
     public Guid EventId { get; set; }
 
@@ -306,7 +306,7 @@ public class IssueTransitionedEto
 
     public string ToStatusName { get; set; } = string.Empty;
 
-    public Guid IssueId { get; set; }
+    public Guid TicketId { get; set; }
 
     public Guid ProjectId { get; set; }
 

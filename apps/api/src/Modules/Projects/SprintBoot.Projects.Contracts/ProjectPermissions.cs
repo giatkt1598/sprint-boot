@@ -5,11 +5,11 @@ public static class ProjectPermissions
 {
     public const string Manage = "Project.Manage";
     public const string ManageMembers = "Project.Members.Manage";
-    public const string ViewIssues = "Issue.View";
-    public const string EditIssues = "Issue.Edit";
-    public const string DeleteAnyIssue = "Issue.DeleteAny";
-    public const string DeleteOwnIssue = "Issue.DeleteOwn";
-    public const string TransitionIssues = "Issue.Transition";
+    public const string ViewTickets = "Ticket.View";
+    public const string EditTickets = "Ticket.Edit";
+    public const string DeleteAnyTicket = "Ticket.DeleteAny";
+    public const string DeleteOwnTicket = "Ticket.DeleteOwn";
+    public const string TransitionTickets = "Ticket.Transition";
     public const string RankBacklog = "Backlog.Rank";
     public const string ManageSprints = "Sprint.Manage";
     public const string DeleteAnyComment = "Comment.DeleteAny";
@@ -27,22 +27,22 @@ public static class ProjectRoleNames
     /// <summary>The fixed matrix of the core product. Stored per role so custom roles can come later.</summary>
     public static readonly IReadOnlyDictionary<string, string[]> DefaultPermissions = new Dictionary<string, string[]>
     {
-        [Viewer] = [ProjectPermissions.ViewIssues],
+        [Viewer] = [ProjectPermissions.ViewTickets],
         [Member] =
         [
-            ProjectPermissions.ViewIssues,
-            ProjectPermissions.EditIssues,
-            ProjectPermissions.DeleteOwnIssue,
-            ProjectPermissions.TransitionIssues,
+            ProjectPermissions.ViewTickets,
+            ProjectPermissions.EditTickets,
+            ProjectPermissions.DeleteOwnTicket,
+            ProjectPermissions.TransitionTickets,
             ProjectPermissions.RankBacklog,
         ],
         [Admin] =
         [
-            ProjectPermissions.ViewIssues,
-            ProjectPermissions.EditIssues,
-            ProjectPermissions.DeleteOwnIssue,
-            ProjectPermissions.DeleteAnyIssue,
-            ProjectPermissions.TransitionIssues,
+            ProjectPermissions.ViewTickets,
+            ProjectPermissions.EditTickets,
+            ProjectPermissions.DeleteOwnTicket,
+            ProjectPermissions.DeleteAnyTicket,
+            ProjectPermissions.TransitionTickets,
             ProjectPermissions.RankBacklog,
             ProjectPermissions.ManageSprints,
             ProjectPermissions.Manage,

@@ -11,9 +11,9 @@ import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
 import { MenuItem } from '../components/Menu';
 import { AssistantButton } from '../features/assistant/AssistantPanel';
-import { CreateIssueDialog } from '../features/issues/CreateIssueDialog';
-import { QuickSearch } from '../features/issues/QuickSearch';
-import { RecentsMenu } from '../features/issues/RecentsMenu';
+import { CreateTicketDialog } from '../features/tickets/CreateTicketDialog';
+import { QuickSearch } from '../features/tickets/QuickSearch';
+import { RecentsMenu } from '../features/tickets/RecentsMenu';
 import { NotificationBell } from '../features/notifications/NotificationBell';
 import { font, sem, size } from '../theme/tokens';
 
@@ -63,7 +63,7 @@ export function TopBar() {
         {isAdmin && <MenuItem icon={AdminIcon} onClick={() => open('/admin')}>{t('topBar.administration')}</MenuItem>}
         <MenuItem icon={SignOutIcon} onClick={() => void signOut()}>{t('topBar.signOut')}</MenuItem>
       </Menu>
-      {creating && <CreateIssueDialog onClose={() => setCreating(false)} />}
+      {creating && <CreateTicketDialog onClose={() => setCreating(false)} />}
     </header>
   );
 }

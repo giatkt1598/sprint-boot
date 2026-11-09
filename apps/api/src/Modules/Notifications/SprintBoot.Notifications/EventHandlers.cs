@@ -1,5 +1,5 @@
 using SprintBoot.Agile;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Projects;
 using SprintBoot.Workflows;
 using Volo.Abp.DependencyInjection;
@@ -9,11 +9,11 @@ using Volo.Abp.Uow;
 namespace SprintBoot.Notifications;
 
 public class NotificationEventHandlers(NotificationProcessor processor) :
-    IDistributedEventHandler<IssueCreatedEto>,
-    IDistributedEventHandler<IssueUpdatedEto>,
+    IDistributedEventHandler<TicketCreatedEto>,
+    IDistributedEventHandler<TicketUpdatedEto>,
     IDistributedEventHandler<CommentAddedEto>,
     IDistributedEventHandler<CommentReactedEto>,
-    IDistributedEventHandler<IssueTransitionedEto>,
+    IDistributedEventHandler<TicketTransitionedEto>,
     IDistributedEventHandler<WorkflowNotificationEto>,
     IDistributedEventHandler<SprintStateChangedEto>,
     IDistributedEventHandler<ProjectMemberAddedEto>,
@@ -31,26 +31,26 @@ public class NotificationEventHandlers(NotificationProcessor processor) :
     }
 
     [UnitOfWork]
-    public virtual Task HandleEventAsync(IssueCreatedEto eventData) => WithMentionsAsync(new NotificationEvent(
-        eventData.EventId, NotificationEventTypes.IssueCreated, eventData.ProjectId, eventData.IssueId, eventData.ActorId, eventData.Mentioned));
+    public virtual Task HandleEventAsync(TicketCreatedEto eventData) => WithMentionsAsync(new NotificationEvent(
+        eventData.EventId, NotificationEventTypes.TicketCreated, eventData.ProjectId, eventData.TicketId, eventData.ActorId, eventData.Mentioned));
 
     [UnitOfWork]
-    public virtual async Task HandleEventAsync(IssueUpdatedEto eventData)
+    public virtual async Task HandleEventAsync(TicketUpdatedEto eventData)
     {
         if (eventData.Fields.Contains("assignee"))
         {
             await processor.ProcessAsync(new NotificationEvent(
-                eventData.EventId, NotificationEventTypes.IssueAssigned, eventData.ProjectId, eventData.IssueId, eventData.ActorId, []));
+                eventData.EventId, NotificationEventTypes.TicketAssigned, eventData.ProjectId, eventData.TicketId, eventData.ActorId, []));
         }
 
         await WithMentionsAsync(new NotificationEvent(
-            eventData.EventId, NotificationEventTypes.IssueUpdated, eventData.ProjectId, eventData.IssueId, eventData.ActorId,
+            eventData.EventId, NotificationEventTypes.TicketUpdated, eventData.ProjectId, eventData.TicketId, eventData.ActorId,
             eventData.Mentioned, Detail: string.Join(",", eventData.Fields)));
     }
 
     /// <summary>
     /// The author of the comment a reply answers hears of it first, so they get one notification even when they also
-    /// watch the issue or are mentioned: later ones for the same event are skipped.
+    /// watch the ticket or are mentioned: later ones for the same event are skipped.
     /// </summary>
     [UnitOfWork]
     public virtual async Task HandleEventAsync(CommentAddedEto eventData)
@@ -58,25 +58,25 @@ public class NotificationEventHandlers(NotificationProcessor processor) :
         if (eventData.ParentAuthorId is { } parentAuthor)
         {
             await processor.ProcessAsync(new NotificationEvent(
-                eventData.EventId, NotificationEventTypes.CommentReply, eventData.ProjectId, eventData.IssueId, eventData.ActorId, [parentAuthor]));
+                eventData.EventId, NotificationEventTypes.CommentReply, eventData.ProjectId, eventData.TicketId, eventData.ActorId, [parentAuthor]));
         }
 
         await WithMentionsAsync(new NotificationEvent(
-            eventData.EventId, NotificationEventTypes.CommentAdded, eventData.ProjectId, eventData.IssueId, eventData.ActorId, eventData.Mentioned));
+            eventData.EventId, NotificationEventTypes.CommentAdded, eventData.ProjectId, eventData.TicketId, eventData.ActorId, eventData.Mentioned));
     }
 
     [UnitOfWork]
     public virtual Task HandleEventAsync(CommentReactedEto eventData) => processor.ProcessAsync(new NotificationEvent(
-        eventData.EventId, NotificationEventTypes.CommentReaction, eventData.ProjectId, eventData.IssueId, eventData.ActorId,
+        eventData.EventId, NotificationEventTypes.CommentReaction, eventData.ProjectId, eventData.TicketId, eventData.ActorId,
         [eventData.CommentAuthorId], Detail: eventData.Emoji));
 
     [UnitOfWork]
-    public virtual Task HandleEventAsync(IssueTransitionedEto eventData) => processor.ProcessAsync(new NotificationEvent(
-        eventData.EventId, NotificationEventTypes.IssueTransitioned, eventData.ProjectId, eventData.IssueId, eventData.ActorId, [], Detail: eventData.ToStatusName));
+    public virtual Task HandleEventAsync(TicketTransitionedEto eventData) => processor.ProcessAsync(new NotificationEvent(
+        eventData.EventId, NotificationEventTypes.TicketTransitioned, eventData.ProjectId, eventData.TicketId, eventData.ActorId, [], Detail: eventData.ToStatusName));
 
     [UnitOfWork]
     public virtual Task HandleEventAsync(WorkflowNotificationEto eventData) => processor.ProcessAsync(new NotificationEvent(
-        eventData.EventId, NotificationEventTypes.WorkflowNotification, eventData.ProjectId, eventData.IssueId, eventData.ActorId, [], Detail: eventData.Message));
+        eventData.EventId, NotificationEventTypes.WorkflowNotification, eventData.ProjectId, eventData.TicketId, eventData.ActorId, [], Detail: eventData.Message));
 
     [UnitOfWork]
     public virtual Task HandleEventAsync(SprintStateChangedEto eventData) => processor.ProcessAsync(new NotificationEvent(

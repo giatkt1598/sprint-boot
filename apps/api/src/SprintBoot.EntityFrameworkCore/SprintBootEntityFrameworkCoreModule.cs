@@ -3,7 +3,7 @@ using SprintBoot.Agile;
 using SprintBoot.DocsIntegration;
 using SprintBoot.GitIntegration;
 using SprintBoot.Identity;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Assistant;
 using SprintBoot.Notifications;
 using SprintBoot.Platform;
@@ -33,7 +33,7 @@ namespace SprintBoot.EntityFrameworkCore;
     typeof(IdentityModule),
     typeof(PlatformModule),
     typeof(ProjectsModule),
-    typeof(IssuesModule),
+    typeof(TicketsModule),
     typeof(WorkflowsModule),
     typeof(AgileModule),
     typeof(GitIntegrationModule),

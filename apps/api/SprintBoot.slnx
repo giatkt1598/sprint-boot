@@ -9,8 +9,8 @@
   <Project Path="src/Modules/GitIntegration/SprintBoot.GitIntegration/SprintBoot.GitIntegration.csproj" />
   <Project Path="src/Modules/Identity/SprintBoot.Identity.Contracts/SprintBoot.Identity.Contracts.csproj" />
   <Project Path="src/Modules/Identity/SprintBoot.Identity/SprintBoot.Identity.csproj" />
-  <Project Path="src/Modules/Issues/SprintBoot.Issues.Contracts/SprintBoot.Issues.Contracts.csproj" />
-  <Project Path="src/Modules/Issues/SprintBoot.Issues/SprintBoot.Issues.csproj" />
+  <Project Path="src/Modules/Tickets/SprintBoot.Tickets.Contracts/SprintBoot.Tickets.Contracts.csproj" />
+  <Project Path="src/Modules/Tickets/SprintBoot.Tickets/SprintBoot.Tickets.csproj" />
   <Project Path="src/Modules/Notifications/SprintBoot.Notifications.Contracts/SprintBoot.Notifications.Contracts.csproj" />
   <Project Path="src/Modules/Notifications/SprintBoot.Notifications/SprintBoot.Notifications.csproj" />
   <Project Path="src/Modules/Platform/SprintBoot.Platform.Contracts/SprintBoot.Platform.Contracts.csproj" />

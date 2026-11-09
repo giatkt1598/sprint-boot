@@ -33,7 +33,7 @@ public static class AgileModelBuilderExtensions
         {
             b.ToTable("board_entries", Schema);
             b.ConfigureByConvention();
-            b.HasIndex(entry => new { entry.BoardId, entry.IssueId }).IsUnique();
+            b.HasIndex(entry => new { entry.BoardId, entry.TicketId }).IsUnique();
         });
         builder.Entity<Sprint>(b =>
         {
@@ -46,12 +46,12 @@ public static class AgileModelBuilderExtensions
             b.HasIndex(sprint => sprint.BoardId).HasDatabaseName("IX_sprints_one_active")
                 .IsUnique().HasFilter($"\"State\" = {(int)SprintState.Active}");
         });
-        builder.Entity<SprintIssue>(b =>
+        builder.Entity<SprintTicket>(b =>
         {
-            b.ToTable("sprint_issues", Schema);
+            b.ToTable("sprint_tickets", Schema);
             b.ConfigureByConvention();
             b.HasIndex(item => item.SprintId);
-            b.HasIndex(item => item.IssueId);
+            b.HasIndex(item => item.TicketId);
         });
     }
 }

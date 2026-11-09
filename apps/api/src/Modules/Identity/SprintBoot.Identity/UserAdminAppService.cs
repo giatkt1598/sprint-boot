@@ -139,7 +139,7 @@ public class UserAdminAppService(
             (await userManager.RemoveLoginAsync(user, login.LoginProvider, login.ProviderKey)).CheckErrors();
         }
 
-        // Soft delete: issues, comments and history keep pointing at the person.
+        // Soft delete: tickets, comments and history keep pointing at the person.
         (await userManager.DeleteAsync(user)).CheckErrors();
         await eventBus.PublishAsync(new UserDeletedEto { EventId = GuidGenerator.Create(), UserId = id }, useOutbox: true);
     }

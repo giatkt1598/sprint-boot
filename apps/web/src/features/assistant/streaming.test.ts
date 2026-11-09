@@ -10,14 +10,14 @@ describe('closeOpenMarkdown', () => {
   it('closes bold, strikethrough and inline code left open in the last paragraph', () => {
     expect(closeOpenMarkdown('Done.\n\nThis is **bold')).toBe('Done.\n\nThis is **bold**');
     expect(closeOpenMarkdown('Old ~~text')).toBe('Old ~~text~~');
-    expect(closeOpenMarkdown('Call `get_issue')).toBe('Call `get_issue`');
+    expect(closeOpenMarkdown('Call `get_ticket')).toBe('Call `get_ticket`');
     expect(closeOpenMarkdown('**Done** already')).toBe('**Done** already');
   });
 
   it('holds back a link until it closes', () => {
-    expect(closeOpenMarkdown('See [SB-1](/issues/SB')).toBe('See ');
+    expect(closeOpenMarkdown('See [SB-1](/tickets/SB')).toBe('See ');
     expect(closeOpenMarkdown('See [SB-1')).toBe('See ');
-    expect(closeOpenMarkdown('See [SB-1](/issues/SB-1)')).toBe('See [SB-1](/issues/SB-1)');
+    expect(closeOpenMarkdown('See [SB-1](/tickets/SB-1)')).toBe('See [SB-1](/tickets/SB-1)');
   });
 
   it('holds back a table row still being written', () => {

@@ -21,8 +21,8 @@ const SIDEBAR_WIDTH = { min: 180, max: 400, initial: size.sidebar, maxShare: 0.4
 
 export function Sidebar() {
   const { t } = useTranslation();
-  const { spaceKey: routeKey, issueKey } = useParams();
-  const spaceKey = routeKey ?? issueKey?.replace(/-\d+$/, '');
+  const { spaceKey: routeKey, ticketKey } = useParams();
+  const spaceKey = routeKey ?? ticketKey?.replace(/-\d+$/, '');
   const navigate = useNavigate();
   const space = useSpace(spaceKey);
   const spaces = useSpaces();
@@ -74,7 +74,7 @@ export function Sidebar() {
             <SidebarItem to={`/spaces/${spaceKey}/backlog`} label={t('nav.backlog')} icon={ListIcon} />
             <SidebarItem to={`/spaces/${spaceKey}/board`} label={t('nav.board')} icon={BoardIcon} />
             <SidebarItem to={`/spaces/${spaceKey}/epics`} label={t('nav.epics')} icon={EpicIcon} />
-            <SidebarItem to={`/spaces/${spaceKey}/issues`} label={t('nav.issues')} icon={TaskIcon} />
+            <SidebarItem to={`/spaces/${spaceKey}/tickets`} label={t('nav.tickets')} icon={TaskIcon} />
             <SidebarItem to={`/spaces/${spaceKey}/people`} label={t('nav.people')} icon={PeopleIcon} />
             <SidebarItem to={`/spaces/${spaceKey}/settings`} label={t('nav.settings')} icon={SettingsIcon} />
           </nav>

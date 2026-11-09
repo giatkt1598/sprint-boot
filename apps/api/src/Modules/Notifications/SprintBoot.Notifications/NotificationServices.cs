@@ -104,7 +104,7 @@ public class NotificationAppService(
     {
         Id = row.Id,
         EventType = row.EventType,
-        IssueKey = row.IssueKey,
+        TicketKey = row.TicketKey,
         Title = row.Title,
         ActorName = row.ActorName,
         Detail = row.Detail,
@@ -179,7 +179,7 @@ public class NotificationSchemeAppService(
 
     public async Task<ProjectSchemeDto> GetForProjectAsync(Guid projectId)
     {
-        await projectAccess.CheckAsync(projectId, ProjectPermissions.ViewIssues);
+        await projectAccess.CheckAsync(projectId, ProjectPermissions.ViewTickets);
         var scheme = await resolver.GetForProjectAsync(projectId);
         return new ProjectSchemeDto { SchemeId = scheme.Id, Name = scheme.Name };
     }
@@ -260,16 +260,16 @@ public class NotificationsDataSeedContributor(
 
         (string Event, RecipientType Type, string? Value)[] defaults =
         [
-            (NotificationEventTypes.IssueCreated, RecipientType.ProjectRole, ProjectRoleNames.Admin),
-            (NotificationEventTypes.IssueAssigned, RecipientType.Assignee, null),
-            (NotificationEventTypes.IssueUpdated, RecipientType.Assignee, null),
-            (NotificationEventTypes.IssueUpdated, RecipientType.Watcher, null),
+            (NotificationEventTypes.TicketCreated, RecipientType.ProjectRole, ProjectRoleNames.Admin),
+            (NotificationEventTypes.TicketAssigned, RecipientType.Assignee, null),
+            (NotificationEventTypes.TicketUpdated, RecipientType.Assignee, null),
+            (NotificationEventTypes.TicketUpdated, RecipientType.Watcher, null),
             (NotificationEventTypes.CommentAdded, RecipientType.Assignee, null),
             (NotificationEventTypes.CommentAdded, RecipientType.Reporter, null),
             (NotificationEventTypes.CommentAdded, RecipientType.Watcher, null),
-            (NotificationEventTypes.IssueTransitioned, RecipientType.Assignee, null),
-            (NotificationEventTypes.IssueTransitioned, RecipientType.Reporter, null),
-            (NotificationEventTypes.IssueTransitioned, RecipientType.Watcher, null),
+            (NotificationEventTypes.TicketTransitioned, RecipientType.Assignee, null),
+            (NotificationEventTypes.TicketTransitioned, RecipientType.Reporter, null),
+            (NotificationEventTypes.TicketTransitioned, RecipientType.Watcher, null),
             (NotificationEventTypes.WorkflowNotification, RecipientType.Assignee, null),
             (NotificationEventTypes.WorkflowNotification, RecipientType.Reporter, null),
             (NotificationEventTypes.WorkflowNotification, RecipientType.Watcher, null),

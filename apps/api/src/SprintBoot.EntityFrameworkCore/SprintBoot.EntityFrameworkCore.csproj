@@ -3,7 +3,7 @@
     <ProjectReference Include="..\Modules\Identity\SprintBoot.Identity\SprintBoot.Identity.csproj" />
     <ProjectReference Include="..\Modules\Platform\SprintBoot.Platform\SprintBoot.Platform.csproj" />
     <ProjectReference Include="..\Modules\Projects\SprintBoot.Projects\SprintBoot.Projects.csproj" />
-    <ProjectReference Include="..\Modules\Issues\SprintBoot.Issues\SprintBoot.Issues.csproj" />
+    <ProjectReference Include="..\Modules\Tickets\SprintBoot.Tickets\SprintBoot.Tickets.csproj" />
     <ProjectReference Include="..\Modules\Workflows\SprintBoot.Workflows\SprintBoot.Workflows.csproj" />
     <ProjectReference Include="..\Modules\Agile\SprintBoot.Agile\SprintBoot.Agile.csproj" />
     <ProjectReference Include="..\Modules\GitIntegration\SprintBoot.GitIntegration\SprintBoot.GitIntegration.csproj" />

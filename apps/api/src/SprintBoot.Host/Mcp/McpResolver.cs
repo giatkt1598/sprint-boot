@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 using ModelContextProtocol;
 using SprintBoot.Agile;
 using SprintBoot.Identity;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Projects;
 using SprintBoot.Workflows;
 using Volo.Abp.DependencyInjection;
@@ -17,7 +17,7 @@ public record SprintTarget(Guid? Id, string Name);
 /// <summary>Turns the names an agent uses (space keys, type names, emails) into ids, within one call.</summary>
 public partial class McpResolver(
     IProjectAppService projects,
-    IIssueAppService issues,
+    ITicketAppService tickets,
     IStatusAppService statuses,
     IUserDirectoryAppService users,
     IUserDirectory directory,
@@ -25,7 +25,7 @@ public partial class McpResolver(
     ICurrentUser currentUser) : IScopedDependency
 {
     private readonly Dictionary<string, ProjectDto> _projects = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<Guid, List<IssueTypeDto>> _types = [];
+    private readonly Dictionary<Guid, List<TicketTypeDto>> _types = [];
     private readonly Dictionary<string, UserRefDto> _users = new(StringComparer.OrdinalIgnoreCase);
     private List<PriorityDto>? _priorities;
 
@@ -40,25 +40,25 @@ public partial class McpResolver(
         return project;
     }
 
-    public Task<IssueDto> IssueAsync(string key) => issues.GetByKeyAsync(key.Trim().ToUpperInvariant());
+    public Task<TicketDto> TicketAsync(string key) => tickets.GetByKeyAsync(key.Trim().ToUpperInvariant());
 
-    public async Task<List<IssueTypeDto>> TypesAsync(Guid projectId)
+    public async Task<List<TicketTypeDto>> TypesAsync(Guid projectId)
     {
         if (!_types.TryGetValue(projectId, out var list))
         {
-            list = await issues.GetTypesAsync(projectId);
+            list = await tickets.GetTypesAsync(projectId);
             _types[projectId] = list;
         }
 
         return list;
     }
 
-    public async Task<IssueTypeDto> TypeAsync(Guid projectId, string name) =>
-        Pick(await TypesAsync(projectId), name, type => type.Name, "issue type");
+    public async Task<TicketTypeDto> TypeAsync(Guid projectId, string name) =>
+        Pick(await TypesAsync(projectId), name, type => type.Name, "ticket type");
 
     public async Task<PriorityDto> PriorityAsync(string name)
     {
-        _priorities ??= await issues.GetPrioritiesAsync();
+        _priorities ??= await tickets.GetPrioritiesAsync();
         return Pick(_priorities, name, priority => priority.Name, "priority");
     }
 

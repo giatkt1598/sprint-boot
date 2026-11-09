@@ -14,15 +14,15 @@ import { Table } from '../../components/Table';
 import { SelectField, TextField } from '../../components/TextField';
 import { useErrorMessage } from '../../lib/errors';
 import { formatDate } from '../../lib/format';
-import type { Status } from '../issues/api';
+import type { Status } from '../tickets/api';
 
 type StatusRow = components['schemas']['StatusAdminDto'];
 type WorkflowRow = components['schemas']['WorkflowSummaryDto'];
 
 const GROUPS = [
-  { value: 0, label: 'issue.status.todo' },
-  { value: 1, label: 'issue.status.inProgress' },
-  { value: 2, label: 'issue.status.done' },
+  { value: 0, label: 'ticket.status.todo' },
+  { value: 1, label: 'ticket.status.inProgress' },
+  { value: 2, label: 'ticket.status.done' },
 ];
 
 function PageHeader({ title, hint, children }: { title: string; hint: string; children?: React.ReactNode }) {
@@ -111,13 +111,13 @@ export function StatusesPage() {
             { key: 'name', header: t('account.name'), render: (status) => status.name },
             { key: 'group', header: t('workflows.group'), render: (status) => t(GROUPS[status.category ?? 0]!.label) },
             { key: 'workflows', header: t('workflows.title'), render: (status) => status.workflowCount },
-            { key: 'issues', header: t('spaces.issues'), render: (status) => status.issueCount },
+            { key: 'tickets', header: t('spaces.tickets'), render: (status) => status.ticketCount },
             {
               key: 'state',
               header: t('admin.status'),
               render: (status) => <Badge>{t((status.workflowCount ?? 0) > 0 ? 'workflows.inUse' : 'workflows.notUsed')}</Badge>,
             },
-            { key: 'updated', header: t('issues.updatedAt'), render: (status) => formatDate(status.updatedAt, i18n.language) },
+            { key: 'updated', header: t('tickets.updatedAt'), render: (status) => formatDate(status.updatedAt, i18n.language) },
             {
               key: 'edit',
               header: '',
@@ -172,7 +172,7 @@ function CreateWorkflowDialog({ workflows, projectId, onClose }: { workflows: Wo
   );
 }
 
-/** Asks where issues on dropped statuses should go. */
+/** Asks where tickets on dropped statuses should go. */
 export function StatusMappingFields({
   orphaned,
   targets,
@@ -246,7 +246,7 @@ export function WorkflowsPage({ projectId }: { projectId?: string }) {
                   <Badge tone="success">{t('workflows.publishedState')}</Badge>
                 ),
             },
-            { key: 'updated', header: t('issues.updatedAt'), render: (workflow) => formatDate(workflow.updatedAt, i18n.language) },
+            { key: 'updated', header: t('tickets.updatedAt'), render: (workflow) => formatDate(workflow.updatedAt, i18n.language) },
             {
               key: 'edit',
               header: '',

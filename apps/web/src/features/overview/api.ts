@@ -11,7 +11,7 @@ export type OverviewPeriod = (typeof OverviewPeriods)[number];
 
 export const useOverviewSummary = (projectId: string | undefined, period: OverviewPeriod) =>
   useQuery({
-    queryKey: ['issues', 'overview', projectId, period],
+    queryKey: ['tickets', 'overview', projectId, period],
     enabled: Boolean(projectId),
     placeholderData: keepPreviousData,
     queryFn: () =>

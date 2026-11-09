@@ -92,15 +92,15 @@ public class PersonalTokenTests(ApiFixture fixture)
 
         var tools = await McpAsync(http, "tools/list", new { });
         tools.Status.ShouldBe(HttpStatusCode.OK, tools.Body);
-        tools.Body.ShouldContain("create_issue");
-        tools.Body.ShouldContain("transition_issue");
+        tools.Body.ShouldContain("create_ticket");
+        tools.Body.ShouldContain("transition_ticket");
 
-        var created = await McpAsync(http, "tools/call", new { name = "create_issue", arguments = new { space = key, title = "From an agent" } });
+        var created = await McpAsync(http, "tools/call", new { name = "create_ticket", arguments = new { space = key, title = "From an agent" } });
         created.Body.ShouldContain($"{key}-1");
-        var found = await McpAsync(http, "tools/call", new { name = "search_issues", arguments = new { space = key } });
+        var found = await McpAsync(http, "tools/call", new { name = "search_tickets", arguments = new { space = key } });
         found.Body.ShouldContain("From an agent");
 
-        var moved = await McpAsync(http, "tools/call", new { name = "transition_issue", arguments = new { key = $"{key}-1", status = "Done" } });
+        var moved = await McpAsync(http, "tools/call", new { name = "transition_ticket", arguments = new { key = $"{key}-1", status = "Done" } });
         moved.Body.ShouldNotContain("\"isError\":true", Case.Insensitive, moved.Body);
 
         (await http.GetAsync("/api/v1/project", Token)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
@@ -111,7 +111,7 @@ public class PersonalTokenTests(ApiFixture fixture)
 
         var stranger = await fixture.CreateUserClientAsync(Token);
         var outsider = Bearer((await CreateAsync(stranger, PersonalTokenKind.Mcp)).Token);
-        var hidden = await McpAsync(outsider, "tools/call", new { name = "get_issue", arguments = new { key = $"{key}-1" } });
+        var hidden = await McpAsync(outsider, "tools/call", new { name = "get_ticket", arguments = new { key = $"{key}-1" } });
         hidden.Body.ShouldContain("\"isError\":true");
     }
 }

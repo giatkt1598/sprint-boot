@@ -16,7 +16,7 @@ import { useAssistantStatus, useConversation } from './api';
 import { ChatThread } from './ChatThread';
 import { ConversationPicker, QuickPrompts, RecentConversations } from './ConversationPicker';
 
-export interface IssueRef {
+export interface TicketRef {
   id: string;
   key: string;
 }
@@ -27,8 +27,8 @@ interface AssistantControls {
   /** Opens the panel on a new conversation; an open panel stays as it is. */
   open: () => void;
   close: () => void;
-  /** The issue on screen; its conversations come first and its key goes with every question. */
-  setViewing: (issue: IssueRef | null) => void;
+  /** The ticket on screen; its conversations come first and its key goes with every question. */
+  setViewing: (ticket: TicketRef | null) => void;
 }
 
 const AssistantContext = createContext<AssistantControls>({
@@ -41,11 +41,11 @@ const AssistantContext = createContext<AssistantControls>({
 
 export const useAssistant = () => use(AssistantContext);
 
-/** Tells the assistant which issue is on screen while the calling component is mounted. */
-export function useViewingIssue(issue: IssueRef | null) {
+/** Tells the assistant which ticket is on screen while the calling component is mounted. */
+export function useViewingTicket(ticket: TicketRef | null) {
   const { setViewing } = useAssistant();
-  const id = issue?.id;
-  const key = issue?.key;
+  const id = ticket?.id;
+  const key = ticket?.key;
   useEffect(() => {
     if (!id || !key) {
       return undefined;
@@ -56,9 +56,9 @@ export function useViewingIssue(issue: IssueRef | null) {
 }
 
 /** The minimized panel: one line in the bottom right corner, which opens the conversation again. */
-function MinimizedCard({ title, issueKey, busy, onRestore, onClose }: {
+function MinimizedCard({ title, ticketKey, busy, onRestore, onClose }: {
   title: string;
-  issueKey?: string;
+  ticketKey?: string;
   busy: boolean;
   onRestore: () => void;
   onClose: () => void;
@@ -99,7 +99,7 @@ function MinimizedCard({ title, issueKey, busy, onRestore, onClose }: {
           {busy ? (
             <span className="shrink-0" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>{t('assistant.answering')}</span>
           ) : (
-            issueKey && <Badge tone="subtle">{issueKey}</Badge>
+            ticketKey && <Badge tone="subtle">{ticketKey}</Badge>
           )}
         </ButtonBase>
         <IconButton size="small" aria-label={t('common.close')} onClick={onClose} sx={{ marginRight: 1 }}>
@@ -110,8 +110,8 @@ function MinimizedCard({ title, issueKey, busy, onRestore, onClose }: {
   );
 }
 
-function Panel({ issue, minimized, onMinimize, onRestore, onClose }: {
-  issue: IssueRef | null;
+function Panel({ ticket, minimized, onMinimize, onRestore, onClose }: {
+  ticket: TicketRef | null;
   minimized: boolean;
   onMinimize: () => void;
   onRestore: () => void;
@@ -127,16 +127,16 @@ function Panel({ issue, minimized, onMinimize, onRestore, onClose }: {
   const detail = useConversation(conversationId);
   const conversation = detail.data?.conversation;
   const title = conversation?.title || t('assistant.untitled');
-  const issueKey = conversation ? (conversation.issueKey ?? undefined) : issue?.key;
+  const ticketKey = conversation ? (conversation.ticketKey ?? undefined) : ticket?.key;
 
   return (
     <div className="flex h-full flex-col">
       {/* The panel stays mounted while minimized, so an answer keeps streaming. */}
-      {minimized && createPortal(<MinimizedCard title={title} issueKey={issueKey} busy={busy} onRestore={onRestore} onClose={onClose} />, document.body)}
+      {minimized && createPortal(<MinimizedCard title={title} ticketKey={ticketKey} busy={busy} onRestore={onRestore} onClose={onClose} />, document.body)}
       <div className="flex items-center gap-1 py-2 pl-4 pr-2" style={{ borderBottom: `1px solid ${sem('border-default')}` }}>
         <AssistantIcon size={16} strokeWidth={1.5} aria-hidden />
         <Typography variant="h3" component="h2" className="min-w-0 flex-1 truncate pl-1">
-          {issue ? t('assistant.titleIssue', { key: issue.key }) : t('assistant.title')}
+          {ticket ? t('assistant.titleTicket', { key: ticket.key }) : t('assistant.title')}
         </Typography>
         <Tooltip title={t('assistant.history')}>
           <IconButton size="small" aria-label={t('assistant.history')} aria-haspopup="dialog" onClick={(event) => setHistory(event.currentTarget)}>
@@ -188,7 +188,7 @@ function Panel({ issue, minimized, onMinimize, onRestore, onClose }: {
       </div>
       <ConversationPicker
         anchor={history}
-        issueId={issue?.id}
+        ticketId={ticket?.id}
         selectedId={conversationId}
         onClose={() => setHistory(null)}
         onPick={(id) => {
@@ -199,14 +199,14 @@ function Panel({ issue, minimized, onMinimize, onRestore, onClose }: {
       <ChatThread
         key={conversationId ?? 'new'}
         conversationId={conversationId}
-        issueId={issue?.id}
+        ticketId={ticket?.id}
         onConversation={setConversationId}
         onBusyChange={setBusy}
         active={!minimized}
         intro={(ask) => (
           <div className="flex flex-col gap-4">
-            <RecentConversations issueId={issue?.id} onPick={setConversationId} />
-            {issue && <QuickPrompts onAsk={ask} />}
+            <RecentConversations ticketId={ticket?.id} onPick={setConversationId} />
+            {ticket && <QuickPrompts onAsk={ask} />}
           </div>
         )}
       />
@@ -222,7 +222,7 @@ export function AssistantHost({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   const status = useAssistantStatus();
   const [state, setState] = useState<{ open: boolean; minimized: boolean; session: number }>({ open: false, minimized: false, session: 0 });
-  const [viewing, setViewing] = useState<IssueRef | null>(null);
+  const [viewing, setViewing] = useState<TicketRef | null>(null);
   const available = status.data?.available ?? false;
 
   const controls = useMemo<AssistantControls>(
@@ -262,7 +262,7 @@ export function AssistantHost({ children }: { children: ReactNode }) {
         {state.open && (
           <Panel
             key={state.session}
-            issue={viewing}
+            ticket={viewing}
             minimized={state.minimized}
             onMinimize={() => setState((current) => ({ ...current, minimized: true }))}
             onRestore={controls.open}

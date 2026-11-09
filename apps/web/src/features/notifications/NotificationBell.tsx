@@ -37,7 +37,7 @@ export function NotificationItem({ item, onOpen }: { item: Notification; onOpen:
       <Avatar name={item.actorName ?? ''} />
       <span className="flex min-w-0 flex-1 flex-col">
         <span style={{ fontSize: font.size.md }}>
-          {t(`notifications.event.${eventKey(item.eventType)}`, { actor: item.actorName, key: item.issueKey, name: item.title, status: item.detail })}
+          {t(`notifications.event.${eventKey(item.eventType)}`, { actor: item.actorName, key: item.ticketKey, name: item.title, status: item.detail })}
         </span>
         {item.title && <span className="truncate" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>{item.title}</span>}
         <span style={{ fontSize: font.size.xs, color: sem('text-tertiary') }}>{formatRelative(item.createdAt, i18n.language)}</span>
@@ -59,8 +59,8 @@ export function useOpenNotification() {
     if (!item.readAt) {
       read.mutate(item.id!);
     }
-    if (item.issueKey) {
-      void navigate(`/issues/${item.issueKey}`);
+    if (item.ticketKey) {
+      void navigate(`/tickets/${item.ticketKey}`);
     }
   };
 }

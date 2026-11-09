@@ -65,8 +65,8 @@ public sealed class ApiFixture : IAsyncLifetime
         Environment.SetEnvironmentVariable("Workflows__Webhooks__BackoffSeconds", "1");
         Environment.SetEnvironmentVariable("Assistant__Titles__PollMilliseconds", "300");
         Environment.SetEnvironmentVariable("Assistant__HeartbeatSeconds", "0.3");
-        Environment.SetEnvironmentVariable("Issues__Attachments__MaxFileSizeMb", "1");
-        Environment.SetEnvironmentVariable("Issues__Uploads__PartSizeKb", UploadPartSizeKb.ToString());
+        Environment.SetEnvironmentVariable("Tickets__Attachments__MaxFileSizeMb", "1");
+        Environment.SetEnvironmentVariable("Tickets__Uploads__PartSizeKb", UploadPartSizeKb.ToString());
         Environment.SetEnvironmentVariable("Storage__Local__Path", Path.Combine(Path.GetTempPath(), $"sb-test-{Guid.NewGuid():N}"));
         using (var rsa = System.Security.Cryptography.RSA.Create(2048))
         {
@@ -186,7 +186,7 @@ public sealed class ApiFixture : IAsyncLifetime
     public async Task CleanRichTextFilesAsync(DateTime abandonedBefore)
     {
         using var scope = Factory.Services.CreateScope();
-        await SprintBoot.Issues.RichTextFileCleanupWorker.CleanAsync(scope.ServiceProvider, abandonedBefore);
+        await SprintBoot.Tickets.RichTextFileCleanupWorker.CleanAsync(scope.ServiceProvider, abandonedBefore);
     }
 
     public async Task ExpireInvitationAsync(Guid id)
@@ -213,8 +213,8 @@ public sealed class ApiFixture : IAsyncLifetime
         using var scope = Factory.Services.CreateScope();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>();
         using var uow = unitOfWork.Begin(requiresNew: true);
-        var issues = scope.ServiceProvider.GetRequiredService<Volo.Abp.Domain.Repositories.IRepository<SprintBoot.Issues.Issue, Guid>>();
-        return (await issues.GetListAsync(issue => issue.ProjectId == projectId)).ToDictionary(issue => issue.Id, issue => issue.Rank);
+        var tickets = scope.ServiceProvider.GetRequiredService<Volo.Abp.Domain.Repositories.IRepository<SprintBoot.Tickets.Ticket, Guid>>();
+        return (await tickets.GetListAsync(ticket => ticket.ProjectId == projectId)).ToDictionary(ticket => ticket.Id, ticket => ticket.Rank);
     }
 
     public HubConnection CreateBoardConnection(AuthClient client) =>

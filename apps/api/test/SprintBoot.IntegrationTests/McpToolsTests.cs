@@ -76,20 +76,20 @@ public class McpToolsTests(ApiFixture fixture)
 
         // Arrays and dictionaries can be taken for services and silently dropped from a schema.
         tools["move_to_sprint"].TryGetProperty("keys", out _).ShouldBeTrue();
-        tools["create_issues"].TryGetProperty("items", out _).ShouldBeTrue();
+        tools["create_tickets"].TryGetProperty("items", out _).ShouldBeTrue();
         tools["edit_description"].TryGetProperty("edits", out _).ShouldBeTrue();
-        tools["update_issue"].TryGetProperty("labels", out _).ShouldBeTrue();
-        tools["transition_issue"].TryGetProperty("fields", out _).ShouldBeTrue();
+        tools["update_ticket"].TryGetProperty("labels", out _).ShouldBeTrue();
+        tools["transition_ticket"].TryGetProperty("fields", out _).ShouldBeTrue();
     }
 
     [Fact]
-    public async Task Issues_are_created_with_every_field_and_read_back_as_markdown()
+    public async Task Tickets_are_created_with_every_field_and_read_back_as_markdown()
     {
         var agent = await AgentAsync();
         var key = agent.Space.Key;
-        var epic = await CallAsync(agent.Http, "create_issue", new { space = key, title = "Payments", type = "Epic" });
+        var epic = await CallAsync(agent.Http, "create_ticket", new { space = key, title = "Payments", type = "Epic" });
 
-        var issue = await CallAsync(agent.Http, "create_issue", new
+        var ticket = await CallAsync(agent.Http, "create_ticket", new
         {
             space = key,
             title = "Card form",
@@ -104,7 +104,7 @@ public class McpToolsTests(ApiFixture fixture)
             dueDate = "2026-11-20",
         });
 
-        var read = await CallAsync(agent.Http, "get_issue", new { key = Text(issue, "key") });
+        var read = await CallAsync(agent.Http, "get_ticket", new { key = Text(ticket, "key") });
         Text(read, "type").ShouldBe("Story");
         Text(read, "priority").ShouldBe("High");
         Text(read, "assignee").ShouldContain("@test.local");
@@ -114,7 +114,7 @@ public class McpToolsTests(ApiFixture fixture)
         Text(read, "dueDate").ShouldBe("2026-11-20");
         Text(read, "description").ShouldBe("## Goal\n\nAccept **cards**.\n\n- [ ] validate\n- [x] design\n\n:::callout\nPCI scope\n:::");
 
-        var html = await CallAsync(agent.Http, "get_issue", new { key = Text(issue, "key"), format = "html" });
+        var html = await CallAsync(agent.Http, "get_ticket", new { key = Text(ticket, "key"), format = "html" });
         Text(html, "description").ShouldContain("data-type=\"taskList\"");
 
         var fields = await CallAsync(agent.Http, "get_space_fields", new { space = key });
@@ -123,15 +123,15 @@ public class McpToolsTests(ApiFixture fixture)
     }
 
     [Fact]
-    public async Task A_repeated_idempotency_key_returns_the_first_issue()
+    public async Task A_repeated_idempotency_key_returns_the_first_ticket()
     {
         var agent = await AgentAsync();
-        var first = await CallAsync(agent.Http, "create_issue", new { space = agent.Space.Key, title = "Once", idempotencyKey = "abc-1" });
-        var again = await CallAsync(agent.Http, "create_issue", new { space = agent.Space.Key, title = "Once", idempotencyKey = "abc-1" });
+        var first = await CallAsync(agent.Http, "create_ticket", new { space = agent.Space.Key, title = "Once", idempotencyKey = "abc-1" });
+        var again = await CallAsync(agent.Http, "create_ticket", new { space = agent.Space.Key, title = "Once", idempotencyKey = "abc-1" });
 
         Text(again, "key").ShouldBe(Text(first, "key"));
         again.GetProperty("replayed").GetBoolean().ShouldBeTrue();
-        var found = await CallAsync(agent.Http, "search_issues", new { space = agent.Space.Key });
+        var found = await CallAsync(agent.Http, "search_tickets", new { space = agent.Space.Key });
         found.GetProperty("total").GetInt32().ShouldBe(1);
     }
 
@@ -140,7 +140,7 @@ public class McpToolsTests(ApiFixture fixture)
     {
         var agent = await AgentAsync();
         var key = agent.Space.Key;
-        var batch = await CallAsync(agent.Http, "create_issues", new
+        var batch = await CallAsync(agent.Http, "create_tickets", new
         {
             space = key,
             items = new object[]
@@ -153,33 +153,33 @@ public class McpToolsTests(ApiFixture fixture)
             },
         });
         batch.GetProperty("created").GetInt32().ShouldBe(4);
-        batch.GetProperty("results")[4].GetProperty("error").GetString()!.ShouldContain("No issue type is named Nope");
+        batch.GetProperty("results")[4].GetProperty("error").GetString()!.ShouldContain("No ticket type is named Nope");
 
-        (await CallAsync(agent.Http, "search_issues", new { space = key, types = new[] { "bug" } })).GetProperty("total").GetInt32().ShouldBe(2);
-        (await CallAsync(agent.Http, "search_issues", new { space = key, priorities = new[] { "High" }, labels = new[] { "ops" } }))
-            .GetProperty("issues")[0].GetProperty("title").GetString().ShouldBe("Bug one");
-        (await CallAsync(agent.Http, "search_issues", new { space = key, assignees = new[] { "me" } })).GetProperty("total").GetInt32().ShouldBe(1);
-        (await CallAsync(agent.Http, "search_issues", new { parent = $"{key}-3" })).GetProperty("issues")[0].GetProperty("title").GetString().ShouldBe("Child");
+        (await CallAsync(agent.Http, "search_tickets", new { space = key, types = new[] { "bug" } })).GetProperty("total").GetInt32().ShouldBe(2);
+        (await CallAsync(agent.Http, "search_tickets", new { space = key, priorities = new[] { "High" }, labels = new[] { "ops" } }))
+            .GetProperty("tickets")[0].GetProperty("title").GetString().ShouldBe("Bug one");
+        (await CallAsync(agent.Http, "search_tickets", new { space = key, assignees = new[] { "me" } })).GetProperty("total").GetInt32().ShouldBe(1);
+        (await CallAsync(agent.Http, "search_tickets", new { parent = $"{key}-3" })).GetProperty("tickets")[0].GetProperty("title").GetString().ShouldBe("Child");
 
-        var page = await CallAsync(agent.Http, "search_issues", new { space = key, limit = 3 });
+        var page = await CallAsync(agent.Http, "search_tickets", new { space = key, limit = 3 });
         page.GetProperty("nextOffset").GetInt32().ShouldBe(3);
-        var rest = await CallAsync(agent.Http, "search_issues", new { space = key, limit = 3, offset = 3 });
-        rest.GetProperty("issues").GetArrayLength().ShouldBe(1);
+        var rest = await CallAsync(agent.Http, "search_tickets", new { space = key, limit = 3, offset = 3 });
+        rest.GetProperty("tickets").GetArrayLength().ShouldBe(1);
         rest.TryGetProperty("nextOffset", out _).ShouldBeFalse();
 
-        await Should.ThrowAsync<ToolError>(() => CallAsync(agent.Http, "search_issues", new { space = key, statuses = new[] { "Nope" } }));
+        await Should.ThrowAsync<ToolError>(() => CallAsync(agent.Http, "search_tickets", new { space = key, statuses = new[] { "Nope" } }));
     }
 
     [Fact]
     public async Task Updates_change_clear_and_patch_fields()
     {
         var agent = await AgentAsync();
-        var key = Text(await CallAsync(agent.Http, "create_issue", new
+        var key = Text(await CallAsync(agent.Http, "create_ticket", new
         {
             space = agent.Space.Key, title = "Old", description = "# Plan\n\nDraft\n\n## Risks\n\nMany", labels = new[] { "a", "b" }, assignee = "me", dueDate = "2026-12-01",
         }), "key");
 
-        var updated = await CallAsync(agent.Http, "update_issue", new { key, title = "New", priority = "Low", addLabels = new[] { "c" }, removeLabels = new[] { "a" }, clear = new[] { "assignee", "dueDate" } });
+        var updated = await CallAsync(agent.Http, "update_ticket", new { key, title = "New", priority = "Low", addLabels = new[] { "c" }, removeLabels = new[] { "a" }, clear = new[] { "assignee", "dueDate" } });
         Text(updated, "title").ShouldBe("New");
         Text(updated, "priority").ShouldBe("Low");
         updated.GetProperty("labels").EnumerateArray().Select(item => item.GetString()).ShouldBe(["b", "c"], ignoreOrder: true);
@@ -198,28 +198,28 @@ public class McpToolsTests(ApiFixture fixture)
         });
         Text(edited, "description").ShouldBe($"# Plan\n\nFinal\n\n## Risks\n\nNone\n\nThanks @[Me](user:{agent.Owner.UserId})");
 
-        var stale = Should.ThrowAsync<ToolError>(() => CallAsync(agent.Http, "update_issue", new { key, title = "X", concurrencyStamp = "stale" }));
+        var stale = Should.ThrowAsync<ToolError>(() => CallAsync(agent.Http, "update_ticket", new { key, title = "X", concurrencyStamp = "stale" }));
         (await stale).Message.ShouldContain("changed since");
-        await Should.ThrowAsync<ToolError>(() => CallAsync(agent.Http, "update_issue", new { key, clear = new[] { "title" } }));
+        await Should.ThrowAsync<ToolError>(() => CallAsync(agent.Http, "update_ticket", new { key, clear = new[] { "title" } }));
 
-        var second = Text(await CallAsync(agent.Http, "create_issue", new { space = agent.Space.Key, title = "Second" }), "key");
-        var bulk = await CallAsync(agent.Http, "update_issues", new { keys = new[] { key, second, $"{agent.Space.Key}-99" }, assignee = "me", addLabels = new[] { "bulk" } });
+        var second = Text(await CallAsync(agent.Http, "create_ticket", new { space = agent.Space.Key, title = "Second" }), "key");
+        var bulk = await CallAsync(agent.Http, "update_tickets", new { keys = new[] { key, second, $"{agent.Space.Key}-99" }, assignee = "me", addLabels = new[] { "bulk" } });
         bulk.GetProperty("updated").GetInt32().ShouldBe(2);
         bulk.GetProperty("failed").GetInt32().ShouldBe(1);
-        (await CallAsync(agent.Http, "search_issues", new { space = agent.Space.Key, labels = new[] { "bulk" } })).GetProperty("total").GetInt32().ShouldBe(2);
+        (await CallAsync(agent.Http, "search_tickets", new { space = agent.Space.Key, labels = new[] { "bulk" } })).GetProperty("total").GetInt32().ShouldBe(2);
     }
 
     [Fact]
     public async Task Transitions_comments_work_logs_watchers_and_activity()
     {
         var agent = await AgentAsync();
-        var key = Text(await CallAsync(agent.Http, "create_issue", new { space = agent.Space.Key, title = "Flow" }), "key");
+        var key = Text(await CallAsync(agent.Http, "create_ticket", new { space = agent.Space.Key, title = "Flow" }), "key");
 
         var options = await CallAsync(agent.Http, "list_transitions", new { key });
         options.GetProperty("transitions").EnumerateArray().Select(item => item.GetProperty("to").GetString()).ShouldContain("Done");
-        var refused = await Should.ThrowAsync<ToolError>(() => CallAsync(agent.Http, "transition_issue", new { key, status = "Nowhere" }));
+        var refused = await Should.ThrowAsync<ToolError>(() => CallAsync(agent.Http, "transition_ticket", new { key, status = "Nowhere" }));
         refused.Message.ShouldContain("It can move to");
-        Text(await CallAsync(agent.Http, "transition_issue", new { key, status = "done", comment = "Shipped **today**" }), "status").ShouldBe("Done");
+        Text(await CallAsync(agent.Http, "transition_ticket", new { key, status = "done", comment = "Shipped **today**" }), "status").ShouldBe("Done");
 
         var comment = await CallAsync(agent.Http, "add_comment", new { key, body = "First *note*" });
         var id = Text(comment, "id");
@@ -234,32 +234,32 @@ public class McpToolsTests(ApiFixture fixture)
         await CallAsync(agent.Http, "update_work_log", new { key, id = Text(log, "id"), time = "2h" });
         Text(await CallAsync(agent.Http, "list_work_logs", new { key }), "total").ShouldBe("2h");
 
-        (await CallAsync(agent.Http, "unwatch_issue", new { key })).GetProperty("watchedByMe").GetBoolean().ShouldBeFalse();
-        (await CallAsync(agent.Http, "watch_issue", new { key })).GetProperty("watchedByMe").GetBoolean().ShouldBeTrue();
+        (await CallAsync(agent.Http, "unwatch_ticket", new { key })).GetProperty("watchedByMe").GetBoolean().ShouldBeFalse();
+        (await CallAsync(agent.Http, "watch_ticket", new { key })).GetProperty("watchedByMe").GetBoolean().ShouldBeTrue();
 
-        var activity = await CallAsync(agent.Http, "get_issue_activity", new { key });
+        var activity = await CallAsync(agent.Http, "get_ticket_activity", new { key });
         activity.GetProperty("activity").EnumerateArray().Select(item => Text(item, "field")).ShouldContain("status");
     }
 
     [Fact]
-    public async Task Issues_move_between_sprints_and_show_on_the_backlog_and_board()
+    public async Task Tickets_move_between_sprints_and_show_on_the_backlog_and_board()
     {
         var agent = await AgentAsync();
         var key = agent.Space.Key;
         (await agent.Owner.Http.PostAsJsonAsync("/api/v1/sprint", new { projectId = agent.Space.Id, name = "Sprint 1" }, Token)).EnsureSuccessStatusCode();
-        var first = Text(await CallAsync(agent.Http, "create_issue", new { space = key, title = "Planned", sprint = "Sprint 1" }), "key");
-        var second = Text(await CallAsync(agent.Http, "create_issue", new { space = key, title = "Later" }), "key");
+        var first = Text(await CallAsync(agent.Http, "create_ticket", new { space = key, title = "Planned", sprint = "Sprint 1" }), "key");
+        var second = Text(await CallAsync(agent.Http, "create_ticket", new { space = key, title = "Later" }), "key");
 
         var backlog = await CallAsync(agent.Http, "get_backlog", new { space = key });
-        backlog.GetProperty("sprints")[0].GetProperty("issues")[0].GetProperty("key").GetString().ShouldBe(first);
+        backlog.GetProperty("sprints")[0].GetProperty("tickets")[0].GetProperty("key").GetString().ShouldBe(first);
         backlog.GetProperty("backlog")[0].GetProperty("key").GetString().ShouldBe(second);
 
         await CallAsync(agent.Http, "move_to_sprint", new { keys = new[] { second }, sprint = "sprint 1", before = first });
         var moved = await CallAsync(agent.Http, "get_backlog", new { space = key });
-        moved.GetProperty("sprints")[0].GetProperty("issues").EnumerateArray().Select(item => Text(item, "key")).ShouldBe([second, first]);
+        moved.GetProperty("sprints")[0].GetProperty("tickets").EnumerateArray().Select(item => Text(item, "key")).ShouldBe([second, first]);
 
-        await CallAsync(agent.Http, "update_issue", new { key = first, sprint = "backlog" });
-        Text(await CallAsync(agent.Http, "get_issue", new { key = second }), "sprint").ShouldStartWith("Sprint 1");
+        await CallAsync(agent.Http, "update_ticket", new { key = first, sprint = "backlog" });
+        Text(await CallAsync(agent.Http, "get_ticket", new { key = second }), "sprint").ShouldStartWith("Sprint 1");
 
         var board = await CallAsync(agent.Http, "get_board", new { space = key });
         board.GetProperty("columns").GetArrayLength().ShouldBeGreaterThan(0);
@@ -272,22 +272,22 @@ public class McpToolsTests(ApiFixture fixture)
         (await CallAsync(agent.Http, "list_spaces", new { })).EnumerateArray().Select(item => Text(item, "key")).ShouldContain(agent.Space.Key);
         foreach (var (tool, arguments) in new (string, object)[]
         {
-            ("create_issue", new { space = agent.Space.Key, title = "No" }),
-            ("create_issues", new { space = agent.Space.Key, items = new[] { new { title = "No" } } }),
-            ("update_issues", new { keys = new[] { "X-1" }, assignee = "me" }),
+            ("create_ticket", new { space = agent.Space.Key, title = "No" }),
+            ("create_tickets", new { space = agent.Space.Key, items = new[] { new { title = "No" } } }),
+            ("update_tickets", new { keys = new[] { "X-1" }, assignee = "me" }),
             ("move_to_sprint", new { keys = new[] { "X-1" }, sprint = "backlog" }),
             ("log_work", new { key = "X-1", time = "1h" }),
-            ("watch_issue", new { key = "X-1" }),
+            ("watch_ticket", new { key = "X-1" }),
         })
         {
             (await Should.ThrowAsync<ToolError>(() => CallAsync(agent.Http, tool, arguments))).Message.ShouldContain("read-only");
         }
 
         var owner = await AgentAsync();
-        var key = Text(await CallAsync(owner.Http, "create_issue", new { space = owner.Space.Key, title = "Private" }), "key");
+        var key = Text(await CallAsync(owner.Http, "create_ticket", new { space = owner.Space.Key, title = "Private" }), "key");
         var outsider = await AgentAsync();
-        await Should.ThrowAsync<ToolError>(() => CallAsync(outsider.Http, "get_issue", new { key }));
-        await Should.ThrowAsync<ToolError>(() => CallAsync(outsider.Http, "update_issue", new { key, title = "Mine" }));
-        (await CallAsync(outsider.Http, "search_issues", new { text = "Private" })).GetProperty("total").GetInt32().ShouldBe(0);
+        await Should.ThrowAsync<ToolError>(() => CallAsync(outsider.Http, "get_ticket", new { key }));
+        await Should.ThrowAsync<ToolError>(() => CallAsync(outsider.Http, "update_ticket", new { key, title = "Mine" }));
+        (await CallAsync(outsider.Http, "search_tickets", new { text = "Private" })).GetProperty("total").GetInt32().ShouldBe(0);
     }
 }

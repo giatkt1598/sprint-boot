@@ -110,7 +110,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    issueId?: string;
+                    ticketId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -1358,7 +1358,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    issueId?: string;
+                    ticketId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -1446,7 +1446,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/attachment/upload/{issueId}": {
+    "/api/v1/attachment/upload/{ticketId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1460,7 +1460,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    issueId: string;
+                    ticketId: string;
                 };
                 cookie?: never;
             };
@@ -2750,7 +2750,7 @@ export interface paths {
             parameters: {
                 query?: {
                     projectId?: string;
-                    issueId?: string;
+                    ticketId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -2846,7 +2846,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/board/rank/{issueId}": {
+    "/api/v1/board/rank/{ticketId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -2860,15 +2860,15 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    issueId: string;
+                    ticketId: string;
                 };
                 cookie?: never;
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["RankIssueInput"];
-                    "text/json": components["schemas"]["RankIssueInput"];
-                    "application/*+json": components["schemas"]["RankIssueInput"];
+                    "application/json": components["schemas"]["RankTicketInput"];
+                    "text/json": components["schemas"]["RankTicketInput"];
+                    "application/*+json": components["schemas"]["RankTicketInput"];
                 };
             };
             responses: {
@@ -2964,7 +2964,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    issueId?: string;
+                    ticketId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -5176,7 +5176,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/git-issue/development/{issueId}": {
+    "/api/v1/git-ticket/development/{ticketId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -5188,7 +5188,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    issueId: string;
+                    ticketId: string;
                 };
                 cookie?: never;
             };
@@ -5274,7 +5274,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/git-issue/branch-options/{issueId}": {
+    "/api/v1/git-ticket/branch-options/{ticketId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -5286,7 +5286,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    issueId: string;
+                    ticketId: string;
                 };
                 cookie?: never;
             };
@@ -5372,7 +5372,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/git-issue/branches": {
+    "/api/v1/git-ticket/branches": {
         parameters: {
             query?: never;
             header?: never;
@@ -5382,7 +5382,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    issueId?: string;
+                    ticketId?: string;
                     repositoryId?: string;
                 };
                 header?: never;
@@ -5471,7 +5471,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/git-issue/branch/{issueId}": {
+    "/api/v1/git-ticket/branch/{ticketId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -5485,7 +5485,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    issueId: string;
+                    ticketId: string;
                 };
                 cookie?: never;
             };
@@ -5575,7 +5575,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/git-issue/refresh/{issueId}": {
+    "/api/v1/git-ticket/refresh/{ticketId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -5589,7 +5589,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    issueId: string;
+                    ticketId: string;
                 };
                 cookie?: never;
             };
@@ -5677,7 +5677,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/global-issue-template": {
+    "/api/v1/global-ticket-template": {
         parameters: {
             query?: never;
             header?: never;
@@ -5699,8 +5699,8 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["GlobalIssueTemplateDto"][];
-                        "text/json": components["schemas"]["GlobalIssueTemplateDto"][];
+                        "application/json": components["schemas"]["GlobalTicketTemplateDto"][];
+                        "text/json": components["schemas"]["GlobalTicketTemplateDto"][];
                     };
                 };
                 /** @description Bad Request */
@@ -5775,9 +5775,9 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["SaveGlobalIssueTemplateInput"];
-                    "text/json": components["schemas"]["SaveGlobalIssueTemplateInput"];
-                    "application/*+json": components["schemas"]["SaveGlobalIssueTemplateInput"];
+                    "application/json": components["schemas"]["SaveGlobalTicketTemplateInput"];
+                    "text/json": components["schemas"]["SaveGlobalTicketTemplateInput"];
+                    "application/*+json": components["schemas"]["SaveGlobalTicketTemplateInput"];
                 };
             };
             responses: {
@@ -5787,8 +5787,8 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["GlobalIssueTemplateDto"];
-                        "text/json": components["schemas"]["GlobalIssueTemplateDto"];
+                        "application/json": components["schemas"]["GlobalTicketTemplateDto"];
+                        "text/json": components["schemas"]["GlobalTicketTemplateDto"];
                     };
                 };
                 /** @description Bad Request */
@@ -5859,7 +5859,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/global-issue-template/{id}": {
+    "/api/v1/global-ticket-template/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -5878,9 +5878,9 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["SaveGlobalIssueTemplateInput"];
-                    "text/json": components["schemas"]["SaveGlobalIssueTemplateInput"];
-                    "application/*+json": components["schemas"]["SaveGlobalIssueTemplateInput"];
+                    "application/json": components["schemas"]["SaveGlobalTicketTemplateInput"];
+                    "text/json": components["schemas"]["SaveGlobalTicketTemplateInput"];
+                    "application/*+json": components["schemas"]["SaveGlobalTicketTemplateInput"];
                 };
             };
             responses: {
@@ -5890,8 +5890,8 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["GlobalIssueTemplateDto"];
-                        "text/json": components["schemas"]["GlobalIssueTemplateDto"];
+                        "application/json": components["schemas"]["GlobalTicketTemplateDto"];
+                        "text/json": components["schemas"]["GlobalTicketTemplateDto"];
                     };
                 };
                 /** @description Bad Request */
@@ -7608,2342 +7608,6 @@ export interface paths {
             };
         };
         delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/issue/types/{projectId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    projectId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["IssueTypeDto"][];
-                        "text/json": components["schemas"]["IssueTypeDto"][];
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/issue/priorities": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["PriorityDto"][];
-                        "text/json": components["schemas"]["PriorityDto"][];
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/issue/by-key": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: {
-                    key?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["IssueDto"];
-                        "text/json": components["schemas"]["IssueDto"];
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/issue": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["CreateIssueInput"];
-                    "text/json": components["schemas"]["CreateIssueInput"];
-                    "application/*+json": components["schemas"]["CreateIssueInput"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["IssueDto"];
-                        "text/json": components["schemas"]["IssueDto"];
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/issue/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["UpdateIssueInput"];
-                    "text/json": components["schemas"]["UpdateIssueInput"];
-                    "application/*+json": components["schemas"]["UpdateIssueInput"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["IssueDto"];
-                        "text/json": components["schemas"]["IssueDto"];
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        post?: never;
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description No Content */
-                204: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/issue/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: {
-                    Sorting?: string;
-                    ProjectId?: string;
-                    Text?: string;
-                    TypeIds?: string[];
-                    StatusIds?: string[];
-                    PriorityIds?: string[];
-                    AssigneeIds?: string[];
-                    ReporterIds?: string[];
-                    ParentIds?: string[];
-                    Labels?: string[];
-                    CreatedFrom?: string;
-                    CreatedTo?: string;
-                    UpdatedFrom?: string;
-                    UpdatedTo?: string;
-                    SkipCount?: number;
-                    MaxResultCount?: number;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["IssueSearchResultDto"];
-                        "text/json": components["schemas"]["IssueSearchResultDto"];
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/issue/labels/{projectId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    projectId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": string[];
-                        "text/json": string[];
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/issue/epics/{projectId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    projectId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["EpicRowDto"][];
-                        "text/json": components["schemas"]["EpicRowDto"][];
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/issue/{id}/activity": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["IssueActivityDto"][];
-                        "text/json": components["schemas"]["IssueActivityDto"][];
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/issue/deleted-list": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: {
-                    SkipCount?: number;
-                    MaxResultCount?: number;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["PagedResultDtoOfDeletedIssueDto"];
-                        "text/json": components["schemas"]["PagedResultDtoOfDeletedIssueDto"];
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/issue/{id}/restore": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description No Content */
-                204: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/issue/set-field-for-workflow": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: {
-                    field?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["Issue"];
-                    "text/json": components["schemas"]["Issue"];
-                    "application/*+json": components["schemas"]["Issue"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description No Content */
-                204: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/issue-link": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: {
-                    issueId?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["IssueLinkDto"][];
-                        "text/json": components["schemas"]["IssueLinkDto"][];
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post: {
-            parameters: {
-                query?: {
-                    issueId?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["CreateIssueLinkInput"];
-                    "text/json": components["schemas"]["CreateIssueLinkInput"];
-                    "application/*+json": components["schemas"]["CreateIssueLinkInput"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["IssueLinkDto"];
-                        "text/json": components["schemas"]["IssueLinkDto"];
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/issue-link/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description No Content */
-                204: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/issue-link-type": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["IssueLinkTypeDto"][];
-                        "text/json": components["schemas"]["IssueLinkTypeDto"][];
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["SaveIssueLinkTypeInput"];
-                    "text/json": components["schemas"]["SaveIssueLinkTypeInput"];
-                    "application/*+json": components["schemas"]["SaveIssueLinkTypeInput"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["IssueLinkTypeDto"];
-                        "text/json": components["schemas"]["IssueLinkTypeDto"];
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/issue-link-type/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["SaveIssueLinkTypeInput"];
-                    "text/json": components["schemas"]["SaveIssueLinkTypeInput"];
-                    "application/*+json": components["schemas"]["SaveIssueLinkTypeInput"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["IssueLinkTypeDto"];
-                        "text/json": components["schemas"]["IssueLinkTypeDto"];
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        post?: never;
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description No Content */
-                204: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/issue-template": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: {
-                    projectId?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["IssueTemplateDto"][];
-                        "text/json": components["schemas"]["IssueTemplateDto"][];
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post: {
-            parameters: {
-                query?: {
-                    projectId?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["SaveIssueTemplateInput"];
-                    "text/json": components["schemas"]["SaveIssueTemplateInput"];
-                    "application/*+json": components["schemas"]["SaveIssueTemplateInput"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["IssueTemplateDto"];
-                        "text/json": components["schemas"]["IssueTemplateDto"];
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/issue-template/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["SaveIssueTemplateInput"];
-                    "text/json": components["schemas"]["SaveIssueTemplateInput"];
-                    "application/*+json": components["schemas"]["SaveIssueTemplateInput"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["IssueTemplateDto"];
-                        "text/json": components["schemas"]["IssueTemplateDto"];
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
-        post?: never;
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description No Content */
-                204: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-                /** @description Not Implemented */
-                501: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
-                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
-                    };
-                };
-            };
-        };
         options?: never;
         head?: never;
         patch?: never;
@@ -13326,7 +10990,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/recent-issue/visit/{issueId}": {
+    "/api/v1/recent-ticket/visit/{ticketId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -13340,7 +11004,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    issueId: string;
+                    ticketId: string;
                 };
                 cookie?: never;
             };
@@ -13428,7 +11092,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/recent-issue": {
+    "/api/v1/recent-ticket": {
         parameters: {
             query?: never;
             header?: never;
@@ -13450,8 +11114,8 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["IssueSummaryDto"][];
-                        "text/json": components["schemas"]["IssueSummaryDto"][];
+                        "application/json": components["schemas"]["TicketSummaryDto"][];
+                        "text/json": components["schemas"]["TicketSummaryDto"][];
                     };
                 };
                 /** @description Bad Request */
@@ -14521,7 +12185,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/sprint/move-issue/{issueId}": {
+    "/api/v1/sprint/move-ticket/{ticketId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -14535,15 +12199,15 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    issueId: string;
+                    ticketId: string;
                 };
                 cookie?: never;
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["MoveIssueInput"];
-                    "text/json": components["schemas"]["MoveIssueInput"];
-                    "application/*+json": components["schemas"]["MoveIssueInput"];
+                    "application/json": components["schemas"]["MoveTicketInput"];
+                    "text/json": components["schemas"]["MoveTicketInput"];
+                    "application/*+json": components["schemas"]["MoveTicketInput"];
                 };
             };
             responses: {
@@ -14629,7 +12293,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/sprint/for-issue/{issueId}": {
+    "/api/v1/sprint/for-ticket/{ticketId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -14641,7 +12305,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    issueId: string;
+                    ticketId: string;
                 };
                 cookie?: never;
             };
@@ -16270,7 +13934,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/transition/available/{issueId}": {
+    "/api/v1/ticket/types/{projectId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -16282,7 +13946,2343 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    issueId: string;
+                    projectId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TicketTypeDto"][];
+                        "text/json": components["schemas"]["TicketTypeDto"][];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ticket/priorities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PriorityDto"][];
+                        "text/json": components["schemas"]["PriorityDto"][];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ticket/by-key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    key?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TicketDto"];
+                        "text/json": components["schemas"]["TicketDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateTicketInput"];
+                    "text/json": components["schemas"]["CreateTicketInput"];
+                    "application/*+json": components["schemas"]["CreateTicketInput"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TicketDto"];
+                        "text/json": components["schemas"]["TicketDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ticket/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateTicketInput"];
+                    "text/json": components["schemas"]["UpdateTicketInput"];
+                    "application/*+json": components["schemas"]["UpdateTicketInput"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TicketDto"];
+                        "text/json": components["schemas"]["TicketDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ticket/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Sorting?: string;
+                    ProjectId?: string;
+                    Text?: string;
+                    TypeIds?: string[];
+                    StatusIds?: string[];
+                    PriorityIds?: string[];
+                    AssigneeIds?: string[];
+                    ReporterIds?: string[];
+                    ParentIds?: string[];
+                    Labels?: string[];
+                    CreatedFrom?: string;
+                    CreatedTo?: string;
+                    UpdatedFrom?: string;
+                    UpdatedTo?: string;
+                    SkipCount?: number;
+                    MaxResultCount?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TicketSearchResultDto"];
+                        "text/json": components["schemas"]["TicketSearchResultDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ticket/labels/{projectId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": string[];
+                        "text/json": string[];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ticket/epics/{projectId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["EpicRowDto"][];
+                        "text/json": components["schemas"]["EpicRowDto"][];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ticket/{id}/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TicketActivityDto"][];
+                        "text/json": components["schemas"]["TicketActivityDto"][];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ticket/deleted-list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    SkipCount?: number;
+                    MaxResultCount?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PagedResultDtoOfDeletedTicketDto"];
+                        "text/json": components["schemas"]["PagedResultDtoOfDeletedTicketDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ticket/{id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ticket/set-field-for-workflow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: {
+                    field?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Ticket"];
+                    "text/json": components["schemas"]["Ticket"];
+                    "application/*+json": components["schemas"]["Ticket"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ticket-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    ticketId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TicketLinkDto"][];
+                        "text/json": components["schemas"]["TicketLinkDto"][];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: {
+                    ticketId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateTicketLinkInput"];
+                    "text/json": components["schemas"]["CreateTicketLinkInput"];
+                    "application/*+json": components["schemas"]["CreateTicketLinkInput"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TicketLinkDto"];
+                        "text/json": components["schemas"]["TicketLinkDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ticket-link/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ticket-link-type": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TicketLinkTypeDto"][];
+                        "text/json": components["schemas"]["TicketLinkTypeDto"][];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SaveTicketLinkTypeInput"];
+                    "text/json": components["schemas"]["SaveTicketLinkTypeInput"];
+                    "application/*+json": components["schemas"]["SaveTicketLinkTypeInput"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TicketLinkTypeDto"];
+                        "text/json": components["schemas"]["TicketLinkTypeDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ticket-link-type/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SaveTicketLinkTypeInput"];
+                    "text/json": components["schemas"]["SaveTicketLinkTypeInput"];
+                    "application/*+json": components["schemas"]["SaveTicketLinkTypeInput"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TicketLinkTypeDto"];
+                        "text/json": components["schemas"]["TicketLinkTypeDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ticket-template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    projectId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TicketTemplateDto"][];
+                        "text/json": components["schemas"]["TicketTemplateDto"][];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: {
+                    projectId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SaveTicketTemplateInput"];
+                    "text/json": components["schemas"]["SaveTicketTemplateInput"];
+                    "application/*+json": components["schemas"]["SaveTicketTemplateInput"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TicketTemplateDto"];
+                        "text/json": components["schemas"]["TicketTemplateDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ticket-template/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SaveTicketTemplateInput"];
+                    "text/json": components["schemas"]["SaveTicketTemplateInput"];
+                    "application/*+json": components["schemas"]["SaveTicketTemplateInput"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TicketTemplateDto"];
+                        "text/json": components["schemas"]["TicketTemplateDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/transition/available/{ticketId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    ticketId: string;
                 };
                 cookie?: never;
             };
@@ -16368,7 +16368,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/transition/execute/{issueId}": {
+    "/api/v1/transition/execute/{ticketId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -16382,7 +16382,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    issueId: string;
+                    ticketId: string;
                 };
                 cookie?: never;
             };
@@ -17865,7 +17865,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    issueId?: string;
+                    ticketId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -17953,7 +17953,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/watcher/watch/{issueId}": {
+    "/api/v1/watcher/watch/{ticketId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -17967,7 +17967,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    issueId: string;
+                    ticketId: string;
                 };
                 cookie?: never;
             };
@@ -18051,7 +18051,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/watcher/unwatch/{issueId}": {
+    "/api/v1/watcher/unwatch/{ticketId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -18065,7 +18065,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    issueId: string;
+                    ticketId: string;
                 };
                 cookie?: never;
             };
@@ -18851,7 +18851,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    issueId?: string;
+                    ticketId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -19330,8 +19330,8 @@ export interface components {
             /** Format: uuid */
             boardId: string;
             type: components["schemas"]["BoardType"];
-            sprints: components["schemas"]["SprintWithIssuesDto"][] | null;
-            backlog: components["schemas"]["IssueCardDto"][] | null;
+            sprints: components["schemas"]["SprintWithTicketsDto"][] | null;
+            backlog: components["schemas"]["TicketCardDto"][] | null;
             closedSprints: components["schemas"]["SprintSummaryDto"][] | null;
         };
         BoardColumnDto: {
@@ -19357,7 +19357,7 @@ export interface components {
             activeSprint: components["schemas"]["SprintSummaryDto"];
             columns: components["schemas"]["BoardColumnDto"][] | null;
             cardFields: string[] | null;
-            cards: components["schemas"]["IssueCardDto"][] | null;
+            cards: components["schemas"]["TicketCardDto"][] | null;
             unmappedStatuses: components["schemas"]["StatusDto"][] | null;
             staleStatuses: components["schemas"]["StatusDto"][] | null;
         };
@@ -19379,8 +19379,8 @@ export interface components {
         };
         ClosedSprintDto: {
             sprint: components["schemas"]["SprintSummaryDto"];
-            completed: components["schemas"]["IssueCardDto"][] | null;
-            notCompleted: components["schemas"]["IssueCardDto"][] | null;
+            completed: components["schemas"]["TicketCardDto"][] | null;
+            notCompleted: components["schemas"]["TicketCardDto"][] | null;
         };
         CommentDto: {
             /** Format: uuid */
@@ -19428,8 +19428,8 @@ export interface components {
             id: string;
             title: string | null;
             /** Format: uuid */
-            issueId?: string | null;
-            issueKey?: string | null;
+            ticketId?: string | null;
+            ticketKey?: string | null;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -19443,49 +19443,20 @@ export interface components {
         };
         CreateCommentInput: {
             /** Format: uuid */
-            issueId: string;
+            ticketId: string;
             /** Format: uuid */
             parentId?: string | null;
             body: string;
         };
         CreateConversationInput: {
             /** Format: uuid */
-            issueId?: string | null;
+            ticketId?: string | null;
         };
         CreateInvitationInput: {
             /** Format: email */
             email: string;
             systemRole?: string | null;
             projects?: components["schemas"]["InvitationProjectInput"][] | null;
-        };
-        CreateIssueInput: {
-            /** Format: uuid */
-            projectId: string;
-            /** Format: uuid */
-            typeId: string;
-            title: string;
-            description?: string | null;
-            /** Format: uuid */
-            priorityId?: string | null;
-            /** Format: uuid */
-            assigneeId?: string | null;
-            /** Format: uuid */
-            reporterId?: string | null;
-            /** Format: uuid */
-            parentId?: string | null;
-            labels?: string[] | null;
-            /** Format: double */
-            storyPoints?: number | null;
-            /** Format: date */
-            startDate?: string | null;
-            /** Format: date */
-            dueDate?: string | null;
-        };
-        CreateIssueLinkInput: {
-            /** Format: uuid */
-            linkTypeId: string;
-            direction?: components["schemas"]["IssueLinkDirection"];
-            issueKey: string;
         };
         CreatePersonalTokenInput: {
             name: string;
@@ -19511,6 +19482,35 @@ export interface components {
             /** Format: uuid */
             projectId: string;
         };
+        CreateTicketInput: {
+            /** Format: uuid */
+            projectId: string;
+            /** Format: uuid */
+            typeId: string;
+            title: string;
+            description?: string | null;
+            /** Format: uuid */
+            priorityId?: string | null;
+            /** Format: uuid */
+            assigneeId?: string | null;
+            /** Format: uuid */
+            reporterId?: string | null;
+            /** Format: uuid */
+            parentId?: string | null;
+            labels?: string[] | null;
+            /** Format: double */
+            storyPoints?: number | null;
+            /** Format: date */
+            startDate?: string | null;
+            /** Format: date */
+            dueDate?: string | null;
+        };
+        CreateTicketLinkInput: {
+            /** Format: uuid */
+            linkTypeId: string;
+            direction?: components["schemas"]["TicketLinkDirection"];
+            ticketKey: string;
+        };
         CreateUserInput: {
             name: string;
             /** Format: email */
@@ -19520,7 +19520,7 @@ export interface components {
         };
         CreateWorkLogInput: {
             /** Format: uuid */
-            issueId: string;
+            ticketId: string;
             /** Format: int32 */
             minutes?: number;
             /** Format: date */
@@ -19565,7 +19565,7 @@ export interface components {
             backgroundUrl?: string | null;
             homePage: components["schemas"]["HomePageDto"];
         };
-        DeletedIssueDto: {
+        DeletedTicketDto: {
             /** Format: uuid */
             id: string;
             key: string | null;
@@ -19762,13 +19762,13 @@ export interface components {
          * @enum {integer}
          */
         GitWebhookState: 0 | 1 | 2;
-        GlobalIssueTemplateDto: {
+        GlobalTicketTemplateDto: {
             /** Format: uuid */
             id: string;
-            issueTypeKey: string | null;
+            ticketTypeKey: string | null;
             name: string | null;
             content: string | null;
-            mode: components["schemas"]["IssueTemplateMode"];
+            mode: components["schemas"]["TicketTemplateMode"];
             /** Format: int32 */
             usageCount: number;
         };
@@ -19868,224 +19868,6 @@ export interface components {
          * @enum {integer}
          */
         InvitationStatus: 0 | 1 | 2 | 3;
-        Issue: {
-            /** Format: uuid */
-            readonly id?: string;
-            readonly extraProperties?: {
-                [key: string]: unknown;
-            } | null;
-            concurrencyStamp?: string | null;
-            /** Format: date-time */
-            creationTime?: string;
-            /** Format: uuid */
-            creatorId?: string | null;
-            /** Format: date-time */
-            lastModificationTime?: string | null;
-            /** Format: uuid */
-            lastModifierId?: string | null;
-            isDeleted?: boolean;
-            /** Format: uuid */
-            deleterId?: string | null;
-            /** Format: date-time */
-            deletionTime?: string | null;
-            /** Format: uuid */
-            readonly tenantId?: string | null;
-            /** Format: uuid */
-            projectId?: string;
-            /** Format: int32 */
-            number?: number;
-            /** Format: uuid */
-            typeId?: string;
-            title?: string | null;
-            readonly description?: string | null;
-            readonly descriptionText?: string | null;
-            /** Format: uuid */
-            statusId?: string;
-            /** Format: uuid */
-            workflowVersionId?: string | null;
-            /** Format: uuid */
-            priorityId?: string;
-            readonly resolution?: string | null;
-            /** Format: uuid */
-            assigneeId?: string | null;
-            assigneeType?: components["schemas"]["ActorType"];
-            /** Format: uuid */
-            reporterId?: string | null;
-            /** Format: uuid */
-            parentId?: string | null;
-            /** Format: double */
-            storyPoints?: number | null;
-            /** Format: date */
-            startDate?: string | null;
-            /** Format: date */
-            dueDate?: string | null;
-            readonly rank?: string | null;
-            readonly searchVector?: components["schemas"]["Lexeme"][] | null;
-        };
-        IssueActivityDto: {
-            /** Format: uuid */
-            id: string;
-            actor: components["schemas"]["UserRefDto"];
-            actorType: components["schemas"]["ActorType"];
-            field: string | null;
-            oldValue: string | null;
-            newValue: string | null;
-            /** Format: date-time */
-            createdAt: string;
-        };
-        IssueCardDto: {
-            /** Format: uuid */
-            id: string;
-            key: string | null;
-            title: string | null;
-            type: components["schemas"]["IssueTypeDto"];
-            status: components["schemas"]["StatusDto"];
-            priority: components["schemas"]["PriorityDto"];
-            assignee: components["schemas"]["UserRefDto"];
-            reporter: components["schemas"]["UserRefDto"];
-            labels: string[] | null;
-            /** Format: uuid */
-            epicId: string | null;
-            epicTitle: string | null;
-            /** Format: double */
-            storyPoints: number | null;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-            concurrencyStamp: string | null;
-        };
-        IssueDto: {
-            /** Format: uuid */
-            id: string;
-            key: string | null;
-            /** Format: uuid */
-            projectId: string;
-            projectKey: string | null;
-            projectName: string | null;
-            type: components["schemas"]["IssueTypeDto"];
-            title: string | null;
-            description: string | null;
-            status: components["schemas"]["StatusDto"];
-            priority: components["schemas"]["PriorityDto"];
-            assignee: components["schemas"]["UserRefDto"];
-            reporter: components["schemas"]["UserRefDto"];
-            parent: components["schemas"]["IssueRefDto"];
-            children: components["schemas"]["IssueRefDto"][] | null;
-            labels: string[] | null;
-            /** Format: double */
-            storyPoints: number | null;
-            /** Format: date */
-            startDate: string | null;
-            /** Format: date */
-            dueDate: string | null;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-            /** Format: int32 */
-            totalMinutesLogged: number;
-            concurrencyStamp: string | null;
-        };
-        /**
-         * Format: int32
-         * @enum {integer}
-         */
-        IssueEventKind: 0 | 1 | 2;
-        /**
-         * Format: int32
-         * @enum {integer}
-         */
-        IssueHierarchy: 0 | 1 | 2;
-        /**
-         * Format: int32
-         * @enum {integer}
-         */
-        IssueLinkDirection: 0 | 1;
-        IssueLinkDto: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            linkTypeId: string;
-            direction: components["schemas"]["IssueLinkDirection"];
-            phrase: string | null;
-            issue: components["schemas"]["IssueRefDto"];
-        };
-        IssueLinkTypeDto: {
-            /** Format: uuid */
-            id: string;
-            name: string | null;
-            outward: string | null;
-            inward: string | null;
-            /** Format: int32 */
-            linkCount: number;
-        };
-        IssueRefDto: {
-            /** Format: uuid */
-            id: string;
-            key: string | null;
-            title: string | null;
-            typeIcon: string | null;
-            status: components["schemas"]["StatusDto"];
-            assignee: components["schemas"]["UserRefDto"];
-            concurrencyStamp: string | null;
-        };
-        IssueSearchResultDto: {
-            items?: components["schemas"]["IssueSummaryDto"][] | null;
-            /** Format: int64 */
-            totalCount?: number;
-            exactKey?: string | null;
-        };
-        IssueSummaryDto: {
-            /** Format: uuid */
-            id: string;
-            key: string | null;
-            title: string | null;
-            projectKey: string | null;
-            type: components["schemas"]["IssueTypeDto"];
-            status: components["schemas"]["StatusDto"];
-            priority: components["schemas"]["PriorityDto"];
-            assignee: components["schemas"]["UserRefDto"];
-            reporter: components["schemas"]["UserRefDto"];
-            sprintName: string | null;
-            /** Format: uuid */
-            parentId?: string | null;
-            /** Format: date */
-            startDate?: string | null;
-            /** Format: date */
-            dueDate?: string | null;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-            concurrencyStamp: string | null;
-        };
-        IssueTemplateDto: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            projectId: string;
-            /** Format: uuid */
-            issueTypeId: string;
-            name: string | null;
-            content: string | null;
-            mode: components["schemas"]["IssueTemplateMode"];
-            /** Format: uuid */
-            globalTemplateId?: string | null;
-            isDefault: boolean;
-        };
-        /**
-         * Format: int32
-         * @enum {integer}
-         */
-        IssueTemplateMode: 0 | 1;
-        IssueTypeDto: {
-            /** Format: uuid */
-            id: string;
-            name: string | null;
-            icon: string | null;
-            hierarchy: components["schemas"]["IssueHierarchy"];
-        };
         LdapLoginInput: {
             provider: string;
             userName: string;
@@ -20121,19 +19903,19 @@ export interface components {
             email: string;
             password: string;
         };
-        MoveIssueInput: {
+        MoveTicketInput: {
             /** Format: uuid */
             sprintId?: string | null;
             /** Format: uuid */
-            afterIssueId?: string | null;
+            afterTicketId?: string | null;
             /** Format: uuid */
-            beforeIssueId?: string | null;
+            beforeTicketId?: string | null;
         };
         NotificationDto: {
             /** Format: uuid */
             id: string;
             eventType: string | null;
-            issueKey: string | null;
+            ticketKey: string | null;
             title: string | null;
             actorName: string | null;
             detail: string | null;
@@ -20179,26 +19961,13 @@ export interface components {
         };
         OverviewEventDto: {
             actor: components["schemas"]["UserRefDto"];
-            kind: components["schemas"]["IssueEventKind"];
-            issueKey: string | null;
-            issueTitle: string | null;
+            kind: components["schemas"]["TicketEventKind"];
+            ticketKey: string | null;
+            ticketTitle: string | null;
             field: string | null;
             newValue: string | null;
             /** Format: date-time */
             at: string;
-        };
-        OverviewIssueCountsDto: {
-            /** Format: int32 */
-            total: number;
-            /** Format: int32 */
-            createdInPeriod: number;
-            /** Format: int32 */
-            toDo: number;
-            /** Format: int32 */
-            inProgress: number;
-            inProgressByStatus: components["schemas"]["OverviewStatusCountDto"][] | null;
-            /** Format: int32 */
-            done: number;
         };
         /**
          * Format: int32
@@ -20235,7 +20004,7 @@ export interface components {
             members: number;
             /** Format: int32 */
             membersAddedInPeriod: number;
-            issues: components["schemas"]["OverviewIssueCountsDto"];
+            tickets: components["schemas"]["OverviewTicketCountsDto"];
             byType: components["schemas"]["OverviewTypeCountDto"][] | null;
             activity: components["schemas"]["OverviewActivityDto"];
             pullRequests: components["schemas"]["OverviewPullRequestsDto"];
@@ -20244,10 +20013,23 @@ export interface components {
             velocitySprints: number;
             recent: components["schemas"]["OverviewEventDto"][] | null;
         };
+        OverviewTicketCountsDto: {
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            createdInPeriod: number;
+            /** Format: int32 */
+            toDo: number;
+            /** Format: int32 */
+            inProgress: number;
+            inProgressByStatus: components["schemas"]["OverviewStatusCountDto"][] | null;
+            /** Format: int32 */
+            done: number;
+        };
         OverviewTypeCountDto: {
             name: string | null;
             icon: string | null;
-            hierarchy: components["schemas"]["IssueHierarchy"];
+            hierarchy: components["schemas"]["TicketHierarchy"];
             /** Format: int32 */
             count: number;
         };
@@ -20256,10 +20038,10 @@ export interface components {
             /** Format: double */
             points: number;
             /** Format: int32 */
-            issues: number;
+            tickets: number;
         };
-        PagedResultDtoOfDeletedIssueDto: {
-            items?: components["schemas"]["DeletedIssueDto"][] | null;
+        PagedResultDtoOfDeletedTicketDto: {
+            items?: components["schemas"]["DeletedTicketDto"][] | null;
             /** Format: int64 */
             totalCount?: number;
         };
@@ -20325,7 +20107,7 @@ export interface components {
             sprintLengthDays: number;
             lead: components["schemas"]["UserRefDto"];
             /** Format: int32 */
-            issueCount: number;
+            ticketCount: number;
             /** Format: date-time */
             updatedAt: string;
             permissions: string[] | null;
@@ -20351,7 +20133,7 @@ export interface components {
         };
         ProjectWorkflowDto: {
             /** Format: uuid */
-            issueTypeId: string;
+            ticketTypeId: string;
             /** Format: uuid */
             workflowId: string;
             workflowName: string | null;
@@ -20366,11 +20148,11 @@ export interface components {
                 [key: string]: string;
             } | null;
         };
-        RankIssueInput: {
+        RankTicketInput: {
             /** Format: uuid */
-            afterIssueId?: string | null;
+            afterTicketId?: string | null;
             /** Format: uuid */
-            beforeIssueId?: string | null;
+            beforeTicketId?: string | null;
         };
         /**
          * Format: int32
@@ -20476,11 +20258,11 @@ export interface components {
             clientId?: string | null;
             clientSecret?: string | null;
         };
-        SaveGlobalIssueTemplateInput: {
-            issueTypeKey: string;
+        SaveGlobalTicketTemplateInput: {
+            ticketTypeKey: string;
             name: string;
             content?: string | null;
-            mode?: components["schemas"]["IssueTemplateMode"];
+            mode?: components["schemas"]["TicketTemplateMode"];
         };
         SaveGoalInput: {
             name: string;
@@ -20491,21 +20273,6 @@ export interface components {
             startDate?: string | null;
             /** Format: date */
             targetDate?: string | null;
-        };
-        SaveIssueLinkTypeInput: {
-            name: string;
-            outward: string;
-            inward: string;
-        };
-        SaveIssueTemplateInput: {
-            /** Format: uuid */
-            issueTypeId: string;
-            /** Format: uuid */
-            globalTemplateId?: string | null;
-            name?: string | null;
-            content?: string | null;
-            mode?: components["schemas"]["IssueTemplateMode"];
-            isDefault?: boolean;
         };
         SavePreferencesInput: {
             items: components["schemas"]["NotificationPreferenceDto"][] | null;
@@ -20545,6 +20312,21 @@ export interface components {
             /** Format: uuid */
             projectId?: string | null;
         };
+        SaveTicketLinkTypeInput: {
+            name: string;
+            outward: string;
+            inward: string;
+        };
+        SaveTicketTemplateInput: {
+            /** Format: uuid */
+            ticketTypeId: string;
+            /** Format: uuid */
+            globalTemplateId?: string | null;
+            name?: string | null;
+            content?: string | null;
+            mode?: components["schemas"]["TicketTemplateMode"];
+            isDefault?: boolean;
+        };
         SendTestEmailInput: {
             /** Format: email */
             to: string;
@@ -20562,7 +20344,7 @@ export interface components {
             /** Format: uuid */
             projectId: string;
             /** Format: uuid */
-            issueTypeId: string;
+            ticketTypeId: string;
             /** Format: uuid */
             workflowId: string;
             statusMappings?: {
@@ -20630,20 +20412,20 @@ export interface components {
             /** Format: date-time */
             completedAt: string | null;
             /** Format: int32 */
-            issueCount: number;
+            ticketCount: number;
             /** Format: double */
             totalPoints: number;
             /** Format: double */
             donePoints: number;
         };
-        SprintWithIssuesDto: {
+        SprintWithTicketsDto: {
             sprint: components["schemas"]["SprintSummaryDto"];
-            issues: components["schemas"]["IssueCardDto"][] | null;
+            tickets: components["schemas"]["TicketCardDto"][] | null;
         };
         StartUploadInput: {
             purpose?: components["schemas"]["UploadPurpose"];
             /** Format: uuid */
-            issueId?: string | null;
+            ticketId?: string | null;
             /** Format: uuid */
             projectId?: string | null;
             fileName: string;
@@ -20661,7 +20443,7 @@ export interface components {
             /** Format: int32 */
             workflowCount: number;
             /** Format: int32 */
-            issueCount: number;
+            ticketCount: number;
             /** Format: date-time */
             updatedAt: string;
         };
@@ -20680,7 +20462,7 @@ export interface components {
         };
         StatusUsageDto: {
             /** Format: int32 */
-            issueCount: number;
+            ticketCount: number;
             /** Format: int32 */
             workflowCount: number;
             replacementRequired: boolean;
@@ -20718,6 +20500,224 @@ export interface components {
             baseUrl?: string | null;
             accessToken?: string | null;
         };
+        Ticket: {
+            /** Format: uuid */
+            readonly id?: string;
+            readonly extraProperties?: {
+                [key: string]: unknown;
+            } | null;
+            concurrencyStamp?: string | null;
+            /** Format: date-time */
+            creationTime?: string;
+            /** Format: uuid */
+            creatorId?: string | null;
+            /** Format: date-time */
+            lastModificationTime?: string | null;
+            /** Format: uuid */
+            lastModifierId?: string | null;
+            isDeleted?: boolean;
+            /** Format: uuid */
+            deleterId?: string | null;
+            /** Format: date-time */
+            deletionTime?: string | null;
+            /** Format: uuid */
+            readonly tenantId?: string | null;
+            /** Format: uuid */
+            projectId?: string;
+            /** Format: int32 */
+            number?: number;
+            /** Format: uuid */
+            typeId?: string;
+            title?: string | null;
+            readonly description?: string | null;
+            readonly descriptionText?: string | null;
+            /** Format: uuid */
+            statusId?: string;
+            /** Format: uuid */
+            workflowVersionId?: string | null;
+            /** Format: uuid */
+            priorityId?: string;
+            readonly resolution?: string | null;
+            /** Format: uuid */
+            assigneeId?: string | null;
+            assigneeType?: components["schemas"]["ActorType"];
+            /** Format: uuid */
+            reporterId?: string | null;
+            /** Format: uuid */
+            parentId?: string | null;
+            /** Format: double */
+            storyPoints?: number | null;
+            /** Format: date */
+            startDate?: string | null;
+            /** Format: date */
+            dueDate?: string | null;
+            readonly rank?: string | null;
+            readonly searchVector?: components["schemas"]["Lexeme"][] | null;
+        };
+        TicketActivityDto: {
+            /** Format: uuid */
+            id: string;
+            actor: components["schemas"]["UserRefDto"];
+            actorType: components["schemas"]["ActorType"];
+            field: string | null;
+            oldValue: string | null;
+            newValue: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        TicketCardDto: {
+            /** Format: uuid */
+            id: string;
+            key: string | null;
+            title: string | null;
+            type: components["schemas"]["TicketTypeDto"];
+            status: components["schemas"]["StatusDto"];
+            priority: components["schemas"]["PriorityDto"];
+            assignee: components["schemas"]["UserRefDto"];
+            reporter: components["schemas"]["UserRefDto"];
+            labels: string[] | null;
+            /** Format: uuid */
+            epicId: string | null;
+            epicTitle: string | null;
+            /** Format: double */
+            storyPoints: number | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            concurrencyStamp: string | null;
+        };
+        TicketDto: {
+            /** Format: uuid */
+            id: string;
+            key: string | null;
+            /** Format: uuid */
+            projectId: string;
+            projectKey: string | null;
+            projectName: string | null;
+            type: components["schemas"]["TicketTypeDto"];
+            title: string | null;
+            description: string | null;
+            status: components["schemas"]["StatusDto"];
+            priority: components["schemas"]["PriorityDto"];
+            assignee: components["schemas"]["UserRefDto"];
+            reporter: components["schemas"]["UserRefDto"];
+            parent: components["schemas"]["TicketRefDto"];
+            children: components["schemas"]["TicketRefDto"][] | null;
+            labels: string[] | null;
+            /** Format: double */
+            storyPoints: number | null;
+            /** Format: date */
+            startDate: string | null;
+            /** Format: date */
+            dueDate: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: int32 */
+            totalMinutesLogged: number;
+            concurrencyStamp: string | null;
+        };
+        /**
+         * Format: int32
+         * @enum {integer}
+         */
+        TicketEventKind: 0 | 1 | 2;
+        /**
+         * Format: int32
+         * @enum {integer}
+         */
+        TicketHierarchy: 0 | 1 | 2;
+        /**
+         * Format: int32
+         * @enum {integer}
+         */
+        TicketLinkDirection: 0 | 1;
+        TicketLinkDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            linkTypeId: string;
+            direction: components["schemas"]["TicketLinkDirection"];
+            phrase: string | null;
+            ticket: components["schemas"]["TicketRefDto"];
+        };
+        TicketLinkTypeDto: {
+            /** Format: uuid */
+            id: string;
+            name: string | null;
+            outward: string | null;
+            inward: string | null;
+            /** Format: int32 */
+            linkCount: number;
+        };
+        TicketRefDto: {
+            /** Format: uuid */
+            id: string;
+            key: string | null;
+            title: string | null;
+            typeIcon: string | null;
+            status: components["schemas"]["StatusDto"];
+            assignee: components["schemas"]["UserRefDto"];
+            concurrencyStamp: string | null;
+        };
+        TicketSearchResultDto: {
+            items?: components["schemas"]["TicketSummaryDto"][] | null;
+            /** Format: int64 */
+            totalCount?: number;
+            exactKey?: string | null;
+        };
+        TicketSummaryDto: {
+            /** Format: uuid */
+            id: string;
+            key: string | null;
+            title: string | null;
+            projectKey: string | null;
+            type: components["schemas"]["TicketTypeDto"];
+            status: components["schemas"]["StatusDto"];
+            priority: components["schemas"]["PriorityDto"];
+            assignee: components["schemas"]["UserRefDto"];
+            reporter: components["schemas"]["UserRefDto"];
+            sprintName: string | null;
+            /** Format: uuid */
+            parentId?: string | null;
+            /** Format: date */
+            startDate?: string | null;
+            /** Format: date */
+            dueDate?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            concurrencyStamp: string | null;
+        };
+        TicketTemplateDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            projectId: string;
+            /** Format: uuid */
+            ticketTypeId: string;
+            name: string | null;
+            content: string | null;
+            mode: components["schemas"]["TicketTemplateMode"];
+            /** Format: uuid */
+            globalTemplateId?: string | null;
+            isDefault: boolean;
+        };
+        /**
+         * Format: int32
+         * @enum {integer}
+         */
+        TicketTemplateMode: 0 | 1;
+        TicketTypeDto: {
+            /** Format: uuid */
+            id: string;
+            name: string | null;
+            icon: string | null;
+            hierarchy: components["schemas"]["TicketHierarchy"];
+        };
         ToggleReactionInput: {
             emoji: string;
         };
@@ -20748,12 +20748,6 @@ export interface components {
             projectId: string;
             role: string;
         };
-        UpdateIssueInput: {
-            concurrencyStamp: string;
-            fields: {
-                [key: string]: unknown;
-            };
-        };
         UpdateMemberInput: {
             role: string;
         };
@@ -20773,6 +20767,12 @@ export interface components {
         };
         UpdateProjectIntroductionInput: {
             content?: string | null;
+        };
+        UpdateTicketInput: {
+            concurrencyStamp: string;
+            fields: {
+                [key: string]: unknown;
+            };
         };
         UpdateWorkLogInput: {
             /** Format: int32 */

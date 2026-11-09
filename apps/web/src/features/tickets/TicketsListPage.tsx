@@ -1,0 +1,156 @@
+import Link from '@mui/material/Link';
+import Typography from '@mui/material/Typography';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link as RouterLink, useParams } from 'react-router';
+import { apiClient, unwrap } from '../../api';
+import { Avatar } from '../../components/Avatar';
+import { TicketTypeIcon, type TicketType as IconType } from '../../components/TicketIcons';
+import { Pagination } from '../../components/Pagination';
+import { SearchInput } from '../../components/SearchInput';
+import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
+import { Table, useTableSort } from '../../components/Table';
+import { formatDate } from '../../lib/format';
+import { useMembers, useSpace } from '../spaces/api';
+import { FilterChips, FilterControls, useTicketFilters, useSearchText } from './TicketFilters';
+import { QuickAssignee, QuickPriority, QuickStatus } from './QuickFields';
+import type { TicketSummary } from './api';
+
+const PAGE_SIZE = 25;
+
+// One line per ticket: long titles, names and sprints stop here and end in an ellipsis.
+const TITLE_MAX = 480;
+const PERSON_MAX = 200;
+
+export function TicketsListPage() {
+  const { t, i18n } = useTranslation();
+  const { spaceKey } = useParams();
+  const space = useSpace(spaceKey);
+  const projectId = space.data?.id;
+  // The overview links here with the types or statuses a figure counted; the filters read them from the address.
+  const filters = useTicketFilters(projectId);
+  const members = useMembers(projectId);
+  const people = (members.data ?? []).map((member) => member.user!);
+  // Search across spaces has no single space to check, so its rows stay read-only.
+  const canEdit = space.data?.permissions?.includes('Ticket.Edit') ?? false;
+  const { values, createdRange, updatedRange } = filters;
+
+  const [text, setText] = useSearchText();
+  const [skip, setSkip] = useState(0);
+  const { sort, toggle } = useTableSort();
+  const sorting = sort ? `${sort.key} ${sort.direction}` : undefined;
+
+  const search = useQuery({
+    queryKey: ['tickets', 'search', projectId, text, values, filters.created, filters.updated, sorting, skip],
+    enabled: !spaceKey || Boolean(projectId),
+    placeholderData: keepPreviousData,
+    queryFn: () =>
+      unwrap(
+        apiClient.GET('/api/v1/ticket/search', {
+          params: {
+            query: {
+              ProjectId: projectId,
+              Text: text || undefined,
+              AssigneeIds: values.assignee,
+              ReporterIds: values.reporter,
+              TypeIds: values.type,
+              StatusIds: values.status,
+              PriorityIds: values.priority,
+              ParentIds: values.epic,
+              Labels: values.label,
+              CreatedFrom: createdRange.from,
+              CreatedTo: createdRange.to,
+              UpdatedFrom: updatedRange.from,
+              UpdatedTo: updatedRange.to,
+              Sorting: sorting,
+              SkipCount: skip,
+              MaxResultCount: PAGE_SIZE,
+            },
+          },
+        }),
+      ),
+  });
+
+  const filtering = filters.chips.length > 0 || Boolean(text);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-2">
+        <Typography variant="h1" className="flex-1">{t(spaceKey ? 'tickets.title' : 'tickets.searchResults')}</Typography>
+        {spaceKey && <FilterControls filters={filters} onChange={() => setSkip(0)} />}
+        <SearchInput label={t('tickets.search')} value={text} onChange={(event) => { setText(event.target.value); setSkip(0); }} />
+      </div>
+
+      <FilterChips filters={filters} onClear={() => setSkip(0)} />
+
+      {search.isPending && <LoadingState />}
+      {search.isError && <ErrorState onRetry={() => void search.refetch()} />}
+      {search.data && search.data.totalCount === 0 && (
+        <EmptyState title={filtering ? t('tickets.noResults') : t('tickets.empty')} action={filtering ? <Typography variant="body2" color="textSecondary">{t('tickets.noResultsHint')}</Typography> : undefined} />
+      )}
+      {search.data && (search.data.totalCount ?? 0) > 0 && (
+        <>
+          <Table<TicketSummary>
+            label={t('tickets.title')}
+            rows={search.data.items ?? []}
+            rowKey={(ticket) => ticket.id!}
+            nowrap
+            sort={sort}
+            onSort={(key) => {
+              toggle(key);
+              setSkip(0);
+            }}
+            columns={[
+              {
+                key: 'key', sortable: true,
+                header: t('tickets.key'),
+                render: (ticket) => (
+                  <span className="flex items-center gap-2">
+                    <TicketTypeIcon type={ticket.type?.icon as IconType} />
+                    <Link component={RouterLink} to={`/tickets/${ticket.key}`} color="inherit">{ticket.key}</Link>
+                  </span>
+                ),
+              },
+              {
+                key: 'title', sortable: true,
+                header: t('tickets.titleField'),
+                render: (ticket) => (
+                  <Link component={RouterLink} to={`/tickets/${ticket.key}`} color="inherit" title={ticket.title ?? undefined} className="block truncate" sx={{ maxWidth: TITLE_MAX }}>
+                    {ticket.title}
+                  </Link>
+                ),
+              },
+              { key: 'status', sortable: true, header: t('tickets.status'), render: (ticket) => <QuickStatus ticket={ticket} canEdit={canEdit} people={people} /> },
+              { key: 'priority', sortable: true, header: t('tickets.priority'), render: (ticket) => <QuickPriority ticket={ticket} canEdit={canEdit} /> },
+              {
+                key: 'assignee', sortable: true,
+                header: t('tickets.assignee'),
+                render: (ticket) => <QuickAssignee ticket={ticket} canEdit={canEdit} people={people} showName />,
+              },
+              {
+                key: 'reporter', sortable: true,
+                header: t('tickets.reporter'),
+                render: (ticket) =>
+                  ticket.reporter && (
+                    <span className="flex items-center gap-2">
+                      <span className="flex shrink-0"><Avatar name={ticket.reporter.name ?? ''} src={ticket.reporter.avatarUrl} /></span>
+                      <span title={ticket.reporter.name ?? undefined} className="truncate" style={{ maxWidth: PERSON_MAX }}>{ticket.reporter.name}</span>
+                    </span>
+                  ),
+              },
+              {
+                key: 'sprint',
+                header: t('agile.sprint'),
+                render: (ticket) => <span title={ticket.sprintName ?? undefined} className="block truncate" style={{ maxWidth: PERSON_MAX }}>{ticket.sprintName}</span>,
+              },
+              { key: 'created', sortable: true, header: t('tickets.createdAt'), render: (ticket) => formatDate(ticket.createdAt, i18n.language) },
+              { key: 'updated', sortable: true, header: t('tickets.updatedAt'), render: (ticket) => formatDate(ticket.updatedAt, i18n.language) },
+            ]}
+          />
+          <Pagination skip={skip} pageSize={PAGE_SIZE} total={search.data.totalCount ?? 0} onChange={setSkip} />
+        </>
+      )}
+    </div>
+  );
+}

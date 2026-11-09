@@ -9,7 +9,7 @@ public class DescriptionEdit
     [Description("replace, append, prepend, replace_section or insert_after_section.")]
     public required string Op { get; set; }
 
-    [Description("replace: the exact Markdown to find, as get_issue returns it.")]
+    [Description("replace: the exact Markdown to find, as get_ticket returns it.")]
     public string? Find { get; set; }
 
     [Description("The new Markdown: the replacement, the text to add, or the new section body.")]
@@ -52,7 +52,7 @@ public static partial class MarkdownEdits
         var count = Count(text, find);
         if (count == 0)
         {
-            throw new McpException($"Edit {step}: the text to find is not in the description. Read the issue again and copy it exactly.");
+            throw new McpException($"Edit {step}: the text to find is not in the description. Read the ticket again and copy it exactly.");
         }
 
         if (count > 1 && !edit.All)

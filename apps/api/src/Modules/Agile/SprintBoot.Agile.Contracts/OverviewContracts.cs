@@ -1,5 +1,5 @@
 using SprintBoot.Identity;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using Volo.Abp.Application.Services;
 
 namespace SprintBoot.Agile;
@@ -32,8 +32,8 @@ public class OverviewRangeDto
     public required int? DaysLeft { get; set; }
 
     /// <summary>
-    /// True when the figures count the issues of the period's sprints (and their subtasks); otherwise they count the
-    /// issues created or updated in the period.
+    /// True when the figures count the tickets of the period's sprints (and their subtasks); otherwise they count the
+    /// tickets created or updated in the period.
     /// </summary>
     public required bool BySprint { get; set; }
 }
@@ -45,7 +45,7 @@ public class OverviewStatusCountDto
     public required int Count { get; set; }
 }
 
-public class OverviewIssueCountsDto
+public class OverviewTicketCountsDto
 {
     public required int Total { get; set; }
 
@@ -67,7 +67,7 @@ public class OverviewTypeCountDto
 
     public required string Icon { get; set; }
 
-    public required IssueHierarchy Hierarchy { get; set; }
+    public required TicketHierarchy Hierarchy { get; set; }
 
     public required int Count { get; set; }
 }
@@ -102,18 +102,18 @@ public class OverviewVelocityDto
 
     public required decimal Points { get; set; }
 
-    public required int Issues { get; set; }
+    public required int Tickets { get; set; }
 }
 
 public class OverviewEventDto
 {
     public required UserRefDto? Actor { get; set; }
 
-    public required IssueEventKind Kind { get; set; }
+    public required TicketEventKind Kind { get; set; }
 
-    public required string IssueKey { get; set; }
+    public required string TicketKey { get; set; }
 
-    public required string IssueTitle { get; set; }
+    public required string TicketTitle { get; set; }
 
     public required string? Field { get; set; }
 
@@ -130,7 +130,7 @@ public class OverviewSummaryDto
 
     public required int MembersAddedInPeriod { get; set; }
 
-    public required OverviewIssueCountsDto Issues { get; set; }
+    public required OverviewTicketCountsDto Tickets { get; set; }
 
     public required List<OverviewTypeCountDto> ByType { get; set; }
 

@@ -21,7 +21,7 @@ import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { formatRelative } from '../../lib/format';
 import { radius, sem } from '../../theme/tokens';
-import { useStatuses, type Status } from '../issues/api';
+import { useStatuses, type Status } from '../tickets/api';
 import { StatusOrderList, WorkflowHistory } from './WorkflowSidePanels';
 import { TransitionRules, type DraftRule } from './TransitionRules';
 import { ANY, arrow, edgeTypes, facingSides, nodeTypes, parallelOffset } from './WorkflowCanvas';
@@ -50,9 +50,9 @@ const NODE_GAP_X = 272;
 const NODE_GAP_Y = 164;
 const ANY_ABOVE = 164;
 const GROUPS = [
-  { value: 0, label: 'issue.status.todo' },
-  { value: 1, label: 'issue.status.inProgress' },
-  { value: 2, label: 'issue.status.done' },
+  { value: 0, label: 'ticket.status.todo' },
+  { value: 1, label: 'ticket.status.inProgress' },
+  { value: 2, label: 'ticket.status.done' },
 ];
 
 let nextUid = 1;
@@ -629,7 +629,7 @@ export function WorkflowDesignerPage() {
             <div key={id} className="grid grid-cols-2 gap-4">
               <TextField label={t('designer.removedStatus')} disabled value={statusOf(id)?.name ?? id} />
               <SelectField
-                label={t('designer.moveIssuesTo')}
+                label={t('designer.moveTicketsTo')}
                 value={mappings[id] ?? ''}
                 onChange={(event) => setMappings({ ...mappings, [id]: event.target.value })}
                 options={steps}
@@ -775,7 +775,7 @@ function DeleteStatusDialog({ status, isStart, statuses, beforeDelete, onCancel,
       ) : usage.data ? (
         <Typography variant="body1" color="textSecondary">
           {needed
-            ? t('designer.deleteStatusUsed', { issues: usage.data.issueCount, workflows: usage.data.workflowCount })
+            ? t('designer.deleteStatusUsed', { tickets: usage.data.ticketCount, workflows: usage.data.workflowCount })
             : t('designer.deleteStatusBody')}
         </Typography>
       ) : (

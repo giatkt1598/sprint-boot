@@ -17,7 +17,7 @@ import { SelectField, TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { radius, sem } from '../../theme/tokens';
-import { useStatuses } from '../issues/api';
+import { useStatuses } from '../tickets/api';
 import type { Space } from '../spaces/api';
 import { boardKey, useBoard } from './api';
 

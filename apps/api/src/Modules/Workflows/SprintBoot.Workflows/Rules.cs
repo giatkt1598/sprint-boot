@@ -129,7 +129,7 @@ public class PermissionCondition(IProjectAccess access) : ITransitionCondition, 
 }
 
 [ExposeServices(typeof(ITransitionCondition))]
-public class SubtasksDoneCondition(IWorkflowIssueGateway issues) : ITransitionCondition, ITransientDependency
+public class SubtasksDoneCondition(IWorkflowTicketGateway tickets) : ITransitionCondition, ITransientDependency
 {
     public string Key => "subtasks-done";
 
@@ -137,7 +137,7 @@ public class SubtasksDoneCondition(IWorkflowIssueGateway issues) : ITransitionCo
 
     public async Task<bool> IsMetAsync(RuleContext context, JsonElement? config)
     {
-        var statusIds = await issues.GetSubtaskStatusIdsAsync(context.Subject.IssueId);
+        var statusIds = await tickets.GetSubtaskStatusIdsAsync(context.Subject.TicketId);
         return statusIds.All(id => context.Statuses[id].Category == StatusCategory.Done);
     }
 }
@@ -208,31 +208,31 @@ public class CommentRequiredValidator : ITransitionValidator, ITransientDependen
 }
 
 [ExposeServices(typeof(ITransitionValidator))]
-public class LinkedPullRequestValidator(IIssueGitFacts git) : ITransitionValidator, ITransientDependency
+public class LinkedPullRequestValidator(ITicketGitFacts git) : ITransitionValidator, ITransientDependency
 {
     public string Key => "linked-pull-request";
 
     public RuleKind Kind => RuleKind.Validator;
 
     public async Task<IReadOnlyList<RuleProblem>> ValidateAsync(RuleContext context, JsonElement? config) =>
-        await git.HasPullRequestAsync(context.Subject.IssueId) ? [] : [new RuleProblem(GitErrors.LinkedPullRequestRequired)];
+        await git.HasPullRequestAsync(context.Subject.TicketId) ? [] : [new RuleProblem(GitErrors.LinkedPullRequestRequired)];
 }
 
 [ExposeServices(typeof(ITransitionPostFunction))]
-public class SetFieldPostFunction(IWorkflowIssueGateway issues) : ITransitionPostFunction, ITransientDependency
+public class SetFieldPostFunction(IWorkflowTicketGateway tickets) : ITransitionPostFunction, ITransientDependency
 {
     public string Key => "set-field";
 
     public RuleKind Kind => RuleKind.PostFunction;
 
-    public Task RunAsync(RuleContext context, JsonElement? config) => issues.SetFieldAsync(
-        context.Subject.IssueId,
+    public Task RunAsync(RuleContext context, JsonElement? config) => tickets.SetFieldAsync(
+        context.Subject.TicketId,
         RuleConfig.String(config, "field") ?? string.Empty,
         RuleConfig.Element(config, "value") ?? JsonDocument.Parse("null").RootElement);
 }
 
 [ExposeServices(typeof(ITransitionPostFunction))]
-public class AssignPostFunction(IWorkflowIssueGateway issues) : ITransitionPostFunction, ITransientDependency
+public class AssignPostFunction(IWorkflowTicketGateway tickets) : ITransitionPostFunction, ITransientDependency
 {
     public string Key => "assign";
 
@@ -247,30 +247,30 @@ public class AssignPostFunction(IWorkflowIssueGateway issues) : ITransitionPostF
             "user" => Guid.Parse(RuleConfig.String(config, "userId")!),
             _ => throw new BusinessException(WorkflowErrors.InvalidDefinition),
         };
-        return issues.SetFieldAsync(context.Subject.IssueId, "assignee", JsonSerializer.SerializeToElement(target));
+        return tickets.SetFieldAsync(context.Subject.TicketId, "assignee", JsonSerializer.SerializeToElement(target));
     }
 }
 
 [ExposeServices(typeof(ITransitionPostFunction))]
-public class SetResolutionPostFunction(IWorkflowIssueGateway issues) : ITransitionPostFunction, ITransientDependency
+public class SetResolutionPostFunction(IWorkflowTicketGateway tickets) : ITransitionPostFunction, ITransientDependency
 {
     public string Key => "set-resolution";
 
     public RuleKind Kind => RuleKind.PostFunction;
 
     public Task RunAsync(RuleContext context, JsonElement? config) =>
-        issues.SetResolutionAsync(context.Subject.IssueId, RuleConfig.String(config, "value"));
+        tickets.SetResolutionAsync(context.Subject.TicketId, RuleConfig.String(config, "value"));
 }
 
 [ExposeServices(typeof(ITransitionPostFunction))]
-public class AddCommentPostFunction(IWorkflowIssueGateway issues) : ITransitionPostFunction, ITransientDependency
+public class AddCommentPostFunction(IWorkflowTicketGateway tickets) : ITransitionPostFunction, ITransientDependency
 {
     public string Key => "add-comment";
 
     public RuleKind Kind => RuleKind.PostFunction;
 
     public Task RunAsync(RuleContext context, JsonElement? config) =>
-        issues.AddCommentAsync(context.Subject.IssueId, RuleConfig.String(config, "body") ?? string.Empty);
+        tickets.AddCommentAsync(context.Subject.TicketId, RuleConfig.String(config, "body") ?? string.Empty);
 }
 
 /// <summary>Publishes through the outbox: delivery cannot fail the transition, and a rollback sends nothing.</summary>
@@ -285,7 +285,7 @@ public class NotifyPostFunction(IDistributedEventBus eventBus, IGuidGenerator gu
         new WorkflowNotificationEto
         {
             EventId = guids.Create(),
-            IssueId = context.Subject.IssueId,
+            TicketId = context.Subject.TicketId,
             ProjectId = context.Subject.ProjectId,
             ActorId = context.Actor.Id,
             Message = RuleConfig.String(config, "message"),
@@ -312,7 +312,7 @@ public class WebhookPostFunction(IRepository<WebhookDelivery, Guid> deliveries, 
 
         var payload = JsonSerializer.Serialize(new
         {
-            issueId = context.Subject.IssueId,
+            ticketId = context.Subject.TicketId,
             key = context.Subject.Key,
             fromStatus = context.Statuses[context.Subject.StatusId].Name,
             toStatus = context.Statuses[context.ToStatusId].Name,

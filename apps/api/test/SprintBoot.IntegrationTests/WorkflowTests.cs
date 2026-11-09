@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using Shouldly;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Projects;
 using SprintBoot.Workflows;
 using Xunit;
@@ -36,27 +36,27 @@ public class WorkflowTests(ApiFixture fixture)
 
     private static async Task<Guid> TaskTypeAsync(AuthClient client, Guid projectId)
     {
-        var types = await client.Http.GetFromJsonAsync<List<IssueTypeDto>>($"/api/v1/issue/types/{projectId}", Token);
+        var types = await client.Http.GetFromJsonAsync<List<TicketTypeDto>>($"/api/v1/ticket/types/{projectId}", Token);
         return types!.Single(type => type.Name == "Task").Id;
     }
 
-    private static async Task<IssueDto> CreateIssueAsync(AuthClient client, Guid projectId, Guid typeId, Guid? parentId = null)
+    private static async Task<TicketDto> CreateTicketAsync(AuthClient client, Guid projectId, Guid typeId, Guid? parentId = null)
     {
-        var response = await client.Http.PostAsJsonAsync("/api/v1/issue", new { projectId, typeId, title = "Work", parentId }, Token);
+        var response = await client.Http.PostAsJsonAsync("/api/v1/ticket", new { projectId, typeId, title = "Work", parentId }, Token);
         response.StatusCode.ShouldBe(HttpStatusCode.OK, await response.Content.ReadAsStringAsync(Token));
-        return (await response.Content.ReadFromJsonAsync<IssueDto>(Token))!;
+        return (await response.Content.ReadFromJsonAsync<TicketDto>(Token))!;
     }
 
-    private static Task<IssueDto?> ReloadAsync(AuthClient client, string key) =>
-        client.Http.GetFromJsonAsync<IssueDto>($"/api/v1/issue/by-key?key={key}", Token);
+    private static Task<TicketDto?> ReloadAsync(AuthClient client, string key) =>
+        client.Http.GetFromJsonAsync<TicketDto>($"/api/v1/ticket/by-key?key={key}", Token);
 
-    private static Task<List<AvailableTransitionDto>?> AvailableAsync(AuthClient client, Guid issueId) =>
-        client.Http.GetFromJsonAsync<List<AvailableTransitionDto>>($"/api/v1/transition/available/{issueId}", Token);
+    private static Task<List<AvailableTransitionDto>?> AvailableAsync(AuthClient client, Guid ticketId) =>
+        client.Http.GetFromJsonAsync<List<AvailableTransitionDto>>($"/api/v1/transition/available/{ticketId}", Token);
 
-    private static Task<HttpResponseMessage> ExecuteAsync(AuthClient client, IssueDto issue, Guid transitionId, string? comment = null) =>
+    private static Task<HttpResponseMessage> ExecuteAsync(AuthClient client, TicketDto ticket, Guid transitionId, string? comment = null) =>
         client.Http.PostAsJsonAsync(
-            $"/api/v1/transition/execute/{issue.Id}",
-            new { transitionId, concurrencyStamp = issue.ConcurrencyStamp, comment },
+            $"/api/v1/transition/execute/{ticket.Id}",
+            new { transitionId, concurrencyStamp = ticket.ConcurrencyStamp, comment },
             Token);
 
     /// <summary>Creates and publishes a workflow, then maps it to the project's Task type.</summary>
@@ -75,7 +75,7 @@ public class WorkflowTests(ApiFixture fixture)
         var published = await admin.Http.PostAsJsonAsync($"/api/v1/workflow/{workflow.Id}/publish", new { }, Token);
         published.StatusCode.ShouldBe(HttpStatusCode.OK, await published.Content.ReadAsStringAsync(Token));
         var mapped = await admin.Http.PostAsJsonAsync(
-            "/api/v1/project-workflow/set", new { projectId = project.Id, issueTypeId = typeId, workflowId = workflow.Id }, Token);
+            "/api/v1/project-workflow/set", new { projectId = project.Id, ticketTypeId = typeId, workflowId = workflow.Id }, Token);
         mapped.StatusCode.ShouldBe(HttpStatusCode.OK, await mapped.Content.ReadAsStringAsync(Token));
         return (admin, project, typeId, workflow.Id);
     }
@@ -98,10 +98,10 @@ public class WorkflowTests(ApiFixture fixture)
     {
         var client = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(client);
-        var issue = await CreateIssueAsync(client, project.Id, await TaskTypeAsync(client, project.Id));
+        var ticket = await CreateTicketAsync(client, project.Id, await TaskTypeAsync(client, project.Id));
 
-        issue.Status.Name.ShouldBe("To Do");
-        var available = await AvailableAsync(client, issue.Id);
+        ticket.Status.Name.ShouldBe("To Do");
+        var available = await AvailableAsync(client, ticket.Id);
         available!.Select(item => item.ToStatus.Name).ShouldBe(["In Progress", "Done"], ignoreOrder: true);
     }
 
@@ -110,13 +110,13 @@ public class WorkflowTests(ApiFixture fixture)
     {
         var client = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(client);
-        var issue = await CreateIssueAsync(client, project.Id, await TaskTypeAsync(client, project.Id));
-        var move = (await AvailableAsync(client, issue.Id))!.Single(item => item.ToStatus.Name == "Done");
+        var ticket = await CreateTicketAsync(client, project.Id, await TaskTypeAsync(client, project.Id));
+        var move = (await AvailableAsync(client, ticket.Id))!.Single(item => item.ToStatus.Name == "Done");
 
-        (await ExecuteAsync(client, issue, move.Id)).EnsureSuccessStatusCode();
+        (await ExecuteAsync(client, ticket, move.Id)).EnsureSuccessStatusCode();
 
-        (await ReloadAsync(client, issue.Key))!.Status.Name.ShouldBe("Done");
-        var activity = await client.Http.GetFromJsonAsync<List<IssueActivityDto>>($"/api/v1/issue/{issue.Id}/activity", Token);
+        (await ReloadAsync(client, ticket.Key))!.Status.Name.ShouldBe("Done");
+        var activity = await client.Http.GetFromJsonAsync<List<TicketActivityDto>>($"/api/v1/ticket/{ticket.Id}/activity", Token);
         var row = activity!.Single(item => item.Field == "status");
         row.OldValue.ShouldBe("To Do");
         row.NewValue.ShouldBe("Done");
@@ -130,16 +130,16 @@ public class WorkflowTests(ApiFixture fixture)
             Move("Assignee only", null, Done, Rule(0, "user", new { @is = new[] { "assignee" } })),
             Move("Start", ToDo, InProgress),
         }, AllThree);
-        var issue = await CreateIssueAsync(admin, project.Id, typeId);
+        var ticket = await CreateTicketAsync(admin, project.Id, typeId);
 
-        var available = await AvailableAsync(admin, issue.Id);
+        var available = await AvailableAsync(admin, ticket.Id);
         available!.Select(item => item.Name).ShouldBe(["Start"]);
 
         var hidden = await TransitionIdByNameAsync(project.Id, typeId, "Assignee only");
-        var response = await ExecuteAsync(admin, issue, hidden);
+        var response = await ExecuteAsync(admin, ticket, hidden);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        (await ReloadAsync(admin, issue.Key))!.Status.Name.ShouldBe("To Do");
+        (await ReloadAsync(admin, ticket.Key))!.Status.Name.ShouldBe("To Do");
     }
 
     private Task<Guid> TransitionIdByNameAsync(Guid projectId, Guid typeId, string name) =>
@@ -153,13 +153,13 @@ public class WorkflowTests(ApiFixture fixture)
             Move("Start", ToDo, InProgress),
             Move("Close", null, Done),
         }, AllThree);
-        var issue = await CreateIssueAsync(admin, project.Id, typeId);
+        var ticket = await CreateTicketAsync(admin, project.Id, typeId);
 
-        (await AvailableAsync(admin, issue.Id))!.Select(item => item.Name).ShouldBe(["Start", "Close"], ignoreOrder: true);
+        (await AvailableAsync(admin, ticket.Id))!.Select(item => item.Name).ShouldBe(["Start", "Close"], ignoreOrder: true);
 
-        var close = (await AvailableAsync(admin, issue.Id))!.Single(item => item.Name == "Close");
-        (await ExecuteAsync(admin, issue, close.Id)).EnsureSuccessStatusCode();
-        (await AvailableAsync(admin, issue.Id))!.ShouldNotContain(item => item.Name == "Close");
+        var close = (await AvailableAsync(admin, ticket.Id))!.Single(item => item.Name == "Close");
+        (await ExecuteAsync(admin, ticket, close.Id)).EnsureSuccessStatusCode();
+        (await AvailableAsync(admin, ticket.Id))!.ShouldNotContain(item => item.Name == "Close");
     }
 
     [Fact]
@@ -169,16 +169,16 @@ public class WorkflowTests(ApiFixture fixture)
         {
             Move("Finish", null, Done, Rule(1, "required-field", new { fields = new[] { "assignee" } }), Rule(1, "comment-required")),
         });
-        var issue = await CreateIssueAsync(admin, project.Id, typeId);
-        var move = (await AvailableAsync(admin, issue.Id))!.Single();
+        var ticket = await CreateTicketAsync(admin, project.Id, typeId);
+        var move = (await AvailableAsync(admin, ticket.Id))!.Single();
 
         move.RequiresComment.ShouldBeTrue();
         move.MissingFields.ShouldBe(["assignee"]);
 
-        var response = await ExecuteAsync(admin, issue, move.Id, "done");
+        var response = await ExecuteAsync(admin, ticket, move.Id, "done");
 
         (await response.Content.ReadAsStringAsync(Token)).ShouldContain(WorkflowErrors.ValidationFailed);
-        (await ReloadAsync(admin, issue.Key))!.Status.Name.ShouldBe("To Do");
+        (await ReloadAsync(admin, ticket.Key))!.Status.Name.ShouldBe("To Do");
     }
 
     [Fact]
@@ -188,14 +188,14 @@ public class WorkflowTests(ApiFixture fixture)
         {
             Move("Finish", null, Done, Rule(2, "add-comment", new { body = "<p>Auto</p>" }), Rule(2, "set-field", new { field = "no-such-field", value = "x" })),
         });
-        var issue = await CreateIssueAsync(admin, project.Id, typeId);
-        var move = (await AvailableAsync(admin, issue.Id))!.Single();
+        var ticket = await CreateTicketAsync(admin, project.Id, typeId);
+        var move = (await AvailableAsync(admin, ticket.Id))!.Single();
 
-        var response = await ExecuteAsync(admin, issue, move.Id);
+        var response = await ExecuteAsync(admin, ticket, move.Id);
 
         response.IsSuccessStatusCode.ShouldBeFalse();
-        (await ReloadAsync(admin, issue.Key))!.Status.Name.ShouldBe("To Do");
-        var comments = await admin.Http.GetFromJsonAsync<List<CommentDto>>($"/api/v1/comment?issueId={issue.Id}", Token);
+        (await ReloadAsync(admin, ticket.Key))!.Status.Name.ShouldBe("To Do");
+        var comments = await admin.Http.GetFromJsonAsync<List<CommentDto>>($"/api/v1/comment?ticketId={ticket.Id}", Token);
         comments.ShouldBeEmpty();
     }
 
@@ -212,13 +212,13 @@ public class WorkflowTests(ApiFixture fixture)
                 Rule(2, "set-resolution", new { value = "Fixed" }),
                 Rule(2, "add-comment", new { body = "<p>Closed</p>" })),
         });
-        var issue = await CreateIssueAsync(admin, project.Id, typeId);
-        var move = (await AvailableAsync(admin, issue.Id))!.Single();
+        var ticket = await CreateTicketAsync(admin, project.Id, typeId);
+        var move = (await AvailableAsync(admin, ticket.Id))!.Single();
 
-        (await ExecuteAsync(admin, issue, move.Id)).EnsureSuccessStatusCode();
+        (await ExecuteAsync(admin, ticket, move.Id)).EnsureSuccessStatusCode();
 
-        (await ReloadAsync(admin, issue.Key))!.Assignee.ShouldNotBeNull();
-        (await admin.Http.GetFromJsonAsync<List<CommentDto>>($"/api/v1/comment?issueId={issue.Id}", Token))!.Single().Body.ShouldBe("<p>Closed</p>");
+        (await ReloadAsync(admin, ticket.Key))!.Assignee.ShouldNotBeNull();
+        (await admin.Http.GetFromJsonAsync<List<CommentDto>>($"/api/v1/comment?ticketId={ticket.Id}", Token))!.Single().Body.ShouldBe("<p>Closed</p>");
     }
 
     [Fact]
@@ -228,9 +228,9 @@ public class WorkflowTests(ApiFixture fixture)
         {
             Move("Finish", null, Done, Rule(0, "subtasks-done")),
         });
-        var parent = await CreateIssueAsync(admin, project.Id, typeId);
-        var types = await admin.Http.GetFromJsonAsync<List<IssueTypeDto>>($"/api/v1/issue/types/{project.Id}", Token);
-        var child = await CreateIssueAsync(admin, project.Id, types!.Single(type => type.Name == "Subtask").Id, parent.Id);
+        var parent = await CreateTicketAsync(admin, project.Id, typeId);
+        var types = await admin.Http.GetFromJsonAsync<List<TicketTypeDto>>($"/api/v1/ticket/types/{project.Id}", Token);
+        var child = await CreateTicketAsync(admin, project.Id, types!.Single(type => type.Name == "Subtask").Id, parent.Id);
 
         (await AvailableAsync(admin, parent.Id)).ShouldBeEmpty();
 
@@ -262,11 +262,11 @@ public class WorkflowTests(ApiFixture fixture)
         {
             Move("Finish", null, Done, Rule(2, "webhook", new { url = $"http://localhost:{port}/hook" })),
         });
-        var issue = await CreateIssueAsync(admin, project.Id, typeId);
-        var move = (await AvailableAsync(admin, issue.Id))!.Single();
+        var ticket = await CreateTicketAsync(admin, project.Id, typeId);
+        var move = (await AvailableAsync(admin, ticket.Id))!.Single();
 
-        (await ExecuteAsync(admin, issue, move.Id)).EnsureSuccessStatusCode();
-        (await ReloadAsync(admin, issue.Key))!.Status.Name.ShouldBe("Done");
+        (await ExecuteAsync(admin, ticket, move.Id)).EnsureSuccessStatusCode();
+        (await ReloadAsync(admin, ticket.Key))!.Status.Name.ShouldBe("Done");
 
         for (var wait = 0; wait < 100 && Volatile.Read(ref calls) < 2; wait++)
         {
@@ -294,12 +294,12 @@ public class WorkflowTests(ApiFixture fixture)
     }
 
     [Fact]
-    public async Task Publish_dropping_a_used_status_requires_a_mapping_and_moves_the_issues()
+    public async Task Publish_dropping_a_used_status_requires_a_mapping_and_moves_the_tickets()
     {
         var (admin, project, typeId, workflowId) = await ProjectWithWorkflowAsync(Basic, AllThree);
-        var issue = await CreateIssueAsync(admin, project.Id, typeId);
-        var start = (await AvailableAsync(admin, issue.Id))!.Single();
-        (await ExecuteAsync(admin, issue, start.Id)).EnsureSuccessStatusCode();
+        var ticket = await CreateTicketAsync(admin, project.Id, typeId);
+        var start = (await AvailableAsync(admin, ticket.Id))!.Single();
+        (await ExecuteAsync(admin, ticket, start.Id)).EnsureSuccessStatusCode();
 
         var draft = new
         {
@@ -311,7 +311,7 @@ public class WorkflowTests(ApiFixture fixture)
 
         var refused = await admin.Http.PostAsJsonAsync($"/api/v1/workflow/{workflowId}/publish", new { }, Token);
         (await refused.Content.ReadAsStringAsync(Token)).ShouldContain(WorkflowErrors.StatusMappingRequired);
-        (await ReloadAsync(admin, issue.Key))!.Status.Name.ShouldBe("In Progress");
+        (await ReloadAsync(admin, ticket.Key))!.Status.Name.ShouldBe("In Progress");
 
         var published = await admin.Http.PostAsJsonAsync(
             $"/api/v1/workflow/{workflowId}/publish",
@@ -319,18 +319,18 @@ public class WorkflowTests(ApiFixture fixture)
             Token);
         published.StatusCode.ShouldBe(HttpStatusCode.OK, await published.Content.ReadAsStringAsync(Token));
 
-        (await ReloadAsync(admin, issue.Key))!.Status.Name.ShouldBe("To Do");
-        (await AvailableAsync(admin, issue.Id))!.Select(item => item.Name).ShouldBe(["Finish"]);
+        (await ReloadAsync(admin, ticket.Key))!.Status.Name.ShouldBe("To Do");
+        (await AvailableAsync(admin, ticket.Id))!.Select(item => item.Name).ShouldBe(["Finish"]);
     }
 
     [Fact]
     public async Task Large_migration_runs_in_the_background()
     {
         var (admin, project, typeId, workflowId) = await ProjectWithWorkflowAsync(Basic, AllThree);
-        var issues = new List<IssueDto>();
+        var tickets = new List<TicketDto>();
         for (var index = 0; index < ApiFixture.MigrationSyncLimit + 1; index++)
         {
-            issues.Add(await CreateIssueAsync(admin, project.Id, typeId));
+            tickets.Add(await CreateTicketAsync(admin, project.Id, typeId));
         }
 
         var draft = new { initialStatusId = ToDo, statusIds = new[] { ToDo, InProgress, Done }, transitions = new[] { Move("Begin", ToDo, InProgress), Move("Finish", InProgress, Done) } };
@@ -340,7 +340,7 @@ public class WorkflowTests(ApiFixture fixture)
 
         for (var wait = 0; wait < 100; wait++)
         {
-            if ((await AvailableAsync(admin, issues[^1].Id))!.Any(item => item.Name == "Begin"))
+            if ((await AvailableAsync(admin, tickets[^1].Id))!.Any(item => item.Name == "Begin"))
             {
                 return;
             }
@@ -348,7 +348,7 @@ public class WorkflowTests(ApiFixture fixture)
             await Task.Delay(200, Token);
         }
 
-        throw new TimeoutException("Issues did not reach the new version.");
+        throw new TimeoutException("Tickets did not reach the new version.");
     }
 
     [Fact]
@@ -356,10 +356,10 @@ public class WorkflowTests(ApiFixture fixture)
     {
         var client = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(client);
-        var issue = await CreateIssueAsync(client, project.Id, await TaskTypeAsync(client, project.Id));
-        var available = (await AvailableAsync(client, issue.Id))!;
+        var ticket = await CreateTicketAsync(client, project.Id, await TaskTypeAsync(client, project.Id));
+        var available = (await AvailableAsync(client, ticket.Id))!;
 
-        var results = await Task.WhenAll(available.Select(item => ExecuteAsync(client, issue, item.Id)));
+        var results = await Task.WhenAll(available.Select(item => ExecuteAsync(client, ticket, item.Id)));
 
         results.Count(result => result.IsSuccessStatusCode).ShouldBe(1);
         results.Single(result => !result.IsSuccessStatusCode).StatusCode.ShouldBe(HttpStatusCode.Conflict);
@@ -370,14 +370,14 @@ public class WorkflowTests(ApiFixture fixture)
     {
         var owner = await fixture.CreateUserClientAsync(Token);
         var project = await CreateProjectAsync(owner);
-        var issue = await CreateIssueAsync(owner, project.Id, await TaskTypeAsync(owner, project.Id));
-        var move = (await AvailableAsync(owner, issue.Id))!.First();
+        var ticket = await CreateTicketAsync(owner, project.Id, await TaskTypeAsync(owner, project.Id));
+        var move = (await AvailableAsync(owner, ticket.Id))!.First();
         var viewer = await fixture.CreateUserClientAsync(Token);
         (await owner.Http.PostAsJsonAsync($"/api/v1/project/{project.Id}/member", new { userId = viewer.UserId, role = ProjectRoleNames.Viewer }, Token))
             .EnsureSuccessStatusCode();
 
-        (await AvailableAsync(viewer, issue.Id)).ShouldBeEmpty();
-        (await ExecuteAsync(viewer, issue, move.Id)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await AvailableAsync(viewer, ticket.Id)).ShouldBeEmpty();
+        (await ExecuteAsync(viewer, ticket, move.Id)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     [Fact]
@@ -401,7 +401,7 @@ public class WorkflowTests(ApiFixture fixture)
         created.StatusCode.ShouldBe(HttpStatusCode.OK, await created.Content.ReadAsStringAsync(Token));
         var own = (await created.Content.ReadFromJsonAsync<WorkflowDetailDto>(Token))!;
         (await owner.Http.PostAsJsonAsync($"/api/v1/workflow/{own.Id}/publish", new { }, Token)).EnsureSuccessStatusCode();
-        (await owner.Http.PostAsJsonAsync("/api/v1/project-workflow/set", new { projectId = project.Id, issueTypeId = typeId, workflowId = own.Id }, Token)).EnsureSuccessStatusCode();
+        (await owner.Http.PostAsJsonAsync("/api/v1/project-workflow/set", new { projectId = project.Id, ticketTypeId = typeId, workflowId = own.Id }, Token)).EnsureSuccessStatusCode();
 
         var admin = await AdminAsync();
         var globalList = await admin.Http.GetFromJsonAsync<List<WorkflowSummaryDto>>("/api/v1/workflow", Token);
@@ -417,7 +417,7 @@ public class WorkflowTests(ApiFixture fixture)
         // Other spaces see neither the workflow nor the status.
         var other = await CreateProjectAsync(admin);
         var otherType = await TaskTypeAsync(admin, other.Id);
-        var refused = await admin.Http.PostAsJsonAsync("/api/v1/project-workflow/set", new { projectId = other.Id, issueTypeId = otherType, workflowId = own.Id }, Token);
+        var refused = await admin.Http.PostAsJsonAsync("/api/v1/project-workflow/set", new { projectId = other.Id, ticketTypeId = otherType, workflowId = own.Id }, Token);
         (await refused.Content.ReadAsStringAsync(Token)).ShouldContain(WorkflowErrors.OutOfScope);
         var visible = await admin.Http.GetFromJsonAsync<List<StatusDto>>($"/api/v1/status?projectId={other.Id}", Token);
         visible!.ShouldNotContain(item => item.Id == status.Id);
@@ -459,7 +459,7 @@ public class WorkflowTests(ApiFixture fixture)
     }
 
     [Fact]
-    public async Task Deleting_a_status_in_use_moves_issues_workflows_and_boards_to_the_replacement()
+    public async Task Deleting_a_status_in_use_moves_tickets_workflows_and_boards_to_the_replacement()
     {
         var admin = await AdminAsync();
         var project = await CreateProjectAsync(admin);
@@ -483,9 +483,9 @@ public class WorkflowTests(ApiFixture fixture)
         };
         var workflow = (await (await admin.Http.PostAsJsonAsync("/api/v1/workflow", body, Token)).Content.ReadFromJsonAsync<WorkflowDetailDto>(Token))!;
         (await admin.Http.PostAsJsonAsync($"/api/v1/workflow/{workflow.Id}/publish", new { }, Token)).EnsureSuccessStatusCode();
-        (await admin.Http.PostAsJsonAsync("/api/v1/project-workflow/set", new { projectId = project.Id, issueTypeId = typeId, workflowId = workflow.Id }, Token)).EnsureSuccessStatusCode();
-        var issue = await CreateIssueAsync(admin, project.Id, typeId);
-        issue.Status.Id.ShouldBe(doomed.Id);
+        (await admin.Http.PostAsJsonAsync("/api/v1/project-workflow/set", new { projectId = project.Id, ticketTypeId = typeId, workflowId = workflow.Id }, Token)).EnsureSuccessStatusCode();
+        var ticket = await CreateTicketAsync(admin, project.Id, typeId);
+        ticket.Status.Id.ShouldBe(doomed.Id);
 
         var view = await admin.Http.GetFromJsonAsync<SprintBoot.Agile.BoardViewDto>($"/api/v1/board/view/{project.Id}", Token);
         var columns = view!.Columns.Select((column, index) => new
@@ -496,7 +496,7 @@ public class WorkflowTests(ApiFixture fixture)
         (await admin.Http.PutAsJsonAsync($"/api/v1/board/columns/{project.Id}", new { columns }, Token)).EnsureSuccessStatusCode();
 
         var usage = await admin.Http.GetFromJsonAsync<StatusUsageDto>($"/api/v1/status/{doomed.Id}/usage", Token);
-        usage!.IssueCount.ShouldBe(1);
+        usage!.TicketCount.ShouldBe(1);
         usage.WorkflowCount.ShouldBe(1);
         usage.ReplacementRequired.ShouldBeTrue();
 
@@ -506,12 +506,12 @@ public class WorkflowTests(ApiFixture fixture)
 
         (await admin.Http.DeleteAsync($"/api/v1/status/{doomed.Id}?replacementId={InProgress}", Token)).EnsureSuccessStatusCode();
 
-        (await ReloadAsync(admin, issue.Key))!.Status.Id.ShouldBe(InProgress);
+        (await ReloadAsync(admin, ticket.Key))!.Status.Id.ShouldBe(InProgress);
         var published = (await admin.Http.GetFromJsonAsync<WorkflowDetailDto>($"/api/v1/workflow/{workflow.Id}", Token))!.Published!;
         published.InitialStatusId.ShouldBe(InProgress);
         published.StatusIds.ShouldBe([InProgress, Done], ignoreOrder: true);
         published.Transitions.ShouldHaveSingleItem().Name.ShouldBe("Finish");
-        (await AvailableAsync(admin, issue.Id))!.ShouldContain(transition => transition.Name == "Finish");
+        (await AvailableAsync(admin, ticket.Id))!.ShouldContain(transition => transition.Name == "Finish");
 
         var board = await admin.Http.GetFromJsonAsync<SprintBoot.Agile.BoardViewDto>($"/api/v1/board/view/{project.Id}", Token);
         board!.Columns.SelectMany(column => column.Statuses).ShouldNotContain(status => status.Id == doomed.Id);
@@ -525,9 +525,9 @@ public class WorkflowTests(ApiFixture fixture)
         {
             new { name = "", fromStatusId = (Guid?)null, toStatusId = Done, rules = Array.Empty<object>() },
         });
-        var issue = await CreateIssueAsync(admin, project.Id, typeId);
+        var ticket = await CreateTicketAsync(admin, project.Id, typeId);
 
-        (await AvailableAsync(admin, issue.Id))!.ShouldContain(transition => transition.Name == "Any status to Done");
+        (await AvailableAsync(admin, ticket.Id))!.ShouldContain(transition => transition.Name == "Any status to Done");
     }
 
     [Fact]
@@ -584,8 +584,8 @@ public class WorkflowTests(ApiFixture fixture)
 
         var detail = await admin.Http.GetFromJsonAsync<WorkflowDetailDto>($"/api/v1/workflow/{workflowId}", Token);
         detail!.Published!.StatusIds.ShouldBe([Done, InProgress, ToDo]);
-        var issue = await CreateIssueAsync(admin, project.Id, typeId);
-        (await AvailableAsync(admin, issue.Id))!.Select(transition => transition.Name).ShouldBe(["Close", "Go"]);
+        var ticket = await CreateTicketAsync(admin, project.Id, typeId);
+        (await AvailableAsync(admin, ticket.Id))!.Select(transition => transition.Name).ShouldBe(["Close", "Go"]);
 
         var versions = (await admin.Http.GetFromJsonAsync<List<WorkflowVersionDto>>($"/api/v1/workflow/{workflowId}/versions", Token))!;
         versions.Select(version => version.State).ShouldBe([WorkflowVersionState.Published, WorkflowVersionState.Archived]);

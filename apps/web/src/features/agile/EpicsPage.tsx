@@ -7,13 +7,13 @@ import { Link as RouterLink, useParams } from 'react-router';
 import type { components } from '@sprint-boot/api-client';
 import { apiClient, unwrap } from '../../api';
 import { Button } from '../../components/Button';
-import { IssueTypeIcon } from '../../components/IssueIcons';
+import { TicketTypeIcon } from '../../components/TicketIcons';
 import { SearchInput } from '../../components/SearchInput';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
 import { compareValues, Table, useTableSort, type TableSort } from '../../components/Table';
 import { formatDate } from '../../lib/format';
-import { CreateIssueDialog } from '../issues/CreateIssueDialog';
-import { QuickAssignee, QuickPriority, QuickStatus } from '../issues/QuickFields';
+import { CreateTicketDialog } from '../tickets/CreateTicketDialog';
+import { QuickAssignee, QuickPriority, QuickStatus } from '../tickets/QuickFields';
 import { useMembers, useSpace } from '../spaces/api';
 import { EpicProgress } from './EpicProgress';
 
@@ -48,14 +48,14 @@ export function EpicsPage() {
   const [filter, setFilter] = useState('');
   const [creating, setCreating] = useState(false);
   const { sort, toggle } = useTableSort();
-  const canEdit = space.data?.permissions?.includes('Issue.Edit') ?? false;
+  const canEdit = space.data?.permissions?.includes('Ticket.Edit') ?? false;
   const members = useMembers(projectId);
   const people = (members.data ?? []).map((member) => member.user!);
 
   const epics = useQuery({
-    queryKey: ['issues', 'epics-page', projectId],
+    queryKey: ['tickets', 'epics-page', projectId],
     enabled: Boolean(projectId),
-    queryFn: () => unwrap(apiClient.GET('/api/v1/issue/epics/{projectId}', { params: { path: { projectId: projectId! } } })),
+    queryFn: () => unwrap(apiClient.GET('/api/v1/ticket/epics/{projectId}', { params: { path: { projectId: projectId! } } })),
   });
 
   const rows = sortEpics(
@@ -83,24 +83,24 @@ export function EpicsPage() {
           columns={[
             {
               key: 'key', sortable: true,
-              header: t('issues.key'),
+              header: t('tickets.key'),
               render: (epic) => (
                 <span className="flex items-center gap-2">
-                  <IssueTypeIcon type="epic" />
-                  <Link component={RouterLink} to={`/issues/${epic.key}`} color="inherit">{epic.key}</Link>
+                  <TicketTypeIcon type="epic" />
+                  <Link component={RouterLink} to={`/tickets/${epic.key}`} color="inherit">{epic.key}</Link>
                 </span>
               ),
             },
-            { key: 'title', sortable: true, header: t('issues.titleField'), render: (epic) => <Link component={RouterLink} to={`/issues/${epic.key}`} color="inherit">{epic.title}</Link> },
+            { key: 'title', sortable: true, header: t('tickets.titleField'), render: (epic) => <Link component={RouterLink} to={`/tickets/${epic.key}`} color="inherit">{epic.title}</Link> },
             { key: 'progress', sortable: true, header: t('agile.progressColumn'), render: (epic) => <EpicProgress total={epic.total ?? 0} done={epic.done ?? 0} inProgress={epic.inProgress ?? 0} /> },
-            { key: 'status', sortable: true, header: t('issues.status'), render: (epic) => <QuickStatus issue={toQuick(epic)} canEdit={canEdit} people={people} /> },
-            { key: 'priority', sortable: true, header: t('issues.priority'), render: (epic) => <QuickPriority issue={toQuick(epic)} canEdit={canEdit} /> },
-            { key: 'due', sortable: true, header: t('issues.dueDate'), render: (epic) => formatDate(epic.dueDate, i18n.language) },
-            { key: 'lead', sortable: true, header: t('agile.lead'), render: (epic) => <QuickAssignee issue={toQuick(epic)} canEdit={canEdit} people={people} showName /> },
+            { key: 'status', sortable: true, header: t('tickets.status'), render: (epic) => <QuickStatus ticket={toQuick(epic)} canEdit={canEdit} people={people} /> },
+            { key: 'priority', sortable: true, header: t('tickets.priority'), render: (epic) => <QuickPriority ticket={toQuick(epic)} canEdit={canEdit} /> },
+            { key: 'due', sortable: true, header: t('tickets.dueDate'), render: (epic) => formatDate(epic.dueDate, i18n.language) },
+            { key: 'lead', sortable: true, header: t('agile.lead'), render: (epic) => <QuickAssignee ticket={toQuick(epic)} canEdit={canEdit} people={people} showName /> },
           ]}
         />
       )}
-      {creating && <CreateIssueDialog epic onClose={() => setCreating(false)} />}
+      {creating && <CreateTicketDialog epic onClose={() => setCreating(false)} />}
     </div>
   );
 }

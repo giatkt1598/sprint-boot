@@ -11,7 +11,7 @@ import { Badge, type BadgeTone } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { ErrorState, LoadingState } from '../../components/StateViews';
 import { font, radius, sem } from '../../theme/tokens';
-import { RichTextView } from '../issues/RichTextEditor';
+import { RichTextView } from '../tickets/RichTextEditor';
 import { renderStreamingMarkdown, REVEAL_MS, useSmoothText, useStickToBottom } from './streaming';
 import {
   ActionState,
@@ -47,7 +47,7 @@ interface Live {
 
 const EMPTY_LIVE: Live = { question: null, tools: [], toolsShown: 0, segments: [] };
 
-/** One badge per tool, in the order first used, counting the runs: "Used search_issues (4 times)". */
+/** One badge per tool, in the order first used, counting the runs: "Used search_tickets (4 times)". */
 function groupTools(runs: ToolRun[]) {
   const groups = new Map<string, ToolRun[]>();
   for (const run of runs) {
@@ -198,7 +198,7 @@ function AssistantBubble({ message, busy, onDecide }: { message: AssistantMessag
         <div className="flex flex-wrap items-center gap-2">
           <Typography variant="body2" color="textSecondary">{t('assistant.sources')}</Typography>
           {message.sources!.map((key) => (
-            <RouterLink key={key} to={`/issues/${key}`} style={{ fontSize: font.size.xs, color: sem('text-accent') }}>{key}</RouterLink>
+            <RouterLink key={key} to={`/tickets/${key}`} style={{ fontSize: font.size.xs, color: sem('text-accent') }}>{key}</RouterLink>
           ))}
         </div>
       )}
@@ -206,7 +206,7 @@ function AssistantBubble({ message, busy, onDecide }: { message: AssistantMessag
   );
 }
 
-/** Issue links in an answer open inside the app instead of reloading it. */
+/** Ticket links in an answer open inside the app instead of reloading it. */
 function useFollowLink() {
   const navigate = useNavigate();
   return (event: MouseEvent<HTMLDivElement>) => {
@@ -276,12 +276,12 @@ function UserBubble({ text }: { text: string }) {
 
 /**
  * One conversation: what was said, the answer as it streams, and the changes waiting for confirmation. With no conversation
- * yet, the first question starts one, tied to the issue when there is one.
+ * yet, the first question starts one, tied to the ticket when there is one.
  */
-export function ChatThread({ conversationId, issueId, onConversation, intro, onBusyChange, active = true }: {
+export function ChatThread({ conversationId, ticketId, onConversation, intro, onBusyChange, active = true }: {
   conversationId: string | null;
-  /** The issue on screen: a new conversation is tied to it, and it goes with every question. */
-  issueId?: string;
+  /** The ticket on screen: a new conversation is tied to it, and it goes with every question. */
+  ticketId?: string;
   onConversation: (id: string) => void;
   /** Shown above an empty new chat; `ask` sends a question as if typed. */
   intro?: (ask: (text: string) => void) => ReactNode;
@@ -335,7 +335,7 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
       await queryClient.invalidateQueries({ queryKey: assistantKeys.detail(ending.id) });
       await queryClient.invalidateQueries({ queryKey: ['assistant', 'conversations'] });
       if (ending.changed) {
-        // The assistant may have changed any issue, sprint or board; the page behind the chat reloads what it shows.
+        // The assistant may have changed any ticket, sprint or board; the page behind the chat reloads what it shows.
         await queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] !== 'assistant' });
       }
       await ending.done?.();
@@ -418,7 +418,7 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
       return;
     }
     setDraft('');
-    const body = { text, issueId: issueId ?? null };
+    const body = { text, ticketId: ticketId ?? null };
     if (conversationId) {
       await run(conversationId, `/api/v1/assistant/conversations/${conversationId}/messages`, body, text);
       return;
@@ -426,7 +426,7 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
 
     let id: string;
     try {
-      id = (await createConversation(issueId)).id!;
+      id = (await createConversation(ticketId)).id!;
     } catch {
       setError(t('errors.generic'));
       setDraft(typed);
@@ -472,7 +472,7 @@ export function ChatThread({ conversationId, issueId, onConversation, intro, onB
             {intro?.((text) => void send(text))}
             <div className="flex flex-col items-center gap-2 py-6 text-center">
               <BotIcon size={24} strokeWidth={1.5} aria-hidden />
-              <Typography variant="body2" color="textSecondary">{t(issueId ? 'assistant.emptyIssue' : 'assistant.empty')}</Typography>
+              <Typography variant="body2" color="textSecondary">{t(ticketId ? 'assistant.emptyTicket' : 'assistant.empty')}</Typography>
             </div>
           </>
         )}

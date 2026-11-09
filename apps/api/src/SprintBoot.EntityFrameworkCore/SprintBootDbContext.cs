@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SprintBoot.Agile;
 using SprintBoot.GitIntegration;
 using SprintBoot.Identity;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Assistant;
 using SprintBoot.Notifications;
 using SprintBoot.Platform;
@@ -55,7 +55,7 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
     public DbSet<GitBranch> GitBranches { get; set; } = null!;
     public DbSet<GitCommit> GitCommits { get; set; } = null!;
     public DbSet<GitPullRequest> GitPullRequests { get; set; } = null!;
-    public DbSet<IssueGitLink> IssueGitLinks { get; set; } = null!;
+    public DbSet<TicketGitLink> TicketGitLinks { get; set; } = null!;
     public DbSet<CiStatus> CiStatuses { get; set; } = null!;
     public DbSet<GitWebhookDelivery> GitWebhookDeliveries { get; set; } = null!;
 
@@ -76,18 +76,18 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
     public DbSet<WorkflowMigration> WorkflowMigrations { get; set; } = null!;
     public DbSet<WebhookDelivery> WebhookDeliveries { get; set; } = null!;
 
-    public DbSet<IssueType> IssueTypes { get; set; } = null!;
+    public DbSet<TicketType> TicketTypes { get; set; } = null!;
     public DbSet<Priority> Priorities { get; set; } = null!;
-    public DbSet<Issue> Issues { get; set; } = null!;
+    public DbSet<Ticket> Tickets { get; set; } = null!;
     public DbSet<Label> Labels { get; set; } = null!;
 
-    public DbSet<IssueTemplate> IssueTemplates { get; set; } = null!;
+    public DbSet<TicketTemplate> TicketTemplates { get; set; } = null!;
 
-    public DbSet<GlobalIssueTemplate> GlobalIssueTemplates { get; set; } = null!;
+    public DbSet<GlobalTicketTemplate> GlobalTicketTemplates { get; set; } = null!;
 
     public DbSet<ProjectIntroduction> ProjectIntroductions { get; set; } = null!;
 
-    public DbSet<RecentIssue> RecentIssues { get; set; } = null!;
+    public DbSet<RecentTicket> RecentTickets { get; set; } = null!;
 
     public DbSet<Goal> Goals { get; set; } = null!;
 
@@ -103,16 +103,16 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
 
     public DbSet<AssistantAction> AssistantActions { get; set; } = null!;
 
-    public DbSet<IssueLinkType> IssueLinkTypes { get; set; } = null!;
+    public DbSet<TicketLinkType> TicketLinkTypes { get; set; } = null!;
 
-    public DbSet<IssueLink> IssueLinks { get; set; } = null!;
-    public DbSet<IssueWatcher> IssueWatchers { get; set; } = null!;
-    public DbSet<IssueLabel> IssueLabels { get; set; } = null!;
+    public DbSet<TicketLink> TicketLinks { get; set; } = null!;
+    public DbSet<TicketWatcher> TicketWatchers { get; set; } = null!;
+    public DbSet<TicketLabel> TicketLabels { get; set; } = null!;
     public DbSet<Comment> Comments { get; set; } = null!;
     public DbSet<CommentReaction> CommentReactions { get; set; } = null!;
     public DbSet<Attachment> Attachments { get; set; } = null!;
     public DbSet<RichTextFile> RichTextFiles { get; set; } = null!;
-    public DbSet<IssueActivity> IssueActivities { get; set; } = null!;
+    public DbSet<TicketActivity> TicketActivities { get; set; } = null!;
     public DbSet<WorkLog> WorkLogs { get; set; } = null!;
 
     public DbSet<Board> Boards { get; set; } = null!;
@@ -120,7 +120,7 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
     public DbSet<BoardColumnStatus> BoardColumnStatuses { get; set; } = null!;
     public DbSet<BoardEntry> BoardEntries { get; set; } = null!;
     public DbSet<Sprint> Sprints { get; set; } = null!;
-    public DbSet<SprintIssue> SprintIssues { get; set; } = null!;
+    public DbSet<SprintTicket> SprintTickets { get; set; } = null!;
 
     public DbSet<NotificationScheme> NotificationSchemes { get; set; } = null!;
     public DbSet<NotificationRule> NotificationRules { get; set; } = null!;
@@ -146,7 +146,7 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
         builder.ConfigureSprintIdentity();
         builder.ConfigureProjects();
         builder.ConfigureWorkflows();
-        builder.ConfigureIssues();
+        builder.ConfigureTickets();
         builder.ConfigureAgile();
         builder.ConfigureNotifications();
         builder.ConfigureGitIntegration();

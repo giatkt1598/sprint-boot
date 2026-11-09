@@ -1,8 +1,8 @@
 # AI assistant
 
 People chat with an AI model about their work: on its own from the **Assistant** button in the top bar or the
-`/assistant` page, or about the issue on screen, which the assistant picks up when it is opened from an issue page. The assistant finds issues, summarizes them,
-explains them, links every issue it mentions, and, when asked, proposes changes.
+`/assistant` page, or about the ticket on screen, which the assistant picks up when it is opened from a ticket page. The assistant finds tickets, summarizes them,
+explains them, links every ticket it mentions, and, when asked, proposes changes.
 
 ## Turning it on
 
@@ -26,26 +26,26 @@ API keys are stored encrypted and never returned. The model must support tool ca
 
 The assistant uses the same tools as the [MCP server](../apps/api/src/SprintBoot.Host/Mcp), in the person's own request:
 
-- It sees and changes only what that person may. An issue they cannot open does not exist for it.
-- Reading tools (search, get issue, comments, backlog, board, users, …) run at once.
-- Tools that change something (create or edit issues, comment, transition, log work, move to a sprint, …) **never run on
+- It sees and changes only what that person may. A ticket they cannot open does not exist for it.
+- Reading tools (search, get ticket, comments, backlog, board, users, …) run at once.
+- Tools that change something (create or edit tickets, comment, transition, log work, move to a sprint, …) **never run on
   their own**. The assistant proposes them as a card with the arguments, and nothing happens until the person clicks
   **Confirm**. **Decline** tells the assistant the change was refused. Asking something else declines what is pending.
 
-The issue a conversation is about, and the issue the person has open while asking, go along with every question with
-their comments, so "this ticket" or "this page" needs no explaining and answers follow the issue as it changes. An issue
-the person cannot open is left out. On an issue, the panel offers one-click questions such as **Summarize this page**.
+The ticket a conversation is about, and the ticket the person has open while asking, go along with every question with
+their comments, so "this ticket" or "this page" needs no explaining and answers follow the ticket as it changes. A ticket
+the person cannot open is left out. On a ticket, the panel offers one-click questions such as **Summarize this page**.
 
 ## Conversations
 
 Conversations are stored on the server and private to the person who started them. Opening the panel starts a new
-conversation, tied to the issue on screen if there is one. The three latest conversations show above it, those about the
-issue on screen first; **View all** and the **History** button search the rest. The full page (`/assistant`) lists them
+conversation, tied to the ticket on screen if there is one. The three latest conversations show above it, those about the
+ticket on screen first; **View all** and the **History** button search the rest. The full page (`/assistant`) lists them
 all, without the app sidebar. Every assistant turn records its provider, model and token usage. Deleting a conversation
 does not undo changes it made.
 
 A conversation starts with the beginning of its first question as its title. Once the assistant has answered it,
-`ConversationTitleWorker` asks the default connection for a short title from that exchange, without tools or issue
+`ConversationTitleWorker` asks the default connection for a short title from that exchange, without tools or ticket
 content (poll interval `Assistant:Titles:PollMilliseconds`, 5000 by default). A title the person set is never replaced;
 if naming fails, the draft title stays.
 
@@ -53,9 +53,9 @@ if naming fails, the draft title stays.
 
 Every question sends the whole conversation, so requests grow with it. Three things keep them in check:
 
-- An issue goes along with a question only when its content changed since it was last sent in that conversation;
+- A ticket goes along with a question only when its content changed since it was last sent in that conversation;
   otherwise the question refers to the earlier copy by version.
-- A tool result, or an issue sent as context, is cut at 12,000 characters, with a note telling the model to narrow its
+- A tool result, or a ticket sent as context, is cut at 12,000 characters, with a note telling the model to narrow its
   query.
 - **Max request size (KB)** on a connection caps what the history may weigh. Over it, older exchanges are left out whole
   (a question with every step and tool result after it), the first exchange and the latest ones stay, and the model is
@@ -74,7 +74,7 @@ the connection as lost: it shows what was saved and gives the question box back.
 
 ## Data sent to the provider
 
-Each question sends the conversation so far, the tools' answers (issue content the person can read), and the issues
+Each question sends the conversation so far, the tools' answers (ticket content the person can read), and the tickets
 described above with their comments. Naming a conversation sends the text of its first question and answer again. Only
 connect providers the organization trusts with that data.
 

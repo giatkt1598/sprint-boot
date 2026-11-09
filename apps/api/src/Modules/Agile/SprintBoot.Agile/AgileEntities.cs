@@ -81,22 +81,22 @@ public class BoardColumnStatus : Entity<Guid>
     }
 }
 
-/// <summary>Kanban issues pulled from the backlog onto the board.</summary>
+/// <summary>Kanban tickets pulled from the backlog onto the board.</summary>
 public class BoardEntry : Entity<Guid>
 {
     public Guid BoardId { get; private set; }
 
-    public Guid IssueId { get; private set; }
+    public Guid TicketId { get; private set; }
 
     protected BoardEntry()
     {
     }
 
-    public BoardEntry(Guid id, Guid boardId, Guid issueId)
+    public BoardEntry(Guid id, Guid boardId, Guid ticketId)
         : base(id)
     {
         BoardId = boardId;
-        IssueId = issueId;
+        TicketId = ticketId;
     }
 }
 
@@ -137,12 +137,12 @@ public enum SprintOutcome
     NotCompleted = 2,
 }
 
-/// <summary>History of an issue in sprints. Never deleted, so burndown can be added later.</summary>
-public class SprintIssue : Entity<Guid>
+/// <summary>History of a ticket in sprints. Never deleted, so burndown can be added later.</summary>
+public class SprintTicket : Entity<Guid>
 {
     public Guid SprintId { get; private set; }
 
-    public Guid IssueId { get; private set; }
+    public Guid TicketId { get; private set; }
 
     public DateTime AddedAt { get; private set; }
 
@@ -150,15 +150,15 @@ public class SprintIssue : Entity<Guid>
 
     public SprintOutcome Outcome { get; set; }
 
-    protected SprintIssue()
+    protected SprintTicket()
     {
     }
 
-    public SprintIssue(Guid id, Guid sprintId, Guid issueId, DateTime addedAt)
+    public SprintTicket(Guid id, Guid sprintId, Guid ticketId, DateTime addedAt)
         : base(id)
     {
         SprintId = sprintId;
-        IssueId = issueId;
+        TicketId = ticketId;
         AddedAt = addedAt;
     }
 }

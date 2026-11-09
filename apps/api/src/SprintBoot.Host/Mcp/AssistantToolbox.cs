@@ -4,7 +4,7 @@ using Microsoft.Extensions.AI;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
 using SprintBoot.Assistant;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using Volo.Abp.DependencyInjection;
 
 namespace SprintBoot.Host.Mcp;
@@ -16,7 +16,7 @@ namespace SprintBoot.Host.Mcp;
 [ExposeServices(typeof(IAssistantToolbox))]
 public class AssistantToolbox(IServiceProvider services, RichTextSanitizer sanitizer) : IAssistantToolbox, ITransientDependency
 {
-    private static readonly Type[] ToolTypes = [typeof(IssueTools), typeof(CommentTools), typeof(AgileTools), typeof(WorkTools), typeof(LookupTools)];
+    private static readonly Type[] ToolTypes = [typeof(TicketTools), typeof(CommentTools), typeof(AgileTools), typeof(WorkTools), typeof(LookupTools)];
 
     private static readonly Lazy<IReadOnlyList<(AssistantTool Tool, AIFunction Function)>> Catalog = new(Build);
 

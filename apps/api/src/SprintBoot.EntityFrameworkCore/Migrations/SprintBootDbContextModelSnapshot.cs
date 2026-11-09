@@ -146,12 +146,12 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.Property<Guid>("BoardId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("IssueId")
+                    b.Property<Guid>("TicketId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BoardId", "IssueId")
+                    b.HasIndex("BoardId", "TicketId")
                         .IsUnique();
 
                     b.ToTable("board_entries", "agile");
@@ -228,16 +228,13 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.ToTable("sprints", "agile");
                 });
 
-            modelBuilder.Entity("SprintBoot.Agile.SprintIssue", b =>
+            modelBuilder.Entity("SprintBoot.Agile.SprintTicket", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("AddedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("IssueId")
-                        .HasColumnType("uuid");
 
                     b.Property<int>("Outcome")
                         .HasColumnType("integer");
@@ -248,13 +245,16 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.Property<Guid>("SprintId")
                         .HasColumnType("uuid");
 
-                    b.HasKey("Id");
+                    b.Property<Guid>("TicketId")
+                        .HasColumnType("uuid");
 
-                    b.HasIndex("IssueId");
+                    b.HasKey("Id");
 
                     b.HasIndex("SprintId");
 
-                    b.ToTable("sprint_issues", "agile");
+                    b.HasIndex("TicketId");
+
+                    b.ToTable("sprint_tickets", "agile");
                 });
 
             modelBuilder.Entity("SprintBoot.Assistant.AiConnection", b =>
@@ -377,10 +377,10 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("IssueId")
+                    b.Property<Guid>("OwnerId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("OwnerId")
+                    b.Property<Guid?>("TicketId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Title")
@@ -396,7 +396,7 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("IssueId");
+                    b.HasIndex("TicketId");
 
                     b.HasIndex("TitleState");
 
@@ -779,12 +779,9 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.ToTable("webhook_deliveries", "git");
                 });
 
-            modelBuilder.Entity("SprintBoot.GitIntegration.IssueGitLink", b =>
+            modelBuilder.Entity("SprintBoot.GitIntegration.TicketGitLink", b =>
                 {
                     b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("IssueId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("ProjectId")
@@ -796,14 +793,17 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.Property<int>("TargetType")
                         .HasColumnType("integer");
 
+                    b.Property<Guid>("TicketId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ProjectId");
 
-                    b.HasIndex("IssueId", "TargetType", "TargetId")
+                    b.HasIndex("TicketId", "TargetType", "TargetId")
                         .IsUnique();
 
-                    b.ToTable("issue_links", "git");
+                    b.ToTable("ticket_links", "git");
                 });
 
             modelBuilder.Entity("SprintBoot.Identity.AuthPolicy", b =>
@@ -1072,817 +1072,6 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.ToTable("personal_tokens", "access");
                 });
 
-            modelBuilder.Entity("SprintBoot.Issues.Attachment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("CreationTime");
-
-                    b.Property<Guid?>("CreatorId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("CreatorId");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<Guid>("IssueId")
-                        .HasColumnType("uuid");
-
-                    b.Property<long>("Size")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("StorageKey")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IssueId");
-
-                    b.ToTable("attachments", "issues");
-                });
-
-            modelBuilder.Entity("SprintBoot.Issues.Comment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AuthorId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Body")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("BodyText")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("CreationTime");
-
-                    b.Property<Guid?>("CreatorId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("CreatorId");
-
-                    b.Property<DateTime?>("EditedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("IssueId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("ParentId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IssueId");
-
-                    b.ToTable("comments", "issues");
-                });
-
-            modelBuilder.Entity("SprintBoot.Issues.CommentReaction", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CommentId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("now()");
-
-                    b.Property<string>("Emoji")
-                        .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CommentId", "UserId", "Emoji")
-                        .IsUnique();
-
-                    b.ToTable("comment_reactions", "issues");
-                });
-
-            modelBuilder.Entity("SprintBoot.Issues.GlobalIssueTemplate", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("IssueTypeKey")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<int>("Mode")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("global_issue_templates", "issues");
-                });
-
-            modelBuilder.Entity("SprintBoot.Issues.Goal", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("ArchivedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)")
-                        .HasColumnName("ConcurrencyStamp");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("CreationTime");
-
-                    b.Property<Guid?>("CreatorId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("CreatorId");
-
-                    b.Property<Guid?>("DeleterId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("DeleterId");
-
-                    b.Property<DateTime?>("DeletionTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("DeletionTime");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ExtraProperties")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("ExtraProperties");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("IsDeleted");
-
-                    b.Property<DateTime?>("LastModificationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("LastModificationTime");
-
-                    b.Property<Guid?>("LastModifierId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("LastModifierId");
-
-                    b.Property<DateTime?>("LastUpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<Guid?>("OwnerId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Progress")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateOnly?>("StartDate")
-                        .HasColumnType("date");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<DateOnly?>("TargetDate")
-                        .HasColumnType("date");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProjectId", "ArchivedAt");
-
-                    b.ToTable("goals", "issues");
-                });
-
-            modelBuilder.Entity("SprintBoot.Issues.GoalUpdate", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AuthorId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("GoalId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Note")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<int>("Progress")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GoalId", "CreatedAt");
-
-                    b.ToTable("goal_updates", "issues");
-                });
-
-            modelBuilder.Entity("SprintBoot.Issues.Issue", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("AssigneeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int?>("AssigneeType")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)")
-                        .HasColumnName("ConcurrencyStamp");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("CreationTime");
-
-                    b.Property<Guid?>("CreatorId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("CreatorId");
-
-                    b.Property<Guid?>("DeleterId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("DeleterId");
-
-                    b.Property<DateTime?>("DeletionTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("DeletionTime");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("DescriptionText")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateOnly?>("DueDate")
-                        .HasColumnType("date");
-
-                    b.Property<string>("ExtraProperties")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("ExtraProperties");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("IsDeleted");
-
-                    b.Property<DateTime?>("LastModificationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("LastModificationTime");
-
-                    b.Property<Guid?>("LastModifierId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("LastModifierId");
-
-                    b.Property<int>("Number")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid?>("ParentId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("PriorityId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Rank")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .UseCollation("C");
-
-                    b.Property<Guid?>("ReporterId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Resolution")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<NpgsqlTsVector>("SearchVector")
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("tsvector")
-                        .HasAnnotation("Npgsql:TsVectorConfig", "simple")
-                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "Title", "DescriptionText" });
-
-                    b.Property<DateOnly?>("StartDate")
-                        .HasColumnType("date");
-
-                    b.Property<Guid>("StatusId")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal?>("StoryPoints")
-                        .HasPrecision(6, 2)
-                        .HasColumnType("numeric(6,2)");
-
-                    b.Property<Guid?>("TenantId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("TenantId");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<Guid>("TypeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("WorkflowVersionId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ParentId");
-
-                    b.HasIndex("SearchVector");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "GIN");
-
-                    b.HasIndex("ProjectId", "LastModificationTime");
-
-                    b.HasIndex("ProjectId", "Number")
-                        .IsUnique();
-
-                    b.HasIndex("ProjectId", "Rank");
-
-                    b.ToTable("issues", "issues");
-                });
-
-            modelBuilder.Entity("SprintBoot.Issues.IssueActivity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ActorId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("ActorType")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Field")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<Guid>("IssueId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("NewValue")
-                        .HasColumnType("text");
-
-                    b.Property<string>("OldValue")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IssueId", "CreatedAt");
-
-                    b.ToTable("issue_activities", "issues");
-                });
-
-            modelBuilder.Entity("SprintBoot.Issues.IssueLabel", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("IssueId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("LabelId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LabelId");
-
-                    b.HasIndex("IssueId", "LabelId")
-                        .IsUnique();
-
-                    b.ToTable("issue_labels", "issues");
-                });
-
-            modelBuilder.Entity("SprintBoot.Issues.IssueLink", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("CreationTime");
-
-                    b.Property<Guid?>("CreatorId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("CreatorId");
-
-                    b.Property<Guid>("LinkTypeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("SourceIssueId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("TargetIssueId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id")
-                        .HasName("PK_issue_links1");
-
-                    b.HasIndex("LinkTypeId");
-
-                    b.HasIndex("TargetIssueId");
-
-                    b.HasIndex("SourceIssueId", "TargetIssueId", "LinkTypeId")
-                        .IsUnique();
-
-                    b.ToTable("issue_links", "issues");
-                });
-
-            modelBuilder.Entity("SprintBoot.Issues.IssueLinkType", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Inward")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<string>("Outward")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<Guid?>("TenantId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("TenantId");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("issue_link_types", "issues");
-                });
-
-            modelBuilder.Entity("SprintBoot.Issues.IssueTemplate", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid?>("GlobalTemplateId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsDefault")
-                        .HasColumnType("boolean");
-
-                    b.Property<Guid>("IssueTypeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Mode")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GlobalTemplateId");
-
-                    b.HasIndex("ProjectId", "IssueTypeId");
-
-                    b.ToTable("issue_templates", "issues");
-                });
-
-            modelBuilder.Entity("SprintBoot.Issues.IssueType", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Hierarchy")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Icon")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProjectId", "Name")
-                        .IsUnique();
-
-                    b.ToTable("issue_types", "issues");
-                });
-
-            modelBuilder.Entity("SprintBoot.Issues.IssueWatcher", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("IssueId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IssueId", "UserId")
-                        .IsUnique();
-
-                    b.ToTable("issue_watchers", "issues");
-                });
-
-            modelBuilder.Entity("SprintBoot.Issues.Label", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProjectId", "Name")
-                        .IsUnique();
-
-                    b.ToTable("labels", "issues");
-                });
-
-            modelBuilder.Entity("SprintBoot.Issues.Priority", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<int>("Order")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid?>("TenantId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("TenantId");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("priorities", "issues");
-                });
-
-            modelBuilder.Entity("SprintBoot.Issues.ProjectIntroduction", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("UpdatedById")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProjectId")
-                        .IsUnique();
-
-                    b.ToTable("project_introductions", "issues");
-                });
-
-            modelBuilder.Entity("SprintBoot.Issues.RecentIssue", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("IssueId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("ViewedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId", "IssueId")
-                        .IsUnique();
-
-                    b.HasIndex("UserId", "ViewedAt");
-
-                    b.ToTable("recent_issues", "issues");
-                });
-
-            modelBuilder.Entity("SprintBoot.Issues.RichTextFile", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<Guid?>("OwnerId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("RemovedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<long>("Size")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OwnerId");
-
-                    b.ToTable("rich_text_files", "issues");
-                });
-
-            modelBuilder.Entity("SprintBoot.Issues.UploadSession", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatorId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("FileId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<Guid?>("IssueId")
-                        .HasColumnType("uuid");
-
-                    b.Property<long>("PartSize")
-                        .HasColumnType("bigint");
-
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Purpose")
-                        .HasColumnType("integer");
-
-                    b.Property<long>("Size")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("StorageUploadId")
-                        .HasMaxLength(1024)
-                        .HasColumnType("character varying(1024)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExpiresAt");
-
-                    b.ToTable("upload_sessions", "issues");
-                });
-
-            modelBuilder.Entity("SprintBoot.Issues.WorkLog", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AuthorId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("IssueId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Minutes")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Note")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<DateOnly>("WorkDate")
-                        .HasColumnType("date");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IssueId");
-
-                    b.ToTable("work_logs", "issues");
-                });
-
             modelBuilder.Entity("SprintBoot.Notifications.Notification", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1910,13 +1099,6 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
-                    b.Property<Guid?>("IssueId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("IssueKey")
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
                     b.Property<int>("MergedCount")
                         .HasColumnType("integer");
 
@@ -1925,6 +1107,13 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
 
                     b.Property<DateTime?>("ReadAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("TicketId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TicketKey")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.Property<string>("Title")
                         .HasMaxLength(255)
@@ -2149,7 +1338,7 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
-                    b.Property<int>("NextIssueNumber")
+                    b.Property<int>("NextTicketNumber")
                         .HasColumnType("integer");
 
                     b.Property<int>("SprintLengthDays")
@@ -2245,15 +1434,826 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.ToTable("project_role_permissions", "projects");
                 });
 
+            modelBuilder.Entity("SprintBoot.Tickets.Attachment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<long>("Size")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("StorageKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid>("TicketId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TicketId");
+
+                    b.ToTable("attachments", "tickets");
+                });
+
+            modelBuilder.Entity("SprintBoot.Tickets.Comment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("BodyText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<DateTime?>("EditedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TicketId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TicketId");
+
+                    b.ToTable("comments", "tickets");
+                });
+
+            modelBuilder.Entity("SprintBoot.Tickets.CommentReaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CommentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("Emoji")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CommentId", "UserId", "Emoji")
+                        .IsUnique();
+
+                    b.ToTable("comment_reactions", "tickets");
+                });
+
+            modelBuilder.Entity("SprintBoot.Tickets.GlobalTicketTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Mode")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("TicketTypeKey")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("global_ticket_templates", "tickets");
+                });
+
+            modelBuilder.Entity("SprintBoot.Tickets.Goal", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ArchivedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletionTime");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<DateTime?>("LastUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid?>("OwnerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Progress")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("TargetDate")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId", "ArchivedAt");
+
+                    b.ToTable("goals", "tickets");
+                });
+
+            modelBuilder.Entity("SprintBoot.Tickets.GoalUpdate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("GoalId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("Progress")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GoalId", "CreatedAt");
+
+                    b.ToTable("goal_updates", "tickets");
+                });
+
+            modelBuilder.Entity("SprintBoot.Tickets.Label", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("labels", "tickets");
+                });
+
+            modelBuilder.Entity("SprintBoot.Tickets.Priority", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("priorities", "tickets");
+                });
+
+            modelBuilder.Entity("SprintBoot.Tickets.ProjectIntroduction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UpdatedById")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId")
+                        .IsUnique();
+
+                    b.ToTable("project_introductions", "tickets");
+                });
+
+            modelBuilder.Entity("SprintBoot.Tickets.RecentTicket", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TicketId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("ViewedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "TicketId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "ViewedAt");
+
+                    b.ToTable("recent_tickets", "tickets");
+                });
+
+            modelBuilder.Entity("SprintBoot.Tickets.RichTextFile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<Guid?>("OwnerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("RemovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Size")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId");
+
+                    b.ToTable("rich_text_files", "tickets");
+                });
+
+            modelBuilder.Entity("SprintBoot.Tickets.Ticket", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AssigneeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("AssigneeType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletionTime");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DescriptionText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly?>("DueDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PriorityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Rank")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .UseCollation("C");
+
+                    b.Property<Guid?>("ReporterId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Resolution")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<NpgsqlTsVector>("SearchVector")
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("tsvector")
+                        .HasAnnotation("Npgsql:TsVectorConfig", "simple")
+                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "Title", "DescriptionText" });
+
+                    b.Property<DateOnly?>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("StatusId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("StoryPoints")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("numeric(6,2)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<Guid>("TypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("WorkflowVersionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentId");
+
+                    b.HasIndex("SearchVector");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "GIN");
+
+                    b.HasIndex("ProjectId", "LastModificationTime");
+
+                    b.HasIndex("ProjectId", "Number")
+                        .IsUnique();
+
+                    b.HasIndex("ProjectId", "Rank");
+
+                    b.ToTable("tickets", "tickets");
+                });
+
+            modelBuilder.Entity("SprintBoot.Tickets.TicketActivity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ActorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ActorType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Field")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("NewValue")
+                        .HasColumnType("text");
+
+                    b.Property<string>("OldValue")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TicketId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TicketId", "CreatedAt");
+
+                    b.ToTable("ticket_activities", "tickets");
+                });
+
+            modelBuilder.Entity("SprintBoot.Tickets.TicketLabel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("LabelId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TicketId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LabelId");
+
+                    b.HasIndex("TicketId", "LabelId")
+                        .IsUnique();
+
+                    b.ToTable("ticket_labels", "tickets");
+                });
+
+            modelBuilder.Entity("SprintBoot.Tickets.TicketLink", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid>("LinkTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SourceTicketId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TargetTicketId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id")
+                        .HasName("PK_ticket_links1");
+
+                    b.HasIndex("LinkTypeId");
+
+                    b.HasIndex("TargetTicketId");
+
+                    b.HasIndex("SourceTicketId", "TargetTicketId", "LinkTypeId")
+                        .IsUnique();
+
+                    b.ToTable("ticket_links", "tickets");
+                });
+
+            modelBuilder.Entity("SprintBoot.Tickets.TicketLinkType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Inward")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Outward")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ticket_link_types", "tickets");
+                });
+
+            modelBuilder.Entity("SprintBoot.Tickets.TicketTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("GlobalTemplateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Mode")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TicketTypeId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GlobalTemplateId");
+
+                    b.HasIndex("ProjectId", "TicketTypeId");
+
+                    b.ToTable("ticket_templates", "tickets");
+                });
+
+            modelBuilder.Entity("SprintBoot.Tickets.TicketType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Hierarchy")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("ticket_types", "tickets");
+                });
+
+            modelBuilder.Entity("SprintBoot.Tickets.TicketWatcher", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TicketId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TicketId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("ticket_watchers", "tickets");
+                });
+
+            modelBuilder.Entity("SprintBoot.Tickets.UploadSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("FileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<long>("PartSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Purpose")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("Size")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("StorageUploadId")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<Guid?>("TicketId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.ToTable("upload_sessions", "tickets");
+                });
+
+            modelBuilder.Entity("SprintBoot.Tickets.WorkLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Minutes")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid>("TicketId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("WorkDate")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TicketId");
+
+                    b.ToTable("work_logs", "tickets");
+                });
+
             modelBuilder.Entity("SprintBoot.Workflows.ProjectWorkflowMapping", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("IssueTypeId")
+                    b.Property<Guid>("ProjectId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("ProjectId")
+                    b.Property<Guid>("TicketTypeId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("WorkflowId")
@@ -2261,7 +2261,7 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProjectId", "IssueTypeId")
+                    b.HasIndex("ProjectId", "TicketTypeId")
                         .IsUnique();
 
                     b.ToTable("project_workflow_mappings", "workflows");

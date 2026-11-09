@@ -9,15 +9,15 @@ Attachments, files placed in rich text, avatars and logos are stored by the prov
 | `Storage:S3:Bucket`, `AccessKey`, `SecretKey` | The bucket and the keys of an account that can read, write and delete in it. |
 | `Storage:S3:Region` | The AWS region. Optional when `Endpoint` is set. |
 | `Storage:S3:Endpoint` | An S3-compatible service instead of AWS, such as `https://<account>.r2.cloudflarestorage.com` or a MinIO address. Addresses are path-style. |
-| `Issues:Attachments:MaxFileSizeMb` | Largest attachment or rich text file. Default 2048 (2 GB). |
-| `Issues:Uploads:PartSizeKb` | Size of each upload part. Default 16384 (16 MB). With S3, keep it at least 5120 (5 MB). |
+| `Tickets:Attachments:MaxFileSizeMb` | Largest attachment or rich text file. Default 2048 (2 GB). |
+| `Tickets:Uploads:PartSizeKb` | Size of each upload part. Default 16384 (16 MB). With S3, keep it at least 5120 (5 MB). |
 
 ## Large files
 
 Proxies in front of Sprint Boot often cap the size of one request: Cloudflare, including Cloudflare Tunnel, stops at
 100 MB. So the web app sends attachments and rich text files **in parts**:
 
-1. `POST /api/v1/upload/start` checks that the person may add files to the issue or space and that the size is allowed.
+1. `POST /api/v1/upload/start` checks that the person may add files to the ticket or space and that the size is allowed.
    It returns the list of parts.
 2. Each part goes up separately, three at a time:
    - **S3**: straight to object storage, with a presigned `PUT` URL per part (an S3 multipart upload). The file never
@@ -29,7 +29,7 @@ Proxies in front of Sprint Boot often cap the size of one request: Cloudflare, i
 A failed part is retried. An upload that still fails is cancelled, and the person can try again. Uploads that are never
 completed are cancelled after 24 hours, and what storage holds of them is freed.
 
-The older single-request endpoints (`/api/v1/attachment/upload/{issueId}`, `/api/v1/rich-text-file/upload/{projectId}`)
+The older single-request endpoints (`/api/v1/attachment/upload/{ticketId}`, `/api/v1/rich-text-file/upload/{projectId}`)
 remain for API clients. They are subject to the proxy's limit.
 
 ## Bucket CORS (S3)

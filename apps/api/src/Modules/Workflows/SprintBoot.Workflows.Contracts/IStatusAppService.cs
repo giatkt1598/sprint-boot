@@ -15,6 +15,6 @@ public interface IStatusAppService : IApplicationService
 
     Task<StatusUsageDto> GetUsageAsync(Guid id);
 
-    /// <summary>While issues or a published workflow use the status, a replacement takes its place.</summary>
+    /// <summary>While tickets or a published workflow use the status, a replacement takes its place.</summary>
     Task DeleteAsync(Guid id, DeleteStatusInput input);
 }

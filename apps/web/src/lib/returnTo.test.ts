@@ -5,7 +5,7 @@ describe('returnTo', () => {
   beforeEach(() => sessionStorage.clear());
 
   it('falls back when no app page was seen in this tab', () => {
-    expect(appLocationOr('/spaces/SB/issues')).toBe('/spaces/SB/issues');
+    expect(appLocationOr('/spaces/SB/tickets')).toBe('/spaces/SB/tickets');
   });
 
   it('returns the last app page seen', () => {

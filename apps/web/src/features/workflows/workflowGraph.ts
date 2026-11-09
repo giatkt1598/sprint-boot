@@ -212,7 +212,7 @@ export function nearestSpaced(wanted: number[]) {
   return blocks.flatMap((block) => Array<number>(block.count).fill(block.sum / block.count)).map((value, index) => value + index);
 }
 
-/** Statuses no issue could ever reach from the start, the same rule the server applies on publish. */
+/** Statuses no ticket could ever reach from the start, the same rule the server applies on publish. */
 export function unreachableStatuses({ initialStatusId, statusIds, transitions }: Graph) {
   const reached = new Set([initialStatusId]);
   const queue = [initialStatusId];

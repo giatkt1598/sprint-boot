@@ -12,11 +12,11 @@ import { useConversations, type Conversation } from './api';
 
 const RECENT = 3;
 
-/** Newest first, with the conversations about the issue on screen ahead of the rest. */
-export function useRankedConversations(issueId: string | undefined) {
+/** Newest first, with the conversations about the ticket on screen ahead of the rest. */
+export function useRankedConversations(ticketId: string | undefined) {
   const list = useConversations();
   const all = list.data ?? [];
-  const ranked = issueId ? [...all.filter((item) => item.issueId === issueId), ...all.filter((item) => item.issueId !== issueId)] : all;
+  const ranked = ticketId ? [...all.filter((item) => item.ticketId === ticketId), ...all.filter((item) => item.ticketId !== ticketId)] : all;
   return { ...list, ranked };
 }
 
@@ -35,7 +35,7 @@ function ConversationRow({ item, selected, onPick }: { item: Conversation; selec
     >
       <span className="w-full truncate" style={{ fontSize: font.size.md, color: sem('text-primary') }}>{item.title || t('assistant.untitled')}</span>
       <span className="flex items-center gap-1" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>
-        {item.issueKey && <Badge tone="subtle">{item.issueKey}</Badge>}
+        {item.ticketKey && <Badge tone="subtle">{item.ticketKey}</Badge>}
         {formatDateTime(item.updatedAt, i18n.language)}
       </span>
     </ButtonBase>
@@ -43,26 +43,26 @@ function ConversationRow({ item, selected, onPick }: { item: Conversation; selec
 }
 
 const matches = (item: Conversation, text: string) =>
-  !text || (item.title ?? '').toLowerCase().includes(text) || (item.issueKey ?? '').toLowerCase().includes(text);
+  !text || (item.title ?? '').toLowerCase().includes(text) || (item.ticketKey ?? '').toLowerCase().includes(text);
 
-/** Every earlier conversation, searchable; those about the issue on screen come first, under their own heading. */
-export function ConversationPicker({ anchor, issueId, selectedId, onClose, onPick }: {
+/** Every earlier conversation, searchable; those about the ticket on screen come first, under their own heading. */
+export function ConversationPicker({ anchor, ticketId, selectedId, onClose, onPick }: {
   anchor: HTMLElement | null;
-  issueId?: string;
+  ticketId?: string;
   selectedId?: string | null;
   onClose: () => void;
   onPick: (id: string) => void;
 }) {
   const { t } = useTranslation();
-  const conversations = useRankedConversations(issueId);
+  const conversations = useRankedConversations(ticketId);
   const [search, setSearch] = useState('');
   const input = useRef<HTMLInputElement>(null);
   const text = search.trim().toLowerCase();
   const found = conversations.ranked.filter((item) => matches(item, text));
-  const groups = issueId
+  const groups = ticketId
     ? [
-        { key: 'issue', label: t('assistant.thisIssue'), items: found.filter((item) => item.issueId === issueId) },
-        { key: 'other', label: t('assistant.otherConversations'), items: found.filter((item) => item.issueId !== issueId) },
+        { key: 'ticket', label: t('assistant.thisTicket'), items: found.filter((item) => item.ticketId === ticketId) },
+        { key: 'other', label: t('assistant.otherConversations'), items: found.filter((item) => item.ticketId !== ticketId) },
       ]
     : [{ key: 'all', label: null, items: found }];
 
@@ -104,9 +104,9 @@ export function ConversationPicker({ anchor, issueId, selectedId, onClose, onPic
 }
 
 /** The few latest conversations, at the top of a new chat; the rest are one click away. */
-export function RecentConversations({ issueId, onPick }: { issueId?: string; onPick: (id: string) => void }) {
+export function RecentConversations({ ticketId, onPick }: { ticketId?: string; onPick: (id: string) => void }) {
   const { t } = useTranslation();
-  const conversations = useRankedConversations(issueId);
+  const conversations = useRankedConversations(ticketId);
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const recent = conversations.ranked.slice(0, RECENT);
   const more = conversations.ranked.length - recent.length;
@@ -133,7 +133,7 @@ export function RecentConversations({ issueId, onPick }: { issueId?: string; onP
       {recent.map((item) => <ConversationRow key={item.id} item={item} onPick={onPick} />)}
       <ConversationPicker
         anchor={anchor}
-        issueId={issueId}
+        ticketId={ticketId}
         onClose={() => setAnchor(null)}
         onPick={(id) => {
           setAnchor(null);
@@ -146,7 +146,7 @@ export function RecentConversations({ issueId, onPick }: { issueId?: string; onP
 
 const PROMPTS = ['summarize', 'explain', 'nextSteps'] as const;
 
-/** One-click questions about the issue on screen; the assistant gets the issue with them. */
+/** One-click questions about the ticket on screen; the assistant gets the ticket with them. */
 export function QuickPrompts({ onAsk }: { onAsk: (text: string) => void }) {
   const { t } = useTranslation();
   return (

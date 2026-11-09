@@ -1,5 +1,5 @@
 using SprintBoot.Identity;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Projects;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
@@ -13,7 +13,7 @@ public record NotificationEvent(
     Guid EventId,
     string EventType,
     Guid ProjectId,
-    Guid? IssueId,
+    Guid? TicketId,
     Guid ActorId,
     IReadOnlyCollection<Guid> Mentioned,
     string? Title = null,
@@ -25,7 +25,7 @@ public class NotificationProcessor(
     IRepository<NotificationRule, Guid> rules,
     IRepository<NotificationPreference, Guid> preferences,
     SchemeResolver schemes,
-    IIssueFactsProvider issueFacts,
+    ITicketFactsProvider ticketFacts,
     IProjectAccess projectAccess,
     IUserDirectory userDirectory,
     NotificationPusher pusher,
@@ -37,8 +37,8 @@ public class NotificationProcessor(
 
     public async Task ProcessAsync(NotificationEvent item)
     {
-        var facts = item.IssueId is { } issueId ? await issueFacts.FindAsync(issueId) : null;
-        if (item.IssueId is not null && facts is null)
+        var facts = item.TicketId is { } ticketId ? await ticketFacts.FindAsync(ticketId) : null;
+        if (item.TicketId is not null && facts is null)
         {
             return;
         }
@@ -79,13 +79,13 @@ public class NotificationProcessor(
         foreach (var userId in recipients)
         {
             pushed.Add(userId);
-            if (item.EventType == NotificationEventTypes.IssueUpdated && await TryMergeAsync(item, userId, now))
+            if (item.EventType == NotificationEventTypes.TicketUpdated && await TryMergeAsync(item, userId, now))
             {
                 continue;
             }
 
             await notifications.InsertAsync(new Notification(
-                guids.Create(), userId, item.EventType, item.EventId, item.IssueId, item.ProjectId, item.ActorId,
+                guids.Create(), userId, item.EventType, item.EventId, item.TicketId, item.ProjectId, item.ActorId,
                 facts?.Key, facts?.Title ?? item.Title, actor?.Name, item.Detail, now), autoSave: true);
         }
 
@@ -105,7 +105,7 @@ public class NotificationProcessor(
         var since = now - MergeWindow;
         var recent = await notifications.FirstOrDefaultAsync(row =>
             row.UserId == userId
-            && row.IssueId == item.IssueId
+            && row.TicketId == item.TicketId
             && row.ActorId == item.ActorId
             && row.EventType == item.EventType
             && row.ReadAt == null
@@ -124,7 +124,7 @@ public class NotificationProcessor(
         return true;
     }
 
-    private static IEnumerable<Guid> Resolve(NotificationRule rule, IssueFacts? facts, NotificationEvent item, Dictionary<Guid, string> members)
+    private static IEnumerable<Guid> Resolve(NotificationRule rule, TicketFacts? facts, NotificationEvent item, Dictionary<Guid, string> members)
     {
         switch (rule.RecipientType)
         {

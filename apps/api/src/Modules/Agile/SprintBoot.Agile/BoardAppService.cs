@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Projects;
 using SprintBoot.Workflows;
 using Volo.Abp;
@@ -15,11 +15,11 @@ public class BoardAppService(
     IRepository<BoardColumnStatus, Guid> columnStatuses,
     IRepository<BoardEntry, Guid> entries,
     IRepository<Sprint, Guid> sprints,
-    IRepository<SprintIssue, Guid> sprintIssues,
+    IRepository<SprintTicket, Guid> sprintTickets,
     BoardProvider boards,
     IRepository<Board, Guid> boardRepository,
     SprintMapper sprintMapper,
-    IIssuePlanningGateway issues,
+    ITicketPlanningGateway tickets,
     IStatusLookup statusLookup,
     IWorkflowRuntime workflowRuntime,
     IProjectAccess projectAccess,
@@ -28,7 +28,7 @@ public class BoardAppService(
 {
     public async Task<BoardViewDto> GetViewAsync(Guid projectId)
     {
-        await projectAccess.CheckAsync(projectId, ProjectPermissions.ViewIssues);
+        await projectAccess.CheckAsync(projectId, ProjectPermissions.ViewTickets);
         var board = await boards.GetAsync(projectId);
         var statuses = (await statusLookup.GetListAsync()).ToDictionary(status => status.Id);
 
@@ -40,18 +40,18 @@ public class BoardAppService(
         var mapped = links.Select(link => link.StatusId).ToHashSet();
 
         var active = await sprints.FirstOrDefaultAsync(sprint => sprint.BoardId == board.Id && sprint.State == SprintState.Active);
-        List<Guid> issueIds;
+        List<Guid> ticketIds;
         if (board.Type == BoardType.Kanban)
         {
-            issueIds = [.. (await entries.GetListAsync(entry => entry.BoardId == board.Id)).Select(entry => entry.IssueId)];
+            ticketIds = [.. (await entries.GetListAsync(entry => entry.BoardId == board.Id)).Select(entry => entry.TicketId)];
         }
         else if (active is not null)
         {
-            issueIds = [.. (await sprintIssues.GetListAsync(item => item.SprintId == active.Id && item.RemovedAt == null)).Select(item => item.IssueId)];
+            ticketIds = [.. (await sprintTickets.GetListAsync(item => item.SprintId == active.Id && item.RemovedAt == null)).Select(item => item.TicketId)];
         }
         else
         {
-            issueIds = [];
+            ticketIds = [];
         }
 
         return new BoardViewDto
@@ -69,7 +69,7 @@ public class BoardAppService(
                 Statuses = [.. links.Where(link => link.ColumnId == column.Id && statuses.ContainsKey(link.StatusId)).Select(link => statuses[link.StatusId])],
             })],
             CardFields = [.. board.CardFields?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? BoardCardFields.Default],
-            Cards = await issues.GetCardsAsync(projectId, issueIds),
+            Cards = await tickets.GetCardsAsync(projectId, ticketIds),
             UnmappedStatuses = [.. used.Where(id => !mapped.Contains(id) && statuses.ContainsKey(id)).Select(id => statuses[id])],
             StaleStatuses = [.. mapped.Where(id => !used.Contains(id) && statuses.ContainsKey(id)).Select(id => statuses[id])],
         };
@@ -110,19 +110,19 @@ public class BoardAppService(
         return await GetViewAsync(projectId);
     }
 
-    public async Task SetEntryAsync(Guid projectId, Guid issueId, SetBoardEntryInput input)
+    public async Task SetEntryAsync(Guid projectId, Guid ticketId, SetBoardEntryInput input)
     {
         await projectAccess.CheckAsync(projectId, ProjectPermissions.RankBacklog);
-        if (await issues.GetProjectIdAsync(issueId) != projectId)
+        if (await tickets.GetProjectIdAsync(ticketId) != projectId)
         {
             throw new BusinessException(AgileErrors.NotPlannable);
         }
 
         var board = await boards.GetAsync(projectId);
-        var entry = await entries.FirstOrDefaultAsync(item => item.BoardId == board.Id && item.IssueId == issueId);
+        var entry = await entries.FirstOrDefaultAsync(item => item.BoardId == board.Id && item.TicketId == ticketId);
         if (input.OnBoard && entry is null)
         {
-            await entries.InsertAsync(new BoardEntry(GuidGenerator.Create(), board.Id, issueId), autoSave: true);
+            await entries.InsertAsync(new BoardEntry(GuidGenerator.Create(), board.Id, ticketId), autoSave: true);
         }
         else if (!input.OnBoard && entry is not null)
         {
@@ -132,11 +132,11 @@ public class BoardAppService(
         await notifier.ChangedAsync(projectId);
     }
 
-    public async Task RankAsync(Guid issueId, RankIssueInput input)
+    public async Task RankAsync(Guid ticketId, RankTicketInput input)
     {
-        var projectId = await issues.GetProjectIdAsync(issueId);
+        var projectId = await tickets.GetProjectIdAsync(ticketId);
         await projectAccess.CheckAsync(projectId, ProjectPermissions.RankBacklog);
-        await issues.MoveRankAsync(issueId, input.AfterIssueId, input.BeforeIssueId);
+        await tickets.MoveRankAsync(ticketId, input.AfterTicketId, input.BeforeTicketId);
         await notifier.ChangedAsync(projectId);
     }
 }

@@ -11,11 +11,11 @@ import { SelectField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { StatusMappingFields, WorkflowsPage } from '../admin/WorkflowPages';
-import { useIssueTypes, useStatuses, type IssueType } from '../issues/api';
+import { useTicketTypes, useStatuses, type TicketType } from '../tickets/api';
 import { SpacePermission, type Space } from './api';
 
 interface PendingChange {
-  issueTypeId: string;
+  ticketTypeId: string;
   workflowId: string;
   orphaned: string[];
 }
@@ -28,7 +28,7 @@ export function SpaceWorkflowsPage() {
   const queryClient = useQueryClient();
   const canManage = space.permissions?.includes(SpacePermission.manage);
   const statuses = useStatuses(space.id);
-  const types = useIssueTypes(space.id);
+  const types = useTicketTypes(space.id);
   const [pending, setPending] = useState<PendingChange | null>(null);
   const [mappings, setMappings] = useState<Record<string, string>>({});
 
@@ -48,7 +48,7 @@ export function SpaceWorkflowsPage() {
   });
 
   const save = useMutation({
-    mutationFn: (change: { issueTypeId: string; workflowId: string; statusMappings: Record<string, string> }) =>
+    mutationFn: (change: { ticketTypeId: string; workflowId: string; statusMappings: Record<string, string> }) =>
       unwrap(apiClient.POST('/api/v1/project-workflow/set', { body: { projectId: space.id!, ...change } })),
     onSuccess: async (result) => {
       setPending(null);
@@ -65,7 +65,7 @@ export function SpaceWorkflowsPage() {
     },
   });
 
-  const workflowOf = (type: IssueType) => assigned.data?.find((item) => item.issueTypeId === type.id);
+  const workflowOf = (type: TicketType) => assigned.data?.find((item) => item.ticketTypeId === type.id);
   const defaultName = workflows.data?.find((item) => item.name === 'Default');
   const options = (workflows.data ?? []).filter((item) => item.version).map((item) => ({ value: item.id!, label: item.name! }));
 
@@ -78,12 +78,12 @@ export function SpaceWorkflowsPage() {
       {(types.isPending || assigned.isPending) && <LoadingState />}
       {assigned.isError && <ErrorState onRetry={() => void assigned.refetch()} />}
       {types.data && assigned.data && (
-        <Table<IssueType>
+        <Table<TicketType>
           label={t('workflows.title')}
           rows={types.data}
           rowKey={(type) => type.id!}
           columns={[
-            { key: 'type', header: t('issues.issueType'), render: (type) => t(`issue.type.${type.icon}`) },
+            { key: 'type', header: t('tickets.ticketType'), render: (type) => t(`ticket.type.${type.icon}`) },
             {
               key: 'workflow',
               header: t('workflows.title'),
@@ -91,9 +91,9 @@ export function SpaceWorkflowsPage() {
                 canManage ? (
                   <SelectField
                     quiet
-                    label={`${t('workflows.title')}: ${t(`issue.type.${type.icon}`)}`}
+                    label={`${t('workflows.title')}: ${t(`ticket.type.${type.icon}`)}`}
                     value={workflowOf(type)?.workflowId ?? defaultName?.id ?? ''}
-                    onChange={(event) => save.mutate({ issueTypeId: type.id!, workflowId: event.target.value, statusMappings: {} })}
+                    onChange={(event) => save.mutate({ ticketTypeId: type.id!, workflowId: event.target.value, statusMappings: {} })}
                     options={options}
                   />
                 ) : (
@@ -113,7 +113,7 @@ export function SpaceWorkflowsPage() {
               confirmLabel={t('common.confirm')}
               confirmDisabled={pending.orphaned.some((id) => !mappings[id]) || save.isPending}
               onCancel={() => setPending(null)}
-              onConfirm={() => save.mutate({ issueTypeId: pending.issueTypeId, workflowId: pending.workflowId, statusMappings: mappings })}
+              onConfirm={() => save.mutate({ ticketTypeId: pending.ticketTypeId, workflowId: pending.workflowId, statusMappings: mappings })}
             />
           }
         >

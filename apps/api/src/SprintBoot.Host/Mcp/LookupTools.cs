@@ -2,7 +2,7 @@ using System.ComponentModel;
 using ModelContextProtocol.Server;
 using SprintBoot.Agile;
 using SprintBoot.Identity;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Projects;
 
 namespace SprintBoot.Host.Mcp;
@@ -13,7 +13,7 @@ public class LookupTools(
     McpRunner runner,
     McpResolver resolver,
     IProjectAppService projects,
-    IIssueAppService issues,
+    ITicketAppService tickets,
     ISprintAppService sprints,
     IUserDirectoryAppService users)
 {
@@ -25,11 +25,11 @@ public class LookupTools(
             space.Name,
             Board = space.Type.ToString(),
             Lead = McpViews.Person(space.Lead),
-            Issues = space.IssueCount,
+            Tickets = space.TicketCount,
         }));
 
     [McpServerTool(Name = "get_space_fields", ReadOnly = true), Description(
-        "Lists the values the issue fields of a space accept: issue types, priorities, statuses, labels, epics and open sprints.")]
+        "Lists the values the ticket fields of a space accept: ticket types, priorities, statuses, labels, epics and open sprints.")]
     public Task<string> GetSpaceFields([Description("Space key.")] string space) => runner.ReadAsync(async () =>
     {
         var project = await resolver.SpaceAsync(space);
@@ -42,10 +42,10 @@ public class LookupTools(
             project.Name,
             Board = project.Type.ToString(),
             Types = (await resolver.TypesAsync(project.Id)).Select(type => new { type.Name, Level = type.Hierarchy.ToString() }),
-            Priorities = (await issues.GetPrioritiesAsync()).OrderBy(priority => priority.Order).Select(priority => priority.Name),
+            Priorities = (await tickets.GetPrioritiesAsync()).OrderBy(priority => priority.Order).Select(priority => priority.Name),
             Statuses = (await resolver.StatusesAsync(project.Id)).Select(status => new { status.Name, Category = status.Category.ToString() }),
-            Labels = await issues.GetLabelsAsync(project.Id),
-            Epics = (await issues.GetEpicsAsync(project.Id)).Select(epic => new { epic.Key, epic.Title, Status = epic.Status.Name }),
+            Labels = await tickets.GetLabelsAsync(project.Id),
+            Epics = (await tickets.GetEpicsAsync(project.Id)).Select(epic => new { epic.Key, epic.Title, Status = epic.Status.Name }),
             Sprints = openSprints,
         };
     });

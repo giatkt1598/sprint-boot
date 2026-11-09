@@ -9,15 +9,15 @@ public class SprintBootPermissionDefinitionProvider : PermissionDefinitionProvid
     {
         var group = context.AddGroup(SprintBootPermissions.Group, new FixedLocalizableString("Sprint Boot"));
         group.AddPermission(SprintBootPermissions.ManageUsers, new FixedLocalizableString("Manage users"));
-        group.AddPermission(SprintBootPermissions.RestoreIssues, new FixedLocalizableString("Restore deleted issues"));
+        group.AddPermission(SprintBootPermissions.RestoreTickets, new FixedLocalizableString("Restore deleted tickets"));
         group.AddPermission(SprintBootPermissions.ManageNotificationSchemes, new FixedLocalizableString("Manage notification schemes"));
         group.AddPermission(SprintBootPermissions.ManageSso, new FixedLocalizableString("Manage single sign-on"));
         group.AddPermission(SprintBootPermissions.ManageEmail, new FixedLocalizableString("Manage single sign-on"));
         group.AddPermission(SprintBootPermissions.ManageInvitations, new FixedLocalizableString("Manage all invitations"));
         group.AddPermission(SprintBootPermissions.ManageGit, new FixedLocalizableString("Manage Git connections"));
         group.AddPermission(SprintBootPermissions.ManageWorkflows, new FixedLocalizableString("Manage workflows"));
-        group.AddPermission(SprintBootPermissions.ManageIssueLinkTypes, new FixedLocalizableString("Manage issue link types"));
-        group.AddPermission(SprintBootPermissions.ManageIssueTemplates, new FixedLocalizableString("Manage workspace issue templates"));
+        group.AddPermission(SprintBootPermissions.ManageTicketLinkTypes, new FixedLocalizableString("Manage ticket link types"));
+        group.AddPermission(SprintBootPermissions.ManageTicketTemplates, new FixedLocalizableString("Manage workspace ticket templates"));
         group.AddPermission(SprintBootPermissions.ManageAi, new FixedLocalizableString("Manage the AI assistant"));
         group.AddPermission(SprintBootPermissions.AccessAllProjects, new FixedLocalizableString("Access all projects"));
     }

@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using SprintBoot.Assistant;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Projects;
 using Xunit;
 
@@ -48,18 +48,18 @@ public class AssistantTests(ApiFixture fixture)
         return (await response.Content.ReadFromJsonAsync<AiConnectionDto>(Token))!;
     }
 
-    private static async Task<(ProjectDto Project, IssueDto Issue)> IssueAsync(AuthClient client, string title = "Payment fails on retry")
+    private static async Task<(ProjectDto Project, TicketDto Ticket)> TicketAsync(AuthClient client, string title = "Payment fails on retry")
     {
         var key = $"A{Random.Shared.Next(100000, 999999)}";
         var project = (await (await client.Http.PostAsJsonAsync("/api/v1/project", new { name = "Assist", key, type = 0 }, Token)).Content.ReadFromJsonAsync<ProjectDto>(Token))!;
-        var types = await client.Http.GetFromJsonAsync<List<IssueTypeDto>>($"/api/v1/issue/types/{project.Id}", Token);
-        var created = await client.Http.PostAsJsonAsync("/api/v1/issue", new { projectId = project.Id, typeId = types!.Single(type => type.Name == "Task").Id, title }, Token);
-        return (project, (await created.Content.ReadFromJsonAsync<IssueDto>(Token))!);
+        var types = await client.Http.GetFromJsonAsync<List<TicketTypeDto>>($"/api/v1/ticket/types/{project.Id}", Token);
+        var created = await client.Http.PostAsJsonAsync("/api/v1/ticket", new { projectId = project.Id, typeId = types!.Single(type => type.Name == "Task").Id, title }, Token);
+        return (project, (await created.Content.ReadFromJsonAsync<TicketDto>(Token))!);
     }
 
-    private static async Task<ConversationDto> ConversationAsync(AuthClient client, Guid? issueId = null)
+    private static async Task<ConversationDto> ConversationAsync(AuthClient client, Guid? ticketId = null)
     {
-        var response = await client.Http.PostAsJsonAsync("/api/v1/assistant", new { issueId }, Token);
+        var response = await client.Http.PostAsJsonAsync("/api/v1/assistant", new { ticketId }, Token);
         response.StatusCode.ShouldBe(HttpStatusCode.OK, await response.Content.ReadAsStringAsync(Token));
         return (await response.Content.ReadFromJsonAsync<ConversationDto>(Token))!;
     }
@@ -89,14 +89,14 @@ public class AssistantTests(ApiFixture fixture)
 
         tools.Count.ShouldBe(25);
         tools.Select(tool => tool.Name).ShouldBeUnique();
-        tools.Single(tool => tool.Name == "search_issues").ReadOnly.ShouldBeTrue();
-        tools.Single(tool => tool.Name == "get_issue").ReadOnly.ShouldBeTrue();
-        foreach (var write in new[] { "create_issue", "update_issue", "add_comment", "transition_issue", "log_work", "move_to_sprint" })
+        tools.Single(tool => tool.Name == "search_tickets").ReadOnly.ShouldBeTrue();
+        tools.Single(tool => tool.Name == "get_ticket").ReadOnly.ShouldBeTrue();
+        foreach (var write in new[] { "create_ticket", "update_ticket", "add_comment", "transition_ticket", "log_work", "move_to_sprint" })
         {
             tools.Single(tool => tool.Name == write).ReadOnly.ShouldBeFalse(write);
         }
 
-        var search = tools.Single(tool => tool.Name == "search_issues");
+        var search = tools.Single(tool => tool.Name == "search_tickets");
         search.Description.ShouldNotBeNullOrWhiteSpace();
         search.InputSchema.GetProperty("properties").TryGetProperty("text", out _).ShouldBeTrue();
         search.InputSchema.GetProperty("properties").TryGetProperty("cancellationToken", out _).ShouldBeFalse();
@@ -112,20 +112,20 @@ public class AssistantTests(ApiFixture fixture)
         var client = await fixture.CreateUserClientAsync(Token);
         (await client.Http.GetFromJsonAsync<AssistantStatusDto>("/api/v1/assistant/status", Token))!.Available.ShouldBeTrue();
         var conversation = await ConversationAsync(client);
-        Ai.Script(new FakeAiReply("Sprint Boot tracks **issues**."));
+        Ai.Script(new FakeAiReply("Sprint Boot tracks **tickets**."));
 
         var events = await AskAsync(client, conversation.Id, "What is Sprint Boot?");
 
-        Deltas(events).ShouldBe("Sprint Boot tracks **issues**.");
+        Deltas(events).ShouldBe("Sprint Boot tracks **tickets**.");
         var message = events.Single(item => item.Type == "message").Message!;
-        message.Html.ShouldNotBeNull().ShouldContain("<strong>issues</strong>");
+        message.Html.ShouldNotBeNull().ShouldContain("<strong>tickets</strong>");
         events.Last().Type.ShouldBe("done");
 
         var sent = Ai.Bodies.Single();
         sent["stream"]!.GetValue<bool>().ShouldBeTrue();
         sent["messages"]![0]!["role"]!.GetValue<string>().ShouldBe("system");
         sent["messages"]!.AsArray().Last()!["content"]!.ToJsonString().ShouldContain("What is Sprint Boot?");
-        sent["tools"]!.AsArray().Select(tool => tool!["function"]!["name"]!.GetValue<string>()).ShouldContain("search_issues");
+        sent["tools"]!.AsArray().Select(tool => tool!["function"]!["name"]!.GetValue<string>()).ShouldContain("search_tickets");
         Ai.Requests.Single().Headers.Authorization!.Parameter.ShouldBe("secret-key");
 
         var detail = (await client.Http.GetFromJsonAsync<ConversationDetailDto>($"/api/v1/assistant/{conversation.Id}", Token))!;
@@ -170,27 +170,27 @@ public class AssistantTests(ApiFixture fixture)
     }
 
     [Fact]
-    public async Task The_issue_the_person_has_open_goes_with_the_question_when_they_can_read_it()
+    public async Task The_ticket_the_person_has_open_goes_with_the_question_when_they_can_read_it()
     {
         await UseAsync(AiProvider.OpenAiCompatible);
         var owner = await fixture.CreateUserClientAsync(Token);
-        var (_, issue) = await IssueAsync(owner, "Checkout button misaligned");
+        var (_, ticket) = await TicketAsync(owner, "Checkout button misaligned");
         var conversation = await ConversationAsync(owner);
         Ai.Script(new FakeAiReply("It is about the checkout button."));
 
-        await StreamAsync(owner, $"/api/v1/assistant/conversations/{conversation.Id}/messages", new { text = "Summarize this page", issueId = issue.Id });
+        await StreamAsync(owner, $"/api/v1/assistant/conversations/{conversation.Id}/messages", new { text = "Summarize this page", ticketId = ticket.Id });
 
         var question = Ai.Bodies.Single()["messages"]!.AsArray().Last()!["content"]!.ToJsonString();
-        question.ShouldContain($"[{issue.Key}](/issues/{issue.Key})");
+        question.ShouldContain($"[{ticket.Key}](/tickets/{ticket.Key})");
         question.ShouldContain("Checkout button misaligned");
         question.ShouldContain("this page");
 
         var outsider = await fixture.CreateUserClientAsync(Token);
         var theirs = await ConversationAsync(outsider);
         Ai.Script(new FakeAiReply("Which page?"));
-        await StreamAsync(outsider, $"/api/v1/assistant/conversations/{theirs.Id}/messages", new { text = "Summarize this page", issueId = issue.Id });
+        await StreamAsync(outsider, $"/api/v1/assistant/conversations/{theirs.Id}/messages", new { text = "Summarize this page", ticketId = ticket.Id });
         var hidden = Ai.Bodies.Single()["messages"]!.AsArray().Last()!["content"]!.ToJsonString();
-        hidden.ShouldNotContain(issue.Key);
+        hidden.ShouldNotContain(ticket.Key);
         hidden.ShouldNotContain("Checkout button misaligned");
     }
 
@@ -206,14 +206,14 @@ public class AssistantTests(ApiFixture fixture)
         [.. body["messages"]!.AsArray().Where(message => message!["role"]!.GetValue<string>() == "user").Select(Content)];
 
     [Fact]
-    public async Task An_issue_goes_to_the_model_once_until_it_changes()
+    public async Task An_ticket_goes_to_the_model_once_until_it_changes()
     {
         await UseAsync(AiProvider.OpenAiCompatible);
         var owner = await fixture.CreateUserClientAsync(Token);
-        var (_, issue) = await IssueAsync(owner, "Checkout totals are off by a cent");
-        var conversation = await ConversationAsync(owner, issue.Id);
+        var (_, ticket) = await TicketAsync(owner, "Checkout totals are off by a cent");
+        var conversation = await ConversationAsync(owner, ticket.Id);
 
-        Ai.Script(new FakeAiReply("A rounding issue."));
+        Ai.Script(new FakeAiReply("A rounding ticket."));
         await AskAsync(owner, conversation.Id, "What is this about?");
         Ai.Script(new FakeAiReply("Probably in the tax step."));
         await AskAsync(owner, conversation.Id, "Where should I look?");
@@ -223,8 +223,8 @@ public class AssistantTests(ApiFixture fixture)
         second[1].ShouldNotContain("Checkout totals are off by a cent");
         second[1].ShouldContain("unchanged=\"true\"");
 
-        var current = (await owner.Http.GetFromJsonAsync<IssueDto>($"/api/v1/issue/by-key?key={issue.Key}", Token))!;
-        (await owner.Http.PutAsJsonAsync($"/api/v1/issue/{issue.Id}", new { concurrencyStamp = current.ConcurrencyStamp, fields = new { title = "Checkout totals are off by two cents" } }, Token))
+        var current = (await owner.Http.GetFromJsonAsync<TicketDto>($"/api/v1/ticket/by-key?key={ticket.Key}", Token))!;
+        (await owner.Http.PutAsJsonAsync($"/api/v1/ticket/{ticket.Id}", new { concurrencyStamp = current.ConcurrencyStamp, fields = new { title = "Checkout totals are off by two cents" } }, Token))
             .EnsureSuccessStatusCode();
         Ai.Script(new FakeAiReply("Then it grew."));
         await AskAsync(owner, conversation.Id, "And now?");
@@ -304,22 +304,22 @@ public class AssistantTests(ApiFixture fixture)
     {
         await UseAsync(AiProvider.OpenAiCompatible);
         var client = await fixture.CreateUserClientAsync(Token);
-        var (_, issue) = await IssueAsync(client, "Checkout payment fails");
+        var (_, ticket) = await TicketAsync(client, "Checkout payment fails");
         var conversation = await ConversationAsync(client);
         Ai.Script(
-            new FakeAiReply("", ("search_issues", new { text = "payment" })),
-            new FakeAiReply($"Found [{issue.Key}](/issues/{issue.Key})."));
+            new FakeAiReply("", ("search_tickets", new { text = "payment" })),
+            new FakeAiReply($"Found [{ticket.Key}](/tickets/{ticket.Key})."));
 
-        var events = await AskAsync(client, conversation.Id, "Which issues mention payment?");
+        var events = await AskAsync(client, conversation.Id, "Which tickets mention payment?");
 
         events.Where(item => item.Type == "tool").Select(item => item.State).ShouldBe(["running", "done"]);
         var final = events.Last(item => item.Type == "message").Message!;
-        final.Sources.ShouldBe([issue.Key]);
+        final.Sources.ShouldBe([ticket.Key]);
 
         var second = Ai.Bodies[1]["messages"]!.AsArray();
         var toolMessage = second.Single(message => message!["role"]!.GetValue<string>() == "tool")!;
         toolMessage["tool_call_id"]!.GetValue<string>().ShouldBe("call_0");
-        toolMessage["content"]!.ToJsonString().ShouldContain(issue.Key);
+        toolMessage["content"]!.ToJsonString().ShouldContain(ticket.Key);
     }
 
     [Fact]
@@ -327,36 +327,36 @@ public class AssistantTests(ApiFixture fixture)
     {
         await UseAsync(AiProvider.OpenAiCompatible);
         var client = await fixture.CreateUserClientAsync(Token);
-        var (_, issue) = await IssueAsync(client);
-        var conversation = await ConversationAsync(client, issue.Id);
+        var (_, ticket) = await TicketAsync(client);
+        var conversation = await ConversationAsync(client, ticket.Id);
 
-        Ai.Script(new FakeAiReply("I will add the comment.", ("add_comment", new { key = issue.Key, body = "Looked into it" })));
+        Ai.Script(new FakeAiReply("I will add the comment.", ("add_comment", new { key = ticket.Key, body = "Looked into it" })));
         var proposed = await AskAsync(client, conversation.Id, "Comment that I looked into it");
         var action = proposed.Single(item => item.Type == "action").Action!;
         action.State.ShouldBe(AssistantActionState.Proposed);
         action.Tool.ShouldBe("add_comment");
-        // The issue went along as context.
-        Ai.Bodies.Single()["messages"]!.AsArray().Last()!["content"]!.ToJsonString().ShouldContain(issue.Title);
-        (await client.Http.GetFromJsonAsync<List<CommentDto>>($"/api/v1/comment?issueId={issue.Id}", Token))!.ShouldBeEmpty();
+        // The ticket went along as context.
+        Ai.Bodies.Single()["messages"]!.AsArray().Last()!["content"]!.ToJsonString().ShouldContain(ticket.Title);
+        (await client.Http.GetFromJsonAsync<List<CommentDto>>($"/api/v1/comment?ticketId={ticket.Id}", Token))!.ShouldBeEmpty();
 
-        Ai.Script(new FakeAiReply("Done, the comment is on the issue."));
+        Ai.Script(new FakeAiReply("Done, the comment is on the ticket."));
         var confirmed = await StreamAsync(client, $"/api/v1/assistant/conversations/{conversation.Id}/actions/{action.Id}/confirm");
         confirmed.First(item => item.Type == "action").Action!.State.ShouldBe(AssistantActionState.Confirmed);
-        Deltas(confirmed).ShouldBe("Done, the comment is on the issue.");
-        (await client.Http.GetFromJsonAsync<List<CommentDto>>($"/api/v1/comment?issueId={issue.Id}", Token))!.ShouldHaveSingleItem().Body.ShouldContain("Looked into it");
+        Deltas(confirmed).ShouldBe("Done, the comment is on the ticket.");
+        (await client.Http.GetFromJsonAsync<List<CommentDto>>($"/api/v1/comment?ticketId={ticket.Id}", Token))!.ShouldHaveSingleItem().Body.ShouldContain("Looked into it");
 
         // Confirming twice changes nothing.
         (await StreamAsync(client, $"/api/v1/assistant/conversations/{conversation.Id}/actions/{action.Id}/confirm"))
             .Single().Code.ShouldBe(AssistantErrors.ActionNotPending);
 
         Ai.Script(
-            new FakeAiReply("", ("add_comment", new { key = issue.Key, body = "Second" })),
+            new FakeAiReply("", ("add_comment", new { key = ticket.Key, body = "Second" })),
             new FakeAiReply("Understood, I left it."));
         var again = await AskAsync(client, conversation.Id, "Add another comment");
         var second = again.Single(item => item.Type == "action").Action!;
         var declined = await StreamAsync(client, $"/api/v1/assistant/conversations/{conversation.Id}/actions/{second.Id}/decline");
         declined.First(item => item.Type == "action").Action!.State.ShouldBe(AssistantActionState.Declined);
-        (await client.Http.GetFromJsonAsync<List<CommentDto>>($"/api/v1/comment?issueId={issue.Id}", Token))!.Count.ShouldBe(1);
+        (await client.Http.GetFromJsonAsync<List<CommentDto>>($"/api/v1/comment?ticketId={ticket.Id}", Token))!.Count.ShouldBe(1);
         Ai.Bodies.Last()["messages"]!.AsArray().Last()!["content"]!.ToJsonString().ShouldContain("declined");
     }
 
@@ -365,12 +365,12 @@ public class AssistantTests(ApiFixture fixture)
     {
         await UseAsync(AiProvider.OpenAiCompatible);
         var owner = await fixture.CreateUserClientAsync(Token);
-        var (_, hidden) = await IssueAsync(owner, "Secret roadmap");
+        var (_, hidden) = await TicketAsync(owner, "Secret roadmap");
         var outsider = await fixture.CreateUserClientAsync(Token);
-        (await outsider.Http.PostAsJsonAsync("/api/v1/assistant", new { issueId = hidden.Id }, Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await outsider.Http.PostAsJsonAsync("/api/v1/assistant", new { ticketId = hidden.Id }, Token)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
         var conversation = await ConversationAsync(outsider);
-        Ai.Script(new FakeAiReply("", ("get_issue", new { key = hidden.Key })), new FakeAiReply("I cannot find that issue."));
+        Ai.Script(new FakeAiReply("", ("get_ticket", new { key = hidden.Key })), new FakeAiReply("I cannot find that ticket."));
         var events = await AskAsync(outsider, conversation.Id, $"What is {hidden.Key} about?");
 
         events.Single(item => item.Type == "tool" && item.State != "running").State.ShouldBe("failed");
@@ -383,15 +383,15 @@ public class AssistantTests(ApiFixture fixture)
     {
         await UseAsync(AiProvider.Anthropic);
         var client = await fixture.CreateUserClientAsync(Token);
-        var (_, issue) = await IssueAsync(client, "Login button misaligned");
+        var (_, ticket) = await TicketAsync(client, "Login button misaligned");
         var conversation = await ConversationAsync(client);
         Ai.Script(
-            new FakeAiReply("Let me look.", ("search_issues", new { text = "login" })) { Thinking = "find login issues" },
-            new FakeAiReply($"See [{issue.Key}](/issues/{issue.Key})."));
+            new FakeAiReply("Let me look.", ("search_tickets", new { text = "login" })) { Thinking = "find login tickets" },
+            new FakeAiReply($"See [{ticket.Key}](/tickets/{ticket.Key})."));
 
-        var events = await AskAsync(client, conversation.Id, "Any login issues?");
+        var events = await AskAsync(client, conversation.Id, "Any login tickets?");
 
-        Deltas(events).ShouldBe($"Let me look.See [{issue.Key}](/issues/{issue.Key}).");
+        Deltas(events).ShouldBe($"Let me look.See [{ticket.Key}](/tickets/{ticket.Key}).");
         var first = Ai.Requests.First();
         first.Path.ShouldEndWith("/v1/messages");
         first.Headers.Authorization!.Parameter.ShouldBe("secret-key");
@@ -403,12 +403,12 @@ public class AssistantTests(ApiFixture fixture)
         var replay = Ai.Bodies[1]["messages"]!.AsArray();
         var assistant = replay.Single(message => message!["role"]!.GetValue<string>() == "assistant")!["content"]!.AsArray();
         assistant[0]!["type"]!.GetValue<string>().ShouldBe("thinking");
-        assistant[0]!["thinking"]!.GetValue<string>().ShouldBe("find login issues");
-        assistant[0]!["signature"]!.GetValue<string>().ShouldBe("sig-find login issues");
+        assistant[0]!["thinking"]!.GetValue<string>().ShouldBe("find login tickets");
+        assistant[0]!["signature"]!.GetValue<string>().ShouldBe("sig-find login tickets");
         assistant.Last()!["type"]!.GetValue<string>().ShouldBe("tool_use");
         var results = replay.Last()!["content"]!.AsArray();
         results[0]!["type"]!.GetValue<string>().ShouldBe("tool_result");
-        results[0]!["content"]!.ToJsonString().ShouldContain(issue.Key);
+        results[0]!["content"]!.ToJsonString().ShouldContain(ticket.Key);
     }
 
     [Fact]

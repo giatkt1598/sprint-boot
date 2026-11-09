@@ -13,7 +13,7 @@ const storageKey = (userId: string | undefined) => `sb.lastSpace.${userId}`;
 export const rememberSpace = (userId: string | undefined, spaceKey: string) => localStorage.setItem(storageKey(userId), spaceKey);
 
 /** Matches the server's SpaceView values, in order. */
-export const SPACE_VIEWS = ['backlog', 'board', 'issues', 'epics'] as const;
+export const SPACE_VIEWS = ['backlog', 'board', 'tickets', 'epics'] as const;
 
 export const HomePageKind = { lastSpace: 0, space: 1, search: 2, notifications: 3 } as const;
 

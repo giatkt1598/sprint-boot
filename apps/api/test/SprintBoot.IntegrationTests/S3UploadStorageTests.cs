@@ -4,7 +4,7 @@ using Amazon.S3.Model;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using Volo.Abp.BlobStoring;

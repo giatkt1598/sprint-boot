@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using SprintBoot.Identity;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Projects;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -43,7 +43,7 @@ public class GitConnectionAppService(
     IRepository<GitCommit, Guid> commits,
     IRepository<GitPullRequest, Guid> pullRequests,
     IRepository<CiStatus, Guid> statuses,
-    IRepository<IssueGitLink, Guid> links,
+    IRepository<TicketGitLink, Guid> links,
     GitAccessProvider access,
     GitSyncService sync,
     GitAuthState authState,
@@ -197,7 +197,7 @@ public class GitConnectionAppService(
     public async Task<GitAuthorizeUrlDto> GetAuthorizeUrlAsync(Guid id)
     {
         var connection = await LoadAsync(id);
-        var state = authState.Issue(connection.Id);
+        var state = authState.Ticket(connection.Id);
         if (connection.ProviderType == GitProviderType.GitHub)
         {
             var slug = configuration["Git:GitHub:AppSlug"];
@@ -336,31 +336,31 @@ public class GitConnectionAppService(
 }
 
 [Authorize]
-public class GitIssueAppService(
+public class GitTicketAppService(
     IRepository<GitConnection, Guid> connections,
     IRepository<GitRepository, Guid> repositories,
     IRepository<GitBranch, Guid> branches,
     IRepository<GitCommit, Guid> commits,
     IRepository<GitPullRequest, Guid> pullRequests,
     IRepository<CiStatus, Guid> statuses,
-    IRepository<IssueGitLink, Guid> links,
-    IIssuePlanningGateway issues,
-    IIssueFactsProvider facts,
+    IRepository<TicketGitLink, Guid> links,
+    ITicketPlanningGateway tickets,
+    ITicketFactsProvider facts,
     IProjectAccess projects,
     GitAccessProvider access,
     GitEventProcessor processor,
     IDistributedEventBus eventBus,
     IConfiguration configuration)
-    : ApplicationService, IGitIssueAppService
+    : ApplicationService, IGitTicketAppService
 {
     private const int DefaultPollSeconds = 60;
     private const int DefaultPollRepositories = 10;
 
-    public async Task<DevelopmentDto> GetDevelopmentAsync(Guid issueId)
+    public async Task<DevelopmentDto> GetDevelopmentAsync(Guid ticketId)
     {
-        await projects.CheckAsync(await issues.GetProjectIdAsync(issueId), ProjectPermissions.ViewIssues);
-        var issueLinks = await links.GetListAsync(item => item.IssueId == issueId);
-        var ids = issueLinks.Select(item => item.TargetId).ToList();
+        await projects.CheckAsync(await tickets.GetProjectIdAsync(ticketId), ProjectPermissions.ViewTickets);
+        var ticketLinks = await links.GetListAsync(item => item.TicketId == ticketId);
+        var ids = ticketLinks.Select(item => item.TargetId).ToList();
 
         var branchRows = await branches.GetListAsync(item => ids.Contains(item.Id));
         var commitRows = await commits.GetListAsync(item => ids.Contains(item.Id));
@@ -379,7 +379,7 @@ public class GitIssueAppService(
 
         return new DevelopmentDto
         {
-            CanCreateBranch = await UsableRepositoriesAsync(await issues.GetProjectIdAsync(issueId)) is { Count: > 0 },
+            CanCreateBranch = await UsableRepositoriesAsync(await tickets.GetProjectIdAsync(ticketId)) is { Count: > 0 },
             Branches = [.. branchRows.OrderBy(item => item.Name).Select(item => new GitBranchRowDto
             {
                 Name = item.Name,
@@ -413,11 +413,11 @@ public class GitIssueAppService(
         };
     }
 
-    public async Task<BranchOptionsDto> GetBranchOptionsAsync(Guid issueId)
+    public async Task<BranchOptionsDto> GetBranchOptionsAsync(Guid ticketId)
     {
-        var projectId = await issues.GetProjectIdAsync(issueId);
-        await projects.CheckAsync(projectId, ProjectPermissions.EditIssues);
-        var issue = await facts.FindAsync(issueId) ?? throw new BusinessException(GitErrors.InvalidConnection);
+        var projectId = await tickets.GetProjectIdAsync(ticketId);
+        await projects.CheckAsync(projectId, ProjectPermissions.EditTickets);
+        var ticket = await facts.FindAsync(ticketId) ?? throw new BusinessException(GitErrors.InvalidConnection);
 
         var used = await UsedRepositoriesAsync(projectId);
         var repos = await UsableRepositoriesAsync(projectId);
@@ -425,7 +425,7 @@ public class GitIssueAppService(
 
         return new BranchOptionsDto
         {
-            SuggestedName = IssueKeyScanner.BranchName(await projects.GetBranchTemplateAsync(projectId), issue.Key, issue.Title),
+            SuggestedName = TicketKeyScanner.BranchName(await projects.GetBranchTemplateAsync(projectId), ticket.Key, ticket.Title),
             Repositories = [.. repos
                 .OrderByDescending(item => used.Contains(item.Id)).ThenBy(item => item.FullName)
                 .Select(item => new BranchRepositoryDto
@@ -439,19 +439,19 @@ public class GitIssueAppService(
         };
     }
 
-    public async Task<List<string>> GetBranchesAsync(Guid issueId, Guid repositoryId)
+    public async Task<List<string>> GetBranchesAsync(Guid ticketId, Guid repositoryId)
     {
-        var projectId = await issues.GetProjectIdAsync(issueId);
-        await projects.CheckAsync(projectId, ProjectPermissions.EditIssues);
+        var projectId = await tickets.GetProjectIdAsync(ticketId);
+        await projects.CheckAsync(projectId, ProjectPermissions.EditTickets);
         var (repository, connection) = await TargetAsync(repositoryId, projectId);
         return await CallAsync(async () =>
             (await access.Provider(connection.ProviderType).ListBranchesAsync(await access.GetAsync(connection), repository.FullName)).ToList());
     }
 
-    public async Task<GitBranchRowDto> CreateBranchAsync(Guid issueId, CreateBranchInput input)
+    public async Task<GitBranchRowDto> CreateBranchAsync(Guid ticketId, CreateBranchInput input)
     {
-        var projectId = await issues.GetProjectIdAsync(issueId);
-        await projects.CheckAsync(projectId, ProjectPermissions.EditIssues);
+        var projectId = await tickets.GetProjectIdAsync(ticketId);
+        await projects.CheckAsync(projectId, ProjectPermissions.EditTickets);
         var (repository, connection) = await TargetAsync(input.RepositoryId, projectId);
 
         await CallAsync(async () =>
@@ -463,8 +463,8 @@ public class GitIssueAppService(
 
         var branch = await branches.FirstOrDefaultAsync(item => item.RepositoryId == repository.Id && item.Name == input.Name)
             ?? await branches.InsertAsync(new GitBranch(GuidGenerator.Create(), repository.Id, input.Name), autoSave: true);
-        await processor.LinkAsync(new IssueRef(issueId, projectId), GitLinkTarget.Branch, branch.Id);
-        await issues.RecordActivityAsync(issueId, "branch", null, $"{repository.FullName}:{input.Name}");
+        await processor.LinkAsync(new TicketRef(ticketId, projectId), GitLinkTarget.Branch, branch.Id);
+        await tickets.RecordActivityAsync(ticketId, "branch", null, $"{repository.FullName}:{input.Name}");
 
         return new GitBranchRowDto
         {
@@ -474,10 +474,10 @@ public class GitIssueAppService(
         };
     }
 
-    public async Task RefreshAsync(Guid issueId)
+    public async Task RefreshAsync(Guid ticketId)
     {
-        var projectId = await issues.GetProjectIdAsync(issueId);
-        await projects.CheckAsync(projectId, ProjectPermissions.ViewIssues);
+        var projectId = await tickets.GetProjectIdAsync(ticketId);
+        await projects.CheckAsync(projectId, ProjectPermissions.ViewTickets);
 
         var usable = (await connections.GetListAsync(item => item.ProjectId == projectId && item.Status == GitConnectionStatus.Connected))
             .ToDictionary(item => item.Id);
@@ -485,7 +485,7 @@ public class GitIssueAppService(
         var repos = (await repositories.GetListAsync(item => item.IsAccessible && ids.Contains(item.ConnectionId)))
             .Where(item => usable[item.ConnectionId].Uses(item))
             .ToList();
-        var linked = await RepositoriesOfIssueAsync(issueId);
+        var linked = await RepositoriesOfTicketAsync(ticketId);
         var cutoff = Clock.Now.AddSeconds(-configuration.GetValue("Git:Polling:IntervalSeconds", DefaultPollSeconds));
         var due = repos
             .Where(item => item.LastPolledAt is null || item.LastPolledAt < cutoff)
@@ -509,9 +509,9 @@ public class GitIssueAppService(
         }
     }
 
-    private async Task<HashSet<Guid>> RepositoriesOfIssueAsync(Guid issueId)
+    private async Task<HashSet<Guid>> RepositoriesOfTicketAsync(Guid ticketId)
     {
-        var ids = (await links.GetListAsync(item => item.IssueId == issueId)).Select(item => item.TargetId).ToList();
+        var ids = (await links.GetListAsync(item => item.TicketId == ticketId)).Select(item => item.TargetId).ToList();
         return
         [
             .. (await branches.GetListAsync(item => ids.Contains(item.Id))).Select(item => item.RepositoryId),
@@ -573,13 +573,13 @@ public class GitIssueAppService(
             new GitRepoInfo(repository.ExternalId, repository.FullName, repository.DefaultBranch, repository.IsPrivate, repository.WebUrl), name);
 }
 
-public class IssueGitFacts(IRepository<IssueGitLink, Guid> links) : IIssueGitFacts, ITransientDependency
+public class TicketGitFacts(IRepository<TicketGitLink, Guid> links) : ITicketGitFacts, ITransientDependency
 {
-    public Task<bool> HasPullRequestAsync(Guid issueId) =>
-        links.AnyAsync(item => item.IssueId == issueId && item.TargetType == GitLinkTarget.PullRequest);
+    public Task<bool> HasPullRequestAsync(Guid ticketId) =>
+        links.AnyAsync(item => item.TicketId == ticketId && item.TargetType == GitLinkTarget.PullRequest);
 }
 
-public class ProjectGitFacts(IRepository<IssueGitLink, Guid> links, IRepository<GitPullRequest, Guid> pullRequests)
+public class ProjectGitFacts(IRepository<TicketGitLink, Guid> links, IRepository<GitPullRequest, Guid> pullRequests)
     : IProjectGitFacts, ITransientDependency
 {
     public async Task<PullRequestCounts> GetPullRequestCountsAsync(Guid projectId)
@@ -608,7 +608,7 @@ public class GitAuthState(IDataProtectionProvider protection, GitSyncService syn
 
     public string GitHubSetupUri => $"{sync.PublicUrl}/api/v1/git/github/setup";
 
-    public string Issue(Guid connectionId) => Protector.Protect(connectionId.ToString(), Lifetime);
+    public string Ticket(Guid connectionId) => Protector.Protect(connectionId.ToString(), Lifetime);
 
     public Guid? Read(string? state)
     {

@@ -12,7 +12,7 @@ import { useErrorMessage } from '../../lib/errors';
 import { formatRelative } from '../../lib/format';
 import { hasSelectedText } from '../../lib/selection';
 import { font, hoverPane, radius, sem } from '../../theme/tokens';
-import { RichTextEditor, RichTextView } from '../issues/RichTextEditor';
+import { RichTextEditor, RichTextView } from '../tickets/RichTextEditor';
 import { useMembers, type Space } from '../spaces/api';
 import { introductionKey, useIntroduction } from './api';
 

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using SprintBoot.GitIntegration;
 using SprintBoot.Identity;
-using SprintBoot.Issues;
+using SprintBoot.Tickets;
 using SprintBoot.Projects;
 using SprintBoot.Workflows;
 using Volo.Abp.Application.Services;
@@ -10,18 +10,18 @@ using Volo.Abp.Timing;
 
 namespace SprintBoot.Agile;
 
-/// <summary>Gathers the Summary tab from issues, sprints, members and pull requests, each read through its owner.</summary>
+/// <summary>Gathers the Summary tab from tickets, sprints, members and pull requests, each read through its owner.</summary>
 /// <remarks>
-/// For a sprint period the figures count the issues of those sprints, as the Board and Backlog show them: the ones still
-/// in a running sprint and the ones a closed sprint ended with. Subtasks and epics are not sprint issues, so they do not
-/// count. For a calendar period the figures count the issues created or updated in it.
+/// For a sprint period the figures count the tickets of those sprints, as the Board and Backlog show them: the ones still
+/// in a running sprint and the ones a closed sprint ended with. Subtasks and epics are not sprint tickets, so they do not
+/// count. For a calendar period the figures count the tickets created or updated in it.
 /// </remarks>
 [Authorize]
 public class ProjectOverviewAppService(
     IRepository<Sprint, Guid> sprints,
-    IRepository<SprintIssue, Guid> sprintIssues,
+    IRepository<SprintTicket, Guid> sprintTickets,
     BoardProvider boards,
-    IIssueOverviewFacts issueFacts,
+    ITicketOverviewFacts ticketFacts,
     IProjectGitFacts gitFacts,
     IProjectAccess projectAccess,
     IUserDirectory userDirectory,
@@ -34,30 +34,30 @@ public class ProjectOverviewAppService(
 
     public async Task<OverviewSummaryDto> GetSummaryAsync(Guid projectId, OverviewSummaryInput input)
     {
-        await projectAccess.CheckAsync(projectId, ProjectPermissions.ViewIssues);
+        await projectAccess.CheckAsync(projectId, ProjectPermissions.ViewTickets);
         var board = await boards.GetAsync(projectId);
         var boardSprints = await sprints.GetListAsync(sprint => sprint.BoardId == board.Id);
         var (range, periodSprints) = RangeOf(input.Period, boardSprints, DateOnly.FromDateTime(clock.Now));
 
-        var all = await issueFacts.GetIssuesAsync(projectId);
+        var all = await ticketFacts.GetTicketsAsync(projectId);
         var from = range.From.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
         var to = range.To.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
         bool InRange(DateTime? at) => at >= from && at < to;
 
         var bySprint = periodSprints.Count > 0;
         var sprintWork = bySprint ? await SprintWorkAsync(periodSprints, boardSprints) : null;
-        List<IssueOverviewRow> issues = sprintWork is not null
-            ? [.. all.Where(issue => sprintWork.Planned.Contains(issue.Id))]
-            : all.Where(issue => InRange(issue.CreatedAt) || InRange(issue.UpdatedAt)).ToList();
+        List<TicketOverviewRow> tickets = sprintWork is not null
+            ? [.. all.Where(ticket => sprintWork.Planned.Contains(ticket.Id))]
+            : all.Where(ticket => InRange(ticket.CreatedAt) || InRange(ticket.UpdatedAt)).ToList();
         // Done in the sprint counts whenever it happened, even after the planned end; by date, done in the period.
         var completed = sprintWork is not null
-            ? issues.Where(sprintWork.IsDone).ToList()
-            : issues.Where(issue => InRange(issue.CompletedAt)).ToList();
+            ? tickets.Where(sprintWork.IsDone).ToList()
+            : tickets.Where(ticket => InRange(ticket.CompletedAt)).ToList();
 
         var (velocity, velocitySprints) = sprintWork is not null
-            ? (VelocityOf(issues.Where(sprintWork.IsDone)), periodSprints.Count)
-            : (VelocityOf(all.Where(issue => issue.Category == StatusCategory.Done && InRange(issue.CompletedAt))), 0);
-        var events = await issueFacts.GetRecentEventsAsync(projectId, RecentCount);
+            ? (VelocityOf(tickets.Where(sprintWork.IsDone)), periodSprints.Count)
+            : (VelocityOf(all.Where(ticket => ticket.Category == StatusCategory.Done && InRange(ticket.CompletedAt))), 0);
+        var events = await ticketFacts.GetRecentEventsAsync(projectId, RecentCount);
         var people = await userDirectory.GetByIdsAsync([.. velocity.Select(item => item.UserId), .. events.Select(item => item.ActorId)]);
         var pulls = await gitFacts.GetPullRequestCountsAsync(projectId);
         var joined = await projectAccess.GetMemberJoinTimesAsync(projectId);
@@ -67,43 +67,43 @@ public class ProjectOverviewAppService(
             Range = range,
             Members = joined.Count,
             MembersAddedInPeriod = joined.Values.Count(at => InRange(at)),
-            Issues = new OverviewIssueCountsDto
+            Tickets = new OverviewTicketCountsDto
             {
-                Total = issues.Count,
-                CreatedInPeriod = issues.Count(issue => InRange(issue.CreatedAt)),
-                ToDo = issues.Count(issue => issue.Category == StatusCategory.ToDo),
-                InProgress = issues.Count(issue => issue.Category == StatusCategory.InProgress),
-                InProgressByStatus = [.. issues
-                    .Where(issue => issue.Category == StatusCategory.InProgress)
-                    .GroupBy(issue => issue.StatusName)
+                Total = tickets.Count,
+                CreatedInPeriod = tickets.Count(ticket => InRange(ticket.CreatedAt)),
+                ToDo = tickets.Count(ticket => ticket.Category == StatusCategory.ToDo),
+                InProgress = tickets.Count(ticket => ticket.Category == StatusCategory.InProgress),
+                InProgressByStatus = [.. tickets
+                    .Where(ticket => ticket.Category == StatusCategory.InProgress)
+                    .GroupBy(ticket => ticket.StatusName)
                     .Select(group => new OverviewStatusCountDto { Name = group.Key, Count = group.Count() })
                     .OrderByDescending(item => item.Count)],
-                Done = issues.Count(issue => issue.Category == StatusCategory.Done),
+                Done = tickets.Count(ticket => ticket.Category == StatusCategory.Done),
             },
-            ByType = [.. issues
-                .GroupBy(issue => (issue.TypeName, issue.TypeIcon, issue.Hierarchy))
+            ByType = [.. tickets
+                .GroupBy(ticket => (ticket.TypeName, ticket.TypeIcon, ticket.Hierarchy))
                 .Select(group => new OverviewTypeCountDto { Name = group.Key.TypeName, Icon = group.Key.TypeIcon, Hierarchy = group.Key.Hierarchy, Count = group.Count() })
                 .OrderByDescending(item => item.Count)],
             Activity = new OverviewActivityDto
             {
-                Created = issues.Count(issue => InRange(issue.CreatedAt)),
-                Updated = issues.Count(issue => InRange(issue.UpdatedAt)),
+                Created = tickets.Count(ticket => InRange(ticket.CreatedAt)),
+                Updated = tickets.Count(ticket => InRange(ticket.UpdatedAt)),
                 Completed = completed.Count,
-                LastCreatedAt = issues.Count == 0 ? null : issues.Max(issue => issue.CreatedAt),
-                LastUpdatedAt = issues.Count == 0 ? null : issues.Max(issue => issue.UpdatedAt),
-                LastCompletedAt = completed.Max(issue => issue.CompletedAt),
+                LastCreatedAt = tickets.Count == 0 ? null : tickets.Max(ticket => ticket.CreatedAt),
+                LastUpdatedAt = tickets.Count == 0 ? null : tickets.Max(ticket => ticket.UpdatedAt),
+                LastCompletedAt = completed.Max(ticket => ticket.CompletedAt),
             },
             PullRequests = new OverviewPullRequestsDto { Total = pulls.Total, Open = pulls.Open, Merged = pulls.Merged },
             Velocity = [.. velocity
                 .Where(item => people.ContainsKey(item.UserId))
-                .Select(item => new OverviewVelocityDto { User = people[item.UserId], Points = item.Points, Issues = item.Issues })],
+                .Select(item => new OverviewVelocityDto { User = people[item.UserId], Points = item.Points, Tickets = item.Tickets })],
             VelocitySprints = velocitySprints,
             Recent = [.. events.Select(item => new OverviewEventDto
             {
                 Actor = people.GetValueOrDefault(item.ActorId),
                 Kind = item.Kind,
-                IssueKey = item.IssueKey,
-                IssueTitle = item.IssueTitle,
+                TicketKey = item.TicketKey,
+                TicketTitle = item.TicketTitle,
                 Field = item.Field,
                 NewValue = item.NewValue,
                 At = item.At,
@@ -111,7 +111,7 @@ public class ProjectOverviewAppService(
         };
     }
 
-    /// <summary>The period's dates, and the sprints whose issues it counts; no sprints means it counts by date.</summary>
+    /// <summary>The period's dates, and the sprints whose tickets it counts; no sprints means it counts by date.</summary>
     private static (OverviewRangeDto Range, List<Guid> Sprints) RangeOf(OverviewPeriod period, List<Sprint> boardSprints, DateOnly today)
     {
         OverviewRangeDto Range(DateOnly from, DateOnly to, bool bySprint, string? name = null, int? left = null) =>
@@ -157,33 +157,33 @@ public class ProjectOverviewAppService(
         }
     }
 
-    /// <summary>The issues of the sprints and which of them count as done there.</summary>
+    /// <summary>The tickets of the sprints and which of them count as done there.</summary>
     private sealed record SprintWork(HashSet<Guid> Planned, HashSet<Guid> Finished, HashSet<Guid> Running)
     {
         /// <summary>A closed sprint counts what it completed; a running one counts what is done so far.</summary>
-        public bool IsDone(IssueOverviewRow issue) => Finished.Contains(issue.Id) || (Running.Contains(issue.Id) && issue.Category == StatusCategory.Done);
+        public bool IsDone(TicketOverviewRow ticket) => Finished.Contains(ticket.Id) || (Running.Contains(ticket.Id) && ticket.Category == StatusCategory.Done);
     }
 
     /// <summary>
-    /// Issues still in a running sprint, and the ones a closed sprint ended with, completed or not. An issue moved out of
-    /// a sprint before it ended is no longer one of its issues.
+    /// Tickets still in a running sprint, and the ones a closed sprint ended with, completed or not. A ticket moved out of
+    /// a sprint before it ended is no longer one of its tickets.
     /// </summary>
     private async Task<SprintWork> SprintWorkAsync(List<Guid> sprintIds, List<Sprint> boardSprints)
     {
         var closed = boardSprints.Where(sprint => sprintIds.Contains(sprint.Id) && sprint.State == SprintState.Closed).Select(sprint => sprint.Id).ToHashSet();
-        var rows = await sprintIssues.GetListAsync(row => sprintIds.Contains(row.SprintId) && (row.RemovedAt == null || row.Outcome != SprintOutcome.Open));
+        var rows = await sprintTickets.GetListAsync(row => sprintIds.Contains(row.SprintId) && (row.RemovedAt == null || row.Outcome != SprintOutcome.Open));
         return new SprintWork(
-            [.. rows.Select(row => row.IssueId)],
-            [.. rows.Where(row => closed.Contains(row.SprintId) && row.Outcome == SprintOutcome.Completed).Select(row => row.IssueId)],
-            [.. rows.Where(row => !closed.Contains(row.SprintId) && row.RemovedAt == null).Select(row => row.IssueId)]);
+            [.. rows.Select(row => row.TicketId)],
+            [.. rows.Where(row => closed.Contains(row.SprintId) && row.Outcome == SprintOutcome.Completed).Select(row => row.TicketId)],
+            [.. rows.Where(row => !closed.Contains(row.SprintId) && row.RemovedAt == null).Select(row => row.TicketId)]);
     }
 
-    /// <summary>Finished work per assignee: story points and issue count, most points first.</summary>
-    private static List<(Guid UserId, decimal Points, int Issues)> VelocityOf(IEnumerable<IssueOverviewRow> done) =>
+    /// <summary>Finished work per assignee: story points and ticket count, most points first.</summary>
+    private static List<(Guid UserId, decimal Points, int Tickets)> VelocityOf(IEnumerable<TicketOverviewRow> done) =>
         [.. done
-            .Where(issue => issue.AssigneeId is not null)
-            .GroupBy(issue => issue.AssigneeId!.Value)
-            .Select(group => (group.Key, group.Sum(issue => issue.StoryPoints ?? 0), group.Count()))
+            .Where(ticket => ticket.AssigneeId is not null)
+            .GroupBy(ticket => ticket.AssigneeId!.Value)
+            .Select(group => (group.Key, group.Sum(ticket => ticket.StoryPoints ?? 0), group.Count()))
             .OrderByDescending(item => item.Item2)
             .ThenByDescending(item => item.Item3)];
 }

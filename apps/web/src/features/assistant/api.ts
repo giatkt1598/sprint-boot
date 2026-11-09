@@ -27,7 +27,7 @@ export const Provider = { openAiCompatible: 0, anthropic: 1 } as const;
 
 export const assistantKeys = {
   status: ['assistant', 'status'],
-  list: (issueId?: string) => ['assistant', 'conversations', issueId ?? 'all'],
+  list: (ticketId?: string) => ['assistant', 'conversations', ticketId ?? 'all'],
   detail: (id: string) => ['assistant', 'conversation', id],
 };
 
@@ -38,10 +38,10 @@ export const useAssistantStatus = () =>
     queryFn: () => unwrap(apiClient.GET('/api/v1/assistant/status')),
   });
 
-export const useConversations = (issueId?: string) =>
+export const useConversations = (ticketId?: string) =>
   useQuery({
-    queryKey: assistantKeys.list(issueId),
-    queryFn: () => unwrap(apiClient.GET('/api/v1/assistant', { params: { query: { issueId } } })),
+    queryKey: assistantKeys.list(ticketId),
+    queryFn: () => unwrap(apiClient.GET('/api/v1/assistant', { params: { query: { ticketId } } })),
   });
 
 export const conversationQuery = (id: string) => ({
@@ -52,8 +52,8 @@ export const conversationQuery = (id: string) => ({
 export const useConversation = (id: string | null) =>
   useQuery({ ...conversationQuery(id ?? ''), enabled: Boolean(id) });
 
-export const createConversation = (issueId?: string) =>
-  unwrap(apiClient.POST('/api/v1/assistant', { body: { issueId: issueId ?? null } }));
+export const createConversation = (ticketId?: string) =>
+  unwrap(apiClient.POST('/api/v1/assistant', { body: { ticketId: ticketId ?? null } }));
 
 /** Splits a server-sent event stream into its JSON events; returns what is left of a partial event. */
 export function parseEvents(buffer: string, onEvent: (event: AssistantEvent) => void): string {

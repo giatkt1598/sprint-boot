@@ -35,7 +35,7 @@ export function CreateSpaceDialog({ open, onClose }: { open: boolean; onClose: (
     onSuccess: async (space) => {
       await queryClient.invalidateQueries({ queryKey: ['spaces'] });
       onClose();
-      await navigate(`/spaces/${space.key}/issues`);
+      await navigate(`/spaces/${space.key}/tickets`);
     },
   });
 
@@ -109,7 +109,7 @@ export function SpacesPage() {
               render: (space) => (
                 <span className="flex items-center gap-2">
                   <SpaceLogo spaceKey={space.key} logoUrl={space.logoUrl} />
-                  <Link component={RouterLink} to={`/spaces/${space.key}/issues`} color="inherit">{space.name}</Link>
+                  <Link component={RouterLink} to={`/spaces/${space.key}/tickets`} color="inherit">{space.name}</Link>
                 </span>
               ),
             },
@@ -126,7 +126,7 @@ export function SpacesPage() {
                   </span>
                 ),
             },
-            { key: 'issues', header: t('spaces.issues'), render: (space) => space.issueCount },
+            { key: 'tickets', header: t('spaces.tickets'), render: (space) => space.ticketCount },
             { key: 'updated', header: t('spaces.updated'), render: (space) => formatDate(space.updatedAt, i18n.language) },
           ]}
         />

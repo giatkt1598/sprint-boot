@@ -12,7 +12,7 @@ import { MenuItem } from '../../components/Menu';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
 import { formatMinutes, formatRelative } from '../../lib/format';
 import { font, radius, sem, type SemanticToken } from '../../theme/tokens';
-import { useIssueTypes, useStatuses } from '../issues/api';
+import { useTicketTypes, useStatuses } from '../tickets/api';
 import type { Space } from '../spaces/api';
 import { useOverviewSummary, type OverviewPeriod, type OverviewSummary } from './api';
 
@@ -41,16 +41,16 @@ export function SummaryTab({ space }: { space: Space }) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const summary = useOverviewSummary(space.id, period);
   const statuses = useStatuses(space.id);
-  const types = useIssueTypes(space.id);
+  const types = useTicketTypes(space.id);
 
-  const issuesPath = `/spaces/${space.key}/issues`;
+  const ticketsPath = `/spaces/${space.key}/tickets`;
   const withStatuses = (categories: number[]) => {
     const ids = (statuses.data ?? []).filter((status) => categories.includes(status.category ?? 0) && (!status.projectId || status.projectId === space.id)).map((status) => status.id!);
-    return `${issuesPath}?${ids.map((id) => `status=${id}`).join('&')}`;
+    return `${ticketsPath}?${ids.map((id) => `status=${id}`).join('&')}`;
   };
   const withType = (icon: string) => {
     const id = types.data?.find((type) => type.icon === icon)?.id;
-    return id ? `${issuesPath}?type=${id}` : issuesPath;
+    return id ? `${ticketsPath}?type=${id}` : ticketsPath;
   };
 
   const periodName = (value: OverviewPeriod, data?: OverviewSummary) =>
@@ -108,9 +108,9 @@ export function SummaryTab({ space }: { space: Space }) {
         <>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
             <Kpi icon={PeopleIcon} label={t('overview.members')} value={summary.data.members} note={t('overview.membersAdded', { count: summary.data.membersAddedInPeriod, period: inPeriod })} />
-            <Kpi icon={BacklogIcon} label={t('overview.issues')} value={summary.data.issues.total} to={issuesPath} note={t('overview.createdIn', { count: summary.data.issues.createdInPeriod, period: inPeriod })} />
-            <Kpi icon={InboxIcon} label={t('overview.open')} value={summary.data.issues.toDo + summary.data.issues.inProgress} to={withStatuses([0, 1])} note={inProgressNote(summary.data, t)} />
-            <Kpi icon={CheckIcon} label={t('overview.done')} value={summary.data.issues.done} to={withStatuses([2])} note={t('overview.ofAll', { percent: percent(summary.data.issues.done, summary.data.issues.total) })} />
+            <Kpi icon={BacklogIcon} label={t('overview.tickets')} value={summary.data.tickets.total} to={ticketsPath} note={t('overview.createdIn', { count: summary.data.tickets.createdInPeriod, period: inPeriod })} />
+            <Kpi icon={InboxIcon} label={t('overview.open')} value={summary.data.tickets.toDo + summary.data.tickets.inProgress} to={withStatuses([0, 1])} note={inProgressNote(summary.data, t)} />
+            <Kpi icon={CheckIcon} label={t('overview.done')} value={summary.data.tickets.done} to={withStatuses([2])} note={t('overview.ofAll', { percent: percent(summary.data.tickets.done, summary.data.tickets.total) })} />
             <Kpi icon={PullRequestIcon} label={t('overview.pullRequests')} value={summary.data.pullRequests.total} note={t('overview.pullRequestsNote', { open: summary.data.pullRequests.open, merged: summary.data.pullRequests.merged })} />
           </div>
 
@@ -118,8 +118,8 @@ export function SummaryTab({ space }: { space: Space }) {
             <Card title={t('overview.byStatus')} meta={periodTag}>
               <StatusDonut summary={summary.data} link={withStatuses} />
             </Card>
-            <Card title={t('overview.byType')} meta={t('overview.issueCount', { count: summary.data.issues.total })}>
-              {byType.length === 0 ? <EmptyState title={t('overview.noIssues')} /> : (
+            <Card title={t('overview.byType')} meta={t('overview.ticketCount', { count: summary.data.tickets.total })}>
+              {byType.length === 0 ? <EmptyState title={t('overview.noTickets')} /> : (
                 <div className="flex flex-col gap-3">
                   {byType.map((item) => (
                     <BarRow
@@ -133,7 +133,7 @@ export function SummaryTab({ space }: { space: Space }) {
                 </div>
               )}
             </Card>
-            <Card title={t('overview.issueActivity')} meta={periodTag}>
+            <Card title={t('overview.ticketActivity')} meta={periodTag}>
               <div className="flex flex-col">
                 <ActivityRow label={t('overview.created')} note={summary.data.activity.lastCreatedAt && t('overview.lastCreated', { when: formatRelative(summary.data.activity.lastCreatedAt, i18n.language) })} value={summary.data.activity.created} />
                 <ActivityRow label={t('overview.updated')} note={summary.data.activity.lastUpdatedAt && t('overview.lastUpdated', { when: formatRelative(summary.data.activity.lastUpdatedAt, i18n.language) })} value={summary.data.activity.updated} />
@@ -160,7 +160,7 @@ export function SummaryTab({ space }: { space: Space }) {
                 </div>
               )}
             </Card>
-            <Card title={t('overview.recent')} action={<Link component={RouterLink} to={issuesPath} underline="hover" sx={{ fontSize: font.size.xs }}>{t('overview.viewAll')}</Link>}>
+            <Card title={t('overview.recent')} action={<Link component={RouterLink} to={ticketsPath} underline="hover" sx={{ fontSize: font.size.xs }}>{t('overview.viewAll')}</Link>}>
               {recent.length === 0 ? <EmptyState title={t('overview.noActivity')} /> : (
                 <ul className="m-0 flex list-none flex-col gap-1 p-0">
                   {recent.map((item, index) => (
@@ -202,7 +202,7 @@ type Event = NonNullable<OverviewSummary['recent']>[number];
 /** "moved SB-81 to In Progress", "completed SB-12", "logged 2h on SB-27". */
 function EventText({ item, doneStatuses }: { item: Event; doneStatuses: Set<string | null | undefined> }) {
   const { t } = useTranslation();
-  const key = <Link component={RouterLink} to={`/issues/${item.issueKey}`} underline="hover" title={item.issueTitle ?? undefined}>{item.issueKey}</Link>;
+  const key = <Link component={RouterLink} to={`/tickets/${item.ticketKey}`} underline="hover" title={item.ticketTitle ?? undefined}>{item.ticketKey}</Link>;
   if (item.kind === 0 || item.kind === 2) {
     return <>{t(item.kind === 0 ? 'overview.event.created' : 'overview.event.commented')} {key}</>;
   }
@@ -220,7 +220,7 @@ function EventText({ item, doneStatuses }: { item: Event; doneStatuses: Set<stri
 
 /** "12 in progress, 5 in review", from the statuses the open work sits in. */
 function inProgressNote(summary: OverviewSummary, t: (key: string, options?: Record<string, unknown>) => string) {
-  const parts = (summary.issues.inProgressByStatus ?? []).map((item) => t('overview.inStatus', { count: item.count, status: (item.name ?? '').toLowerCase() }));
+  const parts = (summary.tickets.inProgressByStatus ?? []).map((item) => t('overview.inStatus', { count: item.count, status: (item.name ?? '').toLowerCase() }));
   return parts.length > 0 ? parts.join(', ') : t('overview.inProgressCount', { count: 0 });
 }
 
@@ -299,13 +299,13 @@ function ActivityRow({ label, note, value, last }: { label: string; note?: strin
 const DONUT_RADIUS = 40;
 const DONUT_STROKE = 14;
 
-/** A ring per status category; each slice links to the issues it counts. */
+/** A ring per status category; each slice links to the tickets it counts. */
 function StatusDonut({ summary, link }: { summary: OverviewSummary; link: (categories: number[]) => string }) {
   const { t } = useTranslation();
-  const counts = [summary.issues.toDo, summary.issues.inProgress, summary.issues.done];
+  const counts = [summary.tickets.toDo, summary.tickets.inProgress, summary.tickets.done];
   const total = counts.reduce((sum, count) => sum + count, 0);
   if (total === 0) {
-    return <EmptyState title={t('overview.noIssues')} />;
+    return <EmptyState title={t('overview.noTickets')} />;
   }
 
   const circumference = 2 * Math.PI * DONUT_RADIUS;
@@ -339,7 +339,7 @@ function StatusDonut({ summary, link }: { summary: OverviewSummary; link: (categ
         </svg>
         <span className="absolute inset-0 flex flex-col items-center justify-center">
           <span style={{ fontSize: font.size.xl, fontWeight: font.weight.semibold }}>{total}</span>
-          <span style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>{t('overview.issuesUnit', { count: total })}</span>
+          <span style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>{t('overview.ticketsUnit', { count: total })}</span>
         </span>
       </div>
       <ul className="m-0 flex list-none flex-col gap-2 p-0" style={{ fontSize: font.size.md }}>

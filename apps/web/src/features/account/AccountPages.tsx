@@ -298,7 +298,7 @@ type HomeView = NonNullable<HomePage['view']>;
 const VIEW_LABELS: Record<(typeof SPACE_VIEWS)[number], string> = {
   backlog: 'nav.backlog',
   board: 'nav.board',
-  issues: 'nav.issues',
+  tickets: 'nav.tickets',
   epics: 'nav.epics',
 };
 
@@ -358,7 +358,7 @@ function HomePageSection() {
       {kind === HomePageKind.space && options.length > 0 && (
         <>
           <SelectField
-            label={t('issues.space')}
+            label={t('tickets.space')}
             value={spaceId}
             onChange={(event) => setProjectId(event.target.value)}
             options={options.map((space) => ({ value: space.id!, label: space.name! }))}

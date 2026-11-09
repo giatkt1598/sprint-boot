@@ -6,14 +6,14 @@ namespace SprintBoot.Notifications;
 
 public static class NotificationEventTypes
 {
-    public const string IssueCreated = "issue.created";
-    public const string IssueAssigned = "issue.assigned";
-    public const string IssueUpdated = "issue.updated";
+    public const string TicketCreated = "ticket.created";
+    public const string TicketAssigned = "ticket.assigned";
+    public const string TicketUpdated = "ticket.updated";
     public const string CommentAdded = "comment.added";
     public const string Mentioned = "mentioned";
     public const string CommentReply = "comment.reply";
     public const string CommentReaction = "comment.reaction";
-    public const string IssueTransitioned = "issue.transitioned";
+    public const string TicketTransitioned = "ticket.transitioned";
     public const string WorkflowNotification = "workflow.notification";
     public const string SprintStarted = "sprint.started";
     public const string SprintCompleted = "sprint.completed";
@@ -21,8 +21,8 @@ public static class NotificationEventTypes
 
     public static readonly string[] All =
     [
-        IssueCreated, IssueAssigned, IssueUpdated, CommentAdded, Mentioned, CommentReply, CommentReaction,
-        IssueTransitioned, WorkflowNotification, SprintStarted, SprintCompleted, MemberAdded,
+        TicketCreated, TicketAssigned, TicketUpdated, CommentAdded, Mentioned, CommentReply, CommentReaction,
+        TicketTransitioned, WorkflowNotification, SprintStarted, SprintCompleted, MemberAdded,
     ];
 }
 
@@ -42,7 +42,7 @@ public class NotificationDto
 
     public required string EventType { get; set; }
 
-    public required string? IssueKey { get; set; }
+    public required string? TicketKey { get; set; }
 
     public required string? Title { get; set; }
 

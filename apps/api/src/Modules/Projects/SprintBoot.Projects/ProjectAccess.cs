@@ -25,7 +25,7 @@ public class ProjectAccess(
     public async Task CheckAsync(Guid projectId, string permission)
     {
         var granted = await GetPermissionsAsync(projectId);
-        if (!granted.Contains(ProjectPermissions.ViewIssues))
+        if (!granted.Contains(ProjectPermissions.ViewTickets))
         {
             // Outsiders must not learn that the project exists.
             throw new EntityNotFoundException(typeof(Project), projectId);
@@ -126,15 +126,15 @@ public class ProjectAccess(
         return list.ToDictionary(item => item.UserId, item => item.CreationTime);
     }
 
-    public async Task<int> NextIssueNumberAsync(Guid projectId)
+    public async Task<int> NextTicketNumberAsync(Guid projectId)
     {
         // A single UPDATE takes the row lock until commit, so concurrent creates serialize here.
         var dbContext = await projects.GetDbContextAsync();
         var numbers = await dbContext.Database
             .SqlQuery<int>($"""
-                UPDATE projects.projects SET "NextIssueNumber" = "NextIssueNumber" + 1
+                UPDATE projects.projects SET "NextTicketNumber" = "NextTicketNumber" + 1
                 WHERE "Id" = {projectId}
-                RETURNING "NextIssueNumber" - 1 AS "Value"
+                RETURNING "NextTicketNumber" - 1 AS "Value"
                 """)
             .ToListAsync();
         return numbers.Single();
