@@ -99,16 +99,33 @@ export function TimelineTab({ space }: { space: Space }) {
   const days = range.to - range.from + 1;
   const today = todayDay();
 
+  // The sprint view shows a sprint's own tickets: the running one, or a planned one whose start falls in the period
+  // the arrows moved to. Tickets of other sprints or of the backlog stay off it, even when their dates overlap.
+  const shownSprint = useMemo(() => {
+    if (view !== 'sprint') {
+      return undefined;
+    }
+    if (shift === 0) {
+      return active;
+    }
+    return backlog.data?.sprints
+      ?.map((item) => item.sprint!)
+      .find((sprint) => sprint.startDate && toDay(sprint.startDate) >= range.from && toDay(sprint.startDate) <= range.to);
+  }, [view, shift, active, backlog.data, range.from, range.to]);
+
   const rows = useMemo(() => {
     // Subtasks stay off the timeline: their parent's bar already covers the work.
-    const visible = (tickets.data?.items ?? []).filter((ticket) => ticket.type?.hierarchy !== 0 && filters.matches({ ...ticket, epicId: ticket.parentId }));
+    const visible = (tickets.data?.items ?? []).filter(
+      (ticket) => ticket.type?.hierarchy !== 0 && filters.matches({ ...ticket, epicId: ticket.parentId }) && (!shownSprint || ticket.sprintName === shownSprint.name),
+    );
     const dated = visible
       .filter((ticket) => ticket.startDate && ticket.dueDate && toDay(ticket.startDate) <= range.to && toDay(ticket.dueDate) >= range.from)
       .sort((a, b) => toDay(a.startDate!) - toDay(b.startDate!) || toDay(a.dueDate!) - toDay(b.dueDate!));
-    // Missing a date matters for the work planned now, so the list keeps to the running sprint.
-    const undated = active ? visible.filter((ticket) => ticket.sprintName === active.name && (!ticket.startDate || !ticket.dueDate)) : [];
+    // Missing a date matters for the work planned in a sprint: the one shown, or else the running one.
+    const planned = shownSprint ?? active;
+    const undated = planned ? visible.filter((ticket) => ticket.sprintName === planned.name && (!ticket.startDate || !ticket.dueDate)) : [];
     return { dated, undated };
-  }, [tickets.data, filters, range.from, range.to, active]);
+  }, [tickets.data, filters, range.from, range.to, active, shownSprint]);
 
   const short = (options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(i18n.language, { ...options, timeZone: 'UTC' });
   const dayLabel = (day: number) => {
@@ -122,7 +139,7 @@ export function TimelineTab({ space }: { space: Space }) {
     return `${short({ weekday: 'short' }).format(date)} ${date.getUTCDate()}`;
   };
   const span = `${short({ month: 'short', day: 'numeric' }).format(fromDay(range.from))} – ${short({ month: 'short', day: 'numeric', year: 'numeric' }).format(fromDay(range.to))}`;
-  const heading = view === 'sprint' && active && shift === 0 ? `${active.name} · ${span}` : span;
+  const heading = shownSprint ? `${shownSprint.name} · ${span}` : span;
 
   const views: { value: View; label: string }[] = [
     ...(active ? [{ value: 'sprint' as const, label: active.name ?? t('overview.timeline.sprint') }] : []),
