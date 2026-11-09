@@ -66,6 +66,8 @@ const shapes: Partial<Record<IconName, ReactNode>> = {
     <circle cx="12" cy="13.5" r="2" />
     <path d="M12 7V3.5M9 3.5h6" />
   </>,
+  // Bamboo canes, jointed in the middle.
+  menu: <path d="M4 6.5h7M13 6.5h7M4 12h7M13 12h7M4 17.5h7M13 17.5h7" />,
   search: <>
     <circle cx="10.5" cy="10.5" r="6.5" />
     <path d="M15.5 15.5L21 21M10.5 8v5M8 10.5h5" />

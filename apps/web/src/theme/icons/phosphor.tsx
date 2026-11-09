@@ -133,6 +133,7 @@ const drawn: Partial<Record<IconName, ComponentType<any>>> = {
   admin: ShieldCheck,
   settings: Gear,
   search: MagnifyingGlass,
+  menu: List,
   reply: ArrowBendUpLeft,
   attachment: Paperclip,
   minus: Minus,

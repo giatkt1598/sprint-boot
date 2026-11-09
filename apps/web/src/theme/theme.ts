@@ -1,7 +1,7 @@
 import { createTheme } from '@mui/material/styles';
 import { FONT_CHOICES, FONT_FAMILIES } from './fonts';
 import { THEMES, themeById, type ThemeDefinition } from './themes';
-import { font, motion, radius, sem, size, type Accent, type SemanticToken } from './tokens';
+import { breakpoint, font, motion, radius, sem, size, type Accent, type SemanticToken } from './tokens';
 
 const focusRing = {
   outline: `2px solid ${sem('border-focus')}`,
@@ -80,6 +80,7 @@ export function createAppTheme(themeId: string, accent: Accent) {
   const heading = { fontFamily: 'var(--sb-heading-font)' };
 
   return createTheme({
+    breakpoints: { values: breakpoint },
     palette: {
       mode,
       // Links read this colour, so it is the accent that stays readable as text on the page.

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { themeColors } from './theme';
 import { THEMES, type ThemeDefinition } from './themes';
-import { primitive, semanticDark, semanticLight, type Accent } from './tokens';
+import { readFileSync } from 'node:fs';
+import { breakpoint, primitive, semanticDark, semanticLight, type Accent } from './tokens';
 
 const luminance = (hex: string) => {
   const channels = [1, 3, 5].map((start) => {
@@ -17,6 +18,13 @@ const contrast = (a: string, b: string) => {
 };
 
 describe('tokens', () => {
+  it('give Tailwind the screens MUI breaks at', () => {
+    // Vitest leaves CSS out of the module graph, so the stylesheet is read from disk, from the package root.
+    const indexCss = readFileSync('src/index.css', 'utf8');
+    const screens = Object.fromEntries([...indexCss.matchAll(/--breakpoint-(\w+):\s*(\d+)px/g)].map((match) => [match[1], Number(match[2])]));
+    expect(screens).toEqual(Object.fromEntries(Object.entries(breakpoint).filter(([name]) => name !== 'xs')));
+  });
+
   it('match the Penpot token counts', () => {
     // 25 and 35 in Penpot, plus green50, violet50, violet700, bar-done and feedback-danger-solid that the accents and dark mode brought.
     expect(Object.keys(primitive)).toHaveLength(28);

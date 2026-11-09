@@ -205,7 +205,15 @@ export const size = {
   row: 36,
   topBar: 48,
   sidebar: 216,
+  /** The sidebar as a drawer on small screens. */
+  drawer: 280,
 } as const;
+
+/**
+ * Screen widths the layout changes at, MUI's defaults. Tailwind's screens in index.css repeat them, so `md:` and
+ * `theme.breakpoints.up('md')` agree. Below md the app lays out for phones and tablets.
+ */
+export const breakpoint = { xs: 0, sm: 600, md: 900, lg: 1200, xl: 1536 } as const;
 
 /** Colors people can pick inside rich text. Stored in the HTML, so they stay plain values. */
 export const editorColors = {

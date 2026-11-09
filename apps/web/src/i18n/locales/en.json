@@ -23,7 +23,9 @@
     "switchSpace": "Switch space",
     "allSpaces": "View all spaces",
     "overview": "Overview",
-    "people": "People"
+    "people": "People",
+    "openMenu": "Open menu",
+    "menu": "Menu"
   },
   "home": {
     "title": "Home",

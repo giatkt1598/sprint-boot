@@ -80,6 +80,10 @@ const shapes: Partial<Record<IconName, ReactNode>> = {
     <circle cx="12" cy="21" r="1" />
   </>,
   // A monocle on its chain.
+  menu: <>
+    <path d="M4 7h16M4 17h16M4 12h6.5M13.5 12H20" />
+    <path d="M12 10.5l1.5 1.5-1.5 1.5-1.5-1.5z" />
+  </>,
   search: <>
     <circle cx="10" cy="10" r="6" />
     <path d="M14.5 14.5L20 20M16 4c2 1 3 3 3 5" />

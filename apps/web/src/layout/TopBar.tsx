@@ -1,6 +1,6 @@
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
-import { AdminIcon, SignOutIcon, UserIcon } from '../components/icons';
+import { AddIcon, AdminIcon, MenuIcon, SignOutIcon, UserIcon } from '../components/icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
@@ -16,6 +16,7 @@ import { QuickSearch } from '../features/tickets/QuickSearch';
 import { RecentsMenu } from '../features/tickets/RecentsMenu';
 import { NotificationBell } from '../features/notifications/NotificationBell';
 import { font, sem, size } from '../theme/tokens';
+import { useCompact, useShellNav } from './ShellNav';
 
 export function TopBar() {
   const { t } = useTranslation();
@@ -24,6 +25,8 @@ export function TopBar() {
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [creating, setCreating] = useState(false);
   const isAdmin = (user.permissions ?? []).length > 0;
+  const compact = useCompact();
+  const nav = useShellNav();
 
   const open = (path: string) => {
     setMenuAnchor(null);
@@ -32,7 +35,7 @@ export function TopBar() {
 
   return (
     <header
-      className="sb-surface flex shrink-0 items-center gap-4 px-6"
+      className="sb-surface flex shrink-0 items-center gap-2 px-3 md:gap-4 md:px-6"
       style={{
         height: size.topBar,
         backgroundColor: 'var(--sb-chrome-bg)',
@@ -40,17 +43,30 @@ export function TopBar() {
         borderBottom: `1px solid ${sem('border-default')}`,
       }}
     >
+      {compact && nav.available && (
+        <IconButton size="small" aria-label={t('nav.openMenu')} aria-expanded={nav.open} aria-controls={nav.open ? 'sb-side-nav' : undefined} onClick={() => nav.setOpen(!nav.open)}>
+          <MenuIcon size={20} strokeWidth={1.5} aria-hidden />
+        </IconButton>
+      )}
       <Link
         to="/"
-        className="flex items-center gap-3"
+        className="flex shrink-0 items-center gap-3"
+        aria-label={compact ? t('app.name') : undefined}
         style={{ fontSize: font.size.md, fontWeight: font.weight.semibold, color: sem('text-primary'), textDecoration: 'none' }}
       >
         <img src={logo} alt="" width={24} height={24} />
-        {t('app.name')}
+        {/* The name gives its room to the buttons on small screens. */}
+        <span className="hidden sm:inline">{t('app.name')}</span>
       </Link>
       <div className="flex-1" />
-      <QuickSearch />
-      <Button onClick={() => setCreating(true)}>{t('topBar.create')}</Button>
+      <QuickSearch compact={compact} />
+      {compact ? (
+        <IconButton size="small" aria-label={t('topBar.create')} onClick={() => setCreating(true)}>
+          <AddIcon size={20} strokeWidth={1.5} aria-hidden />
+        </IconButton>
+      ) : (
+        <Button onClick={() => setCreating(true)}>{t('topBar.create')}</Button>
+      )}
       <RecentsMenu />
       <AssistantButton />
       <NotificationBell />

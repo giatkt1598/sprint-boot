@@ -19,6 +19,7 @@ import { isNotFound, useErrorMessage } from '../../lib/errors';
 import { NotFoundPage } from '../../pages/NotFoundPage';
 import { formatDate } from '../../lib/format';
 import { appLocationOr } from '../../lib/returnTo';
+import { SideNav } from '../../layout/ShellNav';
 import { font, radius, sem, size } from '../../theme/tokens';
 import { SpaceSchemeField } from '../notifications/NotificationPages';
 import { InviteMemberDialog, SpaceInvitations } from '../admin/InvitationPages';
@@ -89,14 +90,18 @@ export function SpaceSettingsLayout() {
 export function SettingsFrame({ title, backTo, menu, context }: { title: string; backTo: string; menu: ReactNode; context?: unknown }) {
   return (
     <div className="flex min-h-0 flex-1">
-      <aside
-        className="sb-surface flex shrink-0 flex-col gap-1 p-4"
-        style={{ width: size.sidebar, backgroundColor: 'var(--sb-chrome-bg)', borderRight: `1px solid ${sem('border-default')}` }}
-      >
-        <BackHeader title={title} backTo={backTo} />
-        {menu}
-      </aside>
-      <main className="sb-content min-w-0 flex-1 overflow-auto p-8">
+      <SideNav label={title}>
+        {(compact) => (
+          <aside
+            className="sb-surface flex shrink-0 flex-col gap-1 p-4"
+            style={compact ? undefined : { width: size.sidebar, backgroundColor: 'var(--sb-chrome-bg)', borderRight: `1px solid ${sem('border-default')}` }}
+          >
+            <BackHeader title={title} backTo={backTo} />
+            {menu}
+          </aside>
+        )}
+      </SideNav>
+      <main className="sb-content min-w-0 flex-1 overflow-auto p-4 md:p-8">
         <div className="max-w-4xl">
           <Outlet context={context} />
         </div>

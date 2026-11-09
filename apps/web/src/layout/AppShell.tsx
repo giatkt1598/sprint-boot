@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router';
 import { rememberAppLocation } from '../lib/returnTo';
+import { ShellNavProvider } from './ShellNav';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 
@@ -14,26 +15,30 @@ export function AppShell() {
   useEffect(() => rememberAppLocation(location.pathname + location.search), [location.pathname, location.search]);
 
   return (
-    <div className="flex h-screen flex-col">
-      <TopBar />
-      <div className="flex min-h-0 flex-1">
-        {!wide && <Sidebar />}
-        <main className="sb-content min-w-0 flex-1 overflow-auto p-8">
-          <Outlet />
-        </main>
+    <ShellNavProvider>
+      <div className="flex h-screen flex-col">
+        <TopBar />
+        <div className="flex min-h-0 flex-1">
+          {!wide && <Sidebar />}
+          <main className="sb-content min-w-0 flex-1 overflow-auto p-4 md:p-8">
+            <Outlet />
+          </main>
+        </div>
       </div>
-    </div>
+    </ShellNavProvider>
   );
 }
 
 /** Settings areas replace the sidebar with their own menu. */
 export function BareShell() {
   return (
-    <div className="flex h-screen flex-col">
-      <TopBar />
-      <div className="flex min-h-0 flex-1">
-        <Outlet />
+    <ShellNavProvider>
+      <div className="flex h-screen flex-col">
+        <TopBar />
+        <div className="flex min-h-0 flex-1">
+          <Outlet />
+        </div>
       </div>
-    </div>
+    </ShellNavProvider>
   );
 }

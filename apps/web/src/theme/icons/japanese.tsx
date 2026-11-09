@@ -68,6 +68,8 @@ const shapes: Partial<Record<IconName, ReactNode>> = {
   priorityLowest: <path d="M4 5.5l8 6 8-6M4 12l8 6 8-6" />,
   // A furin wind chime.
   notifications: <path d="M7 12.5a5 5 0 0 1 10 0v.5H7zM12 7.5V4M12 13v4M10 17h4v4h-4z" />,
+  // Brush strokes that swell and taper.
+  menu: <path d="M4 7c5-1.2 11-1.2 16 0M4 12h16M4 17c5 1.2 11 1.2 16 0" />,
   search: <>
     <circle cx="10.5" cy="10.5" r="6.5" />
     <path d="M15.5 15.5L21 21" />

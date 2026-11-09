@@ -42,6 +42,7 @@ export const ICON_NAMES = [
   'admin',
   'settings',
   'search',
+  'menu',
   'reply',
   'attachment',
   'minus',
@@ -151,6 +152,7 @@ export const classicIcons: Record<IconName, IconComponent> = {
   admin: Lucide.Shield,
   settings: Lucide.Settings,
   search: Lucide.Search,
+  menu: Lucide.Menu,
   reply: Lucide.Reply,
   attachment: Lucide.Paperclip,
   minus: Lucide.Minus,
@@ -291,6 +293,7 @@ export const ReactionIcon = themed('reaction');
 export const AdminIcon = themed('admin');
 export const SettingsIcon = themed('settings');
 export const SearchIcon = themed('search');
+export const MenuIcon = themed('menu');
 export const ReplyIcon = themed('reply');
 export const AttachmentIcon = themed('attachment');
 export const MinusIcon = themed('minus');

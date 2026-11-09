@@ -117,6 +117,7 @@ const drawn: Partial<Record<IconName, ComponentType<any>>> = {
   admin: ShieldCheckIcon,
   settings: Cog6ToothIcon,
   search: MagnifyingGlassIcon,
+  menu: Bars3Icon,
   reply: ArrowUturnLeftIcon,
   attachment: PaperClipIcon,
   minus: MinusIcon,

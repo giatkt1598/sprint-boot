@@ -128,6 +128,7 @@ const drawn: Partial<Record<IconName, ComponentType<any>>> = {
   admin: Shield,
   settings: Settings,
   search: Search,
+  menu: Menu,
   reply: Reply,
   attachment: Attachment,
   minus: Minus,

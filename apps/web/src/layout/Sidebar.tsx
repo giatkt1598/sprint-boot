@@ -13,6 +13,7 @@ import { useSpace, useSpaces } from '../features/spaces/api';
 import { rememberSpace } from '../features/spaces/HomePage';
 import { CreateSpaceDialog } from '../features/spaces/SpacesPage';
 import { sem, size } from '../theme/tokens';
+import { SideNav } from './ShellNav';
 
 const RECENT_SPACES = 5;
 
@@ -44,9 +45,8 @@ export function Sidebar() {
     void navigate(path);
   };
 
-  return (
-    <div className="sb-surface flex shrink-0" style={{ backgroundColor: 'var(--sb-chrome-bg)', borderRight: `1px solid ${sem('border-default')}` }}>
-      <aside className="flex min-w-0 flex-col gap-1 p-4" style={{ width: sidebar.width }}>
+  const content = (compact: boolean) => (
+      <aside className="flex min-w-0 flex-col gap-1 p-4" style={{ width: compact ? undefined : sidebar.width }}>
         <SpaceSwitcher
           spaceKey={(space.data?.key ?? '').slice(0, 2)}
           logoUrl={space.data?.logoUrl}
@@ -80,7 +80,16 @@ export function Sidebar() {
           </nav>
         )}
       </aside>
-      <Resizer edge="end" label={t('nav.resizeSidebar')} {...sidebar} onChange={sidebar.change} />
-    </div>
+  );
+
+  return (
+    <SideNav label={t('nav.menu')}>
+      {(compact) => compact ? content(true) : (
+        <div className="sb-surface flex shrink-0" style={{ backgroundColor: 'var(--sb-chrome-bg)', borderRight: `1px solid ${sem('border-default')}` }}>
+          {content(false)}
+          <Resizer edge="end" label={t('nav.resizeSidebar')} {...sidebar} onChange={sidebar.change} />
+        </div>
+      )}
+    </SideNav>
   );
 }

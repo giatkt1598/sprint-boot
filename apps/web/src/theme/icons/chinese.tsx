@@ -70,6 +70,8 @@ const shapes: Partial<Record<IconName, ReactNode>> = {
     <path d="M9.5 5h5M10.5 5V3.5h3V5M8.5 5c0 5.5-.8 8.5-2 10.5h11c-1.2-2-2-5-2-10.5M5 15.5h14" />
     <circle cx="12" cy="18.5" r="1.3" />
   </>,
+  // Three carved strokes, as in the character for three.
+  menu: <path d="M5 6.5h14M7 12h10M4 17.5h16" />,
   search: <>
     <circle cx="10.5" cy="10.5" r="6.5" />
     <rect x="9" y="9" width="3" height="3" />
