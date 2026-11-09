@@ -334,6 +334,11 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
                   </tbody>
                 </table>
               )}
+              {(ticket.children?.length ?? 0) === 0 && !addingSubtask && (
+                <Typography variant="body2" color="textSecondary" className="px-2">
+                  {t(ticket.type?.hierarchy === 2 ? 'agile.noChildTickets' : 'tickets.noSubtasks')}
+                </Typography>
+              )}
               {addingSubtask && <SubtaskRow ticket={ticket} onClose={() => setAddingSubtask(false)} />}
             </section>
           )}
