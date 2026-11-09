@@ -449,10 +449,10 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
             />
           </DetailRow>
           <DetailRow label={t('tickets.startDate')}>
-            <DatePicker quiet label={t('tickets.startDate')} value={ticket.startDate ?? ''} disabled={!canEdit} onChange={(text) => update.mutate({ startDate: text || null })} />
+            <DatePicker quiet label={t('tickets.startDate')} value={ticket.startDate ?? ''} rangeEnd={ticket.dueDate ?? ''} disabled={!canEdit} onChange={(text) => update.mutate({ startDate: text || null })} />
           </DetailRow>
           <DetailRow label={t('tickets.dueDate')}>
-            <DatePicker quiet label={t('tickets.dueDate')} value={ticket.dueDate ?? ''} disabled={!canEdit} onChange={(text) => update.mutate({ dueDate: text || null })} />
+            <DatePicker quiet label={t('tickets.dueDate')} value={ticket.dueDate ?? ''} rangeStart={ticket.startDate ?? ''} disabled={!canEdit} onChange={(text) => update.mutate({ dueDate: text || null })} />
           </DetailRow>
           {fieldError && <Typography role="alert" variant="body2" color="error">{fieldError}</Typography>}
           </>

@@ -260,8 +260,8 @@ export function CreateTicketDialog({ onClose, epic }: CreateTicketDialogProps) {
           />
         )}
         <TagInput label={t('tickets.labels')} value={labels} options={knownLabels.data ?? []} onChange={setLabels} />
-        <DatePicker label={t('tickets.startDate')} value={startDate} onChange={setStartDate} />
-        <DatePicker label={t('tickets.dueDate')} value={dueDate} onChange={setDueDate} />
+        <DatePicker label={t('tickets.startDate')} value={startDate} rangeEnd={dueDate} onChange={setStartDate} />
+        <DatePicker label={t('tickets.dueDate')} value={dueDate} rangeStart={startDate} onChange={setDueDate} />
       </div>
       {dateError && <Typography role="alert" color="error" variant="body2">{dateError}</Typography>}
       <div className="flex flex-col items-start gap-1">

@@ -17,6 +17,19 @@ export function monthCells(year: number, month: number) {
   return [...Array<null>(blanks).fill(null), ...Array.from({ length: days }, (_, index) => index + 1)];
 }
 
+export type RangePart = 'start' | 'end' | 'single' | 'inside';
+
+/** Where a day falls in a range of ISO dates: an end, between them, or outside (undefined). */
+export function rangePart(iso: string, start: string, end: string): RangePart | undefined {
+  if (start && end && start > end) {
+    return iso === start ? 'start' : iso === end ? 'end' : undefined;
+  }
+  if (iso === start && iso === end) return 'single';
+  if (iso === start) return start && end ? 'start' : 'single';
+  if (iso === end) return start && end ? 'end' : 'single';
+  return start && end && iso > start && iso < end ? 'inside' : undefined;
+}
+
 export interface DatePickerProps {
   label: string;
   /** ISO date, yyyy-mm-dd, or empty. */
@@ -24,11 +37,22 @@ export interface DatePickerProps {
   onChange: (value: string) => void;
   quiet?: boolean;
   disabled?: boolean;
+  /**
+   * The other end of a from–to pair: give the "to" picker its rangeStart, the "from" picker its rangeEnd. The calendar
+   * then shades the days between, and while a day is hovered, the range it would make.
+   */
+  rangeStart?: string;
+  rangeEnd?: string;
 }
 
-export function DatePicker({ label, value, onChange, quiet, disabled }: DatePickerProps) {
+export function DatePicker({ label, value, onChange, quiet, disabled, rangeStart, rangeEnd }: DatePickerProps) {
   const { t, i18n } = useTranslation();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const ranged = rangeStart !== undefined || rangeEnd !== undefined;
+  const mine = hovered ?? value;
+  const start = rangeStart ?? mine;
+  const end = rangeEnd ?? mine;
   const initial = value ? new Date(`${value}T00:00:00`) : new Date();
   const [view, setView] = useState({ year: initial.getFullYear(), month: initial.getMonth() });
 
@@ -60,6 +84,7 @@ export function DatePicker({ label, value, onChange, quiet, disabled }: DatePick
 
   const pick = (next: string) => {
     onChange(next);
+    setHovered(null);
     setAnchor(null);
   };
 
@@ -100,7 +125,7 @@ export function DatePicker({ label, value, onChange, quiet, disabled }: DatePick
         </IconButton>
       )}
       </div>
-      <Popover width={264} open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}>
+      <Popover width={264} open={Boolean(anchor)} anchorEl={anchor} onClose={() => { setHovered(null); setAnchor(null); }}>
         <div role="group" aria-label={label} className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <IconButton size="small" aria-label={t('common.previousMonth')} onClick={() => shift(-1)}>
@@ -111,7 +136,7 @@ export function DatePicker({ label, value, onChange, quiet, disabled }: DatePick
               <ChevronRightIcon size={16} strokeWidth={1.5} aria-hidden />
             </IconButton>
           </div>
-          <div className="grid grid-cols-7 text-center">
+          <div className="grid grid-cols-7 text-center" onMouseLeave={() => setHovered(null)}>
             {weekdays.map((day) => (
               <span key={day} style={{ fontSize: font.size.xs, color: sem('text-tertiary') }}>{day}</span>
             ))}
@@ -120,27 +145,41 @@ export function DatePicker({ label, value, onChange, quiet, disabled }: DatePick
                 return <span key={`blank-${index}`} />;
               }
               const iso = toIso(view.year, view.month, day);
-              const selected = iso === value;
+              const part = ranged ? rangePart(iso, start, end) : undefined;
+              // The ends of a range are filled like a picked day; the days between sit on a band joining them.
+              // While a day is hovered, the range shown is the one it would make, so the current value may sit inside it.
+              const selected = ranged ? part !== undefined && part !== 'inside' : iso === value;
               const isToday = iso === today;
+              const band = sem('bg-selected');
+              const bandBackground = {
+                inside: band,
+                start: `linear-gradient(to right, transparent 50%, ${band} 50%)`,
+                end: `linear-gradient(to left, transparent 50%, ${band} 50%)`,
+                single: undefined,
+              }[part ?? 'single'];
               return (
-                <ButtonBase
-                  key={iso}
-                  aria-label={`${day} ${title}`}
-                  aria-pressed={selected}
-                  aria-current={isToday ? 'date' : undefined}
-                  onClick={() => pick(iso)}
-                  sx={{
-                    height: 32,
-                    fontSize: font.size.xs,
-                    borderRadius: isToday ? '50%' : `${radius.control}px`,
-                    ...(isToday && { width: 32, justifySelf: 'center', border: `1px solid ${sem('accent-default')}` }),
-                    backgroundColor: selected ? sem('accent-default') : 'transparent',
-                    color: sem(selected ? 'text-on-accent' : 'text-primary'),
-                    '&:hover': { backgroundColor: sem(selected ? 'accent-hover' : 'bg-hover') },
-                  }}
-                >
-                  {day}
-                </ButtonBase>
+                <span key={iso} className="flex justify-center" style={{ background: bandBackground, marginBlock: 1 }}>
+                  <ButtonBase
+                    aria-label={`${day} ${title}`}
+                    aria-pressed={iso === value}
+                    aria-current={isToday ? 'date' : undefined}
+                    onClick={() => pick(iso)}
+                    onMouseEnter={() => ranged && setHovered(iso)}
+                    onFocus={() => ranged && setHovered(iso)}
+                    sx={{
+                      height: 32,
+                      width: ranged || isToday ? 32 : '100%',
+                      fontSize: font.size.xs,
+                      borderRadius: ranged || isToday ? '50%' : `${radius.control}px`,
+                      ...(isToday && { border: `1px solid ${sem('accent-default')}` }),
+                      backgroundColor: selected ? sem('accent-default') : 'transparent',
+                      color: sem(selected ? 'text-on-accent' : part === 'inside' ? 'text-accent' : 'text-primary'),
+                      '&:hover': { backgroundColor: sem(selected ? 'accent-hover' : 'bg-hover') },
+                    }}
+                  >
+                    {day}
+                  </ButtonBase>
+                </span>
               );
             })}
           </div>

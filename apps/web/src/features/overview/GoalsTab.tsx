@@ -168,8 +168,8 @@ function GoalDialog({ space, goal, onClose }: { space: Space; goal?: Goal; onClo
         options={[{ value: NO_OWNER, label: t('goals.noOwner') }, ...(members.data ?? []).map((member) => ({ value: member.user!.id!, label: member.user!.name ?? '' }))]}
       />
       <div className="grid grid-cols-2 gap-4">
-        <DatePicker label={t('goals.start')} value={startDate} onChange={setStartDate} />
-        <DatePicker label={t('goals.target')} value={targetDate} onChange={setTargetDate} />
+        <DatePicker label={t('goals.start')} value={startDate} rangeEnd={targetDate} onChange={setStartDate} />
+        <DatePicker label={t('goals.target')} value={targetDate} rangeStart={startDate} onChange={setTargetDate} />
       </div>
       {datesInvalid && <Typography role="alert" color="error" variant="body2">{t('errors.GoalDatesInvalid')}</Typography>}
     </Dialog>

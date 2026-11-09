@@ -97,8 +97,8 @@ export function SprintDialog({ mode, projectId, sprint, onClose }: SprintFormPro
     >
       <TextField label={t('account.name')} autoFocus value={name} onChange={(event) => setName(event.target.value)} />
       <div className="grid grid-cols-2 gap-4">
-        <DatePicker label={t('tickets.startDate')} value={startDate} onChange={pickStart} />
-        <DatePicker label={t('agile.endDate')} value={endDate} onChange={setEndDate} />
+        <DatePicker label={t('tickets.startDate')} value={startDate} rangeEnd={endDate} onChange={pickStart} />
+        <DatePicker label={t('agile.endDate')} value={endDate} rangeStart={startDate} onChange={setEndDate} />
       </div>
       <TextField label={t('agile.goal')} value={goal} onChange={(event) => setGoal(event.target.value)} />
       {datesInvalid && <Typography role="alert" color="error" variant="body2">{t('errors.SprintEndBeforeStart')}</Typography>}

@@ -369,8 +369,8 @@ export function FilterControls({ filters, onChange }: { filters: TicketFilters; 
                 ))}
                 {dateRange.preset === 'custom' && (
                   <div className="grid grid-cols-2 gap-2">
-                    <DatePicker label={t('tickets.from')} value={dateRange.from} onChange={(from) => setDateRange({ ...dateRange, from })} />
-                    <DatePicker label={t('tickets.to')} value={dateRange.to} onChange={(to) => setDateRange({ ...dateRange, to })} />
+                    <DatePicker label={t('tickets.from')} value={dateRange.from} rangeEnd={dateRange.to} onChange={(from) => setDateRange({ ...dateRange, from })} />
+                    <DatePicker label={t('tickets.to')} value={dateRange.to} rangeStart={dateRange.from} onChange={(to) => setDateRange({ ...dateRange, to })} />
                   </div>
                 )}
               </>
