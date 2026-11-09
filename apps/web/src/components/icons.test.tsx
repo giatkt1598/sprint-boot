@@ -1,6 +1,10 @@
 import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { THEMES, type ThemeDefinition } from '../theme/themes';
+import chinese from '../theme/icons/chinese';
+import european from '../theme/icons/european';
+import japanese from '../theme/icons/japanese';
+import vietnamese from '../theme/icons/vietnamese';
 import { BoardIcon, ICON_NAMES, setIconSet, type IconProps } from './icons';
 
 describe('themed icons', () => {
@@ -37,4 +41,18 @@ describe('themed icons', () => {
     // The first import of a whole icon library is slow while the other test files run beside it.
     60_000,
   );
+
+  it.each([
+    ['chinese', chinese],
+    ['japanese', japanese],
+    ['vietnamese', vietnamese],
+    ['european', european],
+  ] as const)('the %s theme draws its own sidebar, issue type, priority and top bar icons', async (id, own) => {
+    const core = ['overview', 'list', 'board', 'epic', 'task', 'people', 'settings', 'story', 'bug', 'subtask', 'priorityHighest', 'priorityHigh', 'priorityMedium', 'priorityLow', 'priorityLowest', 'notifications', 'search', 'add', 'assistant'];
+    expect(Object.keys(own).sort()).toEqual([...core].sort());
+    const set = await (THEMES.find((theme) => theme.id === id) as ThemeDefinition).icons!();
+    for (const name of core) {
+      expect(set[name as keyof typeof set], name).toBe(own[name as keyof typeof own]);
+    }
+  }, 60_000);
 });

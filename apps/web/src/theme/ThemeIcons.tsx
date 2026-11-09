@@ -17,11 +17,19 @@ export function ThemeIcons() {
       return;
     }
     let current = true;
-    void load().then((set) => {
-      if (current) {
-        setIconSet(set);
-      }
-    });
+    load().then(
+      (set) => {
+        if (current) {
+          setIconSet(set);
+        }
+      },
+      // A set that fails to load, such as after a deploy replaced its file, leaves Classic drawing every icon.
+      () => {
+        if (current) {
+          setIconSet({});
+        }
+      },
+    );
     return () => {
       current = false;
     };

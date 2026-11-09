@@ -67,6 +67,8 @@ export const ICON_NAMES = [
   'error',
   'expandCollapse',
   'priorityHighest',
+  'priorityHigh',
+  'priorityLow',
   'priorityLowest',
   'dateRange',
   'date',
@@ -174,6 +176,8 @@ export const classicIcons: Record<IconName, IconComponent> = {
   error: Lucide.CircleAlert,
   expandCollapse: Lucide.ChevronsUpDown,
   priorityHighest: Lucide.ChevronsUp,
+  priorityHigh: Lucide.ChevronUp,
+  priorityLow: Lucide.ChevronDown,
   priorityLowest: Lucide.ChevronsDown,
   dateRange: Lucide.CalendarDays,
   date: Lucide.Calendar,
@@ -312,6 +316,8 @@ export const SuccessIcon = themed('success');
 export const ErrorIcon = themed('error');
 export const ExpandCollapseIcon = themed('expandCollapse');
 export const PriorityHighestIcon = themed('priorityHighest');
+export const PriorityHighIcon = themed('priorityHigh');
+export const PriorityLowIcon = themed('priorityLow');
 export const PriorityLowestIcon = themed('priorityLowest');
 export const DateRangeIcon = themed('dateRange');
 export const DateIcon = themed('date');

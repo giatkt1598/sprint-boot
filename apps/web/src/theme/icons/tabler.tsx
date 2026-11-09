@@ -157,6 +157,8 @@ const drawn: Partial<Record<IconName, ComponentType<any>>> = {
   error: IconAlertCircle,
   expandCollapse: IconSelector,
   priorityHighest: IconChevronsUp,
+  priorityHigh: IconChevronUp,
+  priorityLow: IconChevronDown,
   priorityLowest: IconChevronsDown,
   dateRange: IconCalendarEvent,
   date: IconCalendar,

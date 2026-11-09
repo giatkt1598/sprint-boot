@@ -140,6 +140,8 @@ const drawn: Partial<Record<IconName, ComponentType<any>>> = {
   error: ExclamationCircleIcon,
   expandCollapse: ChevronUpDownIcon,
   priorityHighest: ChevronDoubleUpIcon,
+  priorityHigh: ChevronUpIcon,
+  priorityLow: ChevronDownIcon,
   priorityLowest: ChevronDoubleDownIcon,
   dateRange: CalendarDaysIcon,
   date: CalendarIcon,

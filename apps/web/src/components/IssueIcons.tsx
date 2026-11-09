@@ -1,4 +1,4 @@
-import { BugIcon, ChevronDownIcon, ChevronUpIcon, EpicIcon, PriorityHighestIcon, PriorityLowestIcon, PriorityMediumIcon, StoryIcon, SubtaskIcon, TaskIcon, type IconComponent } from './icons';
+import { BugIcon, EpicIcon, PriorityHighestIcon, PriorityHighIcon, PriorityLowestIcon, PriorityLowIcon, PriorityMediumIcon, StoryIcon, SubtaskIcon, TaskIcon, type IconComponent } from './icons';
 import { useTranslation } from 'react-i18next';
 import { sem, type SemanticToken } from '../theme/tokens';
 
@@ -15,9 +15,9 @@ const issueTypes: Record<IssueType, [IconComponent, SemanticToken]> = {
 
 const priorities: Record<Priority, [IconComponent, SemanticToken]> = {
   highest: [PriorityHighestIcon, 'feedback-danger-text'],
-  high: [ChevronUpIcon, 'feedback-danger-text'],
+  high: [PriorityHighIcon, 'feedback-danger-text'],
   medium: [PriorityMediumIcon, 'text-secondary'],
-  low: [ChevronDownIcon, 'text-secondary'],
+  low: [PriorityLowIcon, 'text-secondary'],
   lowest: [PriorityLowestIcon, 'text-secondary'],
 };
 

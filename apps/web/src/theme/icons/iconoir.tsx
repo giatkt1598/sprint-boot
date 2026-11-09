@@ -153,6 +153,8 @@ const drawn: Partial<Record<IconName, ComponentType<any>>> = {
   error: WarningCircle,
   expandCollapse: DataTransferBoth,
   priorityHighest: FastArrowUp,
+  priorityHigh: NavArrowUp,
+  priorityLow: NavArrowDown,
   priorityLowest: FastArrowDown,
   dateRange: CalendarCheck,
   date: Calendar,
