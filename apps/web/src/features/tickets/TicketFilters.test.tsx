@@ -10,6 +10,8 @@ describe('date filters in the address', () => {
     expect(readRange('last7')).toEqual({ preset: 'last7', from: '', to: '' });
     expect(readRange('2026-11-01~2026-11-07')).toEqual({ preset: 'custom', from: '2026-11-01', to: '2026-11-07' });
     expect(readRange('yesterday')).toEqual({ preset: 'any', from: '', to: '' });
+    expect(readRange('~')).toEqual({ preset: 'custom', from: '', to: '' });
+    expect(readRange('2026-11~')).toEqual({ preset: 'any', from: '', to: '' });
     expect(readRange(null).preset).toBe('any');
     expect(writeRange({ preset: 'custom', from: '2026-11-01', to: '' })).toBe('2026-11-01~');
     expect(writeRange({ preset: 'any', from: '', to: '' })).toBeNull();
@@ -46,6 +48,20 @@ describe('ticket filters', () => {
     expect(hook.result.current.filters.values.label).toEqual(['ui']);
     expect(hook.result.current.filters.created.preset).toBe('last30');
     expect(hook.result.current.search[0]).toBe('login');
+  });
+
+  it('keep a custom range open while its days are picked, and filter by the whole of those days', () => {
+    const { hook, location } = mount('/spaces/DOC/tickets');
+    act(() => hook.result.current.filters.setCreated({ preset: 'custom', from: '', to: '' }));
+    expect(hook.result.current.filters.created.preset).toBe('custom');
+    act(() => hook.result.current.filters.setCreated({ preset: 'custom', from: '2026-11-02', to: '2026-11-03' }));
+    expect(new URLSearchParams(location()).get('created')).toBe('2026-11-02~2026-11-03');
+    const range = hook.result.current.filters.createdRange;
+    expect(range.from).toBe(new Date(2026, 10, 2).toISOString());
+    expect(range.to).toBe(new Date(new Date(2026, 10, 4).getTime() - 1).toISOString());
+    const card = (createdAt: string) => hook.result.current.filters.matches({ createdAt });
+    expect(card(new Date(2026, 10, 3, 22).toISOString())).toBe(true);
+    expect(card(new Date(2026, 10, 4, 0, 30).toISOString())).toBe(false);
   });
 
   it('write changes back to the address and leave other parameters alone', () => {

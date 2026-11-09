@@ -45,7 +45,13 @@ function rangeToQuery({ preset, from, to }: DateRange): { from?: string; to?: st
     return {};
   }
   if (preset === 'custom') {
-    return { from: from || undefined, to: to ? `${to}T23:59:59Z` : undefined };
+    // The picked days are the viewer's own days, from the start of the first to the end of the last.
+    const end = to ? new Date(`${to}T00:00:00`) : undefined;
+    end?.setDate(end.getDate() + 1);
+    return {
+      from: from ? new Date(`${from}T00:00:00`).toISOString() : undefined,
+      to: end ? new Date(end.getTime() - 1).toISOString() : undefined,
+    };
   }
   const days = { today: 0, last7: 7, last30: 30 }[preset];
   const start = new Date();
@@ -57,7 +63,7 @@ function rangeToQuery({ preset, from, to }: DateRange): { from?: string; to?: st
 const VALUE_FILTERS = Object.keys(NO_VALUES) as ValueFilter[];
 const PRESETS: DatePreset[] = ['today', 'last7', 'last30'];
 
-/** A date filter in the address: a preset name, or "from~to" for a custom range. */
+/** A date filter in the address: a preset name, or "from~to" for a custom range, "~" while no day is picked yet. */
 export function readRange(raw: string | null): DateRange {
   if (!raw) {
     return ANY_TIME;
@@ -67,7 +73,8 @@ export function readRange(raw: string | null): DateRange {
   }
   const [from = '', to = ''] = raw.split('~');
   const day = /^\d{4}-\d{2}-\d{2}$/;
-  return (from && !day.test(from)) || (to && !day.test(to)) || (!from && !to) ? ANY_TIME : { preset: 'custom', from, to };
+  // A bare "~" is a custom range still being picked: reading it as any time would hide the date pickers.
+  return !raw.includes('~') || (from && !day.test(from)) || (to && !day.test(to)) ? ANY_TIME : { preset: 'custom', from, to };
 }
 
 export function writeRange(range: DateRange): string | null {
@@ -99,8 +106,11 @@ export function useSearchText(): [string, (text: string) => void] {
   return [params.get('text') ?? '', setText];
 }
 
-const inRange = (value: string | undefined, range: { from?: string; to?: string }) =>
-  (!range.from || (value ?? '') >= range.from) && (!range.to || (value ?? '') <= range.to);
+/** Compared as instants: the API's timestamps and the range's ISO strings need not be written alike. */
+const inRange = (value: string | undefined, range: { from?: string; to?: string }) => {
+  const at = value ? Date.parse(value) : Number.NaN;
+  return (!range.from || at >= Date.parse(range.from)) && (!range.to || at <= Date.parse(range.to));
+};
 
 /**
  * The filters of a ticket list. They live in the address (assignee=…&type=…&created=last7), so they survive opening an
