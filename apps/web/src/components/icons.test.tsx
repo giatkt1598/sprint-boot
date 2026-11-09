@@ -47,12 +47,9 @@ describe('themed icons', () => {
     ['japanese', japanese],
     ['vietnamese', vietnamese],
     ['european', european],
-  ] as const)('the %s theme draws its own sidebar, issue type, priority and top bar icons', async (id, own) => {
-    const core = ['overview', 'list', 'board', 'epic', 'task', 'people', 'settings', 'story', 'bug', 'subtask', 'priorityHighest', 'priorityHigh', 'priorityMedium', 'priorityLow', 'priorityLowest', 'notifications', 'search', 'add', 'assistant'];
-    expect(Object.keys(own).sort()).toEqual([...core].sort());
+  ] as const)('the %s theme draws every icon itself, none from a library', async (id, own) => {
+    expect(Object.keys(own).sort()).toEqual([...ICON_NAMES].sort());
     const set = await (THEMES.find((theme) => theme.id === id) as ThemeDefinition).icons!();
-    for (const name of core) {
-      expect(set[name as keyof typeof set], name).toBe(own[name as keyof typeof own]);
-    }
+    expect(set).toBe(own);
   }, 60_000);
 });
