@@ -141,7 +141,7 @@ export function TimelineTab({ space }: { space: Space }) {
         {ticket.type?.icon && KNOWN_TYPES.includes(ticket.type.icon) ? <TicketTypeIcon type={ticket.type.icon as IconType} /> : null}
       </span>
       {/* The key opens the full page; the title opens the side panel. */}
-      <Link component={RouterLink} to={`/tickets/${ticket.key}`} underline="hover" className="shrink-0" sx={{ color: sem('text-secondary') }}>{ticket.key}</Link>
+      <Link component={RouterLink} to={`/browse/${ticket.key}`} underline="hover" className="shrink-0" sx={{ color: sem('text-secondary') }}>{ticket.key}</Link>
       <ButtonBase
         onClick={() => setOpenTicket(ticket.key!)}
         className="h-full min-w-0 flex-1"

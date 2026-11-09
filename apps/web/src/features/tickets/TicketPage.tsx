@@ -178,7 +178,7 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
   const copyLink = async () => {
     setMenuAnchor(null);
     // Not the current address: the drawer opens over a board or backlog.
-    await navigator.clipboard.writeText(`${window.location.origin}/tickets/${ticket.key}`);
+    await navigator.clipboard.writeText(`${window.location.origin}/browse/${ticket.key}`);
     toast('success', t('tickets.linkCopied'));
   };
 
@@ -204,7 +204,7 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
           <span aria-hidden>/</span>
           {ticket.parent && (
             <>
-              <Link component={RouterLink} to={`/tickets/${ticket.parent.key}`} color="inherit" className="flex items-center gap-1">
+              <Link component={RouterLink} to={`/browse/${ticket.parent.key}`} color="inherit" className="flex items-center gap-1">
                 <TicketTypeIcon type={ticket.parent.typeIcon as IconType} />
                 {ticket.parent.key}
               </Link>
@@ -321,7 +321,7 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
                       >
                         <td className="pl-2 pr-3"><span className="flex"><TicketTypeIcon type={child.typeIcon as IconType} /></span></td>
                         <td className="whitespace-nowrap pr-3">
-                          <Link component={RouterLink} to={`/tickets/${child.key}`} color="inherit" variant="body2">{child.key}</Link>
+                          <Link component={RouterLink} to={`/browse/${child.key}`} color="inherit" variant="body2">{child.key}</Link>
                         </td>
                         {/* Zero max-width with full width lets the title truncate and take the spare room. */}
                         <td className="w-full pr-3" style={{ maxWidth: 0 }}>
@@ -538,7 +538,7 @@ function EpicField({ ticket, canEdit, epics, onPick }: { ticket: Ticket; canEdit
   const tag = name ? <span style={epicTagStyle} title={name}>{name}</span> : <span>{t('common.none')}</span>;
 
   if (!canEdit) {
-    return parent ? <RouterLink to={`/tickets/${parent.key}`} style={{ textDecoration: 'none' }}>{tag}</RouterLink> : tag;
+    return parent ? <RouterLink to={`/browse/${parent.key}`} style={{ textDecoration: 'none' }}>{tag}</RouterLink> : tag;
   }
 
   return (

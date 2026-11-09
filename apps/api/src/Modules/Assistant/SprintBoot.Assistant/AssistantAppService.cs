@@ -173,7 +173,8 @@ public static partial class AssistantViews
     public static List<string> Sources(string text) =>
         [.. TicketLink().Matches(text).Select(match => match.Groups[1].Value).Distinct()];
 
-    [GeneratedRegex(@"/tickets/([A-Z][A-Z0-9_]*-\d+)")]
+    // Ticket pages live at /browse/KEY; /tickets and /issues are older addresses of the same page.
+    [GeneratedRegex(@"/(?:browse|tickets|issues)/([A-Z][A-Z0-9_]*-\d+)")]
     private static partial Regex TicketLink();
 }
 
@@ -210,7 +211,7 @@ public class AssistantChatAppService(
 
         - Use the tools to look things up before you answer anything about tickets, spaces, sprints or people. Never guess
           ticket content, keys, statuses or names.
-        - Link every ticket you mention as a Markdown link [KEY](/tickets/KEY), so the person can open it and check.
+        - Link every ticket you mention as a Markdown link [KEY](/browse/KEY), so the person can open it and check.
         - When the tools find nothing, or the data you need is missing or out of your reach, say so plainly and say what you
           looked at. Do not fill gaps with assumptions.
         - Tools run with the person's own permissions. A ticket you cannot read does not exist for you.
@@ -511,7 +512,7 @@ public class AssistantChatAppService(
                 ? "The ticket this conversation was about no longer exists."
                 : content is null
                     ? $"This conversation is about ticket {key}, which the person can no longer open."
-                    : $"This conversation is about ticket [{key}](/tickets/{key}) (id {ticketId}).");
+                    : $"This conversation is about ticket [{key}](/browse/{key}) (id {ticketId}).");
             if (content is not null && (viewingTicketId is null || viewingTicketId == ticketId))
             {
                 parts.Add($"When the person says \"this ticket\", \"this issue\" or \"this page\", they mean {key}.");
@@ -529,7 +530,7 @@ public class AssistantChatAppService(
             var (key, content) = await ReadTicketAsync(conversation.Id, viewing, cancellationToken);
             if (key is not null && content is not null)
             {
-                parts.Add($"The person has ticket [{key}](/tickets/{key}) (id {viewing}) open now, so \"this ticket\", \"this issue\" or \"this page\" means {key}. Its current content:\n{content}");
+                parts.Add($"The person has ticket [{key}](/browse/{key}) (id {viewing}) open now, so \"this ticket\", \"this issue\" or \"this page\" means {key}. Its current content:\n{content}");
             }
         }
 

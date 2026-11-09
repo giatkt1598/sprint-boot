@@ -63,7 +63,7 @@ export function QuickSearch() {
         onKeyDown={(event) => {
           if (event.key === 'Enter' && text.trim()) {
             if (results.data?.exactKey) {
-              go(`/tickets/${results.data.exactKey}`);
+              go(`/browse/${results.data.exactKey}`);
             } else {
               seeAll();
             }
@@ -79,7 +79,7 @@ export function QuickSearch() {
           style={{ width: 400, backgroundColor: sem('bg-surface'), border: `1px solid ${sem('border-default')}`, borderRadius: radius.card, boxShadow: shadow.popover }}
         >
           {(results.data?.items ?? []).map((ticket) => (
-            <MenuItem key={ticket.id} onClick={() => go(`/tickets/${ticket.key}`)}>
+            <MenuItem key={ticket.id} onClick={() => go(`/browse/${ticket.key}`)}>
               <TicketTypeIcon type={ticket.type?.icon as IconType} />
               <span className="shrink-0">{ticket.key}</span>
               <span className="truncate">{ticket.title}</span>

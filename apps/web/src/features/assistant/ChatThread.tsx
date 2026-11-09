@@ -198,7 +198,7 @@ function AssistantBubble({ message, busy, onDecide }: { message: AssistantMessag
         <div className="flex flex-wrap items-center gap-2">
           <Typography variant="body2" color="textSecondary">{t('assistant.sources')}</Typography>
           {message.sources!.map((key) => (
-            <RouterLink key={key} to={`/tickets/${key}`} style={{ fontSize: font.size.xs, color: sem('text-accent') }}>{key}</RouterLink>
+            <RouterLink key={key} to={`/browse/${key}`} style={{ fontSize: font.size.xs, color: sem('text-accent') }}>{key}</RouterLink>
           ))}
         </div>
       )}

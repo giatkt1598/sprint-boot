@@ -60,7 +60,7 @@ export function useOpenNotification() {
       read.mutate(item.id!);
     }
     if (item.ticketKey) {
-      void navigate(`/tickets/${item.ticketKey}`);
+      void navigate(`/browse/${item.ticketKey}`);
     }
   };
 }

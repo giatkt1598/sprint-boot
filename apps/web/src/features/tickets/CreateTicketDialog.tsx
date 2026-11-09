@@ -150,7 +150,7 @@ export function CreateTicketDialog({ onClose, epic }: CreateTicketDialogProps) {
         setEditorKey((value) => value + 1);
       } else {
         onClose();
-        await navigate(`/tickets/${ticket.key}`);
+        await navigate(`/browse/${ticket.key}`);
       }
     },
   });

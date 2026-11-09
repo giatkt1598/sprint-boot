@@ -181,7 +181,7 @@ public class AssistantTests(ApiFixture fixture)
         await StreamAsync(owner, $"/api/v1/assistant/conversations/{conversation.Id}/messages", new { text = "Summarize this page", ticketId = ticket.Id });
 
         var question = Ai.Bodies.Single()["messages"]!.AsArray().Last()!["content"]!.ToJsonString();
-        question.ShouldContain($"[{ticket.Key}](/tickets/{ticket.Key})");
+        question.ShouldContain($"[{ticket.Key}](/browse/{ticket.Key})");
         question.ShouldContain("Checkout button misaligned");
         question.ShouldContain("this page");
 
@@ -308,7 +308,7 @@ public class AssistantTests(ApiFixture fixture)
         var conversation = await ConversationAsync(client);
         Ai.Script(
             new FakeAiReply("", ("search_tickets", new { text = "payment" })),
-            new FakeAiReply($"Found [{ticket.Key}](/tickets/{ticket.Key})."));
+            new FakeAiReply($"Found [{ticket.Key}](/browse/{ticket.Key})."));
 
         var events = await AskAsync(client, conversation.Id, "Which tickets mention payment?");
 
@@ -387,11 +387,11 @@ public class AssistantTests(ApiFixture fixture)
         var conversation = await ConversationAsync(client);
         Ai.Script(
             new FakeAiReply("Let me look.", ("search_tickets", new { text = "login" })) { Thinking = "find login tickets" },
-            new FakeAiReply($"See [{ticket.Key}](/tickets/{ticket.Key})."));
+            new FakeAiReply($"See [{ticket.Key}](/browse/{ticket.Key})."));
 
         var events = await AskAsync(client, conversation.Id, "Any login tickets?");
 
-        Deltas(events).ShouldBe($"Let me look.See [{ticket.Key}](/tickets/{ticket.Key}).");
+        Deltas(events).ShouldBe($"Let me look.See [{ticket.Key}](/browse/{ticket.Key}).");
         var first = Ai.Requests.First();
         first.Path.ShouldEndWith("/v1/messages");
         first.Headers.Authorization!.Parameter.ShouldBe("secret-key");

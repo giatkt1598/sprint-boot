@@ -64,7 +64,7 @@ function RowBody({ card, onOpen, actions }: TicketRowProps) {
       <td className="pl-2"><span className="flex"><TicketTypeIcon type={card.type?.icon as IconType} /></span></td>
       <td><Link
         component={RouterLink}
-        to={`/tickets/${card.key}`}
+        to={`/browse/${card.key}`}
         draggable={false}
         sx={{ width: 96, flexShrink: 0, fontSize: font.size.xs, color: sem('text-accent') }}
       >

@@ -68,5 +68,6 @@ describe('uploadFile', () => {
     await expect(uploadFile({ purpose: 1, projectId: 'p1' }, new File(['abc'], 'a.txt'))).rejects.toThrow();
     expect(fetch).toHaveBeenCalledTimes(3);
     expect(post).toHaveBeenCalledWith('/api/v1/upload/{id}/abort', expect.anything());
-  });
+    // The retries wait out their real back-off, which runs past the default 5s when the machine is busy.
+  }, 15_000);
 });

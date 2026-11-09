@@ -48,7 +48,7 @@ test('sign in, run a space and a ticket end to end', async ({ page }) => {
   await expect(dialog.getByRole('textbox', { name: 'Description' })).toHaveText('First description');
   await expectAccessible(page);
   await dialog.getByRole('button', { name: 'Create', exact: true }).click();
-  await page.waitForURL(`**/tickets/${key}-1`);
+  await page.waitForURL(`**/browse/${key}-1`);
   await expect(page.getByRole('heading', { name: 'Build đăng nhập screen' })).toBeVisible();
   await expect(page.getByText('First description')).toBeVisible();
   await expectAccessible(page);
@@ -127,7 +127,7 @@ test('sign in, run a space and a ticket end to end', async ({ page }) => {
   await subtask.fill('Child work');
   await page.keyboard.press('Enter');
   await expect(page.getByRole('link', { name: `${key}-2` })).toBeVisible();
-  await expect(page).toHaveURL(new RegExp(`/tickets/${key}-1$`));
+  await expect(page).toHaveURL(new RegExp(`/browse/${key}-1$`));
   await expect(subtask).toHaveValue('');
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByRole('button', { name: 'Cancel' }).click();
@@ -163,7 +163,7 @@ test('sign in, run a space and a ticket end to end', async ({ page }) => {
   await page.keyboard.type(`${key}-2`);
   await expect(page.getByRole('menuitem').filter({ hasText: 'Child work' })).toBeVisible();
   await page.keyboard.press('Enter');
-  await page.waitForURL(`**/tickets/${key}-2`);
+  await page.waitForURL(`**/browse/${key}-2`);
 
   // Filter by type.
   await page.goto(`/spaces/${key}/tickets`);
@@ -181,9 +181,9 @@ test('sign in, run a space and a ticket end to end', async ({ page }) => {
   await page.getByRole('option', { name: 'Epic' }).click();
   await page.getByLabel('Attachments').setInputFiles({ name: 'plan.txt', mimeType: 'text/plain', buffer: Buffer.from('plan') });
   await page.getByRole('dialog').getByRole('button', { name: 'Create', exact: true }).click();
-  await page.waitForURL(`**/tickets/${key}-3`);
+  await page.waitForURL(`**/browse/${key}-3`);
   await expect(page.getByRole('button', { name: 'Delete plan.txt' })).toBeVisible();
-  await page.goto(`/tickets/${key}-1`);
+  await page.goto(`/browse/${key}-1`);
   await page.getByRole('button', { name: /^Epic:/ }).click();
   await page.getByRole('button', { name: `${key}-3 Launch epic` }).click();
   await expect(page.getByRole('button', { name: `Epic: ${key}-3 Launch epic` })).toBeVisible();
@@ -196,7 +196,7 @@ test('sign in, run a space and a ticket end to end', async ({ page }) => {
   await expect(page.getByRole('cell', { name: 'Child work' })).toHaveCount(0);
 
   // Move through the workflow from the status menu.
-  await page.goto(`/tickets/${key}-1`);
+  await page.goto(`/browse/${key}-1`);
   await page.getByRole('button', { name: 'Status: To Do' }).click();
   await expectAccessible(page);
   await page.getByRole('menuitem', { name: /^In Progress/ }).click();
@@ -205,7 +205,7 @@ test('sign in, run a space and a ticket end to end', async ({ page }) => {
   await expect(page.getByText('To Do → In Progress')).toBeVisible();
 
   // Soft delete with subtask, then restore.
-  await page.goto(`/tickets/${key}-1`);
+  await page.goto(`/browse/${key}-1`);
   await page.getByRole('button', { name: 'More actions' }).click();
   await page.getByRole('menuitem', { name: 'Delete' }).click();
   await expect(page.getByRole('dialog')).toContainText('1 subtasks');
@@ -215,7 +215,7 @@ test('sign in, run a space and a ticket end to end', async ({ page }) => {
   await expectAccessible(page);
   await page.getByRole('button', { name: `Restore ${key}-1` }).click();
   await expect(page.getByText('Ticket restored')).toBeVisible();
-  await page.goto(`/tickets/${key}-2`);
+  await page.goto(`/browse/${key}-2`);
   await expect(page.getByRole('heading', { name: 'Child work' })).toBeVisible();
 
   // Settings screens.
@@ -355,7 +355,7 @@ test('a transition that needs input opens a dialog and stays blocked until fille
   await post('/api/v1/project-workflow/set', { projectId: space.id, ticketTypeId: task.id, workflowId: workflow.id });
   await post('/api/v1/ticket', { projectId: space.id, typeId: task.id, title: 'Needs input' });
 
-  await page.goto(`/tickets/${key}-1`);
+  await page.goto(`/browse/${key}-1`);
   await page.getByRole('button', { name: 'Status: To Do' }).click();
   await page.getByRole('menuitem', { name: 'Done' }).click();
   const dialog = page.getByRole('dialog');
@@ -492,7 +492,7 @@ test('run a sprint: plan by dragging, work the board, complete', async ({ page }
   await page.getByRole('button', { name: 'Create epic' }).click();
   await page.getByRole('dialog').getByLabel('Title').fill('Launch');
   await page.getByRole('dialog').getByRole('button', { name: 'Create', exact: true }).click();
-  await page.waitForURL(`**/tickets/${key}-4`);
+  await page.waitForURL(`**/browse/${key}-4`);
   await page.goto(`/spaces/${key}/epics`);
   await expect(page.getByRole('cell', { name: 'Launch' })).toBeVisible();
   await expectAccessible(page);
@@ -637,7 +637,7 @@ test('the bell updates live and notifications open the ticket', async ({ browser
   await other.getByRole('button', { name: /unread/ }).click();
   await expectAccessible(other);
   await other.getByRole('button', { name: new RegExp(`assigned ${key}-1 to you`) }).click();
-  await other.waitForURL(`**/tickets/${key}-1`);
+  await other.waitForURL(`**/browse/${key}-1`);
 
   await other.goto('/notifications');
   await expect(other.getByRole('heading', { name: 'Notifications' })).toBeVisible();
@@ -647,7 +647,7 @@ test('the bell updates live and notifications open the ticket', async ({ browser
   await expectAccessible(other);
   await context.close();
 
-  await page.goto(`/tickets/${key}-1`);
+  await page.goto(`/browse/${key}-1`);
   await page.getByRole('button', { name: /watchers/ }).click();
   await expect(page.getByRole('button', { name: 'Stop watching' })).toBeVisible();
   await page.keyboard.press('Escape');
@@ -880,7 +880,7 @@ test('a real Gitea connection links commits, pull requests and CI, and creates b
   await page.getByRole('button', { name: 'Create', exact: true }).click();
   await page.getByRole('dialog').getByLabel('Title').fill('Connect the đồng hồ');
   await page.getByRole('dialog').getByRole('button', { name: 'Create', exact: true }).click();
-  await page.waitForURL(`**/tickets/${key}-1`);
+  await page.waitForURL(`**/browse/${key}-1`);
   const ticketUrl = page.url();
 
   await page.goto(`/spaces/${key}/settings/general`);
@@ -1045,7 +1045,7 @@ test('create ticket form, backlog cards and home follow the last space', async (
   await expect(dialog.getByRole('button', { name: 'Clear date: Start date' })).toHaveCount(0);
   await expectAccessible(page);
   await dialog.getByRole('button', { name: 'Create', exact: true }).click();
-  await page.waitForURL(`**/tickets/${key}-1`);
+  await page.waitForURL(`**/browse/${key}-1`);
   await expect(page.getByRole('heading', { name: 'Attachments' })).toHaveCSS('font-size', '16px');
 
   // A blank line in the description keeps its height once saved.
@@ -1118,7 +1118,7 @@ test('create ticket form, backlog cards and home follow the last space', async (
   await page.goto(`/spaces/${key}/backlog`);
   await expectAccessible(page);
   await page.getByRole('link', { name: `${key}-1` }).click();
-  await page.waitForURL(`**/tickets/${key}-1`);
+  await page.waitForURL(`**/browse/${key}-1`);
   await expect(page.getByRole('heading', { name: 'Card row' })).toBeVisible();
 
   // Content and sidebar scroll apart, so the page itself stays put.
@@ -1386,7 +1386,7 @@ test('create ticket form, backlog cards and home follow the last space', async (
   await page.getByRole('button', { name: 'Create epic' }).click();
   await page.getByRole('dialog').getByLabel('Title').fill('Quick epic');
   await page.getByRole('dialog').getByRole('button', { name: 'Create', exact: true }).click();
-  await page.waitForURL(`**/tickets/${key}-2`);
+  await page.waitForURL(`**/browse/${key}-2`);
   await page.goto(`/spaces/${key}/epics`);
   await page.getByRole('button', { name: new RegExp(`^Priority: .* ${key}-2$`) }).click();
   await page.getByRole('group', { name: 'Priority' }).getByRole('button', { name: 'High', exact: true }).click();
@@ -1394,7 +1394,7 @@ test('create ticket form, backlog cards and home follow the last space', async (
   await expectAccessible(page);
 
   // The details widen from the divider, by keyboard as well as by dragging.
-  await page.goto(`/tickets/${key}-1`);
+  await page.goto(`/browse/${key}-1`);
   const divider = page.getByRole('separator', { name: 'Resize ticket details' });
   const width = Number(await divider.getAttribute('aria-valuenow'));
   await divider.focus();
@@ -1403,13 +1403,13 @@ test('create ticket form, backlog cards and home follow the last space', async (
   await divider.press('ArrowRight');
 
   // Breadcrumb: change the type, copy the link.
-  await page.goto(`/tickets/${key}-1`);
+  await page.goto(`/browse/${key}-1`);
   await page.getByRole('button', { name: 'Ticket type: Task' }).click();
   await page.getByRole('group', { name: 'Ticket type' }).getByRole('button', { name: 'Bug' }).click();
   await expect(page.getByRole('button', { name: 'Ticket type: Bug' })).toBeVisible();
   await page.getByRole('navigation', { name: 'breadcrumb' }).getByText(`${key}-1`).hover();
   await page.getByRole('navigation', { name: 'breadcrumb' }).getByRole('button', { name: 'Copy link' }).click();
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(new RegExp(`/tickets/${key}-1$`));
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(new RegExp(`/browse/${key}-1$`));
 
   // The epic field is a purple tag with a searchable picker.
   await page.getByRole('button', { name: /^Epic:/ }).click();
@@ -1424,7 +1424,7 @@ test('create ticket form, backlog cards and home follow the last space', async (
   await expect(page.getByRole('columnheader', { name: 'Created' })).toBeVisible();
   await expectAccessible(page);
   await page.getByRole('link', { name: 'Card row' }).click();
-  await page.waitForURL(`**/tickets/${key}-1`);
+  await page.waitForURL(`**/browse/${key}-1`);
 
   await page.goto('/');
   await page.waitForURL(`**/spaces/${key}/backlog`);

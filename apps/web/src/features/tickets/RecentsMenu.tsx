@@ -54,7 +54,7 @@ export function RecentsMenu() {
               key={ticket.id}
               onClick={() => {
                 setAnchor(null);
-                void navigate(`/tickets/${ticket.key}`);
+                void navigate(`/browse/${ticket.key}`);
               }}
               className="flex w-full items-center gap-2 p-2 text-left"
               sx={{ justifyContent: 'flex-start', borderRadius: `${radius.card}px`, '&:hover': { backgroundColor: sem('bg-hover') } }}

@@ -87,11 +87,11 @@ export function EpicsPage() {
               render: (epic) => (
                 <span className="flex items-center gap-2">
                   <TicketTypeIcon type="epic" />
-                  <Link component={RouterLink} to={`/tickets/${epic.key}`} color="inherit">{epic.key}</Link>
+                  <Link component={RouterLink} to={`/browse/${epic.key}`} color="inherit">{epic.key}</Link>
                 </span>
               ),
             },
-            { key: 'title', sortable: true, header: t('tickets.titleField'), render: (epic) => <Link component={RouterLink} to={`/tickets/${epic.key}`} color="inherit">{epic.title}</Link> },
+            { key: 'title', sortable: true, header: t('tickets.titleField'), render: (epic) => <Link component={RouterLink} to={`/browse/${epic.key}`} color="inherit">{epic.title}</Link> },
             { key: 'progress', sortable: true, header: t('agile.progressColumn'), render: (epic) => <EpicProgress total={epic.total ?? 0} done={epic.done ?? 0} inProgress={epic.inProgress ?? 0} /> },
             { key: 'status', sortable: true, header: t('tickets.status'), render: (epic) => <QuickStatus ticket={toQuick(epic)} canEdit={canEdit} people={people} /> },
             { key: 'priority', sortable: true, header: t('tickets.priority'), render: (epic) => <QuickPriority ticket={toQuick(epic)} canEdit={canEdit} /> },

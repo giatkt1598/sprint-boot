@@ -1,4 +1,4 @@
-import { Navigate, Outlet, Route, BrowserRouter, Routes, useLocation } from 'react-router';
+import { Navigate, Outlet, Route, BrowserRouter, Routes, useLocation, useParams } from 'react-router';
 import { RequireAuth } from './auth/AuthProvider';
 import { AuthCallbackPage, AcceptInvitationPage, ForgotPasswordPage, LoginPage, ResetPasswordPage, SessionExpiredPage } from './auth/AuthPages';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -112,8 +112,9 @@ export function App() {
                 <Route path="sprints/:sprintId" element={<ClosedSprintPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
-              <Route path="tickets/:ticketKey" element={<TicketPage />} />
-              <Route path="issues/:ticketKey" element={<RenamedToTickets />} />
+              <Route path="browse/:ticketKey" element={<TicketPage />} />
+              <Route path="tickets/:ticketKey" element={<MovedToBrowse />} />
+              <Route path="issues/:ticketKey" element={<MovedToBrowse />} />
               <Route path="search" element={<TicketsListPage />} />
               <Route path="notifications" element={<NotificationsPage />} />
               <Route path="assistant" element={<AssistantPage />} />
@@ -135,4 +136,11 @@ export function App() {
 function RenamedToTickets() {
   const location = useLocation();
   return <Navigate to={location.pathname.replace(/\/issues(\/|$)/, '/tickets$1') + location.search + location.hash} replace />;
+}
+
+/** A ticket or epic opens at /browse/KEY; the older /tickets/KEY and /issues/KEY addresses land there too. */
+function MovedToBrowse() {
+  const { ticketKey } = useParams();
+  const location = useLocation();
+  return <Navigate to={`/browse/${ticketKey}${location.search}${location.hash}`} replace />;
 }

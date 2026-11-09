@@ -121,7 +121,7 @@ export function AssistantPage() {
         {selected?.ticketKey && (
           <div className="px-4 py-2" style={{ borderBottom: `1px solid ${sem('border-default')}` }}>
             <Typography variant="body2" color="textSecondary">
-              {t('assistant.aboutTicket')} <Link to={`/tickets/${selected.ticketKey}`}>{selected.ticketKey}</Link>
+              {t('assistant.aboutTicket')} <Link to={`/browse/${selected.ticketKey}`}>{selected.ticketKey}</Link>
             </Typography>
           </div>
         )}

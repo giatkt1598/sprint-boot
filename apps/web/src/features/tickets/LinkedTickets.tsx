@@ -190,7 +190,7 @@ export function LinkedTickets({ ticket, canEdit }: { ticket: Ticket; canEdit: bo
                     <>
                       <td className="pl-2 pr-3"><span className="flex"><TicketTypeIcon type={link.ticket.typeIcon as IconType} /></span></td>
                       <td className="whitespace-nowrap pr-3">
-                        <Link component={RouterLink} to={`/tickets/${link.ticket.key}`} color="inherit" variant="body2">{link.ticket.key}</Link>
+                        <Link component={RouterLink} to={`/browse/${link.ticket.key}`} color="inherit" variant="body2">{link.ticket.key}</Link>
                       </td>
                       <td className="w-full pr-3" style={{ maxWidth: 0 }}>
                         <Typography variant="body2" className="truncate" title={link.ticket.title ?? undefined}>{link.ticket.title}</Typography>

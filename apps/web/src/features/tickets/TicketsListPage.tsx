@@ -108,7 +108,7 @@ export function TicketsListPage() {
                 render: (ticket) => (
                   <span className="flex items-center gap-2">
                     <TicketTypeIcon type={ticket.type?.icon as IconType} />
-                    <Link component={RouterLink} to={`/tickets/${ticket.key}`} color="inherit">{ticket.key}</Link>
+                    <Link component={RouterLink} to={`/browse/${ticket.key}`} color="inherit">{ticket.key}</Link>
                   </span>
                 ),
               },
@@ -116,7 +116,7 @@ export function TicketsListPage() {
                 key: 'title', sortable: true,
                 header: t('tickets.titleField'),
                 render: (ticket) => (
-                  <Link component={RouterLink} to={`/tickets/${ticket.key}`} color="inherit" title={ticket.title ?? undefined} className="block truncate" sx={{ maxWidth: TITLE_MAX }}>
+                  <Link component={RouterLink} to={`/browse/${ticket.key}`} color="inherit" title={ticket.title ?? undefined} className="block truncate" sx={{ maxWidth: TITLE_MAX }}>
                     {ticket.title}
                   </Link>
                 ),

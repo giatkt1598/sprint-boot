@@ -15,9 +15,9 @@ describe('closeOpenMarkdown', () => {
   });
 
   it('holds back a link until it closes', () => {
-    expect(closeOpenMarkdown('See [SB-1](/tickets/SB')).toBe('See ');
+    expect(closeOpenMarkdown('See [SB-1](/browse/SB')).toBe('See ');
     expect(closeOpenMarkdown('See [SB-1')).toBe('See ');
-    expect(closeOpenMarkdown('See [SB-1](/tickets/SB-1)')).toBe('See [SB-1](/tickets/SB-1)');
+    expect(closeOpenMarkdown('See [SB-1](/browse/SB-1)')).toBe('See [SB-1](/browse/SB-1)');
   });
 
   it('holds back a table row still being written', () => {

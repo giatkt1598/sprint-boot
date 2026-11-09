@@ -202,7 +202,7 @@ type Event = NonNullable<OverviewSummary['recent']>[number];
 /** "moved SB-81 to In Progress", "completed SB-12", "logged 2h on SB-27". */
 function EventText({ item, doneStatuses }: { item: Event; doneStatuses: Set<string | null | undefined> }) {
   const { t } = useTranslation();
-  const key = <Link component={RouterLink} to={`/tickets/${item.ticketKey}`} underline="hover" title={item.ticketTitle ?? undefined}>{item.ticketKey}</Link>;
+  const key = <Link component={RouterLink} to={`/browse/${item.ticketKey}`} underline="hover" title={item.ticketTitle ?? undefined}>{item.ticketKey}</Link>;
   if (item.kind === 0 || item.kind === 2) {
     return <>{t(item.kind === 0 ? 'overview.event.created' : 'overview.event.commented')} {key}</>;
   }
