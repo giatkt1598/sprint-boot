@@ -340,7 +340,13 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.Property<Guid>("ConversationId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Guid>("MessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ProjectId")
                         .HasColumnType("uuid");
 
                     b.Property<bool>("RequiresConfirmation")
@@ -350,6 +356,9 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                         .HasColumnType("text");
 
                     b.Property<int>("State")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TicketsCreated")
                         .HasColumnType("integer");
 
                     b.Property<string>("Tool")
@@ -366,6 +375,8 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
 
                     b.HasIndex("MessageId");
 
+                    b.HasIndex("ProjectId", "CreatedAt");
+
                     b.ToTable("conversation_actions", "assistant");
                 });
 
@@ -378,6 +389,9 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ProjectId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid?>("TicketId")
@@ -395,6 +409,8 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
 
                     b.HasIndex("TicketId");
 

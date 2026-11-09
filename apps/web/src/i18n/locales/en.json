@@ -1571,6 +1571,41 @@
       "minutes": "{{count}}m ago",
       "hours": "{{count}}h ago",
       "yesterday": "Yesterday"
+    },
+    "ai": {
+      "title": "AI Assistant",
+      "conversations": "Conversations",
+      "messages_one": "{{count}} message",
+      "messages_other": "{{count}} messages",
+      "users": "Members using AI",
+      "usersNote": "Asked something {{period}}",
+      "actions": "Actions",
+      "confirmedRate": "{{percent}}% confirmed",
+      "ticketsCreated": "Tickets by AI",
+      "ticketsCreatedNote_one": "{{percent}}% of {{count}} ticket created",
+      "ticketsCreatedNote_other": "{{percent}}% of {{count}} tickets created",
+      "byTool": "Actions by kind",
+      "decisions": "{{confirmed}} confirmed · {{declined}} declined · {{failed}} failed",
+      "noActions": "The assistant has not proposed any change yet.",
+      "topUsers": "Top users",
+      "noUsers": "Nobody has asked the assistant yet.",
+      "questions_one": "{{count}} question",
+      "questions_other": "{{count}} questions",
+      "tool": {
+        "create_ticket": "Create ticket",
+        "create_tickets": "Create tickets",
+        "update_ticket": "Update ticket",
+        "update_tickets": "Update tickets",
+        "transition_ticket": "Change status",
+        "edit_description": "Edit description",
+        "log_work": "Log work",
+        "update_work_log": "Edit work log",
+        "add_comment": "Add comment",
+        "update_comment": "Edit comment",
+        "move_to_sprint": "Move to sprint",
+        "watch_ticket": "Watch ticket",
+        "unwatch_ticket": "Stop watching"
+      }
     }
   },
   "people": {

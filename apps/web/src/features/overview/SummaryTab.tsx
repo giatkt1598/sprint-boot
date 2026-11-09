@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Menu from '@mui/material/Menu';
 import Typography from '@mui/material/Typography';
-import { BacklogIcon, CheckIcon, ChevronDownIcon, DateIcon, InboxIcon, PeopleIcon, PullRequestIcon, type IconComponent } from '../../components/icons';
+import { AssistantIcon, BacklogIcon, BotIcon, CheckIcon, ChevronDownIcon, DateIcon, InboxIcon, PeopleIcon, PullRequestIcon, ToolIcon, type IconComponent } from '../../components/icons';
 import { Fragment, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink } from 'react-router';
@@ -182,9 +182,71 @@ export function SummaryTab({ space }: { space: Space }) {
               )}
             </Card>
           </div>
+
+          {summary.data.assistant && <AssistantUsage usage={summary.data.assistant} periodTag={periodTag} inPeriod={inPeriod} />}
         </>
       )}
     </div>
+  );
+}
+
+type AssistantUsageData = NonNullable<OverviewSummary['assistant']>;
+
+/** How the space used the AI Assistant: counts only, shown while the assistant is switched on. */
+function AssistantUsage({ usage, periodTag, inPeriod }: { usage: AssistantUsageData; periodTag: string; inPeriod: string }) {
+  const { t } = useTranslation();
+  const actions = usage.actions ?? [];
+  const topUsers = usage.topUsers ?? [];
+  const total = actions.reduce((sum, item) => sum + item.count, 0);
+
+  return (
+    <section aria-labelledby="overview-ai" className="flex flex-col gap-4">
+      <div className="flex items-center gap-2">
+        <Typography variant="h3" component="h2" id="overview-ai" className="flex-1">{t('overview.ai.title')}</Typography>
+        <Typography variant="body2" color="textSecondary" sx={{ fontSize: font.size.xs }}>{periodTag}</Typography>
+      </div>
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <Kpi icon={AssistantIcon} label={t('overview.ai.conversations')} value={usage.conversations} note={t('overview.ai.messages', { count: usage.messages })} />
+        <Kpi icon={PeopleIcon} label={t('overview.ai.users')} value={usage.users} note={t('overview.ai.usersNote', { period: inPeriod })} />
+        <Kpi icon={ToolIcon} label={t('overview.ai.actions')} value={total} note={t('overview.ai.confirmedRate', { percent: percent(usage.confirmed, usage.confirmed + usage.declined) })} />
+        <Kpi icon={BotIcon} label={t('overview.ai.ticketsCreated')} value={usage.ticketsCreated} note={t('overview.ai.ticketsCreatedNote', { count: usage.ticketsCreatedInPeriod, percent: percent(usage.ticketsCreated, usage.ticketsCreatedInPeriod) })} />
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card title={t('overview.ai.byTool')} meta={t('overview.ai.decisions', { confirmed: usage.confirmed, declined: usage.declined, failed: usage.failed })}>
+          {actions.length === 0 ? <EmptyState title={t('overview.ai.noActions')} /> : (
+            <div className="flex flex-col gap-3">
+              {actions.map((item) => (
+                <BarRow
+                  key={item.tool}
+                  label={t(`overview.ai.tool.${item.tool}`, { defaultValue: item.tool })}
+                  value={item.count}
+                  max={Math.max(...actions.map((row) => row.count), 1)}
+                  color="accent-default"
+                  wide
+                />
+              ))}
+            </div>
+          )}
+        </Card>
+        <Card title={t('overview.ai.topUsers')} meta={periodTag}>
+          {topUsers.length === 0 ? <EmptyState title={t('overview.ai.noUsers')} /> : (
+            <div className="flex flex-col gap-3">
+              {topUsers.map((item) => (
+                <BarRow
+                  key={item.user.id}
+                  label={<span className="flex min-w-0 items-center gap-2"><Avatar name={item.user.name ?? ''} src={item.user.avatarUrl} /><span className="truncate">{item.user.name}</span></span>}
+                  value={item.messages}
+                  display={t('overview.ai.questions', { count: item.messages })}
+                  max={Math.max(...topUsers.map((row) => row.messages), 1)}
+                  color="accent-default"
+                  wide
+                />
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+    </section>
   );
 }
 

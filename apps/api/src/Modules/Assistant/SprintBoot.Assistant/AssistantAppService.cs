@@ -57,13 +57,18 @@ public class AssistantAppService(
 
     public async Task<ConversationDto> CreateAsync(CreateConversationInput input)
     {
+        Guid? projectId = null;
         if (input.TicketId is { } ticketId)
         {
             var card = await tickets.FindCardAsync(ticketId) ?? throw new EntityNotFoundException(typeof(TicketCardDto), ticketId);
-            await projectAccess.CheckAsync(await tickets.GetProjectIdAsync(card.Id), ProjectPermissions.ViewTickets);
+            projectId = await tickets.GetProjectIdAsync(card.Id);
+            await projectAccess.CheckAsync(projectId.Value, ProjectPermissions.ViewTickets);
         }
 
-        var conversation = new Conversation(GuidGenerator.Create(), CurrentUser.GetId(), input.TicketId, string.Empty, Clock.Now);
+        var conversation = new Conversation(GuidGenerator.Create(), CurrentUser.GetId(), input.TicketId, string.Empty, Clock.Now)
+        {
+            ProjectId = projectId,
+        };
         await conversations.InsertAsync(conversation, autoSave: true);
         return (await ToDtosAsync([conversation])).Single();
     }
@@ -196,7 +201,8 @@ public class AssistantChatAppService(
     ISettingProvider settings,
     IStringEncryptionService encryption,
     IAbpDistributedLock locks,
-    IUnitOfWorkManager unitOfWork)
+    IUnitOfWorkManager unitOfWork,
+    IProjectAccess projectAccess)
     : ApplicationService
 {
     /// <summary>Tool rounds one question may take before the assistant has to answer.</summary>
@@ -310,6 +316,7 @@ public class AssistantChatAppService(
             var outcome = await toolbox.InvokeAsync(action.Tool, Parse(action.Arguments), cancellationToken);
             action.State = outcome.IsError ? AssistantActionState.Failed : AssistantActionState.Confirmed;
             action.Result = Clip(outcome.Content);
+            action.TicketsCreated = outcome.IsError ? 0 : ActionSpace.TicketsCreated(action.Tool, outcome.Content);
             yield return new AssistantEventDto { Type = "tool", Tool = action.Tool, State = outcome.IsError ? "failed" : "done" };
         }
         else
@@ -415,10 +422,15 @@ public class AssistantChatAppService(
                 foreach (var call in turn.ToolCalls)
                 {
                     var tool = tools.FirstOrDefault(item => item.Name == call.Name);
-                    calls.Add(new AssistantAction(GuidGenerator.Create(), conversationId, saved.Id, call.Id, call.Name, call.Arguments, tool is not { ReadOnly: true }));
+                    calls.Add(new AssistantAction(
+                        GuidGenerator.Create(), conversationId, saved.Id, call.Id, call.Name, call.Arguments, tool is not { ReadOnly: true }, Clock.Now)
+                    {
+                        ProjectId = await SpaceOfAsync(call.Arguments),
+                    });
                 }
 
                 await actions.InsertManyAsync(calls);
+                await TieToSpaceAsync(conversationId, calls);
                 if (calls.Count == 0 && turn.Text.Length > 0)
                 {
                     // The first answer is enough to say what the conversation is about.
@@ -630,6 +642,25 @@ public class AssistantChatAppService(
 
             await actions.UpdateManyAsync(group);
             await AnswerToolCallsAsync(conversationId, group.Key, await actions.GetListAsync(item => item.MessageId == group.Key));
+        }
+    }
+
+    private async Task<Guid?> SpaceOfAsync(string arguments) =>
+        ActionSpace.KeyOf(arguments) is { } key ? (await projectAccess.FindRefByKeyAsync(key))?.Id : null;
+
+    /// <summary>A conversation not opened from a ticket belongs to the first space its actions name.</summary>
+    private async Task TieToSpaceAsync(Guid conversationId, List<AssistantAction> calls)
+    {
+        if (calls.FirstOrDefault(call => call.ProjectId is not null)?.ProjectId is not { } projectId)
+        {
+            return;
+        }
+
+        var conversation = await conversations.GetAsync(conversationId);
+        if (conversation.ProjectId is null)
+        {
+            conversation.ProjectId = projectId;
+            await conversations.UpdateAsync(conversation);
         }
     }
 

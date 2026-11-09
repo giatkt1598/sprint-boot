@@ -28004,6 +28004,105 @@
         },
         "additionalProperties": false
       },
+      "OverviewAssistantActionDto": {
+        "required": [
+          "count",
+          "tool"
+        ],
+        "type": "object",
+        "properties": {
+          "tool": {
+            "type": "string",
+            "nullable": true
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OverviewAssistantDto": {
+        "required": [
+          "actions",
+          "confirmed",
+          "conversations",
+          "declined",
+          "failed",
+          "messages",
+          "ticketsCreated",
+          "ticketsCreatedInPeriod",
+          "topUsers",
+          "users"
+        ],
+        "type": "object",
+        "properties": {
+          "conversations": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "messages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "users": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OverviewAssistantActionDto"
+            },
+            "nullable": true
+          },
+          "confirmed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "declined": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "topUsers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OverviewAssistantUserDto"
+            },
+            "nullable": true
+          },
+          "ticketsCreated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ticketsCreatedInPeriod": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OverviewAssistantUserDto": {
+        "required": [
+          "messages",
+          "user"
+        ],
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserRefDto"
+          },
+          "messages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "OverviewEventDto": {
         "required": [
           "actor",
@@ -28193,6 +28292,9 @@
               "$ref": "#/components/schemas/OverviewEventDto"
             },
             "nullable": true
+          },
+          "assistant": {
+            "$ref": "#/components/schemas/OverviewAssistantDto"
           }
         },
         "additionalProperties": false

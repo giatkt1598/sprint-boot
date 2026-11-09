@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using SprintBoot.Assistant;
 using SprintBoot.GitIntegration;
 using SprintBoot.Identity;
 using SprintBoot.Tickets;
@@ -23,6 +24,7 @@ public class ProjectOverviewAppService(
     BoardProvider boards,
     ITicketOverviewFacts ticketFacts,
     IProjectGitFacts gitFacts,
+    IProjectAssistantFacts assistantFacts,
     IProjectAccess projectAccess,
     IUserDirectory userDirectory,
     IClock clock)
@@ -31,6 +33,7 @@ public class ProjectOverviewAppService(
     private const int SprintCount = 3;
     private const int RecentCount = 5;
     private const int FallbackDays = 14;
+    private const int TopAssistantUsers = 5;
 
     public async Task<OverviewSummaryDto> GetSummaryAsync(Guid projectId, OverviewSummaryInput input)
     {
@@ -58,9 +61,12 @@ public class ProjectOverviewAppService(
             ? (VelocityOf(tickets.Where(sprintWork.IsDone)), periodSprints.Count)
             : (VelocityOf(all.Where(ticket => ticket.Category == StatusCategory.Done && InRange(ticket.CompletedAt))), 0);
         var events = await ticketFacts.GetRecentEventsAsync(projectId, RecentCount);
-        var people = await userDirectory.GetByIdsAsync([.. velocity.Select(item => item.UserId), .. events.Select(item => item.ActorId)]);
         var pulls = await gitFacts.GetPullRequestCountsAsync(projectId);
         var joined = await projectAccess.GetMemberJoinTimesAsync(projectId);
+        var assistant = await assistantFacts.IsEnabledAsync() ? await assistantFacts.GetUsageAsync(projectId, from, to) : null;
+        var topAskers = assistant?.MessagesByUser.OrderByDescending(item => item.Value).Take(TopAssistantUsers).ToList() ?? [];
+        var people = await userDirectory.GetByIdsAsync(
+            [.. velocity.Select(item => item.UserId), .. events.Select(item => item.ActorId), .. topAskers.Select(item => item.Key)]);
 
         return new OverviewSummaryDto
         {
@@ -108,6 +114,24 @@ public class ProjectOverviewAppService(
                 NewValue = item.NewValue,
                 At = item.At,
             })],
+            Assistant = assistant is null ? null : new OverviewAssistantDto
+            {
+                Conversations = assistant.Conversations,
+                Messages = assistant.Messages,
+                Users = assistant.MessagesByUser.Count,
+                Actions = [.. assistant.ActionsByTool
+                    .OrderByDescending(item => item.Value).ThenBy(item => item.Key, StringComparer.Ordinal)
+                    .Select(item => new OverviewAssistantActionDto { Tool = item.Key, Count = item.Value })],
+                Confirmed = assistant.Confirmed,
+                Declined = assistant.Declined,
+                Failed = assistant.Failed,
+                TopUsers = [.. topAskers
+                    .Where(item => people.ContainsKey(item.Key))
+                    .Select(item => new OverviewAssistantUserDto { User = people[item.Key], Messages = item.Value })],
+                TicketsCreated = assistant.TicketsCreated,
+                // Every ticket of the space, not only those of the period's sprints: the assistant's are counted so too.
+                TicketsCreatedInPeriod = all.Count(ticket => InRange(ticket.CreatedAt)),
+            },
         };
     }
 

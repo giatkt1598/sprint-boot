@@ -138,7 +138,6 @@ public class OverviewSummaryDto
 
     public required OverviewPullRequestsDto PullRequests { get; set; }
 
-    /// <summary>Finished work per assignee over the last three sprints, the running one included at its progress so far, most first.</summary>
     /// <summary>Finished work per assignee in the period: in its sprints for a sprint period, done in its dates otherwise.</summary>
     public required List<OverviewVelocityDto> Velocity { get; set; }
 
@@ -146,6 +145,55 @@ public class OverviewSummaryDto
     public required int VelocitySprints { get; set; }
 
     public required List<OverviewEventDto> Recent { get; set; }
+
+    /// <summary>How the space used the AI Assistant in the period; null while the assistant is switched off.</summary>
+    public OverviewAssistantDto? Assistant { get; set; }
+}
+
+/// <summary>Counts only: readers of the Overview never see what was said.</summary>
+public class OverviewAssistantDto
+{
+    /// <summary>Conversations someone asked in during the period.</summary>
+    public required int Conversations { get; set; }
+
+    /// <summary>Questions and answers in the period.</summary>
+    public required int Messages { get; set; }
+
+    /// <summary>Members who asked something in the period.</summary>
+    public required int Users { get; set; }
+
+    /// <summary>Changes the assistant proposed, by tool, most first.</summary>
+    public required List<OverviewAssistantActionDto> Actions { get; set; }
+
+    public required int Confirmed { get; set; }
+
+    public required int Declined { get; set; }
+
+    /// <summary>Confirmed, but the change could not be made.</summary>
+    public required int Failed { get; set; }
+
+    /// <summary>The people who asked most, with their question counts.</summary>
+    public required List<OverviewAssistantUserDto> TopUsers { get; set; }
+
+    public required int TicketsCreated { get; set; }
+
+    /// <summary>All tickets created in the space in the period, by anyone, to compare with.</summary>
+    public required int TicketsCreatedInPeriod { get; set; }
+}
+
+public class OverviewAssistantActionDto
+{
+    /// <summary>The tool name, such as create_ticket or transition_ticket.</summary>
+    public required string Tool { get; set; }
+
+    public required int Count { get; set; }
+}
+
+public class OverviewAssistantUserDto
+{
+    public required UserRefDto User { get; set; }
+
+    public required int Messages { get; set; }
 }
 
 public class OverviewSummaryInput

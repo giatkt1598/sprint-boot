@@ -341,3 +341,26 @@ public interface IAssistantToolbox
     /// <summary>Sanitized HTML for Markdown the assistant wrote.</summary>
     Task<string> RenderAsync(string markdown);
 }
+
+/// <summary>How a space used the assistant in a period: counts only, never what was said.</summary>
+/// <param name="MessagesByUser">Questions each person asked, by user id.</param>
+/// <param name="ActionsByTool">Changes the assistant proposed, by tool name, whatever became of them.</param>
+public record ProjectAssistantUsage(
+    int Conversations,
+    int Messages,
+    Dictionary<Guid, int> MessagesByUser,
+    Dictionary<string, int> ActionsByTool,
+    int Confirmed,
+    int Declined,
+    int Failed,
+    int TicketsCreated);
+
+/// <summary>Assistant figures for other modules, such as a space's Overview.</summary>
+public interface IProjectAssistantFacts
+{
+    /// <summary>Whether the workspace has the assistant switched on.</summary>
+    Task<bool> IsEnabledAsync();
+
+    /// <summary>Usage in the space from <paramref name="from"/> (inclusive) to <paramref name="to"/> (exclusive), in UTC.</summary>
+    Task<ProjectAssistantUsage> GetUsageAsync(Guid projectId, DateTime from, DateTime to);
+}

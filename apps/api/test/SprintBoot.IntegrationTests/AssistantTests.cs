@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using SprintBoot.Agile;
 using SprintBoot.Assistant;
 using SprintBoot.Tickets;
 using SprintBoot.Projects;
@@ -467,6 +468,61 @@ public class AssistantTests(ApiFixture fixture)
             (await client.Http.GetAsync("/api/v1/assistant-admin", Token)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
             var invalid = await admin.Http.PostAsJsonAsync("/api/v1/assistant-admin/connection", new { name = "No url", provider = AiProvider.OpenAiCompatible, model = "m" }, Token);
             (await invalid.Content.ReadAsStringAsync(Token)).ShouldContain(AssistantErrors.BaseUrlRequired);
+        }
+        finally
+        {
+            (await admin.Http.PutAsJsonAsync("/api/v1/assistant-admin", new { enabled = true }, Token)).EnsureSuccessStatusCode();
+        }
+    }
+
+    [Fact]
+    public async Task Overview_counts_the_assistant_use_of_each_space_while_it_is_on()
+    {
+        await UseAsync(AiProvider.OpenAiCompatible);
+        var client = await fixture.CreateUserClientAsync(Token);
+        var (project, ticket) = await TicketAsync(client);
+        var (other, _) = await TicketAsync(client);
+        // Not opened from a ticket: the conversation belongs to the space its actions name.
+        var conversation = await ConversationAsync(client);
+
+        Ai.Script(new FakeAiReply(
+            "I will create it and close the old one.",
+            ("create_ticket", new { space = project.Key, title = "Retry payments" }),
+            ("transition_ticket", new { key = ticket.Key, status = "Done" })));
+        var proposed = (await AskAsync(client, conversation.Id, "Create a ticket to retry payments")).Where(item => item.Type == "action").Select(item => item.Action!).ToList();
+        proposed.Count.ShouldBe(2);
+        await StreamAsync(client, $"/api/v1/assistant/conversations/{conversation.Id}/actions/{proposed[1].Id}/decline");
+        Ai.Script(new FakeAiReply("Created it and left the old one open."));
+        await StreamAsync(client, $"/api/v1/assistant/conversations/{conversation.Id}/actions/{proposed[0].Id}/confirm");
+
+        async Task<OverviewSummaryDto> SummaryAsync(ProjectDto space)
+        {
+            var response = await client.Http.GetAsync($"/api/v1/project-overview/summary/{space.Id}?Period={(int)OverviewPeriod.ThisMonth}", Token);
+            response.StatusCode.ShouldBe(HttpStatusCode.OK, await response.Content.ReadAsStringAsync(Token));
+            return (await response.Content.ReadFromJsonAsync<OverviewSummaryDto>(Token))!;
+        }
+
+        var usage = (await SummaryAsync(project)).Assistant.ShouldNotBeNull();
+        usage.Conversations.ShouldBe(1);
+        usage.Users.ShouldBe(1);
+        // The question, the answer that proposed the actions and the one after them.
+        usage.Messages.ShouldBe(3);
+        usage.Actions.Select(item => (item.Tool, item.Count)).ShouldBe([("create_ticket", 1), ("transition_ticket", 1)], ignoreOrder: true);
+        usage.Confirmed.ShouldBe(1);
+        usage.Declined.ShouldBe(1);
+        usage.TicketsCreated.ShouldBe(1);
+        usage.TicketsCreatedInPeriod.ShouldBe(2);
+        usage.TopUsers.ShouldHaveSingleItem().User.Id.ShouldBe(client.UserId);
+
+        var elsewhere = (await SummaryAsync(other)).Assistant.ShouldNotBeNull();
+        elsewhere.Conversations.ShouldBe(0);
+        elsewhere.Actions.ShouldBeEmpty();
+
+        var admin = await AdminAsync();
+        (await admin.Http.PutAsJsonAsync("/api/v1/assistant-admin", new { enabled = false }, Token)).EnsureSuccessStatusCode();
+        try
+        {
+            (await SummaryAsync(project)).Assistant.ShouldBeNull();
         }
         finally
         {

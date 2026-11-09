@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="..\SprintBoot.Agile.Contracts\SprintBoot.Agile.Contracts.csproj" />
+    <ProjectReference Include="..\..\Assistant\SprintBoot.Assistant.Contracts\SprintBoot.Assistant.Contracts.csproj" />
     <ProjectReference Include="..\..\GitIntegration\SprintBoot.GitIntegration.Contracts\SprintBoot.GitIntegration.Contracts.csproj" />
     <ProjectReference Include="..\..\Identity\SprintBoot.Identity.Contracts\SprintBoot.Identity.Contracts.csproj" />
     <ProjectReference Include="..\..\Tickets\SprintBoot.Tickets.Contracts\SprintBoot.Tickets.Contracts.csproj" />

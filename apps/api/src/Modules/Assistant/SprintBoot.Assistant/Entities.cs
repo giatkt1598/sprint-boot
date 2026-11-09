@@ -44,6 +44,9 @@ public class Conversation : Entity<Guid>
 
     public Guid? TicketId { get; private set; }
 
+    /// <summary>The space it is about: its ticket's, or the first one its actions name. Counts usage per space.</summary>
+    public Guid? ProjectId { get; set; }
+
     public string Title { get; set; } = null!;
 
     public ConversationTitleState TitleState { get; set; }
@@ -189,13 +192,23 @@ public class AssistantAction : Entity<Guid>
 
     public string? Result { get; set; }
 
+    /// <summary>The space the action works on, from the ticket or space key it names.</summary>
+    public Guid? ProjectId { get; set; }
+
+    public DateTime CreatedAt { get; private set; }
+
+    /// <summary>Tickets a confirmed create made; the Overview compares them with all tickets created.</summary>
+    public int TicketsCreated { get; set; }
+
     protected AssistantAction()
     {
     }
 
-    public AssistantAction(Guid id, Guid conversationId, Guid messageId, string toolCallId, string tool, string arguments, bool requiresConfirmation)
+    public AssistantAction(
+        Guid id, Guid conversationId, Guid messageId, string toolCallId, string tool, string arguments, bool requiresConfirmation, DateTime createdAt)
         : base(id)
     {
+        CreatedAt = createdAt;
         ConversationId = conversationId;
         MessageId = messageId;
         ToolCallId = toolCallId;
@@ -230,6 +243,7 @@ public static class AssistantModelBuilderExtensions
             b.HasIndex(item => new { item.OwnerId, item.UpdatedAt });
             b.HasIndex(item => item.TicketId);
             b.HasIndex(item => item.TitleState);
+            b.HasIndex(item => item.ProjectId);
         });
 
         builder.Entity<ConversationMessage>(b =>
@@ -249,6 +263,7 @@ public static class AssistantModelBuilderExtensions
             b.Property(item => item.ToolCallId).HasMaxLength(128).IsRequired();
             b.Property(item => item.Tool).HasMaxLength(128).IsRequired();
             b.HasIndex(item => item.MessageId);
+            b.HasIndex(item => new { item.ProjectId, item.CreatedAt });
         });
     }
 }

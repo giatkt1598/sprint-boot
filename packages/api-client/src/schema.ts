@@ -19960,6 +19960,36 @@ export interface components {
             /** Format: date-time */
             lastCompletedAt: string | null;
         };
+        OverviewAssistantActionDto: {
+            tool: string | null;
+            /** Format: int32 */
+            count: number;
+        };
+        OverviewAssistantDto: {
+            /** Format: int32 */
+            conversations: number;
+            /** Format: int32 */
+            messages: number;
+            /** Format: int32 */
+            users: number;
+            actions: components["schemas"]["OverviewAssistantActionDto"][] | null;
+            /** Format: int32 */
+            confirmed: number;
+            /** Format: int32 */
+            declined: number;
+            /** Format: int32 */
+            failed: number;
+            topUsers: components["schemas"]["OverviewAssistantUserDto"][] | null;
+            /** Format: int32 */
+            ticketsCreated: number;
+            /** Format: int32 */
+            ticketsCreatedInPeriod: number;
+        };
+        OverviewAssistantUserDto: {
+            user: components["schemas"]["UserRefDto"];
+            /** Format: int32 */
+            messages: number;
+        };
         OverviewEventDto: {
             actor: components["schemas"]["UserRefDto"];
             kind: components["schemas"]["TicketEventKind"];
@@ -20013,6 +20043,7 @@ export interface components {
             /** Format: int32 */
             velocitySprints: number;
             recent: components["schemas"]["OverviewEventDto"][] | null;
+            assistant?: components["schemas"]["OverviewAssistantDto"];
         };
         OverviewTicketCountsDto: {
             /** Format: int32 */

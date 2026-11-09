@@ -1571,6 +1571,41 @@
       "minutes": "{{count}} phút trước",
       "hours": "{{count}} giờ trước",
       "yesterday": "Hôm qua"
+    },
+    "ai": {
+      "title": "AI Assistant",
+      "conversations": "Cuộc hội thoại",
+      "messages_one": "{{count}} tin nhắn",
+      "messages_other": "{{count}} tin nhắn",
+      "users": "Thành viên dùng AI",
+      "usersNote": "Đã hỏi {{period}}",
+      "actions": "Action",
+      "confirmedRate": "{{percent}}% được xác nhận",
+      "ticketsCreated": "Ticket do AI tạo",
+      "ticketsCreatedNote_one": "{{percent}}% trong {{count}} ticket được tạo",
+      "ticketsCreatedNote_other": "{{percent}}% trong {{count}} ticket được tạo",
+      "byTool": "Action theo loại",
+      "decisions": "{{confirmed}} xác nhận · {{declined}} từ chối · {{failed}} lỗi",
+      "noActions": "Assistant chưa đề xuất thay đổi nào.",
+      "topUsers": "Dùng nhiều nhất",
+      "noUsers": "Chưa ai hỏi Assistant.",
+      "questions_one": "{{count}} câu hỏi",
+      "questions_other": "{{count}} câu hỏi",
+      "tool": {
+        "create_ticket": "Tạo ticket",
+        "create_tickets": "Tạo nhiều ticket",
+        "update_ticket": "Cập nhật ticket",
+        "update_tickets": "Cập nhật nhiều ticket",
+        "transition_ticket": "Chuyển trạng thái",
+        "edit_description": "Sửa mô tả",
+        "log_work": "Log work",
+        "update_work_log": "Sửa work log",
+        "add_comment": "Thêm bình luận",
+        "update_comment": "Sửa bình luận",
+        "move_to_sprint": "Chuyển sprint",
+        "watch_ticket": "Theo dõi ticket",
+        "unwatch_ticket": "Bỏ theo dõi"
+      }
     }
   },
   "people": {
