@@ -125,8 +125,17 @@ export function createAppTheme(themeId: string, accent: Accent) {
       // Every paper floats over the page, so a see-through theme lets its backdrop through by the overlay amount.
       MuiPaper: { styleOverrides: { root: { backgroundImage: 'var(--sb-surface-sheen)', backgroundColor: 'var(--sb-overlay-bg)', backdropFilter: 'var(--sb-surface-filter)' } } },
       MuiButtonBase: { defaultProps: { disableRipple: true } },
-      // A finger needs a bigger target than a mouse: icon buttons take 44×44 on touch screens, whatever they draw.
-      MuiIconButton: { styleOverrides: { root: { '@media (pointer: coarse)': { minWidth: 44, minHeight: 44 } } } },
+      // A finger needs a bigger target than a mouse: on touch screens an icon button answers taps over 44×44 around its
+      // centre. The area is an invisible overlay, so the button keeps its size and stays in line with the text beside it.
+      MuiIconButton: {
+        styleOverrides: {
+          root: {
+            '@media (pointer: coarse)': {
+              '&::after': { content: '""', position: 'absolute', top: '50%', left: '50%', width: 44, height: 44, transform: 'translate(-50%, -50%)' },
+            },
+          },
+        },
+      },
       MuiButton: {
         defaultProps: { disableElevation: true },
         styleOverrides: {

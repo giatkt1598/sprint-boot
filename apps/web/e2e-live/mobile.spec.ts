@@ -127,9 +127,13 @@ test.describe('phone with a touch screen', () => {
     await page.goto(`/spaces/${SPACE}/overview`);
     for (const name of ['Open menu', 'Search (Ctrl K)', 'Create', 'Account']) {
       // The account button also reads out the avatar's name.
-      const box = await page.getByRole('button', { name, exact: name !== 'Account' }).boundingBox();
-      expect(box!.width, name).toBeGreaterThanOrEqual(44);
-      expect(box!.height, name).toBeGreaterThanOrEqual(44);
+      const button = page.getByRole('button', { name, exact: name !== 'Account' });
+      const box = (await button.boundingBox())!;
+      // The button keeps its drawn size; a tap anywhere within 44×44 of its centre still lands on it.
+      const reached = await button.evaluate((element, { x, y }) =>
+        [[-20, -20], [20, -20], [-20, 20], [20, 20]].every(([dx, dy]) => element.contains(document.elementFromPoint(x + dx!, y + dy!))),
+      { x: box.x + box.width / 2, y: box.y + box.height / 2 });
+      expect(reached, name).toBe(true);
     }
   });
 

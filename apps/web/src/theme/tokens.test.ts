@@ -19,8 +19,8 @@ const contrast = (a: string, b: string) => {
 
 describe('tokens', () => {
   it('give Tailwind the screens MUI breaks at', () => {
-    // Vitest leaves CSS out of the module graph, so the stylesheet is read from disk, from the package root.
-    const indexCss = readFileSync('src/index.css', 'utf8');
+    // Vitest leaves CSS out of the module graph, so the stylesheet is read from disk.
+    const indexCss = readFileSync(`${import.meta.dirname}/../index.css`, 'utf8');
     const screens = Object.fromEntries([...indexCss.matchAll(/--breakpoint-(\w+):\s*(\d+)px/g)].map((match) => [match[1], Number(match[2])]));
     expect(screens).toEqual(Object.fromEntries(Object.entries(breakpoint).filter(([name]) => name !== 'xs')));
   });

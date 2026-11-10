@@ -34,9 +34,10 @@ export function TopBar() {
     void navigate(path);
   };
 
+  // 14px between the 30px icon buttons leaves each its own 44px touch area on small screens.
   return (
     <header
-      className="sb-surface flex shrink-0 items-center gap-1 px-2 sm:gap-2 sm:px-3 md:gap-4 md:px-6"
+      className="sb-surface flex shrink-0 items-center gap-3.5 px-2 sm:px-3 md:gap-4 md:px-6"
       style={{
         height: size.topBar,
         backgroundColor: 'var(--sb-chrome-bg)',
