@@ -56,8 +56,27 @@ function groupTools(runs: ToolRun[]) {
   return [...groups.entries()].map(([name, list]) => ({
     name,
     count: list.length,
-    state: list.some((run) => run.state === 'running') ? 'running' : list.some((run) => run.state === 'failed') ? 'failed' : 'done',
+    state: (['running', 'preparing', 'failed'] as const).find((state) => list.some((run) => run.state === state)) ?? 'done',
   }));
+}
+
+const toolLabel = (state: string, many: boolean) =>
+  `assistant.${state === 'running' ? 'runningTool' : state === 'preparing' ? 'preparingTool' : 'usedTool'}${many ? 'Times' : ''}`;
+
+/**
+ * A tool event on the live list. The model announces a call while still writing it (preparing); running then takes over
+ * the first call still being prepared, and done or failed settles the one running.
+ */
+function applyToolEvent(tools: ToolRun[], name: string, state: string): ToolRun[] {
+  if (state === 'preparing') {
+    return [...tools, { name, state }];
+  }
+  if (state === 'running') {
+    const prepared = tools.findIndex((tool) => tool.name === name && tool.state === 'preparing');
+    return prepared < 0 ? [...tools, { name, state }] : tools.map((tool, index) => (index === prepared ? { ...tool, state } : tool));
+  }
+  const running = tools.findLastIndex((tool) => tool.state === 'running');
+  return tools.map((tool, index) => (index === running ? { ...tool, state } : tool));
 }
 
 /**
@@ -96,9 +115,7 @@ function ToolBadges({ runs }: { runs: ToolRun[] }) {
     <div className="flex flex-wrap gap-1">
       {groupTools(runs).map((tool) => (
         <Badge key={tool.name} tone={tool.state === 'failed' ? 'danger' : 'subtle'}>
-          {tool.count > 1
-            ? t(tool.state === 'running' ? 'assistant.runningToolTimes' : 'assistant.usedToolTimes', { tool: tool.name, count: tool.count })
-            : t(tool.state === 'running' ? 'assistant.runningTool' : 'assistant.usedTool', { tool: tool.name })}
+          {t(toolLabel(tool.state, tool.count > 1), { tool: tool.name, count: tool.count })}
         </Badge>
       ))}
     </div>
@@ -374,12 +391,7 @@ export function ChatThread({ conversationId, ticketId, onConversation, intro, on
                   : [...current.segments, { text: event.text ?? '' }],
               };
             case 'tool':
-              return {
-                ...current,
-                tools: event.state === 'running'
-                  ? [...current.tools, { name: event.tool ?? '', state: 'running' }]
-                  : current.tools.map((tool, index, all) => (index === all.length - 1 ? { ...tool, state: event.state ?? 'done' } : tool)),
-              };
+              return { ...current, tools: applyToolEvent(current.tools, event.tool ?? '', event.state ?? 'done') };
             case 'message':
               // The step is saved, with the tools it ran; what streams next belongs to the following step.
               return {

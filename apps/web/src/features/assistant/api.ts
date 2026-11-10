@@ -13,7 +13,7 @@ export interface AssistantEvent {
   type: 'delta' | 'tool' | 'action' | 'message' | 'error' | 'done';
   text?: string | null;
   tool?: string | null;
-  state?: 'running' | 'done' | 'failed' | null;
+  state?: 'preparing' | 'running' | 'done' | 'failed' | null;
   action?: AssistantAction | null;
   message?: AssistantMessage | null;
   code?: string | null;

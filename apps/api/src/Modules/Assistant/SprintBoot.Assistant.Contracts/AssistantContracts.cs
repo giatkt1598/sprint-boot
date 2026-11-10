@@ -288,7 +288,7 @@ public class AssistantEventDto
 
     public string? Tool { get; set; }
 
-    /// <summary>For tool events: running, done or failed.</summary>
+    /// <summary>For tool events: preparing (the model is still writing the call), running, done or failed.</summary>
     public string? State { get; set; }
 
     public AssistantActionDto? Action { get; set; }

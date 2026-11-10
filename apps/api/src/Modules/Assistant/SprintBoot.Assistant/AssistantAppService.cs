@@ -401,6 +401,10 @@ public class AssistantChatAppService(
                     {
                         yield return new AssistantEventDto { Type = "delta", Text = delta.Text };
                     }
+                    else if (current is ChatToolCallStarted started)
+                    {
+                        yield return new AssistantEventDto { Type = "tool", Tool = started.Name, State = "preparing" };
+                    }
                     else if (current is ChatCompleted done)
                     {
                         completed = done;

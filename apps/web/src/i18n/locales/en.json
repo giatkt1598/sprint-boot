@@ -1375,6 +1375,7 @@
     "stop": "Stop",
     "thinking": "Thinking…",
     "runningTool": "Running {{tool}}…",
+    "preparingTool": "Preparing {{tool}}…",
     "usedTool": "Used {{tool}}",
     "sources": "Sources:",
     "actionTitle": "Wants to run {{tool}}",
@@ -1418,6 +1419,8 @@
     "usedToolTimes_other": "Used {{tool}} ({{count}} times)",
     "runningToolTimes_one": "Running {{tool}}… ({{count}} time)",
     "runningToolTimes_other": "Running {{tool}}… ({{count}} times)",
+    "preparingToolTimes_one": "Preparing {{tool}}… ({{count}} time)",
+    "preparingToolTimes_other": "Preparing {{tool}}… ({{count}} times)",
     "connectionLost": "The connection to the server dropped while the assistant was answering. What it saved is shown; ask again to continue."
   },
   "assistantAdmin": {

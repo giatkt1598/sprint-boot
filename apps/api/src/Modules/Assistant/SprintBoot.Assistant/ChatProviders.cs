@@ -37,6 +37,12 @@ public abstract record ChatStreamEvent;
 
 public record ChatTextDelta(string Text) : ChatStreamEvent;
 
+/// <summary>
+/// The model started writing a tool call. Its arguments can take long (a whole ticket description) and stream nothing
+/// readable, so this is the only sign the answer is still moving.
+/// </summary>
+public record ChatToolCallStarted(string Name) : ChatStreamEvent;
+
 public record ChatCompleted(AssistantTurn Turn, string? StopReason, ChatUsage Usage) : ChatStreamEvent;
 
 /// <summary>What the assistant needs of a connection; the key is already decrypted.</summary>
@@ -115,13 +121,13 @@ public class AnthropicChatProvider(IHttpClientFactory http) : IChatProvider, ITr
 
                 // The opening JSON already holds what each block type needs; deltas fill in the rest.
                 var opened = JsonNode.Parse(JsonSerializer.Serialize(blockStart.ContentBlock))!.AsObject();
+                blocks[index] = opened;
                 if (opened["type"]?.GetValue<string>() == "tool_use")
                 {
                     opened["input"] = new JsonObject();
                     inputs[index] = new StringBuilder();
+                    yield return new ChatToolCallStarted(opened["name"]?.GetValue<string>() ?? string.Empty);
                 }
-
-                blocks[index] = opened;
             }
             else if (streamEvent.TryPickContentBlockDelta(out var blockDelta))
             {
@@ -346,6 +352,11 @@ public class OpenAiChatProvider(IHttpClientFactory http) : IChatProvider, ITrans
 
                 if (!string.IsNullOrEmpty(call.FunctionName))
                 {
+                    if (current.Name.Length == 0)
+                    {
+                        yield return new ChatToolCallStarted(call.FunctionName);
+                    }
+
                     current.Name = call.FunctionName;
                 }
 

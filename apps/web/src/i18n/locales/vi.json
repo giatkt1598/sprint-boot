@@ -1375,6 +1375,7 @@
     "stop": "Dừng",
     "thinking": "Đang suy nghĩ…",
     "runningTool": "Đang chạy {{tool}}…",
+    "preparingTool": "Đang soạn {{tool}}…",
     "usedTool": "Đã dùng {{tool}}",
     "sources": "Nguồn:",
     "actionTitle": "Muốn chạy {{tool}}",
@@ -1418,6 +1419,8 @@
     "runningToolTimes_other": "Đang chạy {{tool}}… ({{count}} lần)",
     "usedToolTimes_one": "Đã dùng {{tool}} ({{count}} lần)",
     "runningToolTimes_one": "Đang chạy {{tool}}… ({{count}} lần)",
+    "preparingToolTimes_other": "Đang soạn {{tool}}… ({{count}} lần)",
+    "preparingToolTimes_one": "Đang soạn {{tool}}… ({{count}} lần)",
     "connectionLost": "Mất kết nối tới server khi trợ lý đang trả lời. Phần đã lưu được hiển thị; hãy hỏi lại để tiếp tục."
   },
   "assistantAdmin": {
