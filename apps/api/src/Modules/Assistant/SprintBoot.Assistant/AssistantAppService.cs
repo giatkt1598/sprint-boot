@@ -223,7 +223,10 @@ public class AssistantChatAppService(
         - Tools run with the person's own permissions. A ticket you cannot read does not exist for you.
         - Tools that change data only run after the person confirms them in the app. Propose such a change only when the
           person asked for it, and never say it happened until the tool result confirms it.
-        - Answer in the language the person writes in. Keep answers short and use Markdown lists and tables where they help.
+        - Answer in the language the person writes in, and keep answers short.
+        - Always format every answer as GitHub-flavored Markdown, because the app renders it as Markdown. Use headings,
+          lists, tables, bold and `code` where they help, fence code in ``` blocks, and never answer in HTML or in plain
+          text laid out with spaces or ASCII tables.
         """;
 
     public async IAsyncEnumerable<AssistantEventDto> SendAsync(
