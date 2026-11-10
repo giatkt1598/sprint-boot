@@ -8,6 +8,55 @@ public enum LoginOutcome
     InvalidCredentials,
     LockedOut,
     LocalDisabled,
+
+    /// <summary>The password was right; the account asks for a code from its authenticator app next.</summary>
+    TwoFactorCode,
+
+    /// <summary>The password was right, but the workspace requires two-factor and the account has none set up yet.</summary>
+    TwoFactorSetup,
+}
+
+/// <summary>What the sign-in page does next, as the strings in <see cref="LoginSteps"/>.</summary>
+public class LoginResultDto
+{
+    public required string Step { get; set; }
+}
+
+public static class LoginSteps
+{
+    /// <summary>Signed in: continue to the authorize endpoint.</summary>
+    public const string Done = "done";
+
+    /// <summary>Ask for a code from the authenticator app, or a recovery code.</summary>
+    public const string Code = "code";
+
+    /// <summary>Set up an authenticator app before going on.</summary>
+    public const string Setup = "setup";
+}
+
+public class TwoFactorCodeInput
+{
+    /// <summary>Six digits from the authenticator app, or a recovery code; spaces and dashes are ignored.</summary>
+    [Required]
+    [StringLength(64)]
+    public required string Code { get; set; }
+
+    public bool IsRecoveryCode { get; set; }
+}
+
+public class TwoFactorSetupDto
+{
+    /// <summary>The secret, in Base32, for apps that cannot scan the QR code.</summary>
+    public required string SharedKey { get; set; }
+
+    /// <summary>An otpauth:// address, shown as a QR code.</summary>
+    public required string AuthenticatorUri { get; set; }
+}
+
+public class TwoFactorRecoveryCodesDto
+{
+    /// <summary>Each works once in place of a code; shown only now.</summary>
+    public required List<string> RecoveryCodes { get; set; }
 }
 
 public class LoginInput
@@ -76,6 +125,12 @@ public class CurrentUserDto
 
     /// <summary>Where the app opens; clients fall back to the last space when it is no longer available.</summary>
     public required HomePageDto HomePage { get; set; }
+
+    /// <summary>Sign-in asks for a code from an authenticator app.</summary>
+    public required bool TwoFactorEnabled { get; set; }
+
+    /// <summary>The workspace requires two-factor: without it, the person sets it up before using the app.</summary>
+    public required bool TwoFactorRequired { get; set; }
 }
 
 /// <summary>How the app looks for this person. Values are short names so the client maps them to tokens.</summary>

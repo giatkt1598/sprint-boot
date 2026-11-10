@@ -36,7 +36,8 @@ public class AuthAppService(
     LinkedLoginService linkedLogins,
     ExternalAccountLinker linker,
     LdapAuthenticator ldap,
-    IStringEncryptionService encryption)
+    IStringEncryptionService encryption,
+    TwoFactorGate twoFactor)
     : ApplicationService, IAuthAppService
 {
     public const string LanguageProperty = "Language";
@@ -68,13 +69,14 @@ public class AuthAppService(
             return LoginOutcome.LocalDisabled;
         }
 
-        var result = await signInManager.PasswordSignInAsync(user, input.Password, isPersistent: false, lockoutOnFailure: true);
+        // Checks the password only: the gate then signs in, or waits for the second factor.
+        var result = await signInManager.CheckPasswordSignInAsync(user, input.Password, lockoutOnFailure: true);
         if (result.IsLockedOut)
         {
             return LoginOutcome.LockedOut;
         }
 
-        return result.Succeeded ? LoginOutcome.Succeeded : LoginOutcome.InvalidCredentials;
+        return result.Succeeded ? await twoFactor.SignInAsync(user, authenticationMethod: null) : LoginOutcome.InvalidCredentials;
     }
 
     [Authorize]
@@ -210,8 +212,7 @@ public class AuthAppService(
         }
 
         var user = await linker.ResolveAsync(identity, input.Invitation);
-        await signInManager.SignInAsync(user, isPersistent: false, authenticationMethod: provider.Name);
-        return LoginOutcome.Succeeded;
+        return await twoFactor.SignInAsync(user, provider.Name);
     }
 
     [Authorize]
@@ -412,6 +413,8 @@ public class AuthAppService(
             Preferences = ReadPreferences(user.GetProperty<string>(PreferencesProperty)),
             BackgroundUrl = UserBackgrounds.Url(user),
             HomePage = ReadHomePage(user),
+            TwoFactorEnabled = user.TwoFactorEnabled,
+            TwoFactorRequired = await twoFactor.IsRequiredAsync(),
         };
     }
 }

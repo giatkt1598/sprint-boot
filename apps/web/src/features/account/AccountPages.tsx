@@ -22,6 +22,7 @@ import { useErrorMessage } from '../../lib/errors';
 import { SettingsFrame, SettingsMenuItem } from '../spaces/SpaceSettings';
 import { HomePageKind, SPACE_VIEWS } from '../spaces/HomePage';
 import { useSpaces } from '../spaces/api';
+import { TwoFactorSection } from '../../auth/TwoFactor';
 
 export function AccountLayout() {
   const { t } = useTranslation();
@@ -469,6 +470,7 @@ export function SecurityPage() {
   };
 
   return (
+    <div className="flex flex-col gap-8">
     <form className="flex max-w-md flex-col gap-4" onSubmit={submit}>
       <Typography variant="h1">{t('account.security')}</Typography>
       <TextField label={t('account.currentPassword')} type="password" autoComplete="current-password" required value={currentPassword} onChange={(event) => setCurrent(event.target.value)} />
@@ -488,5 +490,7 @@ export function SecurityPage() {
         </Button>
       </div>
     </form>
+    <TwoFactorSection />
+    </div>
   );
 }

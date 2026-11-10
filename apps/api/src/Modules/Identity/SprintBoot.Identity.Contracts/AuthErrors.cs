@@ -16,4 +16,9 @@ public static class AuthErrors
     public const string InvalidTimeZone = "SprintBoot:InvalidTimeZone";
     public const string BackgroundInvalid = "SprintBoot:BackgroundInvalid";
     public const string InvalidPreferences = "SprintBoot:InvalidPreferences";
+    public const string TwoFactorCodeInvalid = "SprintBoot:TwoFactorCodeInvalid";
+    public const string TwoFactorExpired = "SprintBoot:TwoFactorExpired";
+    public const string TwoFactorRequiredByPolicy = "SprintBoot:TwoFactorRequiredByPolicy";
+    public const string TwoFactorAlreadyEnabled = "SprintBoot:TwoFactorAlreadyEnabled";
+    public const string TwoFactorNotEnabled = "SprintBoot:TwoFactorNotEnabled";
 }

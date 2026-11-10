@@ -2352,7 +2352,19 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResultDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResultDto"
+                }
+              }
+            }
           }
         }
       }
@@ -2377,6 +2389,253 @@
             "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/LdapLoginInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResultDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResultDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/two-factor": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeInput"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeInput"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/two-factor/held-setup": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TwoFactorSetupDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TwoFactorSetupDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeInput"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeInput"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TwoFactorRecoveryCodesDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TwoFactorRecoveryCodesDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/two-factor/setup": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TwoFactorSetupDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TwoFactorSetupDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeInput"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeInput"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TwoFactorRecoveryCodesDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TwoFactorRecoveryCodesDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/two-factor/recovery-codes": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeInput"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeInput"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TwoFactorRecoveryCodesDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TwoFactorRecoveryCodesDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/two-factor/disable": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeInput"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeInput"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeInput"
               }
             }
           }
@@ -23209,6 +23468,131 @@
         }
       }
     },
+    "/api/v1/user-admin/{id}/reset-two-factor": {
+      "post": {
+        "tags": [
+          "UserAdmin"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSummaryDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSummaryDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Not Implemented",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/user-admin/{id}/set-system-role": {
       "post": {
         "tags": [
@@ -25659,6 +26043,7 @@
         "required": [
           "allowedDomains",
           "localLoginEnabled",
+          "requireTwoFactor",
           "selfRegistrationEnabled"
         ],
         "type": "object",
@@ -25672,6 +26057,9 @@
           "allowedDomains": {
             "type": "string",
             "nullable": true
+          },
+          "requireTwoFactor": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -26582,7 +26970,9 @@
           "language",
           "name",
           "permissions",
-          "preferences"
+          "preferences",
+          "twoFactorEnabled",
+          "twoFactorRequired"
         ],
         "type": "object",
         "properties": {
@@ -26630,6 +27020,12 @@
           },
           "homePage": {
             "$ref": "#/components/schemas/HomePageDto"
+          },
+          "twoFactorEnabled": {
+            "type": "boolean"
+          },
+          "twoFactorRequired": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -27806,6 +28202,19 @@
           "password": {
             "minLength": 1,
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LoginResultDto": {
+        "required": [
+          "step"
+        ],
+        "type": "object",
+        "properties": {
+          "step": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -29011,6 +29420,9 @@
             "type": "boolean"
           },
           "selfRegistrationEnabled": {
+            "type": "boolean"
+          },
+          "requireTwoFactor": {
             "type": "boolean"
           },
           "allowedDomains": {
@@ -30864,6 +31276,57 @@
         },
         "additionalProperties": false
       },
+      "TwoFactorCodeInput": {
+        "required": [
+          "code"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "maxLength": 64,
+            "minLength": 0,
+            "type": "string"
+          },
+          "isRecoveryCode": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TwoFactorRecoveryCodesDto": {
+        "required": [
+          "recoveryCodes"
+        ],
+        "type": "object",
+        "properties": {
+          "recoveryCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TwoFactorSetupDto": {
+        "required": [
+          "authenticatorUri",
+          "sharedKey"
+        ],
+        "type": "object",
+        "properties": {
+          "sharedKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "authenticatorUri": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "UpdateAssistantSettingsInput": {
         "type": "object",
         "properties": {
@@ -31194,7 +31657,8 @@
           "isLocked",
           "lastSignInAt",
           "name",
-          "systemRole"
+          "systemRole",
+          "twoFactorEnabled"
         ],
         "type": "object",
         "properties": {
@@ -31223,6 +31687,9 @@
             "nullable": true
           },
           "isLocked": {
+            "type": "boolean"
+          },
+          "twoFactorEnabled": {
             "type": "boolean"
           },
           "creationTime": {

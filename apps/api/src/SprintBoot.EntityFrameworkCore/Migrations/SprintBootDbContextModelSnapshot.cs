@@ -834,6 +834,9 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.Property<bool>("LocalLoginEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("RequireTwoFactor")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("SelfRegistrationEnabled")
                         .HasColumnType("boolean");
 

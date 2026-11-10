@@ -71,9 +71,31 @@ public sealed class LdapServerFixture : IAsyncLifetime
 }
 
 [Collection(ApiCollection.Name)]
-public class LdapSignInTests(ApiFixture fixture, LdapServerFixture ldap) : IClassFixture<LdapServerFixture>
+public class LdapSignInTests(ApiFixture fixture, LdapServerFixture ldap) : IClassFixture<LdapServerFixture>, IAsyncDisposable
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
+
+    private readonly List<Guid> _providers = [];
+
+    /// <summary>
+    /// Removes the providers a test switched on: other tests count the enabled sign-in methods, such as the check that
+    /// the last one cannot be switched off.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (_providers.Count == 0)
+        {
+            return;
+        }
+
+        var admin = await AdminAsync();
+        foreach (var id in _providers)
+        {
+            (await admin.Http.DeleteAsync($"/api/v1/sso-admin/{id}/provider", CancellationToken.None)).EnsureSuccessStatusCode();
+        }
+
+        GC.SuppressFinalize(this);
+    }
 
     private async Task<AuthClient> AdminAsync()
     {
@@ -98,6 +120,7 @@ public class LdapSignInTests(ApiFixture fixture, LdapServerFixture ldap) : IClas
             trustEmail,
         }, Token);
         response.StatusCode.ShouldBe(HttpStatusCode.OK, await response.Content.ReadAsStringAsync(Token));
+        _providers.Add((await response.Content.ReadFromJsonAsync<ExternalProviderDto>(Token))!.Id);
         return name;
     }
 
@@ -127,7 +150,7 @@ public class LdapSignInTests(ApiFixture fixture, LdapServerFixture ldap) : IClas
         (await (await LoginAsync(client, provider, "*", "Directory123!")).Content.ReadAsStringAsync(Token)).ShouldContain(AuthErrors.InvalidCredentials);
 
         var login = await LoginAsync(client, provider, uid, "Directory123!");
-        login.StatusCode.ShouldBe(HttpStatusCode.NoContent, await login.Content.ReadAsStringAsync(Token));
+        login.StatusCode.ShouldBe(HttpStatusCode.OK, await login.Content.ReadAsStringAsync(Token));
         await client.AuthorizeAsync(Token);
         var me = (await client.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!;
         me.Email.ShouldBe(mail);
@@ -135,9 +158,20 @@ public class LdapSignInTests(ApiFixture fixture, LdapServerFixture ldap) : IClas
 
         // Signing in by email finds the same person, and the same account.
         var again = new AuthClient(fixture);
-        (await LoginAsync(again, provider, mail, "Directory123!")).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await LoginAsync(again, provider, mail, "Directory123!")).StatusCode.ShouldBe(HttpStatusCode.OK);
         await again.AuthorizeAsync(Token);
         (await again.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!.Id.ShouldBe(me.Id);
+
+        // With an authenticator app, the directory password alone is not enough either.
+        var setup = (await again.Http.GetFromJsonAsync<TwoFactorSetupDto>("/api/v1/auth/two-factor/setup", Token))!;
+        (await again.Http.PostAsJsonAsync("/api/v1/auth/two-factor/setup", new { code = Totp.Code(setup.SharedKey) }, Token)).EnsureSuccessStatusCode();
+        var third = new AuthClient(fixture);
+        var held = await LoginAsync(third, provider, uid, "Directory123!");
+        (await held.Content.ReadFromJsonAsync<LoginResultDto>(Token))!.Step.ShouldBe(LoginSteps.Code);
+        var csrf = await third.GetCsrfTokenAsync(Token);
+        (await third.PostJsonAsync("/api/v1/auth/two-factor", new { code = Totp.Code(setup.SharedKey) }, csrf, Token)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        await third.AuthorizeAsync(Token);
+        (await third.Http.GetFromJsonAsync<CurrentUserDto>("/api/v1/auth/me", Token))!.Id.ShouldBe(me.Id);
     }
 
     [Fact]

@@ -137,6 +137,9 @@ public class AuthPolicyDto
 
     /// <summary>Comma separated; empty allows every domain.</summary>
     public required string? AllowedDomains { get; set; }
+
+    /// <summary>Everyone sets up an authenticator app before using the workspace.</summary>
+    public required bool RequireTwoFactor { get; set; }
 }
 
 public class SaveAuthPolicyInput
@@ -144,6 +147,8 @@ public class SaveAuthPolicyInput
     public bool LocalLoginEnabled { get; set; }
 
     public bool SelfRegistrationEnabled { get; set; }
+
+    public bool RequireTwoFactor { get; set; }
 
     [StringLength(512)]
     public string? AllowedDomains { get; set; }

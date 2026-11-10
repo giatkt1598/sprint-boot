@@ -105,6 +105,16 @@ public class UserAdminAppService(
         return await ToDtoAsync(user);
     }
 
+    public async Task<UserSummaryDto> ResetTwoFactorAsync(Guid id)
+    {
+        var user = await userManager.GetByIdAsync(id);
+        (await userManager.SetTwoFactorEnabledAsync(user, false)).CheckErrors();
+        // The old app and its recovery codes stop working; setting up again starts from a new key.
+        (await userManager.ResetAuthenticatorKeyAsync(user)).CheckErrors();
+        await userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 0);
+        return await ToDtoAsync(user);
+    }
+
     public async Task<UserSummaryDto> SetSystemRoleAsync(Guid id, SetSystemRoleInput input)
     {
         await EnsureRoleExistsAsync(input.SystemRole);
@@ -166,6 +176,7 @@ public class UserAdminAppService(
             Title = user.GetProperty<string?>(AuthAppService.TitleProperty),
             SystemRole = roles.Contains(SystemRoles.Admin) ? SystemRoles.Admin : SystemRoles.Member,
             IsLocked = await userManager.IsLockedOutAsync(user),
+            TwoFactorEnabled = user.TwoFactorEnabled,
             CreationTime = user.CreationTime,
             LastSignInAt = user.LastSignInTime?.UtcDateTime,
         };

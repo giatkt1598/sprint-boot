@@ -254,7 +254,12 @@
     "GoalOwnerNotMember": "Người phụ trách phải là thành viên của space.",
     "GoalArchived": "Không sửa được mục tiêu đã lưu trữ. Hãy khôi phục trước.",
     "crashTitle": "Đã có lỗi xảy ra",
-    "crashDescription": "Trang này đã ngừng hoạt động. Tải lại để thử lần nữa; dữ liệu đã lưu vẫn an toàn."
+    "crashDescription": "Trang này đã ngừng hoạt động. Tải lại để thử lần nữa; dữ liệu đã lưu vẫn an toàn.",
+    "TwoFactorCodeInvalid": "Mã không đúng. Hãy kiểm tra giờ trên điện thoại rồi thử lại.",
+    "TwoFactorExpired": "Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.",
+    "TwoFactorRequiredByPolicy": "Workspace này yêu cầu xác thực hai bước nên không thể tắt.",
+    "TwoFactorAlreadyEnabled": "Xác thực hai bước đã được bật.",
+    "TwoFactorNotEnabled": "Tài khoản này chưa bật xác thực hai bước."
   },
   "auth": {
     "ldapTitle": "Đăng nhập vào {{provider}}",
@@ -429,7 +434,10 @@
     "methodAccount": "Tài khoản",
     "methodLinked": "Ngày liên kết",
     "methodUsed": "Dùng gần nhất",
-    "lastActive": "Hoạt động gần nhất {{date}}"
+    "lastActive": "Hoạt động gần nhất {{date}}",
+    "resetTwoFactor": "Đặt lại xác thực hai bước",
+    "resetTwoFactorTitle": "Đặt lại xác thực hai bước?",
+    "resetTwoFactorBody": "{{name}} sẽ không đăng nhập được bằng ứng dụng xác thực và mã khôi phục hiện tại. Nếu workspace bắt buộc xác thực hai bước, họ sẽ thiết lập ứng dụng mới ở lần đăng nhập tới."
   },
   "spaces": {
     "logo": "Logo space",
@@ -892,7 +900,9 @@
     "redirectCopied": "Đã sao chép redirect URL",
     "trustEmail": "Tin email",
     "trustEmailOn": "Email từ provider này được coi là đã xác minh: tài khoản Sprint Boot có cùng email sẽ được liên kết với nó. Chỉ bật khi người dùng không tự đổi được email ở provider.",
-    "trustEmailOff": "Chỉ người đã liên kết provider này trong trang cá nhân mới đăng nhập được. Email của nó không bao giờ liên kết tài khoản sẵn có, nhận lời mời hay tạo tài khoản mới."
+    "trustEmailOff": "Chỉ người đã liên kết provider này trong trang cá nhân mới đăng nhập được. Email của nó không bao giờ liên kết tài khoản sẵn có, nhận lời mời hay tạo tài khoản mới.",
+    "requireTwoFactor": "Bắt buộc xác thực hai bước",
+    "requireTwoFactorHint": "Mọi người phải thiết lập ứng dụng xác thực trước khi dùng workspace: ở lần đăng nhập tới, hoặc ngay lập tức nếu đang đăng nhập. Kể cả bạn, nếu chưa thiết lập."
   },
   "templates": {
     "title": "Template ticket",
@@ -1663,5 +1673,40 @@
     "archivedBadge": "Đã lưu trữ",
     "deleteTitle": "Xóa mục tiêu",
     "deleteBody": "Xóa {{name}} cùng các cập nhật của nó? Không thể hoàn tác."
+  },
+  "twoFactor": {
+    "title": "Xác thực hai bước",
+    "codePrompt": "Nhập mã 6 số từ ứng dụng xác thực của bạn.",
+    "recoveryPrompt": "Nhập một trong các mã khôi phục bạn đã lưu khi bật xác thực hai bước.",
+    "code": "Mã xác thực",
+    "recoveryCode": "Mã khôi phục",
+    "verify": "Xác minh",
+    "useRecovery": "Dùng mã khôi phục",
+    "useApp": "Dùng ứng dụng xác thực",
+    "setupTitle": "Thiết lập xác thực hai bước",
+    "requiredHint": "Workspace này yêu cầu xác thực hai bước. Hãy thiết lập một ứng dụng xác thực, ví dụ Google Authenticator, Microsoft Authenticator hoặc 1Password, để tiếp tục.",
+    "scanHint": "Quét mã QR này bằng ứng dụng xác thực, rồi nhập mã 6 số ứng dụng hiển thị.",
+    "qrLabel": "Mã QR cho ứng dụng xác thực",
+    "keyHint": "Không quét được? Nhập khoá này vào ứng dụng:",
+    "enabled": "Đã bật xác thực hai bước.",
+    "recoveryCodes": "Mã khôi phục",
+    "recoveryHint": "Hãy cất các mã này ở nơi an toàn. Mỗi mã giúp bạn đăng nhập một lần nếu mất điện thoại, và chỉ hiển thị lần này.",
+    "copy": "Sao chép",
+    "copied": "Đã sao chép mã khôi phục",
+    "download": "Tải xuống",
+    "continue": "Tiếp tục",
+    "done": "Xong",
+    "sectionTitle": "Xác thực hai bước",
+    "sectionHint": "Mỗi lần đăng nhập, ngoài mật khẩu còn cần mã từ ứng dụng xác thực.",
+    "sectionRequired": "Workspace này yêu cầu xác thực hai bước nên không thể tắt.",
+    "on": "Bật",
+    "off": "Tắt",
+    "turnOn": "Bật",
+    "turnOff": "Tắt",
+    "turnOffTitle": "Tắt xác thực hai bước?",
+    "turnOffHint": "Nhập mã từ ứng dụng xác thực để xác nhận. Các mã khôi phục cũng sẽ hết hiệu lực.",
+    "turnedOff": "Đã tắt xác thực hai bước",
+    "newCodes": "Tạo mã khôi phục mới",
+    "newCodesHint": "Nhập mã từ ứng dụng xác thực. Các mã khôi phục cũ sẽ hết hiệu lực."
   }
 }

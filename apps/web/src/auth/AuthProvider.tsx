@@ -7,6 +7,7 @@ import { apiClient, unwrap } from '../api';
 import { setDisplayTimeZone } from '../lib/format';
 import { setAppearance, type Appearance } from '../theme/appearance';
 import { userManager } from './oidc';
+import { TwoFactorRequiredScreen } from './TwoFactor';
 
 export type CurrentUser = components['schemas']['CurrentUserDto'];
 
@@ -77,5 +78,9 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   // Set while rendering, so the first screen already formats times in the person's zone.
   setDisplayTimeZone(me.data?.timeZone);
   const value = useMemo(() => me.data ?? null, [me.data]);
-  return value ? <AuthContext value={value}>{children}</AuthContext> : null;
+  if (!value) {
+    return null;
+  }
+  // The workspace requires two-factor and this person has none: setting it up comes before the app.
+  return <AuthContext value={value}>{value.twoFactorRequired && !value.twoFactorEnabled ? <TwoFactorRequiredScreen /> : children}</AuthContext>;
 }

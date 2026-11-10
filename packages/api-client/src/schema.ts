@@ -1813,7 +1813,10 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["LoginResultDto"];
+                        "text/json": components["schemas"]["LoginResultDto"];
+                    };
                 };
             };
         };
@@ -1844,6 +1847,253 @@ export interface paths {
                     "application/json": components["schemas"]["LdapLoginInput"];
                     "text/json": components["schemas"]["LdapLoginInput"];
                     "application/*+json": components["schemas"]["LdapLoginInput"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["LoginResultDto"];
+                        "text/json": components["schemas"]["LoginResultDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/two-factor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["TwoFactorCodeInput"];
+                    "text/json": components["schemas"]["TwoFactorCodeInput"];
+                    "application/*+json": components["schemas"]["TwoFactorCodeInput"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/two-factor/held-setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TwoFactorSetupDto"];
+                        "text/json": components["schemas"]["TwoFactorSetupDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["TwoFactorCodeInput"];
+                    "text/json": components["schemas"]["TwoFactorCodeInput"];
+                    "application/*+json": components["schemas"]["TwoFactorCodeInput"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TwoFactorRecoveryCodesDto"];
+                        "text/json": components["schemas"]["TwoFactorRecoveryCodesDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/two-factor/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TwoFactorSetupDto"];
+                        "text/json": components["schemas"]["TwoFactorSetupDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["TwoFactorCodeInput"];
+                    "text/json": components["schemas"]["TwoFactorCodeInput"];
+                    "application/*+json": components["schemas"]["TwoFactorCodeInput"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TwoFactorRecoveryCodesDto"];
+                        "text/json": components["schemas"]["TwoFactorRecoveryCodesDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/two-factor/recovery-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["TwoFactorCodeInput"];
+                    "text/json": components["schemas"]["TwoFactorCodeInput"];
+                    "application/*+json": components["schemas"]["TwoFactorCodeInput"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TwoFactorRecoveryCodesDto"];
+                        "text/json": components["schemas"]["TwoFactorRecoveryCodesDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/two-factor/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["TwoFactorCodeInput"];
+                    "text/json": components["schemas"]["TwoFactorCodeInput"];
+                    "application/*+json": components["schemas"]["TwoFactorCodeInput"];
                 };
             };
             responses: {
@@ -17654,6 +17904,104 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/user-admin/{id}/reset-two-factor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UserSummaryDto"];
+                        "text/json": components["schemas"]["UserSummaryDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/user-admin/{id}/set-system-role": {
         parameters: {
             query?: never;
@@ -19317,6 +19665,7 @@ export interface components {
             localLoginEnabled: boolean;
             selfRegistrationEnabled: boolean;
             allowedDomains: string | null;
+            requireTwoFactor: boolean;
         };
         AvailableTransitionDto: {
             /** Format: uuid */
@@ -19565,6 +19914,8 @@ export interface components {
             preferences: components["schemas"]["PreferencesDto"];
             backgroundUrl?: string | null;
             homePage: components["schemas"]["HomePageDto"];
+            twoFactorEnabled: boolean;
+            twoFactorRequired: boolean;
         };
         DeletedTicketDto: {
             /** Format: uuid */
@@ -19903,6 +20254,9 @@ export interface components {
             /** Format: email */
             email: string;
             password: string;
+        };
+        LoginResultDto: {
+            step: string | null;
         };
         MoveTicketInput: {
             /** Format: uuid */
@@ -20253,6 +20607,7 @@ export interface components {
         SaveAuthPolicyInput: {
             localLoginEnabled?: boolean;
             selfRegistrationEnabled?: boolean;
+            requireTwoFactor?: boolean;
             allowedDomains?: string | null;
         };
         SaveBoardInput: {
@@ -20772,6 +21127,17 @@ export interface components {
             key: string | null;
             config?: unknown;
         };
+        TwoFactorCodeInput: {
+            code: string;
+            isRecoveryCode?: boolean;
+        };
+        TwoFactorRecoveryCodesDto: {
+            recoveryCodes: string[] | null;
+        };
+        TwoFactorSetupDto: {
+            sharedKey: string | null;
+            authenticatorUri: string | null;
+        };
         UpdateAssistantSettingsInput: {
             enabled?: boolean;
         };
@@ -20872,6 +21238,7 @@ export interface components {
             title?: string | null;
             systemRole: string | null;
             isLocked: boolean;
+            twoFactorEnabled: boolean;
             /** Format: date-time */
             creationTime: string;
             /** Format: date-time */

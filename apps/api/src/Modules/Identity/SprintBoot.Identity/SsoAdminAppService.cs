@@ -124,6 +124,7 @@ public class SsoAdminAppService(
         policy.LocalLoginEnabled = input.LocalLoginEnabled;
         policy.SelfRegistrationEnabled = input.SelfRegistrationEnabled;
         policy.AllowedDomains = input.AllowedDomains;
+        policy.RequireTwoFactor = input.RequireTwoFactor;
         await policies.UpdateAsync(policy);
         return ToDto(policy);
     }
@@ -213,5 +214,6 @@ public class SsoAdminAppService(
         LocalLoginEnabled = policy.LocalLoginEnabled,
         SelfRegistrationEnabled = policy.SelfRegistrationEnabled,
         AllowedDomains = policy.AllowedDomains,
+        RequireTwoFactor = policy.RequireTwoFactor,
     };
 }

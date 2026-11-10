@@ -284,6 +284,7 @@ export function ManageUserPage() {
   const queryClient = useQueryClient();
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [resettingTwoFactor, setResettingTwoFactor] = useState(false);
   const navigate = useNavigate();
   const [roleAnchor, setRoleAnchor] = useState<HTMLElement | null>(null);
   const [adding, setAdding] = useState(false);
@@ -321,6 +322,11 @@ export function ManageUserPage() {
     mutationFn: () => unwrap(apiClient.POST('/api/v1/user-admin/{id}/unlock', { params: { path: { id: userId! } } })),
     ...onDone,
   });
+  const resetTwoFactor = useMutation({
+    mutationFn: () => unwrap(apiClient.POST('/api/v1/user-admin/{id}/reset-two-factor', { params: { path: { id: userId! } } })),
+    ...onDone,
+    onSettled: () => setResettingTwoFactor(false),
+  });
   const removeFromSpace = useMutation({
     mutationFn: (space: UserSpace) =>
       unwrap(apiClient.DELETE('/api/v1/project/{id}/member/{userId}', { params: { path: { id: space.projectId!, userId: userId! } } })),
@@ -352,8 +358,8 @@ export function ManageUserPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-2">
-        <div className="min-w-0 flex-1">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="min-w-0 flex-1 basis-48">
           <Typography variant="h1">{user.data.name}</Typography>
           <Typography variant="body2" color="textSecondary">
             {user.data.email}
@@ -419,6 +425,11 @@ export function ManageUserPage() {
 
       <section className="flex flex-col gap-2">
         <Typography variant="h2">{t('admin.signInMethods')}</Typography>
+        <div className="flex flex-wrap items-center gap-2 py-1">
+          <Typography className="flex-1">{t('twoFactor.sectionTitle')}</Typography>
+          <Badge tone={user.data.twoFactorEnabled ? 'success' : 'subtle'}>{t(user.data.twoFactorEnabled ? 'twoFactor.on' : 'twoFactor.off')}</Badge>
+          {user.data.twoFactorEnabled && <Button kind="secondary" onClick={() => setResettingTwoFactor(true)}>{t('admin.resetTwoFactor')}</Button>}
+        </div>
         {methods.isPending && <LoadingState />}
         {methods.isError && <ErrorState onRetry={() => void methods.refetch()} />}
         {methods.data && (
@@ -437,6 +448,14 @@ export function ManageUserPage() {
         )}
       </section>
 
+      <DialogConfirm
+        open={resettingTwoFactor}
+        title={t('admin.resetTwoFactorTitle')}
+        description={t('admin.resetTwoFactorBody', { name: user.data.name })}
+        confirmLabel={t('admin.resetTwoFactor')}
+        onCancel={() => setResettingTwoFactor(false)}
+        onConfirm={() => resetTwoFactor.mutate()}
+      />
       <DialogConfirm
         open={confirming}
         title={t('admin.lockTitle')}

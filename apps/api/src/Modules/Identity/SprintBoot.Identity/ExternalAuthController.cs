@@ -18,7 +18,7 @@ namespace SprintBoot.Identity;
 public class ExternalAuthController(
     ExternalSchemeRegistry registry,
     ExternalAccountLinker linker,
-    AbpSignInManager signInManager,
+    TwoFactorGate twoFactor,
     IRepository<ExternalProviderConfig, Guid> providers,
     LinkedLoginService linkedLogins,
     IUnitOfWorkManager unitOfWorkManager) : AbpController
@@ -71,12 +71,13 @@ public class ExternalAuthController(
             return await CompleteLinkAsync(result.Principal, providerName, link);
         }
 
+        LoginOutcome outcome;
         try
         {
             using var uow = unitOfWorkManager.Begin(requiresNew: true, isTransactional: true);
             var provider = await providers.GetAsync(item => item.Name == providerName);
             var user = await linker.ResolveAsync(ReadIdentity(result.Principal, provider), invitation);
-            await signInManager.SignInAsync(user, isPersistent: false, authenticationMethod: providerName);
+            outcome = await twoFactor.SignInAsync(user, providerName);
             await uow.CompleteAsync();
         }
         catch (BusinessException failure)
@@ -86,7 +87,14 @@ public class ExternalAuthController(
 
         // Only our own authorize endpoint, never a redirect chosen by the caller.
         var returnUrl = Item(items, ReturnItem);
-        return Redirect(returnUrl?.StartsWith("/connect/authorize", StringComparison.Ordinal) == true ? returnUrl : "/");
+        var next = returnUrl?.StartsWith("/connect/authorize", StringComparison.Ordinal) == true ? returnUrl : null;
+        return outcome switch
+        {
+            // The sign-in pages carry on to the authorize endpoint once the second step is done.
+            LoginOutcome.TwoFactorCode => Redirect(TwoFactorPage("/two-factor", next)),
+            LoginOutcome.TwoFactorSetup => Redirect(TwoFactorPage("/two-factor/setup", next)),
+            _ => Redirect(next ?? "/"),
+        };
     }
 
     /// <summary>Adds the IdP login to the account that asked for it, without signing anyone in.</summary>
@@ -112,6 +120,9 @@ public class ExternalAuthController(
 
         return Redirect($"{ProfilePage}?linked={Uri.EscapeDataString(providerName)}");
     }
+
+    private static string TwoFactorPage(string path, string? returnUrl) =>
+        returnUrl is null ? path : $"{path}?ReturnUrl={Uri.EscapeDataString(returnUrl)}";
 
     public static ExternalIdentity ReadIdentity(ClaimsPrincipal principal, ExternalProviderConfig provider)
     {

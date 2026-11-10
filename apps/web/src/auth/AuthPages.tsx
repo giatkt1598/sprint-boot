@@ -16,7 +16,7 @@ import { useErrorMessage } from '../lib/errors';
 import { font, radius, sem } from '../theme/tokens';
 import { userManager } from './oidc';
 
-function AuthCard({ title, children }: { title: string; children: ReactNode }) {
+export function AuthCard({ title, children }: { title: string; children: ReactNode }) {
   const { t } = useTranslation();
 
   return (
@@ -44,7 +44,7 @@ function AuthCard({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function FormError({ message }: { message: string | null }) {
+export function FormError({ message }: { message: string | null }) {
   return message ? (
     <Typography role="alert" variant="body2" sx={{ color: sem('feedback-danger-text') }}>
       {message}
@@ -56,8 +56,20 @@ type SignInProvider = components['schemas']['SignInProviderDto'];
 
 const LDAP = 4;
 
+type LoginResult = components['schemas']['LoginResultDto'];
+
+/** Goes on after the password: straight in, or to the code or setup page with the authorize request to continue. */
+export async function afterPassword(result: LoginResult, returnUrl: string | null, navigate: (path: string) => void | Promise<void>) {
+  if (result.step === 'done') {
+    await continueSignIn(returnUrl);
+    return;
+  }
+  const query = returnUrl?.startsWith('/connect/authorize') ? `?ReturnUrl=${encodeURIComponent(returnUrl)}` : '';
+  await navigate(`${result.step === 'setup' ? '/two-factor/setup' : '/two-factor'}${query}`);
+}
+
 /** After any sign-in on our page: continue our own authorize request, or start one. */
-async function continueSignIn(returnUrl: string | null) {
+export async function continueSignIn(returnUrl: string | null) {
   if (returnUrl?.startsWith('/connect/authorize')) {
     window.location.assign(returnUrl);
   } else {
@@ -68,6 +80,7 @@ async function continueSignIn(returnUrl: string | null) {
 /** LDAP has no page of its own to send people to, so they type their directory password here. */
 function LdapSignInDialog({ provider, query, onClose }: { provider: SignInProvider; query: string; onClose: () => void }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const toMessage = useErrorMessage();
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
@@ -82,13 +95,13 @@ function LdapSignInDialog({ provider, query, onClose }: { provider: SignInProvid
     setError(null);
     try {
       const csrf = await fetchCsrfToken();
-      await unwrap(
+      const result = await unwrap(
         apiClient.POST('/api/v1/auth/ldap-login', {
           body: { provider: provider.name!, userName, password, invitation: params.get('invitation') },
           headers: { RequestVerificationToken: csrf },
         }),
       );
-      await continueSignIn(params.get('returnUrl'));
+      await afterPassword(result, params.get('returnUrl'), navigate);
     } catch (failure) {
       setError(toMessage(failure));
       setBusy(false);
@@ -159,6 +172,7 @@ function OrDivider() {
 
 export function LoginPage() {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const toMessage = useErrorMessage();
   const [params] = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
@@ -183,18 +197,14 @@ export function LoginPage() {
     setError(null);
     try {
       const csrf = await fetchCsrfToken();
-      await unwrap(
+      const result = await unwrap(
         apiClient.POST('/api/v1/auth/login', {
           body: { email, password },
           headers: { RequestVerificationToken: csrf },
         }),
       );
       // Only continue an authorize request of our own, never an arbitrary URL.
-      if (returnUrl?.startsWith('/connect/authorize')) {
-        window.location.assign(returnUrl);
-      } else {
-        await userManager.signinRedirect();
-      }
+      await afterPassword(result, returnUrl, navigate);
     } catch (failure) {
       setError(toMessage(failure));
       setBusy(false);
@@ -368,6 +378,7 @@ function invitationSummary(t: ReturnType<typeof useTranslation>['t'], preview: c
 
 export function AcceptInvitationPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const toMessage = useErrorMessage();
   const [params] = useSearchParams();
   const token = params.get('token') ?? '';
@@ -399,13 +410,13 @@ export function AcceptInvitationPage() {
           headers: { RequestVerificationToken: csrf },
         }),
       );
-      await unwrap(
+      const result = await unwrap(
         apiClient.POST('/api/v1/auth/login', {
           body: { email, password },
           headers: { RequestVerificationToken: await fetchCsrfToken() },
         }),
       );
-      await userManager.signinRedirect();
+      await afterPassword(result, null, navigate);
     } catch (failure) {
       if (failure instanceof ApiError && failure.code?.endsWith('InvitationInvalid')) {
         setGone(true);

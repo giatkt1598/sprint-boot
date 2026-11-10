@@ -47,6 +47,9 @@ public class AuthPolicy : Entity<Guid>
 
     public string? AllowedDomains { get; set; }
 
+    /// <summary>Everyone sets up an authenticator app before using the workspace.</summary>
+    public bool RequireTwoFactor { get; set; }
+
     protected AuthPolicy()
     {
     }

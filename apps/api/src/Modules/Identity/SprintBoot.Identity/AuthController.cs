@@ -13,7 +13,7 @@ namespace SprintBoot.Identity;
 /// cookie, which would leave login CSRF open.
 /// </summary>
 [Route("api/v1/auth")]
-public class AuthController(IAuthAppService authAppService, IAbpAntiForgeryManager antiForgeryManager) : AbpController
+public class AuthController(IAuthAppService authAppService, TwoFactorAppService twoFactor, IAbpAntiForgeryManager antiForgeryManager) : AbpController
 {
     [HttpGet("csrf")]
     [AllowAnonymous]
@@ -23,9 +23,10 @@ public class AuthController(IAuthAppService authAppService, IAbpAntiForgeryManag
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
     [UnitOfWork(IsDisabled = true)]
-    public async Task LoginAsync([FromBody] LoginInput input)
+    public async Task<LoginResultDto> LoginAsync([FromBody] LoginInput input)
     {
-        switch (await authAppService.LoginAsync(input))
+        var outcome = await authAppService.LoginAsync(input);
+        switch (outcome)
         {
             case LoginOutcome.LockedOut:
                 throw new UserFriendlyException("Account is locked", AuthErrors.LockedOut);
@@ -34,18 +35,77 @@ public class AuthController(IAuthAppService authAppService, IAbpAntiForgeryManag
             case LoginOutcome.InvalidCredentials:
                 throw new UserFriendlyException("Invalid email or password", AuthErrors.InvalidCredentials);
         }
+
+        return Step(outcome);
     }
 
     [HttpPost("ldap-login")]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
-    public async Task LdapLoginAsync([FromBody] LdapLoginInput input)
+    public async Task<LoginResultDto> LdapLoginAsync([FromBody] LdapLoginInput input)
     {
-        if (await authAppService.LdapLoginAsync(input) != LoginOutcome.Succeeded)
+        var outcome = await authAppService.LdapLoginAsync(input);
+        if (outcome == LoginOutcome.InvalidCredentials)
         {
             throw new UserFriendlyException("Invalid username or password", AuthErrors.InvalidCredentials);
         }
+
+        return Step(outcome);
     }
+
+    /// <summary>Finishes a sign-in held for its second step, with a code from the app or a recovery code.</summary>
+    [HttpPost("two-factor")]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    [UnitOfWork(IsDisabled = true)]
+    public async Task VerifyTwoFactorAsync([FromBody] TwoFactorCodeInput input)
+    {
+        switch (await twoFactor.VerifyHeldAsync(input))
+        {
+            case LoginOutcome.LockedOut:
+                throw new UserFriendlyException("Account is locked", AuthErrors.LockedOut);
+            case LoginOutcome.InvalidCredentials:
+                throw new UserFriendlyException("The code is not right", AuthErrors.TwoFactorCodeInvalid);
+        }
+    }
+
+    /// <summary>The key for a sign-in held until the workspace's required two-factor is set up.</summary>
+    [HttpGet("two-factor/held-setup")]
+    [AllowAnonymous]
+    public Task<TwoFactorSetupDto> GetHeldTwoFactorSetupAsync() => twoFactor.GetHeldSetupAsync();
+
+    [HttpPost("two-factor/held-setup")]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public Task<TwoFactorRecoveryCodesDto> CompleteHeldTwoFactorSetupAsync([FromBody] TwoFactorCodeInput input) =>
+        twoFactor.CompleteHeldSetupAsync(input);
+
+    [HttpGet("two-factor/setup")]
+    [Authorize]
+    public Task<TwoFactorSetupDto> GetTwoFactorSetupAsync() => twoFactor.GetSetupAsync();
+
+    [HttpPost("two-factor/setup")]
+    [Authorize]
+    public Task<TwoFactorRecoveryCodesDto> CompleteTwoFactorSetupAsync([FromBody] TwoFactorCodeInput input) => twoFactor.CompleteSetupAsync(input);
+
+    [HttpPost("two-factor/recovery-codes")]
+    [Authorize]
+    public Task<TwoFactorRecoveryCodesDto> RegenerateRecoveryCodesAsync([FromBody] TwoFactorCodeInput input) =>
+        twoFactor.RegenerateRecoveryCodesAsync(input);
+
+    [HttpPost("two-factor/disable")]
+    [Authorize]
+    public Task DisableTwoFactorAsync([FromBody] TwoFactorCodeInput input) => twoFactor.DisableAsync(input);
+
+    private static LoginResultDto Step(LoginOutcome outcome) => new()
+    {
+        Step = outcome switch
+        {
+            LoginOutcome.TwoFactorCode => LoginSteps.Code,
+            LoginOutcome.TwoFactorSetup => LoginSteps.Setup,
+            _ => LoginSteps.Done,
+        },
+    };
 
     [HttpGet("methods")]
     [AllowAnonymous]

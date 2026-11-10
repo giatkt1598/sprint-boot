@@ -254,7 +254,12 @@
     "GoalOwnerNotMember": "The owner must be a member of this space.",
     "GoalArchived": "An archived goal cannot be changed. Restore it first.",
     "crashTitle": "Something went wrong",
-    "crashDescription": "This page stopped working. Reload to try again; your saved work is safe."
+    "crashDescription": "This page stopped working. Reload to try again; your saved work is safe.",
+    "TwoFactorCodeInvalid": "That code is not right. Check the time on your phone and try again.",
+    "TwoFactorExpired": "This sign-in has expired. Sign in again.",
+    "TwoFactorRequiredByPolicy": "This workspace requires two-factor authentication, so it cannot be turned off.",
+    "TwoFactorAlreadyEnabled": "Two-factor authentication is already on.",
+    "TwoFactorNotEnabled": "Two-factor authentication is not on for this account."
   },
   "auth": {
     "ldapTitle": "Sign in to {{provider}}",
@@ -429,7 +434,10 @@
     "methodAccount": "Account",
     "methodLinked": "Linked",
     "methodUsed": "Last used",
-    "lastActive": "Last active {{date}}"
+    "lastActive": "Last active {{date}}",
+    "resetTwoFactor": "Reset two-factor",
+    "resetTwoFactorTitle": "Reset two-factor authentication?",
+    "resetTwoFactorBody": "{{name}} can no longer sign in with their current authenticator app or recovery codes. If the workspace requires two-factor, they set up a new app at their next sign-in."
   },
   "spaces": {
     "logo": "Space logo",
@@ -892,7 +900,9 @@
     "redirectCopied": "Redirect URL copied",
     "trustEmail": "Trust email",
     "trustEmailOn": "Emails from this provider count as verified: a Sprint Boot account with the same email is linked to it. Keep this on only when people cannot change their own email at the provider.",
-    "trustEmailOff": "Only people who linked this provider from their profile can sign in with it. Its email never links an existing account, accepts an invitation or creates an account."
+    "trustEmailOff": "Only people who linked this provider from their profile can sign in with it. Its email never links an existing account, accepts an invitation or creates an account.",
+    "requireTwoFactor": "Require two-factor authentication",
+    "requireTwoFactorHint": "Everyone sets up an authenticator app before using the workspace, at their next sign-in or right away if already signed in. You too, if you have not."
   },
   "templates": {
     "title": "Ticket templates",
@@ -1663,5 +1673,40 @@
     "archivedBadge": "Archived",
     "deleteTitle": "Delete goal",
     "deleteBody": "Delete {{name}} and its updates? This cannot be undone."
+  },
+  "twoFactor": {
+    "title": "Two-factor authentication",
+    "codePrompt": "Enter the 6-digit code from your authenticator app.",
+    "recoveryPrompt": "Enter one of the recovery codes you saved when you turned on two-factor authentication.",
+    "code": "Authentication code",
+    "recoveryCode": "Recovery code",
+    "verify": "Verify",
+    "useRecovery": "Use a recovery code instead",
+    "useApp": "Use the authenticator app instead",
+    "setupTitle": "Set up two-factor authentication",
+    "requiredHint": "This workspace requires two-factor authentication. Set up an authenticator app, such as Google Authenticator, Microsoft Authenticator or 1Password, to continue.",
+    "scanHint": "Scan this QR code with your authenticator app, then enter the 6-digit code it shows.",
+    "qrLabel": "QR code for the authenticator app",
+    "keyHint": "Can't scan it? Enter this key in the app instead:",
+    "enabled": "Two-factor authentication is on.",
+    "recoveryCodes": "Recovery codes",
+    "recoveryHint": "Keep these codes somewhere safe. Each one signs you in once if you lose your phone, and this is the only time they are shown.",
+    "copy": "Copy",
+    "copied": "Recovery codes copied",
+    "download": "Download",
+    "continue": "Continue",
+    "done": "Done",
+    "sectionTitle": "Two-factor authentication",
+    "sectionHint": "Ask for a code from an authenticator app each time you sign in, as well as your password.",
+    "sectionRequired": "This workspace requires two-factor authentication, so it stays on.",
+    "on": "On",
+    "off": "Off",
+    "turnOn": "Turn on",
+    "turnOff": "Turn off",
+    "turnOffTitle": "Turn off two-factor authentication?",
+    "turnOffHint": "Enter a code from your authenticator app to confirm. Your recovery codes stop working too.",
+    "turnedOff": "Two-factor authentication is off",
+    "newCodes": "New recovery codes",
+    "newCodesHint": "Enter a code from your authenticator app. Your old recovery codes stop working."
   }
 }

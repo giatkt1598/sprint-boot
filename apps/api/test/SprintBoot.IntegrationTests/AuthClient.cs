@@ -53,7 +53,8 @@ public sealed class AuthClient(ApiFixture fixture)
     {
         var csrf = await GetCsrfTokenAsync(token);
         var login = await PostLoginAsync(email, password, csrf, token);
-        login.StatusCode.ShouldBe(HttpStatusCode.NoContent, await login.Content.ReadAsStringAsync(token));
+        login.StatusCode.ShouldBe(HttpStatusCode.OK, await login.Content.ReadAsStringAsync(token));
+        (await login.Content.ReadFromJsonAsync<SprintBoot.Identity.LoginResultDto>(token))!.Step.ShouldBe(SprintBoot.Identity.LoginSteps.Done);
         await AuthorizeAsync(token);
     }
 

@@ -1,6 +1,7 @@
 import { Navigate, Outlet, Route, BrowserRouter, Routes, useLocation, useParams } from 'react-router';
 import { RequireAuth } from './auth/AuthProvider';
 import { AuthCallbackPage, AcceptInvitationPage, ForgotPasswordPage, LoginPage, ResetPasswordPage, SessionExpiredPage } from './auth/AuthPages';
+import { TwoFactorCodePage, TwoFactorSetupPage } from './auth/TwoFactor';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastHost } from './components/ToastHost';
 import { McpDocsPage, TokensPage } from './features/account/TokenPages';
@@ -49,6 +50,8 @@ export function App() {
           <Route path="reset-password" element={<ResetPasswordPage />} />
           <Route path="accept-invitation" element={<AcceptInvitationPage />} />
           <Route path="session-expired" element={<SessionExpiredPage />} />
+          <Route path="two-factor" element={<TwoFactorCodePage />} />
+          <Route path="two-factor/setup" element={<TwoFactorSetupPage />} />
           <Route path="auth/callback" element={<AuthCallbackPage />} />
           <Route path="dev/ui" element={<main className="p-8"><DevUiPage /></main>} />
 

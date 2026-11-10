@@ -26,6 +26,8 @@ public class UserSummaryDto
 
     public required bool IsLocked { get; set; }
 
+    public required bool TwoFactorEnabled { get; set; }
+
     public required DateTime CreationTime { get; set; }
 
     public required DateTime? LastSignInAt { get; set; }

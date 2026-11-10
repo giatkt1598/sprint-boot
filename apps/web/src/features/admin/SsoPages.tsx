@@ -220,6 +220,7 @@ function PolicyCard() {
     localLoginEnabled: policy.data.localLoginEnabled,
     selfRegistrationEnabled: policy.data.selfRegistrationEnabled,
     allowedDomains: policy.data.allowedDomains,
+    requireTwoFactor: policy.data.requireTwoFactor,
   };
 
   return (
@@ -241,6 +242,13 @@ function PolicyCard() {
           <Typography variant="body2" color="textSecondary">{t('sso.selfSignUpHint')}</Typography>
         </div>
         <Toggle label={t('sso.selfSignUp')} checked={current.selfRegistrationEnabled ?? false} onChange={(event) => save.mutate({ ...current, selfRegistrationEnabled: event.target.checked })} />
+      </div>
+      <div className="flex items-center gap-4">
+        <div className="flex-1">
+          <Typography>{t('sso.requireTwoFactor')}</Typography>
+          <Typography variant="body2" color="textSecondary">{t('sso.requireTwoFactorHint')}</Typography>
+        </div>
+        <Toggle label={t('sso.requireTwoFactor')} checked={current.requireTwoFactor ?? false} onChange={(event) => save.mutate({ ...current, requireTwoFactor: event.target.checked })} />
       </div>
       <TextField
         autoComplete="off"
