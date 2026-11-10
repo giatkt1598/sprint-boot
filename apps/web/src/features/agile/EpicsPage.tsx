@@ -7,11 +7,14 @@ import { Link as RouterLink, useParams } from 'react-router';
 import type { components } from '@sprint-boot/api-client';
 import { apiClient, unwrap } from '../../api';
 import { Button } from '../../components/Button';
+import { CardList, CardMeta, ListCard, SortSelect } from '../../components/CardList';
 import { TicketTypeIcon } from '../../components/TicketIcons';
 import { SearchInput } from '../../components/SearchInput';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
 import { compareValues, Table, useTableSort, type TableSort } from '../../components/Table';
 import { formatDate } from '../../lib/format';
+import { useCompact } from '../../lib/responsive';
+import { font } from '../../theme/tokens';
 import { CreateTicketDialog } from '../tickets/CreateTicketDialog';
 import { QuickAssignee, QuickPriority, QuickStatus } from '../tickets/QuickFields';
 import { useMembers, useSpace } from '../spaces/api';
@@ -47,7 +50,8 @@ export function EpicsPage() {
   const projectId = space.data?.id;
   const [filter, setFilter] = useState('');
   const [creating, setCreating] = useState(false);
-  const { sort, toggle } = useTableSort();
+  const { sort, toggle, set: setSort } = useTableSort();
+  const compact = useCompact();
   const canEdit = space.data?.permissions?.includes('Ticket.Edit') ?? false;
   const members = useMembers(projectId);
   const people = (members.data ?? []).map((member) => member.user!);
@@ -67,13 +71,51 @@ export function EpicsPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-2">
         <Typography variant="h1" className="flex-1 max-sm:basis-full">{t('agile.epics')}</Typography>
-        <SearchInput label={t('spaces.filter')} value={filter} onChange={(event) => setFilter(event.target.value)} />
+        <SearchInput label={t('spaces.filter')} value={filter} onChange={(event) => setFilter(event.target.value)} sx={{ flex: { xs: '1 1 140px', md: '0 0 auto' } }} />
         {canEdit && <Button onClick={() => setCreating(true)}>{t('agile.createEpic')}</Button>}
       </div>
+      {compact && (
+        <SortSelect
+          sort={sort}
+          columns={[
+            { key: 'key', label: t('tickets.key') },
+            { key: 'title', label: t('tickets.titleField') },
+            { key: 'progress', label: t('agile.progressColumn') },
+            { key: 'status', label: t('tickets.status') },
+            { key: 'priority', label: t('tickets.priority') },
+            { key: 'due', label: t('tickets.dueDate') },
+            { key: 'lead', label: t('agile.lead') },
+          ]}
+          onChange={setSort}
+        />
+      )}
       {epics.isPending && <LoadingState />}
       {epics.isError && <ErrorState onRetry={() => void epics.refetch()} />}
       {epics.isSuccess && rows.length === 0 && <EmptyState title={t('agile.noEpics')} />}
-      {rows.length > 0 && (
+      {rows.length > 0 && compact && (
+        // Cards on small screens, as on the Tickets list: the table's seven columns cannot fit.
+        <CardList label={t('agile.epics')}>
+          {rows.map((epic) => (
+            <ListCard key={epic.id}>
+              <CardMeta>
+                <TicketTypeIcon type="epic" />
+                <span className="flex-1">{epic.key}</span>
+                <QuickStatus ticket={toQuick(epic)} canEdit={canEdit} people={people} />
+              </CardMeta>
+              <Link component={RouterLink} to={`/browse/${epic.key}`} color="inherit" className="line-clamp-2" sx={{ fontSize: font.size.md, overflowWrap: 'anywhere' }}>
+                {epic.title}
+              </Link>
+              <EpicProgress total={epic.total ?? 0} done={epic.done ?? 0} inProgress={epic.inProgress ?? 0} />
+              <CardMeta>
+                <QuickPriority ticket={toQuick(epic)} canEdit={canEdit} />
+                <span className="min-w-0 flex-1 overflow-hidden"><QuickAssignee ticket={toQuick(epic)} canEdit={canEdit} people={people} showName /></span>
+                {epic.dueDate && <span className="shrink-0">{formatDate(epic.dueDate, i18n.language)}</span>}
+              </CardMeta>
+            </ListCard>
+          ))}
+        </CardList>
+      )}
+      {rows.length > 0 && !compact && (
         <Table<EpicRow>
           label={t('agile.epics')}
           rows={rows}

@@ -188,6 +188,16 @@ test.describe('phone with a touch screen', () => {
     await expectNoPageScroll(page);
   });
 
+  test('tickets and epics list as cards with a sort select', async ({ page }) => {
+    for (const [path, label] of [[`/spaces/${SPACE}/tickets`, 'Tickets'], [`/spaces/${SPACE}/epics`, 'Epics']] as const) {
+      await page.goto(path);
+      const list = page.getByRole('list', { name: label });
+      await expect(list.getByRole('listitem').first()).toBeVisible();
+      await expect(page.getByRole('table')).toHaveCount(0);
+      await expect(page.getByRole('combobox', { name: 'Sort by' })).toBeVisible();
+    }
+  });
+
   test('the backlog keeps one line per ticket with a menu to move it', async ({ page }) => {
     await page.goto(`/spaces/${SPACE}/backlog`);
     const row = page.locator('tr[data-testid^="row-"]').first();
