@@ -402,10 +402,15 @@ public class OpenAiChatProvider(IHttpClientFactory http) : IChatProvider, ITrans
     private static ApiKeyCredential Credential(ChatConnection connection) =>
         new(string.IsNullOrEmpty(connection.ApiKey) ? "none" : connection.ApiKey);
 
+    /// <summary>
+    /// One retry only: gateways such as LiteLLM retry on their own, and the SDK's three retries on top of theirs kept a
+    /// failing question waiting about eight minutes before the person saw an error.
+    /// </summary>
     private OpenAIClientOptions Options(ChatConnection connection) => new()
     {
         Endpoint = new Uri(connection.BaseUrl!),
         Transport = new HttpClientPipelineTransport(http.CreateClient(ChatProviders.HttpClientName)),
+        RetryPolicy = new ClientRetryPolicy(maxRetries: 1),
     };
 
     private static List<ChatMessage> ToMessages(ChatRequest request)
