@@ -154,10 +154,12 @@ export function TimelineTab({ space }: { space: Space }) {
   // A phone keeps most of its width for the bars: the label column shrinks to the type, key and a bit of title.
   const titleWidth = narrow ? NARROW_TITLE_WIDTH : TITLE_WIDTH;
   const labelWidth = titleWidth + ASSIGNEE_WIDTH;
+  // Smaller text on a phone, so more of each title and the view names fit; 12px is the smallest size the theme has.
+  const text = narrow ? font.size.xs : font.size.md;
 
   const ticketLabel = (ticket: Ticket, faded: boolean) => (
     <div className="sticky left-0 z-10 flex h-full shrink-0" style={{ width: labelWidth, backgroundColor: sem('bg-surface'), opacity: faded ? 0.5 : 1 }}>
-    <div className="flex h-full shrink-0 items-center gap-2 px-2 md:px-4" style={{ width: titleWidth, fontSize: font.size.md }}>
+    <div className="flex h-full shrink-0 items-center gap-2 px-2 md:px-4" style={{ width: titleWidth, fontSize: text }}>
       {/* Its own box, so a long title never squeezes the icon away. */}
       <span className="flex size-4 shrink-0 items-center justify-center">
         {ticket.type?.icon && KNOWN_TYPES.includes(ticket.type.icon) ? <TicketTypeIcon type={ticket.type.icon as IconType} /> : null}
@@ -167,7 +169,7 @@ export function TimelineTab({ space }: { space: Space }) {
       <ButtonBase
         onClick={() => setOpenTicket(ticket.key!)}
         className="h-full min-w-0 flex-1"
-        sx={{ justifyContent: 'flex-start', fontSize: font.size.md, textAlign: 'left' }}
+        sx={{ justifyContent: 'flex-start', fontSize: text, textAlign: 'left' }}
       >
         <TruncatedText text={ticket.title ?? ''} style={{ color: sem('text-primary') }} />
       </ButtonBase>
@@ -220,7 +222,7 @@ export function TimelineTab({ space }: { space: Space }) {
         <Button kind="secondary" onClick={() => setShift(0)}>{t('overview.timeline.today')}</Button>
         <IconButton size="small" aria-label={t('overview.timeline.previous')} onClick={() => setShift(shift - 1)}><ChevronLeftIcon size={16} strokeWidth={1.5} aria-hidden /></IconButton>
         <IconButton size="small" aria-label={t('overview.timeline.next')} onClick={() => setShift(shift + 1)}><ChevronRightIcon size={16} strokeWidth={1.5} aria-hidden /></IconButton>
-        <Typography variant="h3" component="h2" className="flex-1 max-sm:order-first max-sm:basis-full">{heading}</Typography>
+        <Typography variant="h3" component="h2" className="flex-1 max-sm:order-first max-sm:basis-full" sx={{ fontSize: text }}>{heading}</Typography>
         <FilterButton filters={filters} filter="type" label={t('overview.timeline.type')} />
         <FilterButton filters={filters} filter="assignee" label={t('overview.timeline.assignee')} />
         <FilterButton filters={filters} filter="epic" label={t('overview.timeline.epic')} />
@@ -231,9 +233,9 @@ export function TimelineTab({ space }: { space: Space }) {
               role="radio"
               aria-checked={view === item.value}
               onClick={() => { setView(item.value); setShift(0); }}
-              className="h-7 px-3"
+              className="h-7 px-2 md:px-3"
               sx={{
-                fontSize: font.size.md,
+                fontSize: text,
                 borderRadius: `${radius.control - 2}px`,
                 color: sem(view === item.value ? 'text-primary' : 'text-secondary'),
                 fontWeight: view === item.value ? font.weight.medium : font.weight.regular,
