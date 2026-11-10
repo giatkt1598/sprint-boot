@@ -19,6 +19,9 @@ export function Tabs({ label, items, value, onChange }: TabsProps) {
     <MuiTabs
       aria-label={label}
       value={value}
+      // Tabs that do not fit a small screen scroll sideways instead of hiding the last ones.
+      variant="scrollable"
+      scrollButtons={false}
       onChange={(_, next: string) => onChange(next)}
       sx={{ '& .MuiTabs-indicator': { backgroundColor: sem('text-accent'), height: 2 } }}
     >

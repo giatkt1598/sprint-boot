@@ -66,7 +66,8 @@
     "previousMonth": "Tháng trước",
     "nextMonth": "Tháng sau",
     "clearDate": "Xóa ngày",
-    "dismiss": "Bỏ qua"
+    "dismiss": "Bỏ qua",
+    "done": "Xong"
   },
   "ticket": {
     "status": {
@@ -585,7 +586,11 @@
     "resizeSidebar": "Đổi độ rộng phần chi tiết ticket",
     "uploadingPercent": "Đang tải lên {{name}}… {{percent}}%",
     "uploadFailed": "Chưa tải lên được {{name}}: {{message}}",
-    "reactedYou": "Bạn"
+    "reactedYou": "Bạn",
+    "sortBy": "Sắp xếp theo",
+    "defaultOrder": "Thứ tự mặc định",
+    "sortAscending": "Tăng dần, bấm để đổi sang giảm dần",
+    "sortDescending": "Giảm dần, bấm để đổi sang tăng dần"
   },
   "workflows": {
     "title": "Workflow",
@@ -1228,7 +1233,8 @@
     "restoreTitle": "Khôi phục phiên bản {{version}}?",
     "restoreBody": "Bản nháp hiện tại sẽ bị thay thế. Phiên bản đã publish vẫn chạy cho tới khi bạn publish.",
     "versionSummary": "{{statuses}} status, {{transitions}} transition",
-    "reorder": "Đổi thứ tự {{name}}"
+    "reorder": "Đổi thứ tự {{name}}",
+    "viewOnly": "Cần màn hình lớn hơn để chỉnh sửa workflow. Ở đây bạn chỉ xem được."
   },
   "email": {
     "title": "Email",

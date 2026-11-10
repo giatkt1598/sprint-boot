@@ -9,6 +9,7 @@ import type { components } from '@sprint-boot/api-client';
 import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, FilterIcon } from '../../components/icons';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useCompact } from '../../lib/responsive';
 import { Link as RouterLink } from 'react-router';
 import { apiClient, unwrap } from '../../api';
 import { Button } from '../../components/Button';
@@ -29,8 +30,8 @@ type Range = { from: number; to: number };
 const DAY_WIDTH: Record<View, number> = { sprint: 60, week: 120, month: 40, quarter: 14 };
 const TITLE_WIDTH = 400;
 const ASSIGNEE_WIDTH = 48;
-/** The pinned columns on the left: the ticket, then its assignee. */
-const LABEL_WIDTH = TITLE_WIDTH + ASSIGNEE_WIDTH;
+/** The ticket column on small screens. With the assignee it makes the pinned columns on the left. */
+const NARROW_TITLE_WIDTH = 160;
 const HEADER_HEIGHT = 40;
 const ROW_HEIGHT = 41;
 const BAR_HEIGHT = 24;
@@ -66,6 +67,7 @@ function rangeOf(view: Exclude<View, 'sprint'>, anchor: number): Range {
 
 /** Tickets with a start and a due date as bars on a calendar; the sprint's tickets missing one are listed after them. */
 export function TimelineTab({ space }: { space: Space }) {
+  const narrow = useCompact();
   const { t, i18n } = useTranslation();
   const backlog = useBacklog(space.id);
   const filters = useTicketFilters(space.id);
@@ -149,10 +151,13 @@ export function TimelineTab({ space }: { space: Space }) {
   ];
   const isWeekend = (day: number) => [0, 6].includes(fromDay(day).getUTCDay()) && view !== 'quarter';
   const gridWidth = days * dayWidth;
+  // A phone keeps most of its width for the bars: the label column shrinks to the type, key and a bit of title.
+  const titleWidth = narrow ? NARROW_TITLE_WIDTH : TITLE_WIDTH;
+  const labelWidth = titleWidth + ASSIGNEE_WIDTH;
 
   const ticketLabel = (ticket: Ticket, faded: boolean) => (
-    <div className="sticky left-0 z-10 flex h-full shrink-0" style={{ width: LABEL_WIDTH, backgroundColor: sem('bg-surface'), opacity: faded ? 0.5 : 1 }}>
-    <div className="flex h-full shrink-0 items-center gap-2 px-4" style={{ width: TITLE_WIDTH, fontSize: font.size.md }}>
+    <div className="sticky left-0 z-10 flex h-full shrink-0" style={{ width: labelWidth, backgroundColor: sem('bg-surface'), opacity: faded ? 0.5 : 1 }}>
+    <div className="flex h-full shrink-0 items-center gap-2 px-2 md:px-4" style={{ width: titleWidth, fontSize: font.size.md }}>
       {/* Its own box, so a long title never squeezes the icon away. */}
       <span className="flex size-4 shrink-0 items-center justify-center">
         {ticket.type?.icon && KNOWN_TYPES.includes(ticket.type.icon) ? <TicketTypeIcon type={ticket.type.icon as IconType} /> : null}
@@ -215,7 +220,7 @@ export function TimelineTab({ space }: { space: Space }) {
         <Button kind="secondary" onClick={() => setShift(0)}>{t('overview.timeline.today')}</Button>
         <IconButton size="small" aria-label={t('overview.timeline.previous')} onClick={() => setShift(shift - 1)}><ChevronLeftIcon size={16} strokeWidth={1.5} aria-hidden /></IconButton>
         <IconButton size="small" aria-label={t('overview.timeline.next')} onClick={() => setShift(shift + 1)}><ChevronRightIcon size={16} strokeWidth={1.5} aria-hidden /></IconButton>
-        <Typography variant="h3" component="h2" className="flex-1">{heading}</Typography>
+        <Typography variant="h3" component="h2" className="flex-1 max-sm:order-first max-sm:basis-full">{heading}</Typography>
         <FilterButton filters={filters} filter="type" label={t('overview.timeline.type')} />
         <FilterButton filters={filters} filter="assignee" label={t('overview.timeline.assignee')} />
         <FilterButton filters={filters} filter="epic" label={t('overview.timeline.epic')} />
@@ -246,10 +251,10 @@ export function TimelineTab({ space }: { space: Space }) {
       {tickets.isError && <ErrorState onRetry={() => void tickets.refetch()} />}
       {tickets.data && (
         <div className="overflow-x-auto" style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}>
-          <div style={{ width: LABEL_WIDTH + gridWidth, minWidth: '100%' }}>
+          <div style={{ width: labelWidth + gridWidth, minWidth: '100%' }}>
             <div className="relative flex" style={{ height: HEADER_HEIGHT, backgroundColor: sem('bg-page'), borderBottom: `1px solid ${sem('border-default')}` }}>
-              <span className="sticky left-0 z-10 flex shrink-0" style={{ width: LABEL_WIDTH, backgroundColor: sem('bg-page'), fontSize: font.size.xs, color: sem('text-secondary') }}>
-                <span className="flex items-center px-4" style={{ width: TITLE_WIDTH }}>{t('overview.timeline.ticket')}</span>
+              <span className="sticky left-0 z-10 flex shrink-0" style={{ width: labelWidth, backgroundColor: sem('bg-page'), fontSize: font.size.xs, color: sem('text-secondary') }}>
+                <span className="flex items-center px-4" style={{ width: titleWidth }}>{t('overview.timeline.ticket')}</span>
                 <span className="sr-only">{t('overview.timeline.assignee')}</span>
               </span>
               {Array.from({ length: days }, (_, index) => (
@@ -264,9 +269,9 @@ export function TimelineTab({ space }: { space: Space }) {
             </div>
 
             <div className="relative">
-              <DayGrid days={days} dayWidth={dayWidth} from={range.from} today={today} weekend={isWeekend} />
+              <DayGrid labelWidth={labelWidth} days={days} dayWidth={dayWidth} from={range.from} today={today} weekend={isWeekend} />
               {rows.dated.length === 0 && rows.undated.length === 0 && (
-                <div className="sticky left-0 p-4" style={{ width: LABEL_WIDTH + 320 }}><EmptyState title={t('overview.timeline.empty')} /></div>
+                <div className="sticky left-0 p-4" style={{ width: labelWidth + 320, maxWidth: 'calc(100vw - 48px)' }}><EmptyState title={t('overview.timeline.empty')} /></div>
               )}
               {rows.dated.map((ticket) => (
                 <div key={ticket.id} className="relative flex" style={{ height: ROW_HEIGHT, borderBottom: `1px solid ${sem('border-default')}` }}>
@@ -300,9 +305,9 @@ export function TimelineTab({ space }: { space: Space }) {
 type Ticket = components['schemas']['TicketSummaryDto'];
 
 /** Day lines, weekend shading and the today line, drawn behind the dated rows. */
-function DayGrid({ days, dayWidth, from, today, weekend }: { days: number; dayWidth: number; from: number; today: number; weekend: (day: number) => boolean }) {
+function DayGrid({ labelWidth, days, dayWidth, from, today, weekend }: { labelWidth: number; days: number; dayWidth: number; from: number; today: number; weekend: (day: number) => boolean }) {
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-y-0" style={{ left: LABEL_WIDTH, width: days * dayWidth }}>
+    <div aria-hidden className="pointer-events-none absolute inset-y-0" style={{ left: labelWidth, width: days * dayWidth }}>
       {Array.from({ length: days }, (_, index) => (
         <span
           key={index}

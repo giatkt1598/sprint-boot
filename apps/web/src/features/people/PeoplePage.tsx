@@ -26,12 +26,12 @@ export function PeoplePage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <div className="flex-1">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="min-w-0 flex-1 basis-48">
           <Typography variant="h1">{t('people.title')}</Typography>
           <Typography variant="body2" color="textSecondary">{t('people.subtitle', { count: members.data?.length ?? 0 })}</Typography>
         </div>
-        <SearchInput label={t('people.search')} width={240} value={filter} onChange={(event) => setFilter(event.target.value)} />
+        <SearchInput label={t('people.search')} width={240} value={filter} onChange={(event) => setFilter(event.target.value)} sx={{ flex: { xs: '1 1 200px', md: '0 0 auto' } }} />
       </div>
       {(space.isPending || members.isPending) && !space.isError && <LoadingState />}
       {(space.isError || members.isError) && <ErrorState onRetry={() => void members.refetch()} />}

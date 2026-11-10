@@ -20,9 +20,9 @@ function AuthCard({ title, children }: { title: string; children: ReactNode }) {
   const { t } = useTranslation();
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
+    <main className="flex min-h-dvh items-center justify-center p-4">
       <div
-        className="flex w-full flex-col gap-4 p-8"
+        className="flex w-full flex-col gap-4 p-5 sm:p-8"
         style={{
           maxWidth: 400,
           backgroundColor: sem('bg-surface'),

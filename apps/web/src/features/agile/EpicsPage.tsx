@@ -65,8 +65,8 @@ export function EpicsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-2">
-        <Typography variant="h1" className="flex-1">{t('agile.epics')}</Typography>
+      <div className="flex flex-wrap items-center gap-2">
+        <Typography variant="h1" className="flex-1 max-sm:basis-full">{t('agile.epics')}</Typography>
         <SearchInput label={t('spaces.filter')} value={filter} onChange={(event) => setFilter(event.target.value)} />
         {canEdit && <Button onClick={() => setCreating(true)}>{t('agile.createEpic')}</Button>}
       </div>

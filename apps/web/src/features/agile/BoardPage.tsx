@@ -3,7 +3,8 @@ import {
   DragOverlay,
   KeyboardCode,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useDraggable,
   useDroppable,
   useSensor,
@@ -90,7 +91,8 @@ const BoardCard = memo(function BoardCard({ card, canDrag, onOpen }: { card: Car
         data-testid={`card-${card.key}`}
         onClick={() => onOpen(card.key!)}
         className="sb-card w-full min-w-0"
-        sx={{ ...cardStyle, display: 'block', overflow: 'hidden', opacity: isDragging ? 0.4 : 1, '&:hover': { backgroundColor: sem('bg-hover') } }}
+        // A long press picks a card up on touch screens; the phone must not select text or open its own menu meanwhile.
+        sx={{ ...cardStyle, display: 'block', overflow: 'hidden', opacity: isDragging ? 0.4 : 1, userSelect: 'none', WebkitTouchCallout: 'none', '&:hover': { backgroundColor: sem('bg-hover') } }}
       >
         <CardBody card={card} />
       </ButtonBase>
@@ -148,7 +150,8 @@ function ColumnView({ column, cards, total, canDrag, dragging, transitions, onOp
       ref={setNodeRef}
       aria-label={column.name ?? ''}
       data-testid={`column-${column.name}`}
-      className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-2"
+      // On small screens a column takes most of the width and the board snaps from one column to the next.
+      className="flex min-h-0 min-w-0 flex-1 snap-start flex-col gap-2 p-2 max-md:w-[85%] max-md:flex-none"
       style={{ minWidth: COLUMN_MIN_WIDTH, borderRadius: radius.card, backgroundColor: warn ? sem('feedback-warning-bg') : 'var(--sb-column-bg)' }}
     >
       <div className="flex items-center gap-2 px-1 py-1" style={{ fontSize: font.size.xs, fontWeight: font.weight.medium, color: sem(warn ? 'feedback-warning-text' : 'text-secondary') }}>
@@ -201,9 +204,11 @@ export function BoardPage() {
   const canConfigure = space.data?.permissions?.includes(SpacePermission.manage) ?? false;
   const key = boardKey(projectId);
 
-  // Enter opens the card, so only Space picks it up for a keyboard drag.
+  // Enter opens the card, so only Space picks it up for a keyboard drag. A finger picks a card up with a long press, so
+  // a swipe still scrolls the board; tapping a card opens it, where its status can be changed too.
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
     useSensor(KeyboardSensor, {
       keyboardCodes: { start: [KeyboardCode.Space], cancel: [KeyboardCode.Esc], end: [KeyboardCode.Space, KeyboardCode.Enter, KeyboardCode.Tab] },
     }),
@@ -289,10 +294,10 @@ export function BoardPage() {
 
   return (
     <div className="flex h-full flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <Typography variant="h1" className="flex-1">{scrum ? (sprint?.name ?? t('agile.board')) : t('agile.board')}</Typography>
+      <div className="flex flex-wrap items-center gap-2">
+        <Typography variant="h1" className="flex-1 max-sm:basis-full">{scrum ? (sprint?.name ?? t('agile.board')) : t('agile.board')}</Typography>
         <FilterControls filters={filters} />
-        <SearchInput label={t('tickets.search')} value={text} onChange={(event) => setText(event.target.value)} />
+        <SearchInput label={t('tickets.search')} value={text} onChange={(event) => setText(event.target.value)} sx={{ flex: { xs: '1 1 140px', md: '0 0 auto' } }} />
         {scrum && sprint && canManage && <Button kind="secondary" onClick={() => setCompleting(true)}>{t('agile.completeSprint')}</Button>}
         {canConfigure && (
           <>
@@ -331,7 +336,7 @@ export function BoardPage() {
             setDragging(null);
           }}
         >
-          <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto">
+          <div className="flex min-h-0 flex-1 snap-x snap-mandatory gap-3 overflow-x-auto md:snap-none">
             {(board.data.columns ?? []).filter((column) => !column.isHidden).map((column) => (
               <ColumnView
                 key={column.id}

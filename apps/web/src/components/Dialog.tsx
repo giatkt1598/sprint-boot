@@ -3,6 +3,7 @@ import Typography from '@mui/material/Typography';
 import { createContext, use, useEffect, useId, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+import { usePhone } from '../lib/responsive';
 import { sem } from '../theme/tokens';
 import { Button, type ButtonKind } from './Button';
 
@@ -50,24 +51,30 @@ export function Dialog({ title, width = 480, footer, onOpened, children, ...prop
   const [footerSlot, setFooterSlot] = useState<HTMLDivElement | null>(null);
   const overflows = useOverflows(body);
   const edge = overflows ? `1px solid ${sem('border-default')}` : '1px solid transparent';
+  // Phones get the whole screen: a floating box would leave too little room for the form.
+  const fullScreen = usePhone();
 
   return (
     <MuiDialog
       aria-labelledby={titleId}
       maxWidth={false}
-      slotProps={{ paper: { sx: { width, maxWidth: 'calc(100% - 32px)', overflow: 'hidden' } }, transition: { onEntered: onOpened } }}
+      fullScreen={fullScreen}
+      slotProps={{
+        paper: { sx: fullScreen ? { margin: 0, borderRadius: 0, overflow: 'hidden' } : { width, maxWidth: 'calc(100% - 32px)', overflow: 'hidden' } },
+        transition: { onEntered: onOpened },
+      }}
       {...props}
     >
-      <div className="shrink-0 px-6 pt-6 pb-4" style={{ borderBottom: edge }}>
+      <div className="shrink-0 px-4 pt-4 pb-4 sm:px-6 sm:pt-6" style={{ borderBottom: edge }}>
         <Typography id={titleId} variant="h2" component="h2">
           {title}
         </Typography>
       </div>
       {/* The small vertical padding keeps focus rings of the first and last field from being cut off. */}
-      <div ref={setBody} className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 py-1">
+      <div ref={setBody} className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-1 sm:px-6">
         <FooterSlot value={footerSlot}>{children}</FooterSlot>
       </div>
-      <div ref={setFooterSlot} className="shrink-0 px-6 pt-4 pb-6 empty:pt-2" style={{ borderTop: edge }}>
+      <div ref={setFooterSlot} className="shrink-0 px-4 pt-4 pb-4 empty:pt-2 sm:px-6 sm:pb-6" style={{ borderTop: edge }}>
         {footer}
       </div>
     </MuiDialog>

@@ -25,7 +25,7 @@ export function Toast({ kind, message, action }: ToastProps) {
       className="flex min-h-12 items-center gap-2 px-3"
       style={{
         width: 420,
-        maxWidth: '100%',
+        maxWidth: 'calc(100vw - 32px)',
         backgroundColor: sem('bg-surface'),
         border: `1px solid ${sem('border-default')}`,
         borderRadius: radius.card,

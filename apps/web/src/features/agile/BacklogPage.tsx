@@ -1,4 +1,4 @@
-import { DndContext, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { DndContext, KeyboardSensor, MouseSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import Box from '@mui/material/Box';
 import ButtonBase from '@mui/material/ButtonBase';
 import IconButton from '@mui/material/IconButton';
@@ -27,6 +27,7 @@ import { font, radius, sem, shadow, type SemanticToken } from '../../theme/token
 import { FilterChips, FilterControls, useTicketFilters, useSearchText } from '../tickets/TicketFilters';
 import { QuickAssignee, QuickPriority, QuickStatus } from '../tickets/QuickFields';
 import { useMembers, useSpace } from '../spaces/api';
+import { useCompact } from '../../lib/responsive';
 import { TicketPanel } from './TicketPanel';
 import { CompleteSprintDialog, SprintDialog } from './SprintDialogs';
 import { backlogKey, useBacklog, useBoardLive, type Backlog, type Card, type SprintSummary } from './api';
@@ -35,6 +36,9 @@ const BACKLOG_LIST = 'backlog';
 
 /** Closed sprints reuse the row outside the provider, where nothing may change. */
 const RowEditing = createContext<{ canEdit: boolean; people: PickerUser[] }>({ canEdit: false, people: [] });
+
+/** Small screens keep the type, key, title, assignee and row menu; the ticket itself has the rest. */
+const NarrowRows = createContext(false);
 
 interface RowActions {
   onMove: (card: Card, listId: string) => void;
@@ -53,6 +57,7 @@ function RowBody({ card, onOpen, actions }: TicketRowProps) {
   const { t } = useTranslation();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const { canEdit, people } = use(RowEditing);
+  const narrow = use(NarrowRows);
 
   const run = (action: () => void) => {
     setAnchor(null);
@@ -75,17 +80,21 @@ function RowBody({ card, onOpen, actions }: TicketRowProps) {
           <span className="min-w-0 truncate">{card.title}</span>
         </ButtonBase>
       </td>
-      <td className="truncate pr-3">{card.epicTitle && <Badge tone="epic">{card.epicTitle}</Badge>}</td>
-      <td><QuickStatus ticket={card} canEdit={canEdit} people={people} /></td>
-      <td className="pr-1">{card.storyPoints != null && (
-        <Tooltip title={t('agile.storyPoints', { count: card.storyPoints })}>
-          <span className="inline-flex">
-            <Badge tone="subtle">{card.storyPoints}</Badge>
-          </span>
-        </Tooltip>
-      )}</td>
-      <td><QuickPriority ticket={card} canEdit={canEdit} /></td>
-      <td className="overflow-hidden py-1 pr-3"><QuickAssignee ticket={card} canEdit={canEdit} people={people} showName /></td>
+      {!narrow && (
+        <>
+          <td className="truncate pr-3">{card.epicTitle && <Badge tone="epic">{card.epicTitle}</Badge>}</td>
+          <td><QuickStatus ticket={card} canEdit={canEdit} people={people} /></td>
+          <td className="pr-1">{card.storyPoints != null && (
+            <Tooltip title={t('agile.storyPoints', { count: card.storyPoints })}>
+              <span className="inline-flex">
+                <Badge tone="subtle">{card.storyPoints}</Badge>
+              </span>
+            </Tooltip>
+          )}</td>
+          <td><QuickPriority ticket={card} canEdit={canEdit} /></td>
+        </>
+      )}
+      <td className="overflow-hidden py-1 pr-3"><QuickAssignee ticket={card} canEdit={canEdit} people={people} showName={!narrow} /></td>
       <td>{actions && (
         <>
           <IconButton size="small" aria-label={t('agile.rowActions', { key: card.key })} onClick={(event) => setAnchor(event.currentTarget)}>
@@ -109,16 +118,18 @@ function RowBody({ card, onOpen, actions }: TicketRowProps) {
 const RowCells = memo(RowBody);
 
 const TicketColumns: { width?: number }[] = [{ width: 32 }, { width: 96 }, {}, { width: 144 }, { width: 120 }, { width: 48 }, { width: 40 }, { width: 248 }, { width: 40 }];
+const NarrowColumns: { width?: number }[] = [{ width: 28 }, { width: 72 }, {}, { width: 40 }, { width: 44 }];
 
 /** Fixed columns, so sprints and the backlog line up with each other. */
 function TicketTable({ extraColumn, children }: { extraColumn?: boolean; children: ReactNode }) {
+  const narrow = useCompact();
   return (
     <table className="w-full" style={{ tableLayout: 'fixed', borderCollapse: 'collapse' }}>
       <colgroup>
-        {TicketColumns.map((column, index) => <col key={index} style={{ width: column.width }} />)}
-        {extraColumn && <col style={{ width: 128 }} />}
+        {(narrow ? NarrowColumns : TicketColumns).map((column, index) => <col key={index} style={{ width: column.width }} />)}
+        {extraColumn && <col style={{ width: narrow ? 112 : 128 }} />}
       </colgroup>
-      <tbody>{children}</tbody>
+      <tbody><NarrowRows value={narrow}>{children}</NarrowRows></tbody>
     </table>
   );
 }
@@ -284,9 +295,9 @@ function SprintHeader({ sprint, tickets, canManage, shown, futureSprints, projec
   const points = t('agile.pointsProgress', { done: sprint.donePoints, total: sprint.totalPoints });
 
   return (
-    <div className="flex items-center gap-2 px-2">
+    <div className="flex flex-wrap items-center gap-2 px-2">
       <Typography variant="h3" component="h2">{sprint.name}</Typography>
-      <Typography variant="body2" color="textSecondary" className="flex-1">{[range, length, count, points].filter(Boolean).join(' · ')}</Typography>
+      <Typography variant="body2" color="textSecondary" className="min-w-0 flex-1 basis-40">{[range, length, count, points].filter(Boolean).join(' · ')}</Typography>
       <StatusCounters tickets={tickets} />
       {canManage && active && <Button kind="ghost" onClick={() => setDialog('complete')}>{t('agile.completeSprint')}</Button>}
       {canManage && !active && <Button kind="ghost" onClick={() => setDialog('start')}>{t('agile.startSprint')}</Button>}
@@ -361,8 +372,9 @@ export function BacklogPage() {
   const [creating, setCreating] = useState(false);
   const [closedOpen, setClosedOpen] = useState(false);
 
+  // Mouse and keyboard only: on a touch screen a swipe scrolls the list, and the row menu moves tickets between sprints.
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor),
   );
 
@@ -460,10 +472,10 @@ export function BacklogPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <Typography variant="h1" className="flex-1">{t('agile.backlog')}</Typography>
+      <div className="flex flex-wrap items-center gap-2">
+        <Typography variant="h1" className="flex-1 max-sm:basis-full">{t('agile.backlog')}</Typography>
         <FilterControls filters={filters} />
-        <SearchInput label={t('tickets.search')} value={text} onChange={(event) => setText(event.target.value)} />
+        <SearchInput label={t('tickets.search')} value={text} onChange={(event) => setText(event.target.value)} sx={{ flex: { xs: '1 1 140px', md: '0 0 auto' } }} />
         {scrum && canManage && <Button kind="secondary" onClick={() => setCreating(true)}>{t('agile.createSprint')}</Button>}
       </div>
       <FilterChips filters={filters} />

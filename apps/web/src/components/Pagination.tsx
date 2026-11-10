@@ -13,7 +13,7 @@ export function Pagination({ skip, pageSize, total, onChange }: PaginationProps)
   const { t } = useTranslation();
 
   return (
-    <nav className="flex items-center justify-end gap-2">
+    <nav className="flex flex-wrap items-center justify-end gap-2">
       <Typography variant="body2" color="textSecondary">
         {t('common.showing', { from: skip + 1, to: Math.min(skip + pageSize, total), total })}
       </Typography>

@@ -144,8 +144,8 @@ export function UsersPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-2">
-        <Typography variant="h1" className="flex-1">{t('admin.users')}</Typography>
+      <div className="flex flex-wrap items-center gap-2">
+        <Typography variant="h1" className="flex-1 max-sm:basis-full">{t('admin.users')}</Typography>
         <SearchInput label={t('spaces.filter')} value={search} onChange={(event) => { setSearch(event.target.value); setSkip(0); }} />
         <Button onClick={() => setCreating(true)}>{t('admin.createUser')}</Button>
       </div>

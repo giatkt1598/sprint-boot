@@ -5,9 +5,10 @@ import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ConnectionMode, Controls, ReactFlow, useNodesState, type Connection, type Edge, type Node, type ReactFlowInstance } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { BackIcon, WarningIcon } from '../../components/icons';
+import { BackIcon, InfoIcon, WarningIcon } from '../../components/icons';
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useCompact } from '../../lib/responsive';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import type { components } from '@sprint-boot/api-client';
 import { ApiError, apiClient, unwrap } from '../../api';
@@ -20,7 +21,7 @@ import { SelectField, TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { formatRelative } from '../../lib/format';
-import { radius, sem } from '../../theme/tokens';
+import { font, radius, sem } from '../../theme/tokens';
 import { useStatuses, type Status } from '../tickets/api';
 import { StatusOrderList, WorkflowHistory } from './WorkflowSidePanels';
 import { TransitionRules, type DraftRule } from './TransitionRules';
@@ -116,6 +117,8 @@ export function WorkflowDesignerPage() {
 
   const [draft, setDraft] = useState<Draft | null>(null);
   const [panel, setPanel] = useState<Panel>(null);
+  // Small screens only look: dragging statuses and drawing transitions needs a mouse and room.
+  const viewOnly = useCompact();
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [saved, setSaved] = useState('');
   const [savedAt, setSavedAt] = useState<string | null>(null);
@@ -419,7 +422,7 @@ export function WorkflowDesignerPage() {
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-      <header className="flex items-center gap-2 px-4 py-2" style={{ backgroundColor: sem('bg-surface'), borderBottom: `1px solid ${sem('border-default')}` }}>
+      <header className="flex flex-wrap items-center gap-2 px-4 py-2" style={{ backgroundColor: sem('bg-surface'), borderBottom: `1px solid ${sem('border-default')}` }}>
         <IconButton size="small" aria-label={t('designer.back')} onClick={() => void goBack()}>
           <BackIcon size={20} strokeWidth={1.5} aria-hidden />
         </IconButton>
@@ -431,6 +434,8 @@ export function WorkflowDesignerPage() {
         )}
         <span className="flex-1" />
         <Typography variant="body2" color="textSecondary" role="status">{saveState}</Typography>
+        {viewOnly ? <Button kind="ghost" onClick={exportJson}>{t('designer.export')}</Button> : (
+        <>
         <Button kind="ghost" onClick={() => importInput.current?.click()}>{t('designer.import')}</Button>
         <input ref={importInput} type="file" accept="application/json" hidden aria-label={t('designer.import')} onChange={(event) => void importJson(event)} />
         <Button kind="ghost" onClick={exportJson}>{t('designer.export')}</Button>
@@ -441,7 +446,15 @@ export function WorkflowDesignerPage() {
           {t('designer.addTransition')}
         </Button>
         <Button disabled={problems.length > 0 || (!workflow.draft && !dirty)} onClick={() => setPublishing(true)}>{t('workflows.publish')}</Button>
+        </>
+        )}
       </header>
+      {viewOnly && (
+        <div role="note" className="flex items-center gap-2 px-4 py-2" style={{ backgroundColor: sem('status-progress-bg'), color: sem('status-progress-text'), fontSize: font.size.xs }}>
+          <InfoIcon size={16} strokeWidth={1.5} aria-hidden className="shrink-0" />
+          {t('designer.viewOnly')}
+        </div>
+      )}
       <div className="flex min-h-0 flex-1">
         <Box
           component="main"
@@ -461,7 +474,13 @@ export function WorkflowDesignerPage() {
             }}
             onNodesChange={onNodesChange}
             onConnect={onConnect}
+            nodesDraggable={!viewOnly}
+            nodesConnectable={!viewOnly}
+            elementsSelectable={!viewOnly}
             onNodeClick={(_, node) => {
+              if (viewOnly) {
+                return;
+              }
               if (node.type === 'status') {
                 setPanel({ kind: 'status', id: node.id });
               } else {
@@ -470,7 +489,7 @@ export function WorkflowDesignerPage() {
                 setPanel(transition ? { kind: 'transition', uid: transition.uid } : null);
               }
             }}
-            onEdgeClick={(_, edge) => setPanel({ kind: 'transition', uid: Number(edge.id) })}
+            onEdgeClick={(_, edge) => !viewOnly && setPanel({ kind: 'transition', uid: Number(edge.id) })}
             onPaneClick={() => setPanel(null)}
             fitView
             fitViewOptions={{ maxZoom: 1 }}
@@ -478,7 +497,7 @@ export function WorkflowDesignerPage() {
             <Controls showInteractive={false} />
           </ReactFlow>
           {problems.length > 0 && (
-            <div className="absolute left-6 top-6 z-10 flex flex-col gap-2" style={{ width: 520 }}>
+            <div className="absolute left-6 top-6 z-10 flex flex-col gap-2" style={{ width: 520, maxWidth: 'calc(100% - 48px)' }}>
               {problems.map((problem) => (
                 <div
                   key={problem}
@@ -493,7 +512,7 @@ export function WorkflowDesignerPage() {
             </div>
           )}
         </Box>
-        <aside
+        {!viewOnly && <aside
           aria-label={t('designer.details')}
           className="flex shrink-0 flex-col gap-3 overflow-y-auto p-4"
           style={{ width: 320, backgroundColor: sem('bg-surface'), borderLeft: `1px solid ${sem('border-default')}` }}
@@ -582,7 +601,7 @@ export function WorkflowDesignerPage() {
               />
             </>
           )}
-        </aside>
+        </aside>}
       </div>
       {deleting && (
         <DeleteStatusDialog

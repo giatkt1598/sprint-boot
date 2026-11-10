@@ -89,7 +89,7 @@ export function SpaceSettingsLayout() {
 
 export function SettingsFrame({ title, backTo, menu, context }: { title: string; backTo: string; menu: ReactNode; context?: unknown }) {
   return (
-    <div className="flex min-h-0 flex-1">
+    <div className="flex min-h-0 min-w-0 flex-1">
       <SideNav label={title}>
         {(compact) => (
           <aside

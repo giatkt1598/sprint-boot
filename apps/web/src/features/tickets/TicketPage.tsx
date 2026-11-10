@@ -45,6 +45,7 @@ import { useViewingTicket } from '../assistant/AssistantPanel';
 import { RichTextEditor, RichTextView } from './RichTextEditor';
 import { priorityLevel, uploadAttachment, useEpics, useTicketTypes, useLabels, usePriorities, type Ticket } from './api';
 import { DatePicker } from '../../components/DatePicker';
+import { useCompact } from '../../lib/responsive';
 
 const DETAIL_LABEL_WIDTH = 88;
 const DETAIL_GAP = 12;
@@ -77,9 +78,12 @@ export interface PanelHeader {
 }
 
 /** Same content on the full page and in the board panel; compact stacks the details. */
-export function TicketContent({ ticketKey, compact, panelHeader }: { ticketKey: string | undefined; compact?: boolean; panelHeader?: PanelHeader }) {
+export function TicketContent({ ticketKey, compact: inPanel, panelHeader }: { ticketKey: string | undefined; compact?: boolean; panelHeader?: PanelHeader }) {
   const { t } = useTranslation();
   const ticket = useTicket(ticketKey);
+  // Small screens stack the details under the content too: there is no room for them beside it.
+  const narrow = useCompact();
+  const compact = inPanel || narrow;
 
   if (ticket.isPending || ticket.isError) {
     const state = ticket.isPending ? (
@@ -98,6 +102,7 @@ export function TicketContent({ ticketKey, compact, panelHeader }: { ticketKey: 
 const DETAILS_WIDTH = { min: 320, max: 560, initial: 360 };
 
 function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?: boolean; panelHeader?: PanelHeader }) {
+  const narrow = useCompact();
   const { t, i18n } = useTranslation();
   const toMessage = useErrorMessage();
   const toast = useToast();
@@ -327,8 +332,8 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
                         <td className="w-full pr-3" style={{ maxWidth: 0 }}>
                           <span className="flex"><QuickTitle ticket={child} canEdit={canEdit} /></span>
                         </td>
-                        <td className="whitespace-nowrap pr-3"><QuickAssignee ticket={child} canEdit={canEdit} people={people} showName /></td>
-                        <td className="whitespace-nowrap pr-12"><QuickStatus ticket={child} canEdit={canEdit} people={people} /></td>
+                        <td className="whitespace-nowrap pr-3"><QuickAssignee ticket={child} canEdit={canEdit} people={people} showName={!narrow} /></td>
+                        <td className="whitespace-nowrap pr-3 md:pr-12"><QuickStatus ticket={child} canEdit={canEdit} people={people} /></td>
                       </Box>
                     ))}
                   </tbody>
@@ -981,7 +986,7 @@ function StickyHeader({ panel, children }: { panel?: PanelHeader; children: Reac
 
   return (
     <Box
-      className="sticky top-0 -mx-6 flex flex-col gap-4 px-6 pb-3 pt-6"
+      className="sticky top-0 -mx-4 flex flex-col gap-4 px-4 pb-3 pt-6 sm:-mx-6 sm:px-6"
       sx={{
         zIndex: 2,
         // Clear until something scrolls under it; then the panel's own background, frosted, hides what passes beneath.

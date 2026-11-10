@@ -7,13 +7,13 @@ export interface SearchInputProps extends Omit<InputBaseProps, 'startAdornment'>
   width?: number | string;
 }
 
-export function SearchInput({ label, width = 200, ...props }: SearchInputProps) {
+export function SearchInput({ label, width = 200, sx, ...props }: SearchInputProps) {
   return (
     <InputBase
       placeholder={label}
       inputProps={{ 'aria-label': label }}
       startAdornment={<SearchIcon size={16} strokeWidth={1.5} aria-hidden style={{ flexShrink: 0 }} />}
-      sx={{
+      sx={[{
         width,
         height: size.control,
         gap: 2,
@@ -23,7 +23,7 @@ export function SearchInput({ label, width = 200, ...props }: SearchInputProps) 
         color: sem('text-primary'),
         '& input::placeholder': { color: sem('text-tertiary'), opacity: 1 },
         '&.Mui-focused': { outline: `2px solid ${sem('border-focus')}` },
-      }}
+      }, ...(Array.isArray(sx) ? sx : [sx])]}
       {...props}
     />
   );

@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AddIcon, DeleteIcon, EditIcon } from '../../components/icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { SideNav } from '../../layout/ShellNav';
 import { Link, useNavigate, useParams } from 'react-router';
 import { apiClient, unwrap } from '../../api';
 import { Badge } from '../../components/Badge';
@@ -77,8 +78,11 @@ export function AssistantPage() {
   }
 
   return (
-    <div className="-m-8 flex h-[calc(100%+4rem)] min-h-0">
-      <aside className="flex w-72 shrink-0 flex-col gap-2 overflow-y-auto p-4" style={{ borderRight: `1px solid ${sem('border-default')}` }}>
+    <div className="-m-4 flex h-[calc(100%+2rem)] min-h-0 md:-m-8 md:h-[calc(100%+4rem)]">
+      {/* The conversation list sits beside the chat on wide screens and in the menu drawer on small ones. */}
+      <SideNav label={t('assistant.conversations')}>
+      {(inDrawer) => (
+      <aside className={`flex shrink-0 flex-col gap-2 overflow-y-auto p-4 ${inDrawer ? '' : 'w-72'}`} style={inDrawer ? undefined : { borderRight: `1px solid ${sem('border-default')}` }}>
         <div className="flex items-center gap-2">
           <Typography variant="h2" component="h1" className="flex-1">{t('assistant.title')}</Typography>
           <Button kind="secondary" startIcon={<AddIcon size={16} strokeWidth={1.5} aria-hidden />} onClick={() => void navigate('/assistant')}>
@@ -117,6 +121,8 @@ export function AssistantPage() {
           ))}
         </nav>
       </aside>
+      )}
+      </SideNav>
       <section className="flex min-w-0 flex-1 flex-col" aria-label={selected?.title || t('assistant.new')}>
         {selected?.ticketKey && (
           <div className="px-4 py-2" style={{ borderBottom: `1px solid ${sem('border-default')}` }}>

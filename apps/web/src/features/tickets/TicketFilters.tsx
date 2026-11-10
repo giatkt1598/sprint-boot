@@ -9,6 +9,8 @@ import { Button } from '../../components/Button';
 import { Checkbox } from '../../components/Checkbox';
 import { DatePicker } from '../../components/DatePicker';
 import { Popover } from '../../components/Popover';
+import { Sheet } from '../../components/Sheet';
+import { useCompact } from '../../lib/responsive';
 import { font, radius, sem } from '../../theme/tokens';
 import { useMembers } from '../spaces/api';
 import { useEpics, useTicketTypes, useLabels, usePriorities, useStatuses } from './api';
@@ -278,6 +280,7 @@ export function FilterControls({ filters, onChange }: { filters: TicketFilters; 
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null);
   const [active, setActive] = useState<ValueFilter | DateFilter>('assignee');
+  const compact = useCompact();
 
   const toggle = (filter: ValueFilter, value: string) => {
     filters.toggle(filter, value);
@@ -293,7 +296,8 @@ export function FilterControls({ filters, onChange }: { filters: TicketFilters; 
 
   return (
     <>
-      <div className="flex items-center gap-1">
+      {/* Small screens pick people in the filter sheet: a row of faces leaves no room for anything else. */}
+      <div className="flex items-center gap-1 max-md:hidden">
         {visible.map((user) => {
           const selected = values.assignee.includes(user.id!);
           return (
@@ -333,13 +337,15 @@ export function FilterControls({ filters, onChange }: { filters: TicketFilters; 
       <Button kind="secondary" startIcon={<FilterIcon size={16} strokeWidth={1.5} aria-hidden />} onClick={(event) => setAnchor(event.currentTarget)}>
         {chips.length ? t('tickets.filterCount', { count: chips.length }) : t('tickets.filter')}
       </Button>
-      <Popover width={508} open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}>
-        <div className="flex gap-2">
-          <div className="flex shrink-0 flex-col gap-1" style={{ width: 160 }}>
+      <Sheet title={t('tickets.filter')} width={508} anchor={anchor} onClose={() => setAnchor(null)}>
+        {/* On a sheet the filters run across the top and their values fill the width below. */}
+        <div className={compact ? 'flex flex-col gap-3' : 'flex gap-2'}>
+          <div className={compact ? 'flex shrink-0 gap-1 overflow-x-auto pb-1' : 'flex shrink-0 flex-col gap-1'} style={compact ? undefined : { width: 160 }}>
             {tabs.map((filter) => (
               <ButtonBase
                 key={filter}
-                className="h-8 px-2"
+                aria-pressed={active === filter}
+                className={compact ? 'h-9 shrink-0 px-3' : 'h-8 px-2'}
                 onClick={() => setActive(filter)}
                 sx={{
                   justifyContent: 'flex-start',
@@ -381,7 +387,7 @@ export function FilterControls({ filters, onChange }: { filters: TicketFilters; 
             )}
           </div>
         </div>
-      </Popover>
+      </Sheet>
     </>
   );
 }

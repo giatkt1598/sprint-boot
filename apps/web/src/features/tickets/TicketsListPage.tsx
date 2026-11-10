@@ -1,3 +1,4 @@
+import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
@@ -6,13 +7,17 @@ import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useParams } from 'react-router';
 import { apiClient, unwrap } from '../../api';
 import { Avatar } from '../../components/Avatar';
+import { ArrowDownIcon, ArrowUpIcon } from '../../components/icons';
 import { Badge } from '../../components/Badge';
 import { TicketTypeIcon, type TicketType as IconType } from '../../components/TicketIcons';
 import { Pagination } from '../../components/Pagination';
 import { SearchInput } from '../../components/SearchInput';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
-import { Table, useTableSort } from '../../components/Table';
+import { Table, useTableSort, type TableSort } from '../../components/Table';
+import { SelectField } from '../../components/TextField';
 import { formatDate } from '../../lib/format';
+import { useCompact } from '../../lib/responsive';
+import { font, radius, sem } from '../../theme/tokens';
 import { useBacklog } from '../agile/api';
 import { useMembers, useSpace } from '../spaces/api';
 import { FilterChips, FilterControls, useTicketFilters, useSearchText } from './TicketFilters';
@@ -52,7 +57,8 @@ export function TicketsListPage() {
 
   const [text, setText] = useSearchText();
   const [skip, setSkip] = useState(0);
-  const { sort, toggle } = useTableSort();
+  const { sort, toggle, set: setSort } = useTableSort();
+  const compact = useCompact();
   const sorting = sort ? `${sort.key} ${sort.direction}` : undefined;
 
   const search = useQuery({
@@ -91,11 +97,20 @@ export function TicketsListPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <Typography variant="h1" className="flex-1">{t(spaceKey ? 'tickets.title' : 'tickets.searchResults')}</Typography>
+      <div className="flex flex-wrap items-center gap-2">
+        <Typography variant="h1" className="flex-1 max-sm:basis-full">{t(spaceKey ? 'tickets.title' : 'tickets.searchResults')}</Typography>
         {spaceKey && <FilterControls filters={filters} onChange={() => setSkip(0)} />}
-        <SearchInput label={t('tickets.search')} value={text} onChange={(event) => { setText(event.target.value); setSkip(0); }} />
+        <SearchInput label={t('tickets.search')} value={text} onChange={(event) => { setText(event.target.value); setSkip(0); }} sx={{ flex: { xs: '1 1 140px', md: '0 0 auto' } }} />
       </div>
+      {compact && (
+        <SortControl
+          sort={sort}
+          onChange={(key, direction) => {
+            setSort(key, direction);
+            setSkip(0);
+          }}
+        />
+      )}
 
       <FilterChips filters={filters} onClear={() => setSkip(0)} />
 
@@ -106,76 +121,150 @@ export function TicketsListPage() {
       )}
       {search.data && (search.data.totalCount ?? 0) > 0 && (
         <>
-          <Table<TicketSummary>
-            label={t('tickets.title')}
-            rows={search.data.items ?? []}
-            rowKey={(ticket) => ticket.id!}
-            nowrap
-            sort={sort}
-            onSort={(key) => {
-              toggle(key);
-              setSkip(0);
-            }}
-            columns={[
-              {
-                key: 'key', sortable: true,
-                header: t('tickets.key'),
-                render: (ticket) => (
-                  <span className="flex items-center gap-2">
-                    <TicketTypeIcon type={ticket.type?.icon as IconType} />
-                    <Link component={RouterLink} to={`/browse/${ticket.key}`} color="inherit">{ticket.key}</Link>
-                  </span>
-                ),
-              },
-              {
-                key: 'title', sortable: true,
-                header: t('tickets.titleField'),
-                render: (ticket) => (
-                  <Link component={RouterLink} to={`/browse/${ticket.key}`} color="inherit" title={ticket.title ?? undefined} className="block truncate" sx={{ maxWidth: TITLE_MAX }}>
-                    {ticket.title}
-                  </Link>
-                ),
-              },
-              { key: 'status', sortable: true, header: t('tickets.status'), render: (ticket) => <QuickStatus ticket={ticket} canEdit={canEdit} people={people} /> },
-              { key: 'priority', sortable: true, header: t('tickets.priority'), render: (ticket) => <QuickPriority ticket={ticket} canEdit={canEdit} /> },
-              {
-                key: 'assignee', sortable: true,
-                header: t('tickets.assignee'),
-                render: (ticket) => <QuickAssignee ticket={ticket} canEdit={canEdit} people={people} showName />,
-              },
-              {
-                key: 'reporter', sortable: true,
-                header: t('tickets.reporter'),
-                render: (ticket) =>
-                  ticket.reporter && (
+          {compact ? <TicketCards tickets={search.data.items ?? []} canEdit={canEdit} people={people} /> : (
+            <Table<TicketSummary>
+              label={t('tickets.title')}
+              rows={search.data.items ?? []}
+              rowKey={(ticket) => ticket.id!}
+              nowrap
+              sort={sort}
+              onSort={(key) => {
+                toggle(key);
+                setSkip(0);
+              }}
+              columns={[
+                {
+                  key: 'key', sortable: true,
+                  header: t('tickets.key'),
+                  render: (ticket) => (
                     <span className="flex items-center gap-2">
-                      <span className="flex shrink-0"><Avatar name={ticket.reporter.name ?? ''} src={ticket.reporter.avatarUrl} /></span>
-                      <span title={ticket.reporter.name ?? undefined} className="truncate" style={{ maxWidth: PERSON_MAX }}>{ticket.reporter.name}</span>
+                      <TicketTypeIcon type={ticket.type?.icon as IconType} />
+                      <Link component={RouterLink} to={`/browse/${ticket.key}`} color="inherit">{ticket.key}</Link>
                     </span>
                   ),
-              },
-              {
-                key: 'epic',
-                header: t('tickets.epic'),
-                render: (ticket) =>
-                  ticket.epicTitle && (
-                    <span title={ticket.epicTitle} className="block truncate" style={{ maxWidth: PERSON_MAX }}>
-                      <Badge tone="epic">{ticket.epicTitle}</Badge>
-                    </span>
+                },
+                {
+                  key: 'title', sortable: true,
+                  header: t('tickets.titleField'),
+                  render: (ticket) => (
+                    <Link component={RouterLink} to={`/browse/${ticket.key}`} color="inherit" title={ticket.title ?? undefined} className="block truncate" sx={{ maxWidth: TITLE_MAX }}>
+                      {ticket.title}
+                    </Link>
                   ),
-              },
-              {
-                key: 'sprint', sortable: true,
-                header: t('agile.sprint'),
-                render: (ticket) => <span title={ticket.sprintName ?? undefined} className="block truncate" style={{ maxWidth: PERSON_MAX }}>{ticket.sprintName}</span>,
-              },
-              { key: 'created', sortable: true, header: t('tickets.createdAt'), render: (ticket) => formatDate(ticket.createdAt, i18n.language) },
-              { key: 'updated', sortable: true, header: t('tickets.updatedAt'), render: (ticket) => formatDate(ticket.updatedAt, i18n.language) },
-            ]}
-          />
+                },
+                { key: 'status', sortable: true, header: t('tickets.status'), render: (ticket) => <QuickStatus ticket={ticket} canEdit={canEdit} people={people} /> },
+                { key: 'priority', sortable: true, header: t('tickets.priority'), render: (ticket) => <QuickPriority ticket={ticket} canEdit={canEdit} /> },
+                {
+                  key: 'assignee', sortable: true,
+                  header: t('tickets.assignee'),
+                  render: (ticket) => <QuickAssignee ticket={ticket} canEdit={canEdit} people={people} showName />,
+                },
+                {
+                  key: 'reporter', sortable: true,
+                  header: t('tickets.reporter'),
+                  render: (ticket) =>
+                    ticket.reporter && (
+                      <span className="flex items-center gap-2">
+                        <span className="flex shrink-0"><Avatar name={ticket.reporter.name ?? ''} src={ticket.reporter.avatarUrl} /></span>
+                        <span title={ticket.reporter.name ?? undefined} className="truncate" style={{ maxWidth: PERSON_MAX }}>{ticket.reporter.name}</span>
+                      </span>
+                    ),
+                },
+                {
+                  key: 'epic',
+                  header: t('tickets.epic'),
+                  render: (ticket) =>
+                    ticket.epicTitle && (
+                      <span title={ticket.epicTitle} className="block truncate" style={{ maxWidth: PERSON_MAX }}>
+                        <Badge tone="epic">{ticket.epicTitle}</Badge>
+                      </span>
+                    ),
+                },
+                {
+                  key: 'sprint', sortable: true,
+                  header: t('agile.sprint'),
+                  render: (ticket) => <span title={ticket.sprintName ?? undefined} className="block truncate" style={{ maxWidth: PERSON_MAX }}>{ticket.sprintName}</span>,
+                },
+                { key: 'created', sortable: true, header: t('tickets.createdAt'), render: (ticket) => formatDate(ticket.createdAt, i18n.language) },
+                { key: 'updated', sortable: true, header: t('tickets.updatedAt'), render: (ticket) => formatDate(ticket.updatedAt, i18n.language) },
+              ]}
+            />
+          )}
           <Pagination skip={skip} pageSize={PAGE_SIZE} total={search.data.totalCount ?? 0} onChange={setSkip} />
         </>
       )}
     </div>
+  );
+}
+
+const SORTABLE = ['key', 'title', 'status', 'priority', 'assignee', 'reporter', 'sprint', 'created', 'updated'] as const;
+const SORT_LABELS: Record<(typeof SORTABLE)[number], string> = {
+  key: 'tickets.key',
+  title: 'tickets.titleField',
+  status: 'tickets.status',
+  priority: 'tickets.priority',
+  assignee: 'tickets.assignee',
+  reporter: 'tickets.reporter',
+  sprint: 'agile.sprint',
+  created: 'tickets.createdAt',
+  updated: 'tickets.updatedAt',
+};
+
+/** The column headers sort on wide screens; cards have none, so a select and a direction button do it. */
+function SortControl({ sort, onChange }: { sort: TableSort | null; onChange: (key: string, direction: 'asc' | 'desc') => void }) {
+  const { t } = useTranslation();
+  const direction = sort?.direction ?? 'asc';
+  const DirectionIcon = direction === 'asc' ? ArrowUpIcon : ArrowDownIcon;
+
+  return (
+    <div className="flex items-end gap-1">
+      <div className="min-w-0 flex-1">
+        <SelectField
+          label={t('tickets.sortBy')}
+          value={sort?.key ?? ''}
+          displayEmpty
+          options={[{ value: '', label: t('tickets.defaultOrder') }, ...SORTABLE.map((key) => ({ value: key, label: t(SORT_LABELS[key]) }))]}
+          onChange={(event) => onChange(String(event.target.value), direction)}
+        />
+      </div>
+      <IconButton
+        aria-label={t(direction === 'asc' ? 'tickets.sortAscending' : 'tickets.sortDescending')}
+        disabled={!sort}
+        onClick={() => sort && onChange(sort.key, direction === 'asc' ? 'desc' : 'asc')}
+      >
+        <DirectionIcon size={20} strokeWidth={1.5} aria-hidden />
+      </IconButton>
+    </div>
+  );
+}
+
+/** Tickets as cards on small screens, where the table's ten columns cannot fit. */
+function TicketCards({ tickets, canEdit, people }: { tickets: TicketSummary[]; canEdit: boolean; people: Parameters<typeof QuickAssignee>[0]['people'] }) {
+  const { t, i18n } = useTranslation();
+
+  return (
+    <ul aria-label={t('tickets.title')} className="m-0 flex list-none flex-col gap-2 p-0">
+      {tickets.map((ticket) => (
+        <li
+          key={ticket.id}
+          className="sb-card flex flex-col gap-2 p-3"
+          style={{ backgroundColor: 'var(--sb-card-bg)', border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}
+        >
+          <div className="flex items-center gap-2" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>
+            <TicketTypeIcon type={ticket.type?.icon as IconType} />
+            <span className="flex-1">{ticket.key}</span>
+            <QuickStatus ticket={ticket} canEdit={canEdit} people={people} />
+          </div>
+          <Link component={RouterLink} to={`/browse/${ticket.key}`} color="inherit" className="line-clamp-2" sx={{ fontSize: font.size.md, overflowWrap: 'anywhere' }}>
+            {ticket.title}
+          </Link>
+          <div className="flex min-w-0 items-center gap-2" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>
+            <QuickPriority ticket={ticket} canEdit={canEdit} />
+            <span className="min-w-0 flex-1 overflow-hidden"><QuickAssignee ticket={ticket} canEdit={canEdit} people={people} showName /></span>
+            <span className="shrink-0">{formatDate(ticket.updatedAt, i18n.language)}</span>
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }

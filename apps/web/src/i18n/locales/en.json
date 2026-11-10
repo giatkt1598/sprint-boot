@@ -66,7 +66,8 @@
     "previousMonth": "Previous month",
     "nextMonth": "Next month",
     "clearDate": "Clear date",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "done": "Done"
   },
   "ticket": {
     "status": {
@@ -585,7 +586,11 @@
     "resizeSidebar": "Resize ticket details",
     "uploadingPercent": "Uploading {{name}}… {{percent}}%",
     "uploadFailed": "{{name}} was not uploaded: {{message}}",
-    "reactedYou": "You"
+    "reactedYou": "You",
+    "sortBy": "Sort by",
+    "defaultOrder": "Default order",
+    "sortAscending": "Ascending, switch to descending",
+    "sortDescending": "Descending, switch to ascending"
   },
   "workflows": {
     "title": "Workflows",
@@ -1228,7 +1233,8 @@
     "restoreTitle": "Restore version {{version}}?",
     "restoreBody": "It replaces the current draft. The published version stays live until you publish.",
     "versionSummary": "{{statuses}} statuses, {{transitions}} transitions",
-    "reorder": "Reorder {{name}}"
+    "reorder": "Reorder {{name}}",
+    "viewOnly": "Editing a workflow needs a larger screen. Here you can look at it only."
   },
   "email": {
     "title": "Email",

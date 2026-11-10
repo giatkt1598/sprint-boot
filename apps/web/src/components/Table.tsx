@@ -40,40 +40,43 @@ const SortIcon = (props: { className?: string }) => <ArrowDownIcon size={14} str
 export function Table<Row>({ label, columns, rows, rowKey, nowrap, sort, onSort }: TableProps<Row>) {
   const cell = nowrap ? { whiteSpace: 'nowrap' } : undefined;
   return (
-    <MuiTable aria-label={label} size="small">
-      <TableHead>
-        <TableRow>
-          {columns.map((column) => {
-            const active = sort?.key === column.key;
-            return (
-              <TableCell key={column.key} sx={cell} sortDirection={active ? sort.direction : false}>
-                {column.sortable && onSort ? (
-                  <TableSortLabel
-                    active={active}
-                    direction={active ? sort.direction : 'asc'}
-                    onClick={() => onSort(column.key)}
-                    IconComponent={SortIcon}
-                  >
-                    {column.header}
-                  </TableSortLabel>
-                ) : (
-                  column.header
-                )}
-              </TableCell>
-            );
-          })}
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {rows.map((row) => (
-          <TableRow key={rowKey(row)} sx={{ '&:hover': { backgroundColor: sem('bg-hover') } }}>
-            {columns.map((column) => (
-              <TableCell key={column.key} sx={cell}>{column.render(row)}</TableCell>
-            ))}
+    // A table wider than the screen scrolls inside this box instead of pushing the page sideways.
+    <div className="max-w-full overflow-x-auto">
+      <MuiTable aria-label={label} size="small">
+        <TableHead>
+          <TableRow>
+            {columns.map((column) => {
+              const active = sort?.key === column.key;
+              return (
+                <TableCell key={column.key} sx={cell} sortDirection={active ? sort.direction : false}>
+                  {column.sortable && onSort ? (
+                    <TableSortLabel
+                      active={active}
+                      direction={active ? sort.direction : 'asc'}
+                      onClick={() => onSort(column.key)}
+                      IconComponent={SortIcon}
+                    >
+                      {column.header}
+                    </TableSortLabel>
+                  ) : (
+                    column.header
+                  )}
+                </TableCell>
+              );
+            })}
           </TableRow>
-        ))}
-      </TableBody>
-    </MuiTable>
+        </TableHead>
+        <TableBody>
+          {rows.map((row) => (
+            <TableRow key={rowKey(row)} sx={{ '&:hover': { backgroundColor: sem('bg-hover') } }}>
+              {columns.map((column) => (
+                <TableCell key={column.key} sx={cell}>{column.render(row)}</TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </MuiTable>
+    </div>
   );
 }
 
@@ -101,7 +104,22 @@ export function useTableSort() {
     [setParams],
   );
 
-  return { sort, toggle };
+  /** Sorts by a column in a given direction, for controls other than the header, such as a select on small screens. */
+  const set = useCallback(
+    (next: string, nextDirection: SortDirection) =>
+      setParams(
+        (previous) => {
+          const updated = new URLSearchParams(previous);
+          updated.set('sort', next);
+          updated.set('dir', nextDirection);
+          return updated;
+        },
+        { replace: true },
+      ),
+    [setParams],
+  );
+
+  return { sort, toggle, set };
 }
 
 /** Compares values for a client-side sort: text by locale, empty values always last. */

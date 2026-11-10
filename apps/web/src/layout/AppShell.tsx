@@ -16,7 +16,7 @@ export function AppShell() {
 
   return (
     <ShellNavProvider>
-      <div className="flex h-screen flex-col">
+      <div className="flex h-dvh flex-col">
         <TopBar />
         <div className="flex min-h-0 flex-1">
           {!wide && <Sidebar />}
@@ -33,7 +33,7 @@ export function AppShell() {
 export function BareShell() {
   return (
     <ShellNavProvider>
-      <div className="flex h-screen flex-col">
+      <div className="flex h-dvh flex-col">
         <TopBar />
         <div className="flex min-h-0 flex-1">
           <Outlet />

@@ -1,12 +1,9 @@
 import Drawer from '@mui/material/Drawer';
-import useMediaQuery from '@mui/material/useMediaQuery';
-import type { Theme } from '@mui/material/styles';
 import { createContext, useContext, useEffect, useMemo, useState, type MouseEvent, type ReactNode } from 'react';
 import { useLocation } from 'react-router';
+import { useCompact } from '../lib/responsive';
 import { sem, size } from '../theme/tokens';
 
-/** Below md the layout is for phones and tablets: the side menus become drawers. */
-export const useCompact = () => useMediaQuery((theme: Theme) => theme.breakpoints.down('md'), { noSsr: true });
 
 interface ShellNavState {
   /** A side menu is on the page, so the top bar offers a button to open it. */

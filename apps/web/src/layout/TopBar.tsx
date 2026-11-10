@@ -16,7 +16,8 @@ import { QuickSearch } from '../features/tickets/QuickSearch';
 import { RecentsMenu } from '../features/tickets/RecentsMenu';
 import { NotificationBell } from '../features/notifications/NotificationBell';
 import { font, sem, size } from '../theme/tokens';
-import { useCompact, useShellNav } from './ShellNav';
+import { useCompact } from '../lib/responsive';
+import { useShellNav } from './ShellNav';
 
 export function TopBar() {
   const { t } = useTranslation();
@@ -35,7 +36,7 @@ export function TopBar() {
 
   return (
     <header
-      className="sb-surface flex shrink-0 items-center gap-2 px-3 md:gap-4 md:px-6"
+      className="sb-surface flex shrink-0 items-center gap-1 px-2 sm:gap-2 sm:px-3 md:gap-4 md:px-6"
       style={{
         height: size.topBar,
         backgroundColor: 'var(--sb-chrome-bg)',
@@ -48,9 +49,10 @@ export function TopBar() {
           <MenuIcon size={20} strokeWidth={1.5} aria-hidden />
         </IconButton>
       )}
+      {/* On phones the menu button takes the logo's place: a touch screen has room for one or the other. */}
       <Link
         to="/"
-        className="flex shrink-0 items-center gap-3"
+        className={`${compact && nav.available ? 'hidden sm:flex' : 'flex'} shrink-0 items-center gap-3`}
         aria-label={compact ? t('app.name') : undefined}
         style={{ fontSize: font.size.md, fontWeight: font.weight.semibold, color: sem('text-primary'), textDecoration: 'none' }}
       >

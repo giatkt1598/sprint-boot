@@ -28,7 +28,7 @@ export function TicketPanel({ ticketKey, onClose }: { ticketKey: string | null; 
         backdrop: { invisible: true },
         // No top padding: the sticky header brings its own, so it pins flush to the top while the rest scrolls.
         paper: {
-          sx: { width: 640, maxWidth: '100%', paddingX: 3, paddingBottom: 3, boxShadow: shadow.drawer },
+          sx: { width: 640, maxWidth: '100%', paddingX: { xs: 2, sm: 3 }, paddingBottom: 3, boxShadow: shadow.drawer },
           onScroll: (event: React.UIEvent<HTMLDivElement>) => setScrolled(event.currentTarget.scrollTop > 0),
         },
       }}

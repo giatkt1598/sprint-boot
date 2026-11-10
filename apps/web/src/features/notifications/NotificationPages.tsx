@@ -51,8 +51,8 @@ export function NotificationsPage() {
 
   return (
     <div className="flex max-w-3xl flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <Typography variant="h1" className="flex-1">{t('topBar.notifications')}</Typography>
+      <div className="flex flex-wrap items-center gap-2">
+        <Typography variant="h1" className="flex-1 max-sm:basis-full">{t('topBar.notifications')}</Typography>
         <Toggle label={t('notifications.unreadOnly')} checked={unreadOnly} onChange={(event) => { setUnreadOnly(event.target.checked); setSkip(0); }} />
         <Button kind="secondary" onClick={() => markAll.mutate()}>{t('notifications.markAll')}</Button>
       </div>
