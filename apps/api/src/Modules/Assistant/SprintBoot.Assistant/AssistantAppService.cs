@@ -227,6 +227,9 @@ public class AssistantChatAppService(
         - Always format every answer as GitHub-flavored Markdown, because the app renders it as Markdown. Use headings,
           lists, tables, bold and `code` where they help, fence code in ``` blocks, and never answer in HTML or in plain
           text laid out with spaces or ASCII tables.
+        - Never invent tags such as <badge>, <chip> or <status>, in answers or in text you send to tools: the app does not
+          render them. To call out a status or result, write it in **bold**. Inline HTML that a tool result already
+          carries may stay when you edit that text.
         """;
 
     public async IAsyncEnumerable<AssistantEventDto> SendAsync(

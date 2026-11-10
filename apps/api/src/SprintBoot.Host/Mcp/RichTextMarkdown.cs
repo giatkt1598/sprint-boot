@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using AngleSharp.Dom;
+using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
 using Markdig;
 using Markdig.Extensions.CustomContainers;
@@ -99,8 +100,21 @@ public static partial class RichTextMarkdown
             }
         }
 
+        UnwrapUnknownTags(body);
         RemoveLayoutWhitespace(body);
         return body.InnerHtml;
+    }
+
+    /// <summary>
+    /// Models sometimes invent tags such as &lt;badge&gt;. The sanitizer would drop them with their text, so they give way
+    /// to their content instead.
+    /// </summary>
+    private static void UnwrapUnknownTags(IElement root)
+    {
+        foreach (var element in root.QuerySelectorAll("*").OfType<IHtmlUnknownElement>().Reverse().ToList())
+        {
+            element.Replace([.. element.ChildNodes]);
+        }
     }
 
     public static string ToMarkdown(string? html)

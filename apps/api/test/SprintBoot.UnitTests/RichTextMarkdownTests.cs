@@ -33,6 +33,16 @@ public class RichTextMarkdownTests
     }
 
     [Fact]
+    public void Invented_tags_keep_their_text()
+    {
+        var html = Clean(Html("<badge color=\"success\">Comment **added**</badge>\n\nNext <script>alert(1)</script>"));
+
+        html.ShouldContain("<p>Comment <strong>added</strong></p>");
+        html.ShouldNotContain("badge");
+        html.ShouldNotContain("alert");
+    }
+
+    [Fact]
     public void Task_lists_take_the_editor_shape()
     {
         var html = Html("- [x] done\n- [ ] todo");
