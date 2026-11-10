@@ -117,6 +117,39 @@ public static partial class RichTextMarkdown
         }
     }
 
+    /// <summary>
+    /// Turns the HTML blocks of an assistant answer into the text they show. Models sometimes lay an answer out with
+    /// divs and svg icons; kept as HTML, the Markdown inside would stay literal and the indentation would show as gaps.
+    /// Mirrored by flattenHtmlBlocks in apps/web/src/features/assistant/streaming.ts.
+    /// </summary>
+    public static string FlattenHtmlBlocks(string markdown)
+    {
+        markdown = markdown.Replace("\r\n", "\n");
+        // Indented markup inside such a layout parses as indented code: it is part of the same layout.
+        var blocks = Markdown.Parse(markdown, Pipeline)
+            .Where(block => block is HtmlBlock
+                || (block is CodeBlock and not FencedCodeBlock && AnyTag().IsMatch(markdown[block.Span.Start..Math.Min(block.Span.End + 1, markdown.Length)])))
+            .Reverse()
+            .ToList();
+        foreach (var block in blocks)
+        {
+            var end = Math.Min(block.Span.End + 1, markdown.Length);
+            markdown = markdown[..block.Span.Start] + "\n" + HtmlText(markdown[block.Span.Start..end]) + "\n" + markdown[end..];
+        }
+
+        return markdown;
+    }
+
+    /// <summary>Lines come out trimmed, so indentation cannot turn into code blocks; runs of blank lines become one.</summary>
+    private static string HtmlText(string html)
+    {
+        var text = HiddenElements().Replace(html, string.Empty);
+        text = LineBreakTags().Replace(text, "\n");
+        text = AnyTag().Replace(text, string.Empty);
+        text = string.Join('\n', text.Split('\n').Select(line => line.Trim()));
+        return ExtraBlankLines().Replace(text, "\n\n").Trim('\n');
+    }
+
     public static string ToMarkdown(string? html)
     {
         if (string.IsNullOrWhiteSpace(html))
@@ -553,6 +586,18 @@ public static partial class RichTextMarkdown
 
         return longest;
     }
+
+    [GeneratedRegex(@"<!--[\s\S]*?(-->|$)|<(script|style|svg|template)\b[\s\S]*?(</\2\s*>|$)", RegexOptions.IgnoreCase)]
+    private static partial Regex HiddenElements();
+
+    [GeneratedRegex(@"<br\s*/?>|</(p|div|li|tr|h[1-6]|section|article|header|footer)\s*>", RegexOptions.IgnoreCase)]
+    private static partial Regex LineBreakTags();
+
+    [GeneratedRegex(@"</?[A-Za-z][^<>]*>")]
+    private static partial Regex AnyTag();
+
+    [GeneratedRegex(@"\n{3,}")]
+    private static partial Regex ExtraBlankLines();
 
     [GeneratedRegex(@"[ \t\r\n]+")]
     private static partial Regex Whitespace();

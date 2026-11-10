@@ -43,6 +43,22 @@ public class RichTextMarkdownTests
     }
 
     [Fact]
+    public void Answer_html_layouts_become_their_text()
+    {
+        const string answer = "Picture it:\n\n<div class=\"stack\">\n  <div>\n\n**AI MODEL**\n\n  </div>\n  <div class=\"chips\">\n"
+            + "    <span><svg viewBox=\"0 0 24 24\"><path d=\"M0 0\"/></svg>\n    Jira\n  </span>\n\n\n    <span>Git</span>\n  </div>\n</div>\n\n"
+            + "```\n<div>kept</div>\n\n\nin code\n```";
+
+        var html = Clean(Html(RichTextMarkdown.FlattenHtmlBlocks(answer)));
+
+        html.ShouldContain("<strong>AI MODEL</strong>");
+        html.ShouldContain("<p>Jira</p><p>Git</p>");
+        html.ShouldNotContain("<div");
+        html.ShouldNotContain("svg");
+        html.ShouldContain("&lt;div&gt;kept&lt;/div&gt;\n\n\nin code");
+    }
+
+    [Fact]
     public void Task_lists_take_the_editor_shape()
     {
         var html = Html("- [x] done\n- [ ] todo");

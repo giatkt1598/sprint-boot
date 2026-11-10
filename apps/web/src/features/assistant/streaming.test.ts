@@ -49,6 +49,19 @@ describe('renderStreamingMarkdown', () => {
     );
   });
 
+  it('renders an html layout as its text, as the server does', () => {
+    const answer =
+      'Picture it:\n\n<div class="stack">\n  <div>\n\n**AI MODEL**\n\n  </div>\n  <div class="chips">\n' +
+      '    <span><svg viewBox="0 0 24 24"><path d="M0 0"/></svg>\n    Jira\n  </span>\n\n\n    <span>Git</span>\n  </div>\n</div>\n\n' +
+      '```\n<div>kept</div>\n```';
+    const html = renderStreamingMarkdown(answer);
+    expect(html).toContain('<strong>AI MODEL</strong>');
+    expect(html).toContain('<p>Jira</p><p>Git</p>');
+    expect(html).not.toContain('<div');
+    expect(html).not.toContain('svg');
+    expect(html).toContain('&lt;div&gt;kept&lt;/div&gt;');
+  });
+
   it('strips scripts and event handlers from model output', () => {
     const html = renderStreamingMarkdown('Hi <script>alert(1)</script><img src=x onerror="alert(1)">');
     expect(html).not.toContain('<script');

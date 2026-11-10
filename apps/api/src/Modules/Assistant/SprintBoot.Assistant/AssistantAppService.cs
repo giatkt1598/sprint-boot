@@ -226,7 +226,8 @@ public class AssistantChatAppService(
         - Answer in the language the person writes in, and keep answers short.
         - Always format every answer as GitHub-flavored Markdown, because the app renders it as Markdown. Use headings,
           lists, tables, bold and `code` where they help, fence code in ``` blocks, and never answer in HTML or in plain
-          text laid out with spaces or ASCII tables.
+          text laid out with spaces or ASCII tables. Never use <div>, <span>, <svg> or inline styles to lay out a
+          diagram, cards or icons: show layers and flows as a numbered or nested list, or as a table.
         - Never invent tags such as <badge>, <chip> or <status>, in answers or in text you send to tools: the app does not
           render them. To call out a status or result, write it in **bold**. Inline HTML that a tool result already
           carries may stay when you edit that text.

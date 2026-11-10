@@ -1,5 +1,5 @@
 import DOMPurify from 'dompurify';
-import { marked } from 'marked';
+import { marked, type Token } from 'marked';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const prefersReducedMotion = () =>
@@ -53,9 +53,38 @@ export interface RevealMark {
   at: number;
 }
 
+/** The text an HTML block shows: trimmed lines, so indentation cannot turn into code blocks, and one blank line at most. */
+function htmlText(html: string): string {
+  const text = html
+    .replace(/<!--[\s\S]*?(-->|$)|<(script|style|svg|template)\b[\s\S]*?(<\/\2\s*>|$)/gi, '')
+    .replace(/<br\s*\/?>|<\/(p|div|li|tr|h[1-6]|section|article|header|footer)\s*>/gi, '\n')
+    .replace(/<\/?[A-Za-z][^<>]*>/g, '');
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/^\n+|\n+$/g, '');
+}
+
+/**
+ * Turns the HTML blocks of an answer into the text they show, as RichTextMarkdown.FlattenHtmlBlocks does on the server:
+ * a layout of divs and svg icons would otherwise keep its Markdown literal and show its indentation as gaps.
+ */
+export function flattenHtmlBlocks(text: string): string {
+  // Indented markup inside such a layout lexes as indented code: it is part of the same layout.
+  const layout = (token: Token) =>
+    token.type === 'html' || (token.type === 'code' && token.codeBlockStyle === 'indented' && /<\/?[A-Za-z][^<>]*>/.test(token.raw));
+  const tokens = marked.lexer(text, { gfm: true, breaks: true });
+  if (!tokens.some(layout)) {
+    return text;
+  }
+  return tokens.map((token) => (layout(token) ? `\n${htmlText(token.raw)}\n\n` : token.raw)).join('');
+}
+
 /** The answer so far as safe DOM, rendered like the server renders the finished one (GFM, single newlines break). */
 function markdownFragment(text: string): DocumentFragment {
-  const html = text.trim() ? marked.parse(closeOpenMarkdown(text), { gfm: true, breaks: true, async: false }) : '';
+  const html = text.trim() ? marked.parse(flattenHtmlBlocks(closeOpenMarkdown(text)), { gfm: true, breaks: true, async: false }) : '';
   // Model output: never trusted as HTML.
   const root = DOMPurify.sanitize(html, { RETURN_DOM_FRAGMENT: true });
   removeLayoutWhitespace(root);
