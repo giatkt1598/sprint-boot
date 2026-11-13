@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SprintBoot.Agile;
+using SprintBoot.DocsIntegration;
 using SprintBoot.GitIntegration;
 using SprintBoot.Identity;
 using SprintBoot.Tickets;
@@ -58,6 +59,10 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
     public DbSet<TicketGitLink> TicketGitLinks { get; set; } = null!;
     public DbSet<CiStatus> CiStatuses { get; set; } = null!;
     public DbSet<GitWebhookDelivery> GitWebhookDeliveries { get; set; } = null!;
+
+    public DbSet<DocsConnection> DocsConnections { get; set; } = null!;
+    public DbSet<ProjectDocsSpace> ProjectDocsSpaces { get; set; } = null!;
+    public DbSet<TicketDocLink> TicketDocLinks { get; set; } = null!;
 
     public DbSet<SystemPingReceipt> SystemPingReceipts { get; set; } = null!;
 
@@ -150,6 +155,7 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
         builder.ConfigureAgile();
         builder.ConfigureNotifications();
         builder.ConfigureGitIntegration();
+        builder.ConfigureDocsIntegration();
         builder.ConfigureAssistant();
     }
 }

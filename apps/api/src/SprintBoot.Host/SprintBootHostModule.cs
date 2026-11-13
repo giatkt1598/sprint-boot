@@ -8,6 +8,7 @@ using Microsoft.OpenApi;
 using SprintBoot.Agile;
 using SprintBoot.EntityFrameworkCore;
 using SprintBoot.Identity;
+using SprintBoot.DocsIntegration;
 using SprintBoot.GitIntegration;
 using SprintBoot.Tickets;
 using SprintBoot.Assistant;
@@ -57,6 +58,7 @@ public class SprintBootHostModule : AbpModule
         typeof(AgileModule).Assembly,
         typeof(NotificationsModule).Assembly,
         typeof(GitIntegrationModule).Assembly,
+        typeof(DocsIntegrationModule).Assembly,
         typeof(AssistantModule).Assembly,
     ];
 

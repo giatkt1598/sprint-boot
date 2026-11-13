@@ -97,6 +97,7 @@ public sealed class ApiFixture : IAsyncLifetime
                 {
                     services.Replace(ServiceDescriptor.Transient<Volo.Abp.Emailing.IEmailSender, ScriptedEmailSender>());
                     services.AddHttpClient("git").ConfigurePrimaryHttpMessageHandler(() => FakeGitServer.Instance);
+                    services.AddHttpClient("docmost").ConfigurePrimaryHttpMessageHandler(() => FakeDocmostServer.Instance);
                     services.AddHttpClient("assistant").ConfigurePrimaryHttpMessageHandler(() => FakeAiServer.Instance);
                 });
             });

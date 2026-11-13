@@ -19,4 +19,7 @@ public static class SprintBootPermissions
 
     /// <summary>Delete archived spaces, and restore them from the trash.</summary>
     public const string DeleteProjects = Group + ".Projects.Delete";
+
+    /// <summary>Connect Sprint Boot to Docmost.</summary>
+    public const string ManageDocs = Group + ".Docs.Manage";
 }
