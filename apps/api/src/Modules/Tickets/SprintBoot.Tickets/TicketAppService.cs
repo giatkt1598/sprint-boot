@@ -108,6 +108,10 @@ public partial class TicketAppService(
                 Mentioned = RichTextSanitizer.Mentions(ticket.Description),
             },
             useOutbox: true);
+        if (RichTextSanitizer.HasDocMention(ticket.Description))
+        {
+            await eventBus.PublishAsync(new TicketTextChangedEto { TicketId = ticket.Id, ProjectId = ticket.ProjectId }, useOutbox: true);
+        }
 
         return await mapper.ToDtoAsync(ticket);
     }
@@ -161,6 +165,12 @@ public partial class TicketAppService(
                     Mentioned = changed.Contains(TicketFieldKeys.Description) ? RichTextSanitizer.Mentions(ticket.Description) : [],
                 },
                 useOutbox: true);
+
+            // A chip may have been added or removed; the Docs module reads the text again either way.
+            if (changed.Contains(TicketFieldKeys.Description))
+            {
+                await eventBus.PublishAsync(new TicketTextChangedEto { TicketId = ticket.Id, ProjectId = ticket.ProjectId }, useOutbox: true);
+            }
         }
 
         return await mapper.ToDtoAsync(ticket);

@@ -246,117 +246,16 @@ public class DocsProjectAppService(
                 })
                 .ToList());
     }
-}
 
-[Authorize]
-public class DocsTicketAppService(
-    IRepository<TicketDocLink, Guid> links,
-    IRepository<ProjectDocsSpace, Guid> spaces,
-    DocsGateway gateway,
-    DocmostClient client,
-    IProjectAccess projectAccess,
-    ITicketPlanningGateway tickets,
-    IClock clock)
-    : ApplicationService, IDocsTicketAppService
-{
-    /// <summary>The provider name Docmost's Sprint Boot integration renders cards with.</summary>
-    public const string DocmostProvider = "sprint-boot";
-
-    public async Task<TicketDocsDto> GetListAsync(Guid ticketId)
+    public async Task<List<DocsPageHitDto>> GetSearchPagesAsync(Guid projectId, string? query)
     {
-        var projectId = await tickets.GetProjectIdAsync(ticketId);
-        await projectAccess.CheckAsync(projectId, ProjectPermissions.ViewTickets);
-        var canEdit = await projectAccess.IsGrantedAsync(projectId, ProjectPermissions.EditTickets);
-        var configured = await gateway.IsConfiguredAsync();
-        var rows = await links.GetListAsync(item => item.TicketId == ticketId);
-
-        return new TicketDocsDto
-        {
-            Configured = configured,
-            CanEdit = canEdit,
-            CanCreatePage = configured && canEdit && await spaces.AnyAsync(item => item.ProjectId == projectId),
-            Pages = [.. rows
-                .GroupBy(item => item.PageId)
-                .Select(group => group.OrderByDescending(item => item.Source).First())
-                .OrderByDescending(item => item.UpdatedAt)
-                .Select(ToDto)],
-        };
-    }
-
-    public async Task<TicketDocPageDto> LinkAsync(Guid ticketId, LinkDocPageInput input)
-    {
-        var projectId = await tickets.GetProjectIdAsync(ticketId);
-        await projectAccess.CheckAsync(projectId, ProjectPermissions.EditTickets);
-        var connection = await gateway.FindAsync() ?? throw new BusinessException(DocsErrors.NotConfigured);
-        var slugId = DocmostClient.SlugIdFromUrl(input.Url, connection.BaseUrl)
-            ?? throw new BusinessException(DocsErrors.InvalidPageUrl);
-
-        var found = await gateway.CallAsync((access, _) => client.FindPageAsync(access, slugId))
-            ?? throw new BusinessException(DocsErrors.PageNotFound);
-        var (page, space) = found;
-        if (await links.AnyAsync(item => item.TicketId == ticketId && item.PageId == page.Id && item.Source == DocLinkSource.Manual))
-        {
-            throw new BusinessException(DocsErrors.AlreadyLinked);
-        }
-
-        var link = await links.InsertAsync(new TicketDocLink(
-            GuidGenerator.Create(), ticketId, projectId, page.Id, DocLinkSource.Manual, page.Title,
-            DocmostClient.PageUrl(connection.BaseUrl, space.Slug, page.SlugId, page.Title), space.Name, clock.Now), autoSave: true);
-        return ToDto(link);
-    }
-
-    public async Task DeleteAsync(Guid id)
-    {
-        var link = await links.GetAsync(id);
-        await projectAccess.CheckAsync(link.ProjectId, ProjectPermissions.EditTickets);
-        if (link.Source == DocLinkSource.Mention)
-        {
-            throw new BusinessException(DocsErrors.MentionLink);
-        }
-
-        await links.DeleteAsync(link);
-    }
-
-    public async Task<TicketDocPageDto> CreatePageAsync(Guid ticketId)
-    {
-        var projectId = await tickets.GetProjectIdAsync(ticketId);
         await projectAccess.CheckAsync(projectId, ProjectPermissions.EditTickets);
         var space = await spaces.FirstOrDefaultAsync(item => item.ProjectId == projectId)
             ?? throw new BusinessException(DocsErrors.SpaceNotLinked);
-        var card = await tickets.FindCardAsync(ticketId) ?? throw new EntityNotFoundException(typeof(TicketDocLink), ticketId);
-
-        var title = $"{card.Key} {card.Title}";
-        var ticketUrl = gateway.TicketUrl(card.Key);
-        // Docmost renders the card through its Sprint Boot integration; without it, the card is still a plain link.
-        var content = new
-        {
-            type = "doc",
-            content = new object[]
-            {
-                new { type = "integrationCard", attrs = new { url = ticketUrl, provider = DocmostProvider } },
-                new { type = "paragraph" },
-            },
-        };
-
-        var (link, created) = await gateway.CallAsync(async (access, connection) =>
-        {
-            var page = await client.CreatePageAsync(access, space.DocmostSpaceId, title, content);
-            return (DocmostClient.PageUrl(connection.BaseUrl, space.Slug, page.SlugId, page.Title), page);
-        });
-
-        var row = await links.InsertAsync(new TicketDocLink(
-            GuidGenerator.Create(), ticketId, projectId, created.Id, DocLinkSource.Manual, created.Title, link, space.Name, clock.Now), autoSave: true);
-        return ToDto(row);
+        return string.IsNullOrWhiteSpace(query)
+            ? []
+            : await gateway.CallAsync(async (access, connection) =>
+                DocsHits.From(await client.SearchPagesAsync(access, query.Trim(), space.DocmostSpaceId), connection, space.Slug, space.Name));
     }
-
-    private static TicketDocPageDto ToDto(TicketDocLink link) => new()
-    {
-        Id = link.Id,
-        PageId = link.PageId,
-        Title = link.Title,
-        Url = link.Url,
-        SpaceName = link.SpaceName,
-        Source = link.Source,
-        UpdatedAt = link.UpdatedAt,
-    };
 }
+

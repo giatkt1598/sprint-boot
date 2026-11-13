@@ -11,6 +11,7 @@ import { useErrorMessage } from '../../lib/errors';
 import { TextField } from '../../components/TextField';
 import { font, radius, sem, shadow } from '../../theme/tokens';
 import { uploadRichTextFile } from './api';
+import { resolveDocsPage, useDocsInfo } from '../docs/api';
 import { EditorMenus, EditorToolbar, normalizeUrl } from './RichTextMenus';
 import { createExtensions, type MentionUser, type PopupState, type SlashCommand } from './richTextExtensions';
 
@@ -145,9 +146,10 @@ export function RichTextEditor({ label, initialValue = '', people, autoFocus, sh
   // Parents rebuild `people` on every render. Rebuilding the editor with it wiped the text after each
   // keystroke, so the editor is created once and reads the latest values from here.
   const upload = useRef<(files: File[], at?: number) => void>(() => undefined);
-  const latest = useRef({ people, t, onChange, onEdit, projectId });
+  const docmostUrl = useDocsInfo().data?.docmostUrl ?? null;
+  const latest = useRef({ people, t, onChange, onEdit, projectId, docmostUrl });
   useLayoutEffect(() => {
-    latest.current = { people, t, onChange, onEdit, projectId };
+    latest.current = { people, t, onChange, onEdit, projectId, docmostUrl };
   });
 
   // A parent form re-renders on each commit, so typing hands over the text only in pauses and on blur.
@@ -197,6 +199,8 @@ export function RichTextEditor({ label, initialValue = '', people, autoFocus, sh
       commands: slashCommands,
       onMentionPopup: setMentionPopup,
       onSlashPopup: setSlashPopup,
+      docmostUrl: () => latest.current.docmostUrl,
+      resolveDoc: resolveDocsPage,
     }),
   );
 

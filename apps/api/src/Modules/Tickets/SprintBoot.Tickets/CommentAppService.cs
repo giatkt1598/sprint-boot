@@ -55,6 +55,7 @@ public class CommentAppService(
         var comment = new Comment(GuidGenerator.Create(), ticket.Id, input.ParentId, CurrentUser.GetId(), html, text);
         await comments.InsertAsync(comment, autoSave: true);
         await richTextFiles.SyncAsync(ticket.ProjectId, comment.Id, html);
+        await TextChangedAsync(ticket, html);
         await watcherStore.EnsureAsync(ticket.Id, CurrentUser.GetId());
         await eventBus.PublishAsync(
             new CommentAddedEto
@@ -82,9 +83,11 @@ public class CommentAppService(
         }
 
         var (html, text) = Clean(input.Body);
+        var before = comment.Body;
         comment.Edit(html, text, clock.Now);
         await comments.UpdateAsync(comment, autoSave: true);
         await richTextFiles.SyncAsync(ticket.ProjectId, comment.Id, html);
+        await TextChangedAsync(ticket, before, html);
         return (await ToDtosAsync([comment])).Single();
     }
 
@@ -102,7 +105,8 @@ public class CommentAppService(
         var replies = await comments.GetListAsync(reply => reply.ParentId == id);
         await richTextFiles.RemoveOwnedByAsync([id, .. replies.Select(reply => reply.Id)]);
         await comments.DeleteAsync(reply => reply.ParentId == id);
-        await comments.DeleteAsync(comment);
+        await comments.DeleteAsync(comment, autoSave: true);
+        await TextChangedAsync(ticket, [comment.Body, .. replies.Select(reply => reply.Body)]);
     }
 
     public async Task<CommentDto> ToggleReactionAsync(Guid id, ToggleReactionInput input)
@@ -140,6 +144,15 @@ public class CommentAppService(
     /// <summary>The same person reacting to the same comment with the same emoji always gives the same id, so taking it back and giving it again is one notification.</summary>
     private static Guid ReactionEventId(Guid commentId, Guid userId, string emoji) =>
         new(System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes($"reaction:{commentId}:{userId}:{emoji}")));
+
+    /// <summary>Only text that holds, or held, a chip for a Docmost page concerns the Docs module.</summary>
+    private async Task TextChangedAsync(Ticket ticket, params string?[] bodies)
+    {
+        if (bodies.Any(RichTextSanitizer.HasDocMention))
+        {
+            await eventBus.PublishAsync(new TicketTextChangedEto { TicketId = ticket.Id, ProjectId = ticket.ProjectId }, useOutbox: true);
+        }
+    }
 
     private (string Html, string Text) Clean(string body)
     {

@@ -57,6 +57,12 @@ public sealed class FakeDocmostServer : HttpMessageHandler
             "/api/pages/info" when body?["pageId"]?.GetValue<string>() is PageId or PageSlugId => Data(page),
             "/api/pages/info" => new HttpResponseMessage(HttpStatusCode.NotFound),
             "/api/pages/create" => Created(body!),
+            "/api/search" => Data(new
+            {
+                items = (body?["query"]?.GetValue<string>() ?? string.Empty).Contains("design", StringComparison.OrdinalIgnoreCase)
+                    ? new object[] { page }
+                    : [],
+            }),
             _ => new HttpResponseMessage(HttpStatusCode.NotFound),
         };
     }

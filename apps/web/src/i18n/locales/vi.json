@@ -1800,14 +1800,20 @@
     "docmostSpace": "Docmost space",
     "spaceLinked": "Đã lưu Docmost space",
     "unlinkSpace": "Bỏ liên kết",
-    "panelTitle": "Trang tài liệu",
-    "panelEmpty": "Chưa có trang nào. Nhắc tới ticket này trong Docmost, hoặc liên kết một trang.",
     "linkPage": "Liên kết trang",
-    "pageUrl": "Địa chỉ trang Docmost",
-    "createPage": "Tạo trang",
     "pageCreated": "Đã tạo trang trong Docmost",
-    "sourceMention": "Nhắc tới ticket này",
-    "sourceManual": "Đã liên kết",
-    "unlinkPage": "Bỏ liên kết {{title}}"
+    "unlinkPage": "Bỏ liên kết {{title}}",
+    "linkedTitle": "Tài liệu liên kết",
+    "linkedEmpty": "Chưa có tài liệu nào. Liên kết một trang Docmost, hoặc dán địa chỉ trang vào mô tả hay bình luận.",
+    "add": "Thêm",
+    "findPage": "Tìm trong Docmost hoặc dán địa chỉ trang",
+    "createDocument": "Tạo tài liệu",
+    "pageTitle": "Tiêu đề",
+    "parentPage": "Trang cha",
+    "underParent": "Trang sẽ nằm dưới {{title}}.",
+    "topLevel": "Để trống để đặt trang ở cấp gốc của Docmost space gắn với Space này.",
+    "mentionsTitle": "Được nhắc tới trong",
+    "mentionsHint": "Các trang Docmost có liên kết tới ticket này.",
+    "sourceText": "Liên kết từ nội dung ticket"
   }
 }

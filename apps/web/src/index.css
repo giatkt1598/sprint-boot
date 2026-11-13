@@ -494,3 +494,31 @@
 :root[data-theme='dark'] .rich-text mark[style*='rgb(220, 252, 231)'] { background-color: #194a35 !important; color: var(--sb-text-primary) !important; }
 :root[data-theme='dark'] .rich-text mark[style*='#DBEAFE' i],
 :root[data-theme='dark'] .rich-text mark[style*='rgb(219, 234, 254)'] { background-color: #1f3c70 !important; color: var(--sb-text-primary) !important; }
+
+/* A Docmost page as a chip, like a person's mention. */
+.rich-text a.doc-mention {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background-color: var(--sb-bg-subtle);
+  color: var(--sb-text-accent);
+  font-weight: 500;
+  text-decoration: none;
+  vertical-align: baseline;
+}
+
+.rich-text a.doc-mention::before {
+  content: '';
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z'/%3E%3Cpath d='M14 2v4a2 2 0 0 0 2 2h4'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z'/%3E%3Cpath d='M14 2v4a2 2 0 0 0 2 2h4'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.rich-text a.doc-mention:hover {
+  text-decoration: underline;
+}

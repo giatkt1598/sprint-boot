@@ -9,7 +9,7 @@ export type DocmostSpace = components['schemas']['DocmostSpaceDto'];
 
 /** As the API numbers DocsProblem and DocLinkSource. */
 export const DocsProblem = { none: 0, unauthorized: 1, unavailable: 2 } as const;
-export const DocLinkSource = { mention: 0, manual: 1 } as const;
+export const DocLinkSource = { mention: 0, manual: 1, text: 2 } as const;
 
 export const MANAGE_DOCS = 'SprintBoot.Docs.Manage';
 
@@ -20,6 +20,27 @@ export const docsKeys = {
   pages: (projectId: string, parentPageId?: string) => ['docs', 'project', projectId, 'pages', parentPageId ?? 'root'],
   ticket: (ticketId: string) => ['docs', 'ticket', ticketId],
 };
+
+/** Whether Docmost is connected and where; every signed-in person may read it, and it rarely changes. */
+export const useDocsInfo = () =>
+  useQuery({
+    queryKey: ['docs', 'info'],
+    staleTime: 10 * 60_000,
+    retry: false,
+    queryFn: () => unwrap(apiClient.GET('/api/v1/docs-page/info')),
+  });
+
+/** The page a Docmost address opens, for a chip; null when it is no page the connection can read. */
+export async function resolveDocsPage(url: string) {
+  try {
+    const page = await unwrap(apiClient.GET('/api/v1/docs-page/resolve', { params: { query: { url } } }));
+    return { pageId: page.pageId!, title: page.title ?? url, url: page.url ?? url };
+  } catch {
+    return null;
+  }
+}
+
+export type DocsPageHit = components['schemas']['DocsPageHitDto'];
 
 export const useDocsConnection = () =>
   useQuery({ queryKey: docsKeys.connection, queryFn: () => unwrap(apiClient.GET('/api/v1/docs-admin')) });
@@ -49,9 +70,10 @@ export const useDocsPages = (projectId: string, parentPageId: string | undefined
       unwrap(apiClient.GET('/api/v1/docs-project/pages', { params: { query: { projectId, parentPageId } } })),
   });
 
-export const useTicketDocs = (ticketId: string) =>
+export const useTicketDocs = (ticketId: string, refetchInterval?: number) =>
   useQuery({
     queryKey: docsKeys.ticket(ticketId),
+    refetchInterval,
     queryFn: () => unwrap(apiClient.GET('/api/v1/docs-ticket', { params: { query: { ticketId } } })),
   });
 
@@ -60,8 +82,8 @@ export function useTicketDocsActions(ticketId: string) {
   const refresh = () => queryClient.invalidateQueries({ queryKey: docsKeys.ticket(ticketId) });
   return {
     link: useMutation({
-      mutationFn: (url: string) =>
-        unwrap(apiClient.POST('/api/v1/docs-ticket/link/{ticketId}', { params: { path: { ticketId } }, body: { url } })),
+      mutationFn: (target: { url?: string; pageId?: string }) =>
+        unwrap(apiClient.POST('/api/v1/docs-ticket/link/{ticketId}', { params: { path: { ticketId } }, body: target })),
       onSuccess: refresh,
     }),
     unlink: useMutation({
@@ -69,7 +91,8 @@ export function useTicketDocsActions(ticketId: string) {
       onSuccess: refresh,
     }),
     createPage: useMutation({
-      mutationFn: () => unwrap(apiClient.POST('/api/v1/docs-ticket/page/{ticketId}', { params: { path: { ticketId } } })),
+      mutationFn: (input: { title?: string; parentPageId?: string }) =>
+        unwrap(apiClient.POST('/api/v1/docs-ticket/page/{ticketId}', { params: { path: { ticketId } }, body: input })),
       onSuccess: refresh,
     }),
   };

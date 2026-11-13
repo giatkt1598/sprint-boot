@@ -28,6 +28,9 @@ public enum DocLinkSource
 
     /// <summary>Someone linked the page from the ticket, or created it from there.</summary>
     Manual = 1,
+
+    /// <summary>The ticket's description or a comment holds a chip for the page; saving the text keeps it current.</summary>
+    Text = 2,
 }
 
 public class DocsConnectionDto
@@ -145,15 +148,64 @@ public class TicketDocsDto
 
     public required bool CanEdit { get; set; }
 
-    /// <summary>One row per page: a page both mentioned and linked shows as linked.</summary>
-    public required List<TicketDocPageDto> Pages { get; set; }
+    /// <summary>Pages linked by hand or by a chip in the ticket's text; one row per page, a hand link wins.</summary>
+    public required List<TicketDocPageDto> Linked { get; set; }
+
+    /// <summary>Docmost pages that link to the ticket.</summary>
+    public required List<TicketDocPageDto> Mentions { get; set; }
 }
 
+/// <summary>A Docmost page found by title, to link or to create under.</summary>
+public class DocsPageHitDto
+{
+    public required string Id { get; set; }
+
+    public required string Title { get; set; }
+
+    public required string? SpaceName { get; set; }
+
+    public required string Url { get; set; }
+}
+
+public class CreateDocPageInput
+{
+    /// <summary>Blank uses the ticket's key and title.</summary>
+    [StringLength(255)]
+    public string? Title { get; set; }
+
+    /// <summary>A page of the space's Docmost space; none puts the page at its top.</summary>
+    [StringLength(64)]
+    public string? ParentPageId { get; set; }
+}
+
+/// <summary>What a chip for a Docmost page shows.</summary>
+public class DocsPageRefDto
+{
+    public required string PageId { get; set; }
+
+    public required string Title { get; set; }
+
+    public required string? SpaceName { get; set; }
+
+    public required string Url { get; set; }
+}
+
+/// <summary>For every signed-in person: whether Docmost is connected and where, so editors can recognize its links.</summary>
+public class DocsInfoDto
+{
+    public required bool Configured { get; set; }
+
+    public required string? DocmostUrl { get; set; }
+}
+
+/// <summary>A page picked from search, by id, or pasted, by address.</summary>
 public class LinkDocPageInput
 {
-    [Required]
     [StringLength(2048)]
-    public required string Url { get; set; }
+    public string? Url { get; set; }
+
+    [StringLength(64)]
+    public string? PageId { get; set; }
 }
 
 public interface IDocsAdminAppService : IApplicationService
@@ -182,20 +234,34 @@ public interface IDocsProjectAppService : IApplicationService
 
     /// <summary>One level of the linked space's page tree; no parent means its top pages.</summary>
     Task<List<DocsPageNodeDto>> GetPagesAsync(Guid projectId, string? parentPageId);
+
+    /// <summary>Pages of the linked Docmost space whose title matches, to pick a parent.</summary>
+    Task<List<DocsPageHitDto>> GetSearchPagesAsync(Guid projectId, string? query);
 }
 
 public interface IDocsTicketAppService : IApplicationService
 {
     Task<TicketDocsDto> GetListAsync(Guid ticketId);
 
-    /// <summary>Links a page by its Docmost address.</summary>
+    /// <summary>Links a page picked from search or pasted by its Docmost address.</summary>
     Task<TicketDocPageDto> LinkAsync(Guid ticketId, LinkDocPageInput input);
+
+    /// <summary>Pages of every Docmost space the connection can read whose title matches.</summary>
+    Task<List<DocsPageHitDto>> GetSearchPagesAsync(Guid ticketId, string? query);
 
     /// <summary>Removes a link made by hand; links from mentions follow the page.</summary>
     Task DeleteAsync(Guid id);
 
     /// <summary>Creates a page for the ticket in the linked Docmost space, with a card that links back.</summary>
-    Task<TicketDocPageDto> CreatePageAsync(Guid ticketId);
+    Task<TicketDocPageDto> CreatePageAsync(Guid ticketId, CreateDocPageInput input);
+}
+
+public interface IDocsPageAppService : IApplicationService
+{
+    Task<DocsInfoDto> GetInfoAsync();
+
+    /// <summary>The page a Docmost address opens, for a chip; 404 when it is not one.</summary>
+    Task<DocsPageRefDto> GetResolveAsync(string url);
 }
 
 public static class DocsErrors

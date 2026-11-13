@@ -37,7 +37,7 @@ import { formatDateTime, formatRelative, formatSize } from '../../lib/format';
 import { font, hoverPane, radius, sem } from '../../theme/tokens';
 import { useMembers, useSpace } from '../spaces/api';
 import { ArchivedBanner } from '../spaces/SpaceLifecycle';
-import { DocsPagesPanel } from '../docs/DocsViews';
+import { LinkedDocuments } from '../docs/LinkedDocuments';
 import { TicketActivityPanel } from './TicketActivityPanel';
 import { QuickAssignee, QuickStatus, QuickTitle, TitleEditor } from './QuickFields';
 import { TransitionControl } from './TransitionControl';
@@ -354,6 +354,7 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
 
           <LinkedTickets ticket={ticket} canEdit={canEdit} />
 
+          <LinkedDocuments ticketId={ticket.id!} projectId={ticket.projectId!} defaultTitle={`${ticket.key} ${ticket.title}`} />
           <Attachments ticket={ticket} canEdit={canEdit} />
 
           <section className="flex flex-col gap-3">
@@ -468,7 +469,6 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
           )}
         </aside>
         <DevelopmentPanel ticketId={ticket.id!} label={`${ticket.key} ${ticket.title}`} canEdit={canEdit} />
-        <DocsPagesPanel ticketId={ticket.id!} />
         <div className="flex shrink-0 flex-col gap-2 px-3" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>
           <span title={formatDateTime(ticket.createdAt, i18n.language)}>{t('tickets.createdAt')} {formatRelative(ticket.createdAt, i18n.language)}</span>
           <span title={formatDateTime(ticket.updatedAt, i18n.language)}>{t('tickets.updatedAt')} {formatRelative(ticket.updatedAt, i18n.language)}</span>

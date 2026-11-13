@@ -16,6 +16,15 @@ public class TicketCreatedEto
     public Guid[] Mentioned { get; set; } = [];
 }
 
+/// <summary>The ticket's description or one of its comments changed, so the links written in them may have too.</summary>
+[EventName("SprintBoot.Tickets.TextChanged")]
+public class TicketTextChangedEto
+{
+    public Guid TicketId { get; set; }
+
+    public Guid ProjectId { get; set; }
+}
+
 [EventName("SprintBoot.Tickets.TicketUpdated")]
 public class TicketUpdatedEto
 {

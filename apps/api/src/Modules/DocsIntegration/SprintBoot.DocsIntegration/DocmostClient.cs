@@ -94,8 +94,32 @@ public partial class DocmostClient(IHttpClientFactory httpClients) : ITransientD
         return space is null ? null : (ToPage(data), space);
     }
 
-    public async Task<DocmostPage> CreatePageAsync(DocmostAccess access, string spaceId, string title, object content) =>
-        ToPage(await PostAsync(access, "pages/create", new { spaceId, title, content, format = "json" }));
+    public async Task<DocmostPage> CreatePageAsync(DocmostAccess access, string spaceId, string? parentPageId, string title, object content) =>
+        ToPage(await PostAsync(access, "pages/create", parentPageId is null
+            ? new { spaceId, title, content, format = "json" }
+            : (object)new { spaceId, parentPageId, title, content, format = "json" }));
+
+    /// <summary>Pages whose title matches, in the spaces the service user reads; one space when given.</summary>
+    public async Task<List<(DocmostPage Page, DocmostSpaceDto? Space)>> SearchPagesAsync(DocmostAccess access, string query, string? spaceId)
+    {
+        var data = await PostAsync(access, "search", spaceId is null
+            ? new { query, titleOnly = true, limit = 10 }
+            : (object)new { query, spaceId, titleOnly = true, limit = 10 });
+        // Keyword search answers {items: [...]}, hybrid search a bare list.
+        var items = data.ValueKind == JsonValueKind.Array ? data : data.TryGetProperty("items", out var list) ? list : default;
+        if (items.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        return [.. items.EnumerateArray().Select(item =>
+        {
+            var space = item.TryGetProperty("space", out var element) && element.ValueKind == JsonValueKind.Object
+                ? new DocmostSpaceDto { Id = Text(element, "id") ?? string.Empty, Name = Text(element, "name") ?? string.Empty, Slug = Text(element, "slug") ?? string.Empty }
+                : null;
+            return (ToPage(item), space);
+        })];
+    }
 
     /// <summary>Where a page opens: /s/{space}/p/{title-slug}-{slugId}, as Docmost builds it.</summary>
     public static string PageUrl(string baseUrl, string spaceSlug, string slugId, string title) =>

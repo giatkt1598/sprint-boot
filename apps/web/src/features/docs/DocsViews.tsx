@@ -8,24 +8,19 @@ import { Link as RouterLink, useOutletContext } from 'react-router';
 import { apiClient, unwrap } from '../../api';
 import { useCan } from '../../auth/AuthProvider';
 import { Button } from '../../components/Button';
-import { CollapseHeading } from '../../components/CollapseHeading';
-import { Dialog, DialogFooter } from '../../components/Dialog';
-import { ChevronDownIcon, ChevronRightIcon, CloseIcon, DocumentIcon } from '../../components/icons';
+import { ChevronDownIcon, ChevronRightIcon, DocumentIcon } from '../../components/icons';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
-import { SelectField, TextField } from '../../components/TextField';
+import { SelectField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { radius, sem } from '../../theme/tokens';
 import type { Space } from '../spaces/api';
 import {
-  DocLinkSource,
   docsKeys,
   MANAGE_DOCS,
   useDocmostSpaces,
   useDocsPages,
   useProjectDocs,
-  useTicketDocs,
-  useTicketDocsActions,
   type DocsPageNode,
 } from './api';
 
@@ -209,108 +204,5 @@ export function SpaceDocsPage() {
         </>
       )}
     </div>
-  );
-}
-
-function LinkPageDialog({ ticketId, onClose }: { ticketId: string; onClose: () => void }) {
-  const { t } = useTranslation();
-  const toMessage = useErrorMessage();
-  const { link } = useTicketDocsActions(ticketId);
-  const [url, setUrl] = useState('');
-
-  return (
-    <Dialog
-      open
-      title={t('docs.linkPage')}
-      onClose={onClose}
-      footer={
-        <DialogFooter
-          confirmLabel={t('docs.linkPage')}
-          confirmDisabled={!url.trim() || link.isPending}
-          onCancel={onClose}
-          onConfirm={() => link.mutate(url.trim(), { onSuccess: onClose })}
-        />
-      }
-    >
-      <TextField label={t('docs.pageUrl')} placeholder="https://docs.example.com/s/space/p/page-abc123" autoFocus value={url} onChange={(event) => setUrl(event.target.value)} />
-      {link.isError && <Typography role="alert" color="error" variant="body2">{toMessage(link.error)}</Typography>}
-    </Dialog>
-  );
-}
-
-/** Ticket sidebar: the Docmost pages that belong with the ticket, as Confluence pages show on a Jira issue. */
-export function DocsPagesPanel({ ticketId }: { ticketId: string }) {
-  const { t } = useTranslation();
-  const toast = useToast();
-  const toMessage = useErrorMessage();
-  const docs = useTicketDocs(ticketId);
-  const { unlink, createPage } = useTicketDocsActions(ticketId);
-  const [open, setOpen] = useState(true);
-  const [linking, setLinking] = useState(false);
-  const data = docs.data;
-
-  // No Docmost connection, or a failed read that must not disturb the ticket.
-  if (!data?.configured) {
-    return null;
-  }
-  const pages = data.pages ?? [];
-
-  return (
-    <section className="flex shrink-0 flex-col gap-1 p-3" style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card }}>
-      <div className="flex items-center justify-between gap-2 pb-1">
-        <CollapseHeading label={t('docs.panelTitle')} open={open} onToggle={() => setOpen(!open)} />
-        {data.canEdit && (
-          <span className="flex gap-3">
-            <MuiLink component="button" variant="body2" onClick={() => setLinking(true)}>{t('docs.linkPage')}</MuiLink>
-            {data.canCreatePage && (
-              <MuiLink
-                component="button"
-                variant="body2"
-                disabled={createPage.isPending}
-                onClick={() =>
-                  createPage.mutate(undefined, {
-                    onSuccess: (page) => {
-                      toast('success', t('docs.pageCreated'));
-                      window.open(page.url ?? '', '_blank', 'noopener,noreferrer');
-                    },
-                    onError: (failure) => toast('error', toMessage(failure)),
-                  })
-                }
-              >
-                {t('docs.createPage')}
-              </MuiLink>
-            )}
-          </span>
-        )}
-      </div>
-      {open && pages.length === 0 && <Typography variant="body2" color="textSecondary">{t('docs.panelEmpty')}</Typography>}
-      {open && pages.length > 0 && (
-        <ul className="m-0 flex list-none flex-col gap-1 p-0">
-          {pages.map((page) => (
-            <li key={page.id} className="flex min-h-8 items-center gap-2">
-              <DocumentIcon size={16} strokeWidth={1.5} aria-hidden className="shrink-0" />
-              <span className="flex min-w-0 flex-1 flex-col">
-                <PageLink url={page.url ?? ''} title={page.title ?? ''} />
-                <Typography variant="caption" color="textSecondary">
-                  {t(page.source === DocLinkSource.mention ? 'docs.sourceMention' : 'docs.sourceManual')}
-                  {page.spaceName ? ` · ${page.spaceName}` : ''}
-                </Typography>
-              </span>
-              {data.canEdit && page.source === DocLinkSource.manual && (
-                <IconButton
-                  size="small"
-                  aria-label={t('docs.unlinkPage', { title: page.title })}
-                  disabled={unlink.isPending}
-                  onClick={() => unlink.mutate(page.id!, { onError: (failure) => toast('error', toMessage(failure)) })}
-                >
-                  <CloseIcon size={16} strokeWidth={1.5} aria-hidden />
-                </IconButton>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-      {linking && <LinkPageDialog ticketId={ticketId} onClose={() => setLinking(false)} />}
-    </section>
   );
 }

@@ -33,6 +33,13 @@ public class RichTextMarkdownTests
     }
 
     [Fact]
+    public void A_chip_for_a_Docmost_page_reads_as_a_link()
+    {
+        RichTextMarkdown.ToMarkdown("<p>See <a data-type=\"doc-mention\" class=\"doc-mention\" data-page-id=\"p1\" href=\"https://docs.test/p/abc\">Spec</a></p>")
+            .ShouldContain("[Spec](https://docs.test/p/abc)");
+    }
+
+    [Fact]
     public void Invented_tags_keep_their_text()
     {
         var html = Clean(Html("<badge color=\"success\">Comment **added**</badge>\n\nNext <script>alert(1)</script>"));

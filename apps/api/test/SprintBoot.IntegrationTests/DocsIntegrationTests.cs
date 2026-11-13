@@ -134,28 +134,110 @@ public class DocsIntegrationTests(ApiFixture fixture)
 
         var link = await owner.Http.PostAsJsonAsync($"/api/v1/docs-ticket/link/{ticket.Id}", new { url = $"{FakeDocmostServer.BaseUrl}/s/{FakeDocmostServer.SpaceSlug}/p/design-notes-{FakeDocmostServer.PageSlugId}" }, Token);
         link.StatusCode.ShouldBe(HttpStatusCode.OK, await link.Content.ReadAsStringAsync(Token));
-        var page = (await PagesAsync(owner, ticket))!.Pages.ShouldHaveSingleItem();
+        var page = (await PagesAsync(owner, ticket))!.Linked.ShouldHaveSingleItem();
         page.Title.ShouldBe("Design notes");
         page.Source.ShouldBe(DocLinkSource.Manual);
 
         // Creating a page needs the space linked first.
-        var unlinked = await owner.Http.PostAsync($"/api/v1/docs-ticket/page/{ticket.Id}", null, Token);
+        var unlinked = await owner.Http.PostAsJsonAsync($"/api/v1/docs-ticket/page/{ticket.Id}", new { }, Token);
         (await CodeAsync(unlinked)).ShouldBe(DocsErrors.SpaceNotLinked);
         (await owner.Http.PostAsJsonAsync($"/api/v1/docs-project/link/{project.Id}", new { docmostSpaceId = FakeDocmostServer.SpaceId }, Token)).EnsureSuccessStatusCode();
 
-        var created = await owner.Http.PostAsync($"/api/v1/docs-ticket/page/{ticket.Id}", null, Token);
+        var created = await owner.Http.PostAsJsonAsync($"/api/v1/docs-ticket/page/{ticket.Id}", new { }, Token);
         created.StatusCode.ShouldBe(HttpStatusCode.OK, await created.Content.ReadAsStringAsync(Token));
         var sent = FakeDocmostServer.Instance.CreatedPages.Last();
         sent["title"]!.GetValue<string>().ShouldBe($"{ticket.Key} Login page");
         sent["spaceId"]!.GetValue<string>().ShouldBe(FakeDocmostServer.SpaceId);
+        sent["parentPageId"].ShouldBeNull();
         var card = sent["content"]!["content"]![0]!;
         card["type"]!.GetValue<string>().ShouldBe("integrationCard");
         card["attrs"]!["url"]!.GetValue<string>().ShouldEndWith($"/browse/{ticket.Key}");
         card["attrs"]!["provider"]!.GetValue<string>().ShouldBe("sprint-boot");
-        (await PagesAsync(owner, ticket))!.Pages.Count.ShouldBe(2);
+        (await PagesAsync(owner, ticket))!.Linked.Count.ShouldBe(2);
+
+        // A child page, with its own title, under a page picked from the space's search.
+        var parents = await owner.Http.GetFromJsonAsync<List<DocsPageHitDto>>($"/api/v1/docs-project/search-pages/{project.Id}?query=Design", Token);
+        var parent = parents!.ShouldHaveSingleItem();
+        (await owner.Http.PostAsJsonAsync($"/api/v1/docs-ticket/page/{ticket.Id}", new { title = "Login design", parentPageId = parent.Id }, Token)).EnsureSuccessStatusCode();
+        var child = FakeDocmostServer.Instance.CreatedPages.Last();
+        child["title"]!.GetValue<string>().ShouldBe("Login design");
+        child["parentPageId"]!.GetValue<string>().ShouldBe(FakeDocmostServer.PageId);
 
         (await owner.Http.DeleteAsync($"/api/v1/docs-ticket/{page.Id}", Token)).EnsureSuccessStatusCode();
-        (await PagesAsync(owner, ticket))!.Pages.ShouldHaveSingleItem();
+        (await PagesAsync(owner, ticket))!.Linked.Count.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task A_page_found_by_search_links_by_id()
+    {
+        await ConnectAsync(await AdminAsync());
+        var (owner, _, ticket) = await SpaceAsync();
+
+        var hits = await owner.Http.GetFromJsonAsync<List<DocsPageHitDto>>($"/api/v1/docs-ticket/search-pages/{ticket.Id}?query=design", Token);
+        var hit = hits!.ShouldHaveSingleItem();
+        hit.SpaceName.ShouldBe("Engineering");
+        hit.Url.ShouldEndWith($"/s/{FakeDocmostServer.SpaceSlug}/p/design-notes-{FakeDocmostServer.PageSlugId}");
+
+        (await owner.Http.PostAsJsonAsync($"/api/v1/docs-ticket/link/{ticket.Id}", new { pageId = hit.Id }, Token)).EnsureSuccessStatusCode();
+        (await PagesAsync(owner, ticket))!.Linked.ShouldHaveSingleItem().Title.ShouldBe("Design notes");
+    }
+
+    [Fact]
+    public async Task A_Docmost_address_resolves_for_a_chip()
+    {
+        await ConnectAsync(await AdminAsync());
+        var reader = await fixture.CreateUserClientAsync(Token);
+
+        var info = await reader.Http.GetFromJsonAsync<DocsInfoDto>("/api/v1/docs-page/info", Token);
+        info!.DocmostUrl.ShouldBe(FakeDocmostServer.BaseUrl);
+        var address = Uri.EscapeDataString($"{FakeDocmostServer.BaseUrl}/s/{FakeDocmostServer.SpaceSlug}/p/design-notes-{FakeDocmostServer.PageSlugId}");
+        var resolved = await reader.Http.GetFromJsonAsync<DocsPageRefDto>($"/api/v1/docs-page/resolve?url={address}", Token);
+        resolved!.PageId.ShouldBe(FakeDocmostServer.PageId);
+        resolved.Title.ShouldBe("Design notes");
+        (await reader.Http.GetAsync($"/api/v1/docs-page/resolve?url={Uri.EscapeDataString("http://elsewhere.fake/p/abc123")}", Token))
+            .StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Chips_in_the_description_and_comments_follow_the_text()
+    {
+        await ConnectAsync(await AdminAsync());
+        var (owner, _, ticket) = await SpaceAsync();
+        static string Chip(string pageId, string title) =>
+            $"<p>See <a data-type=\"doc-mention\" class=\"doc-mention\" data-page-id=\"{pageId}\" href=\"{FakeDocmostServer.BaseUrl}/p/{pageId}\">{title}</a></p>";
+
+        (await owner.Http.PutAsJsonAsync($"/api/v1/ticket/{ticket.Id}", new { concurrencyStamp = ticket.ConcurrencyStamp, fields = new { description = Chip("page-a", "Spec A") } }, Token))
+            .EnsureSuccessStatusCode();
+        var comment = await (await owner.Http.PostAsJsonAsync("/api/v1/comment", new { ticketId = ticket.Id, body = Chip("page-b", "Spec B") }, Token))
+            .Content.ReadFromJsonAsync<CommentDto>(Token);
+
+        var linked = await WaitForAsync(owner, ticket, docs => docs.Linked.Count == 2);
+        linked.Linked.ShouldAllBe(item => item.Source == DocLinkSource.Text);
+        linked.Linked.Select(item => item.Title).ShouldBe(["Spec A", "Spec B"], ignoreOrder: true);
+
+        // Taking the chip out of the comment takes its page out; the description's stays.
+        (await owner.Http.PutAsJsonAsync($"/api/v1/comment/{comment!.Id}", new { body = "<p>never mind</p>" }, Token)).EnsureSuccessStatusCode();
+        (await WaitForAsync(owner, ticket, docs => docs.Linked.Count == 1)).Linked.Single().Title.ShouldBe("Spec A");
+
+        // A chip cannot be unlinked by hand: it goes with its text.
+        var chipLink = (await PagesAsync(owner, ticket))!.Linked.Single();
+        (await CodeAsync(await owner.Http.DeleteAsync($"/api/v1/docs-ticket/{chipLink.Id}", Token))).ShouldBe(DocsErrors.MentionLink);
+    }
+
+    private static async Task<TicketDocsDto> WaitForAsync(AuthClient client, TicketDto ticket, Func<TicketDocsDto, bool> done)
+    {
+        for (var attempt = 0; attempt < 100; attempt++)
+        {
+            var docs = (await PagesAsync(client, ticket))!;
+            if (done(docs))
+            {
+                return docs;
+            }
+
+            await Task.Delay(200, Token);
+        }
+
+        throw new TimeoutException("The ticket's text links did not settle.");
     }
 
     [Fact]
@@ -171,17 +253,18 @@ public class DocsIntegrationTests(ApiFixture fixture)
 
         (await SaveAsync(new { pageId, title = "Spec", url = "http://docmost.fake/s/e/p/spec-1", keys = new[] { ticket.Key }, urls = new[] { $"http://sb/browse/{other.Key}" } }))
             .EnsureSuccessStatusCode();
-        (await PagesAsync(owner, ticket))!.Pages.ShouldHaveSingleItem().Source.ShouldBe(DocLinkSource.Mention);
-        (await PagesAsync(owner, other))!.Pages.ShouldHaveSingleItem();
+        (await PagesAsync(owner, ticket))!.Mentions.ShouldHaveSingleItem().Source.ShouldBe(DocLinkSource.Mention);
+        (await PagesAsync(owner, ticket))!.Linked.ShouldBeEmpty();
+        (await PagesAsync(owner, other))!.Mentions.ShouldHaveSingleItem();
 
         // The same save again changes nothing; dropping a mention drops its link, and the title follows the page.
         (await SaveAsync(new { pageId, title = "Spec", url = "http://docmost.fake/s/e/p/spec-1", keys = new[] { ticket.Key, other.Key } })).EnsureSuccessStatusCode();
         (await SaveAsync(new { pageId, title = "Spec v2", url = "http://docmost.fake/s/e/p/spec-v2-1", keys = new[] { ticket.Key } })).EnsureSuccessStatusCode();
-        (await PagesAsync(owner, ticket))!.Pages.ShouldHaveSingleItem().Title.ShouldBe("Spec v2");
-        (await PagesAsync(owner, other))!.Pages.ShouldBeEmpty();
+        (await PagesAsync(owner, ticket))!.Mentions.ShouldHaveSingleItem().Title.ShouldBe("Spec v2");
+        (await PagesAsync(owner, other))!.Mentions.ShouldBeEmpty();
 
         (await SaveAsync(new { pageId, deleted = true })).EnsureSuccessStatusCode();
-        (await PagesAsync(owner, ticket))!.Pages.ShouldBeEmpty();
+        (await PagesAsync(owner, ticket))!.Mentions.ShouldBeEmpty();
 
         (await Docmost("wrong-secret").PostAsJsonAsync("/api/v1/docs-bridge/page-links", new { pageId, keys = new[] { ticket.Key } }, Token))
             .StatusCode.ShouldBe(HttpStatusCode.Unauthorized);

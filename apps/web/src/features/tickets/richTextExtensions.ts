@@ -14,6 +14,7 @@ import { PluginKey } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
 import Suggestion, { type SuggestionKeyDownProps, type SuggestionProps } from '@tiptap/suggestion';
 import { common, createLowlight } from 'lowlight';
+import { DocMention, type DocRef } from './docMention';
 
 export interface MentionUser {
   id?: string;
@@ -174,6 +175,9 @@ export interface RichTextOptions {
   commands: () => SlashCommand[];
   onMentionPopup: (state: PopupState<MentionUser> | null) => void;
   onSlashPopup: (state: PopupState<SlashCommand> | null) => void;
+  /** Where Docmost is served from, so its page links become chips; null while Docmost is not connected. */
+  docmostUrl: () => string | null;
+  resolveDoc: (url: string) => Promise<DocRef | null>;
 }
 
 /** Everything reads live values through callbacks, so these extensions never need rebuilding. */
@@ -203,6 +207,7 @@ export function createExtensions(options: RichTextOptions) {
     Video,
     BlockMover,
     SlashMenu.configure({ commands: options.commands, onChange: options.onSlashPopup }),
+    DocMention.configure({ docmostUrl: options.docmostUrl, resolve: options.resolveDoc }),
     Mention.configure({
       HTMLAttributes: { class: 'mention' },
       suggestion: {

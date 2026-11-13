@@ -60,8 +60,12 @@ public partial class RichTextSanitizer : ISingletonDependency
         }
     }
 
-    [GeneratedRegex("^(mention|callout|language-[a-z0-9+#-]+)$")]
+    [GeneratedRegex("^(mention|doc-mention|callout|language-[a-z0-9+#-]+)$")]
     private static partial Regex AllowedClass();
+
+    /// <summary>True when the HTML holds a chip for a Docmost page, which the Docs module links to the ticket.</summary>
+    public static bool HasDocMention(string? html) =>
+        html?.Contains("data-type=\"doc-mention\"", StringComparison.Ordinal) == true;
 
     /// <summary>User ids of the mentions in already sanitized HTML.</summary>
     public static Guid[] Mentions(string html)
