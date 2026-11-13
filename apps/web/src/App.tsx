@@ -33,6 +33,8 @@ import { SpaceGuard } from './features/spaces/SpaceGuard';
 import { SpaceWorkflowsPage } from './features/spaces/SpaceWorkflowsPage';
 import { SpaceTicketTemplatesPage } from './features/spaces/TicketTemplatesPage';
 import { AssistantSettingsPage } from './features/admin/AssistantSettingsPage';
+import { DocsSettingsPage } from './features/docs/DocsSettingsPage';
+import { SpaceDocsPage } from './features/docs/DocsViews';
 import { AssistantPage } from './features/assistant/AssistantPage';
 import { AssistantHost } from './features/assistant/AssistantPanel';
 import { AppShell, BareShell } from './layout/AppShell';
@@ -85,6 +87,7 @@ export function App() {
                 <Route path="notification-schemes/:schemeId" element={<EditSchemePage />} />
                 <Route path="statuses" element={<StatusesPage />} />
                 <Route path="deleted-tickets" element={<DeletedTicketsPage />} />
+                <Route path="docmost" element={<DocsSettingsPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
               <Route path="spaces/:spaceKey/settings" element={<SpaceSettingsLayout />}>
@@ -96,6 +99,7 @@ export function App() {
                 <Route path="ticket-templates" element={<SpaceTicketTemplatesPage />} />
                 <Route path="git" element={<GitConnectionsPage />} />
                 <Route path="git/:connectionId" element={<GitRepositoriesPage />} />
+                <Route path="docs" element={<SpaceDocsPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
             </Route>

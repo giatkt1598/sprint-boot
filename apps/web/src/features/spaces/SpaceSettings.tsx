@@ -83,6 +83,7 @@ export function SpaceSettingsLayout() {
           <SettingsMenuItem to="workflows" label={t('workflows.title')} />
           <SettingsMenuItem to="ticket-templates" label={t('templates.title')} />
           {space.data.permissions?.includes(SpacePermission.manage) && <SettingsMenuItem to="git" label={t('git.title')} />}
+          <SettingsMenuItem to="docs" label={t('docs.spaceSettingsTitle')} />
         </>
       }
     />

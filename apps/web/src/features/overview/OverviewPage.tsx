@@ -1,11 +1,10 @@
 import Typography from '@mui/material/Typography';
-import { DocumentIcon } from '../../components/icons';
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router';
-import { Badge } from '../../components/Badge';
 import { LoadingState } from '../../components/StateViews';
 import { Tabs } from '../../components/Tabs';
-import { radius, sem } from '../../theme/tokens';
+import { sem } from '../../theme/tokens';
+import { DocsTab } from '../docs/DocsViews';
 import { useSpace } from '../spaces/api';
 import { GoalsTab } from './GoalsTab';
 import { IntroductionTab } from './IntroductionTab';
@@ -42,25 +41,10 @@ export function OverviewPage() {
           {tab === 'summary' && <SummaryTab space={space.data} />}
           {tab === 'introduction' && <IntroductionTab space={space.data} />}
           {tab === 'goals' && <GoalsTab space={space.data} />}
-          {tab === 'docs' && <DocsTab />}
+          {tab === 'docs' && <DocsTab space={space.data} />}
           {tab === 'timeline' && <TimelineTab space={space.data} />}
         </>
       )}
     </div>
-  );
-}
-
-function DocsTab() {
-  const { t } = useTranslation();
-
-  return (
-    <section className="flex min-h-[50vh] flex-col items-center justify-center gap-2 px-4 text-center">
-      <span aria-hidden className="mb-2 flex size-12 items-center justify-center" style={{ backgroundColor: sem('bg-subtle'), borderRadius: radius.card, color: sem('text-secondary') }}>
-        <DocumentIcon size={24} strokeWidth={1.5} />
-      </span>
-      <Badge tone="info">{t('overview.comingSoon')}</Badge>
-      <Typography variant="h2">{t('overview.docsTitle')}</Typography>
-      <Typography color="textSecondary" className="max-w-sm">{t('overview.docsDescription')}</Typography>
-    </section>
   );
 }
