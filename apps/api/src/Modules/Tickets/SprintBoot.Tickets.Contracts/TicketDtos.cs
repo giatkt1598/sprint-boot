@@ -195,6 +195,9 @@ public class TicketSearchInput : PagedResultRequestDto, ISortedResultRequest
 
     public string? Text { get; set; }
 
+    /// <summary>Leaves out tickets of archived spaces, for pickers that would change them.</summary>
+    public bool ExcludeArchived { get; set; }
+
     public Guid[]? TypeIds { get; set; }
 
     public Guid[]? StatusIds { get; set; }

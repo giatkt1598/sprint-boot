@@ -41,23 +41,27 @@ public class WatcherAppService(
 
     public async Task<WatchersDto> WatchAsync(Guid ticketId)
     {
-        await CheckAsync(ticketId);
+        await CheckAsync(ticketId, write: true);
         await store.EnsureAsync(ticketId, CurrentUser.GetId());
         return await ToDtoAsync(ticketId);
     }
 
     public async Task<WatchersDto> UnwatchAsync(Guid ticketId)
     {
-        await CheckAsync(ticketId);
+        await CheckAsync(ticketId, write: true);
         var userId = CurrentUser.GetId();
         await watchers.DeleteAsync(item => item.TicketId == ticketId && item.UserId == userId, autoSave: true);
         return await ToDtoAsync(ticketId);
     }
 
-    private async Task CheckAsync(Guid ticketId)
+    private async Task CheckAsync(Guid ticketId, bool write = false)
     {
         var ticket = await tickets.GetAsync(ticketId);
         await projectAccess.CheckAsync(ticket.ProjectId, ProjectPermissions.ViewTickets);
+        if (write)
+        {
+            await projectAccess.CheckWritableAsync(ticket.ProjectId);
+        }
     }
 
     private async Task<WatchersDto> ToDtoAsync(Guid ticketId)

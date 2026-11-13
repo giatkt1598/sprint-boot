@@ -17,15 +17,18 @@ public class LookupTools(
     ISprintAppService sprints,
     IUserDirectoryAppService users)
 {
-    [McpServerTool(Name = "list_spaces", ReadOnly = true), Description("Lists the spaces you can see, with their keys.")]
-    public Task<string> ListSpaces() => runner.ReadAsync(async () =>
-        (await projects.GetListAsync()).Select(space => new
+    [McpServerTool(Name = "list_spaces", ReadOnly = true), Description(
+        "Lists the spaces you can see, with their keys. Archived spaces are read-only and left out unless includeArchived is true.")]
+    public Task<string> ListSpaces(
+        [Description("Also list archived spaces, marked archived: true.")] bool includeArchived = false) => runner.ReadAsync(async () =>
+        (await projects.GetListAsync(includeArchived)).Select(space => new
         {
             space.Key,
             space.Name,
             Board = space.Type.ToString(),
             Lead = McpViews.Person(space.Lead),
             Tickets = space.TicketCount,
+            Archived = space.ArchivedAt is null ? (bool?)null : true,
         }));
 
     [McpServerTool(Name = "get_space_fields", ReadOnly = true), Description(

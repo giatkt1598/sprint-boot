@@ -47,7 +47,7 @@ function TicketKeyField({ label, value, onChange, excludeId }: { label: string; 
     queryKey: ['tickets', 'search', 'link-picker', search],
     enabled: search.length > 0,
     staleTime: 30_000,
-    queryFn: () => unwrap(apiClient.GET('/api/v1/ticket/search', { params: { query: { Text: search, MaxResultCount: MAX_SUGGESTIONS } } })),
+    queryFn: () => unwrap(apiClient.GET('/api/v1/ticket/search', { params: { query: { Text: search, MaxResultCount: MAX_SUGGESTIONS, ExcludeArchived: true } } })),
   });
   const options = (found.data?.items ?? []).filter((item) => item.id !== excludeId);
 

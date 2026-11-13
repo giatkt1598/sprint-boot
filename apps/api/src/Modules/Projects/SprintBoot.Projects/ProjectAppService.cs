@@ -4,6 +4,7 @@ using SprintBoot.Tickets;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Content;
+using Volo.Abp.Data;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.EventBus.Distributed;
@@ -28,12 +29,10 @@ public class ProjectAppService(
 {
     public Task<List<UserSpaceDto>> GetMySpacesAsync() => UserSpaces.LoadAsync(projects, members, CurrentUser.GetId());
 
-    public async Task<List<ProjectDto>> GetListAsync()
+    public async Task<List<ProjectDto>> GetListAsync(bool includeArchived = false)
     {
-        var visible = await access.GetVisibleProjectIdsAsync();
-        var list = visible is null
-            ? await projects.GetListAsync()
-            : await projects.GetListAsync(project => visible.Contains(project.Id));
+        var visible = await access.GetVisibleProjectIdsAsync(includeArchived);
+        var list = await projects.GetListAsync(project => visible.Contains(project.Id));
         return await ToDtosAsync(list.OrderBy(project => project.Name));
     }
 
@@ -52,9 +51,13 @@ public class ProjectAppService(
 
     public async Task<ProjectDto> CreateAsync(CreateProjectInput input)
     {
-        if (await projects.AnyAsync(project => project.Key == input.Key))
+        // A space in the trash still holds its key until it is purged.
+        using (DataFilter.Disable<ISoftDelete>())
         {
-            throw new BusinessException(ProjectErrors.KeyTaken).WithData("key", input.Key);
+            if (await projects.AnyAsync(project => project.Key == input.Key))
+            {
+                throw new BusinessException(ProjectErrors.KeyTaken).WithData("key", input.Key);
+            }
         }
 
         var creatorId = CurrentUser.GetId();
@@ -107,6 +110,82 @@ public class ProjectAppService(
         project.LeadId = input.LeadId;
         project.BranchNameTemplate = input.BranchNameTemplate;
         project.SprintLengthDays = input.SprintLengthDays ?? project.SprintLengthDays;
+        await projects.UpdateAsync(project, autoSave: true);
+        return (await ToDtosAsync([project])).Single();
+    }
+
+    public async Task<ProjectDto> ArchiveAsync(Guid id)
+    {
+        await access.CheckAsync(id, ProjectPermissions.Manage, ignoreArchive: true);
+        var project = await projects.GetAsync(id);
+        project.Archive(Clock.Now);
+        await projects.UpdateAsync(project, autoSave: true);
+        return (await ToDtosAsync([project])).Single();
+    }
+
+    public async Task<ProjectDto> RestoreAsync(Guid id)
+    {
+        await access.CheckAsync(id, ProjectPermissions.Manage, ignoreArchive: true);
+        var project = await projects.GetAsync(id);
+        project.Unarchive();
+        await projects.UpdateAsync(project, autoSave: true);
+        return (await ToDtosAsync([project])).Single();
+    }
+
+    [Authorize(SprintBootPermissions.DeleteProjects)]
+    public async Task DeleteAsync(Guid id, string confirmKey)
+    {
+        var project = await projects.GetAsync(id);
+        if (!project.IsArchived)
+        {
+            throw new BusinessException(ProjectErrors.NotArchived);
+        }
+
+        if (!string.Equals(confirmKey?.Trim(), project.Key, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new BusinessException(ProjectErrors.ConfirmKeyMismatch);
+        }
+
+        // Soft: the trash keeps every row until the purge job runs out the grace period.
+        await projects.DeleteAsync(project, autoSave: true);
+    }
+
+    [Authorize(SprintBootPermissions.DeleteProjects)]
+    public async Task<List<TrashedProjectDto>> GetTrashAsync()
+    {
+        List<Project> list;
+        using (DataFilter.Disable<ISoftDelete>())
+        {
+            list = await projects.GetListAsync(project => project.IsDeleted);
+        }
+
+        var retention = await ProjectPurger.RetentionAsync(SettingProvider);
+        var deleters = await userDirectory.GetByIdsAsync(list.Where(p => p.DeleterId.HasValue).Select(p => p.DeleterId!.Value));
+        return [.. list
+            .OrderByDescending(project => project.DeletionTime)
+            .Select(project => new TrashedProjectDto
+            {
+                Id = project.Id,
+                Key = project.Key,
+                Name = project.Name,
+                DeletedAt = project.DeletionTime ?? project.CreationTime,
+                DeletedBy = project.DeleterId is { } deleterId ? deleters.GetValueOrDefault(deleterId) : null,
+                PurgeAt = (project.DeletionTime ?? project.CreationTime) + retention,
+                LogoUrl = SpaceLogos.Url(project),
+            })];
+    }
+
+    [Authorize(SprintBootPermissions.DeleteProjects)]
+    public async Task<ProjectDto> RestoreDeletedAsync(Guid id)
+    {
+        Project project;
+        using (DataFilter.Disable<ISoftDelete>())
+        {
+            project = await projects.FirstOrDefaultAsync(item => item.Id == id && item.IsDeleted)
+                ?? throw new EntityNotFoundException(typeof(Project), id);
+        }
+
+        project.Undelete();
         await projects.UpdateAsync(project, autoSave: true);
         return (await ToDtosAsync([project])).Single();
     }
@@ -202,6 +281,7 @@ public class ProjectAppService(
         foreach (var project in items)
         {
             var stat = stats.GetValueOrDefault(project.Id);
+            var granted = await access.GetGrantedAsync(project.Id);
             result.Add(new ProjectDto
             {
                 Id = project.Id,
@@ -213,8 +293,11 @@ public class ProjectAppService(
                 Lead = project.LeadId is { } leadId ? leads.GetValueOrDefault(leadId) : null,
                 TicketCount = stat?.Count ?? 0,
                 UpdatedAt = stat?.UpdatedAt ?? project.LastModificationTime ?? project.CreationTime,
-                Permissions = [.. await access.GetPermissionsAsync(project.Id)],
+                // Archived spaces are read-only, so the UI hides every action but viewing.
+                Permissions = [.. project.IsArchived ? granted.Where(key => key == ProjectPermissions.ViewTickets) : granted],
                 LogoUrl = SpaceLogos.Url(project),
+                ArchivedAt = project.ArchivedAt,
+                CanArchive = granted.Contains(ProjectPermissions.Manage),
             });
         }
 

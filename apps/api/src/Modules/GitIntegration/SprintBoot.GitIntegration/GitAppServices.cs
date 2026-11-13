@@ -479,6 +479,9 @@ public class GitTicketAppService(
         var projectId = await tickets.GetProjectIdAsync(ticketId);
         await projects.CheckAsync(projectId, ProjectPermissions.ViewTickets);
 
+        // Git work stops for an archived space.
+        await projects.CheckWritableAsync(projectId);
+
         var usable = (await connections.GetListAsync(item => item.ProjectId == projectId && item.Status == GitConnectionStatus.Connected))
             .ToDictionary(item => item.Id);
         var ids = usable.Keys.ToList();

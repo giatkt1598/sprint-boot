@@ -51,6 +51,7 @@ public class WorkLogAppService(
         var log = await workLogs.GetAsync(id);
         var ticket = await tickets.GetAsync(log.TicketId);
         await projectAccess.CheckAsync(ticket.ProjectId, ProjectPermissions.ViewTickets);
+        await projectAccess.CheckWritableAsync(ticket.ProjectId);
         if (log.AuthorId != CurrentUser.GetId())
         {
             throw new AbpAuthorizationException("Only the author can edit a work log");
@@ -71,6 +72,7 @@ public class WorkLogAppService(
         var log = await workLogs.GetAsync(id);
         var ticket = await tickets.GetAsync(log.TicketId);
         await projectAccess.CheckAsync(ticket.ProjectId, ProjectPermissions.ViewTickets);
+        await projectAccess.CheckWritableAsync(ticket.ProjectId);
         if (log.AuthorId != CurrentUser.GetId()
             && !await projectAccess.IsGrantedAsync(ticket.ProjectId, ProjectPermissions.DeleteAnyWorkLog))
         {

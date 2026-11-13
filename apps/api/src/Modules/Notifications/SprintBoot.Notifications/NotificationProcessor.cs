@@ -37,6 +37,12 @@ public class NotificationProcessor(
 
     public async Task ProcessAsync(NotificationEvent item)
     {
+        // An archived space is quiet, and a deleted one has nobody left to tell.
+        if (!await projectAccess.IsActiveAsync(item.ProjectId))
+        {
+            return;
+        }
+
         var facts = item.TicketId is { } ticketId ? await ticketFacts.FindAsync(ticketId) : null;
         if (item.TicketId is not null && facts is null)
         {

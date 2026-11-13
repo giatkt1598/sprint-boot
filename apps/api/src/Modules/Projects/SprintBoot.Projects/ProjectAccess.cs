@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SprintBoot.Identity;
+using Volo.Abp;
 using Volo.Abp.Authorization;
 using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.DependencyInjection;
@@ -22,13 +23,25 @@ public class ProjectAccess(
     public async Task<bool> IsGrantedAsync(Guid projectId, string permission) =>
         (await GetPermissionsAsync(projectId)).Contains(permission);
 
-    public async Task CheckAsync(Guid projectId, string permission)
+    public Task CheckAsync(Guid projectId, string permission) => CheckAsync(projectId, permission, ignoreArchive: false);
+
+    /// <summary>
+    /// <paramref name="ignoreArchive"/> is for archiving itself: managing the archive must work on an archived space.
+    /// </summary>
+    public async Task CheckAsync(Guid projectId, string permission, bool ignoreArchive)
     {
-        var granted = await GetPermissionsAsync(projectId);
+        var project = await projects.FindAsync(projectId);
+        var granted = project is null ? [] : await GetGrantedAsync(projectId);
         if (!granted.Contains(ProjectPermissions.ViewTickets))
         {
             // Outsiders must not learn that the project exists.
             throw new EntityNotFoundException(typeof(Project), projectId);
+        }
+
+        // Every write checks a permission other than viewing, so this one rule keeps an archived space read-only.
+        if (project!.IsArchived && !ignoreArchive && permission != ProjectPermissions.ViewTickets)
+        {
+            throw new BusinessException(ProjectErrors.Archived).WithData("space", project.Key);
         }
 
         if (!granted.Contains(permission))
@@ -37,7 +50,23 @@ public class ProjectAccess(
         }
     }
 
+    /// <summary>What the caller may do now: viewing only while the project is archived, nothing once it is deleted.</summary>
     public async Task<HashSet<string>> GetPermissionsAsync(Guid projectId)
+    {
+        var project = await projects.FindAsync(projectId);
+        if (project is null)
+        {
+            return [];
+        }
+
+        var granted = await GetGrantedAsync(projectId);
+        return project.IsArchived
+            ? [.. granted.Where(key => key == ProjectPermissions.ViewTickets)]
+            : granted;
+    }
+
+    /// <summary>The keys the caller's role holds, whatever state the project is in.</summary>
+    public async Task<HashSet<string>> GetGrantedAsync(Guid projectId)
     {
         if (await IsSystemAdminAsync())
         {
@@ -65,17 +94,36 @@ public class ProjectAccess(
         return [.. keys.Select(item => item.PermissionKey)];
     }
 
-    public async Task<List<Guid>?> GetVisibleProjectIdsAsync()
+    public async Task<List<Guid>> GetVisibleProjectIdsAsync(bool includeArchived = true)
     {
-        if (await IsSystemAdminAsync())
+        var query = await projects.GetQueryableAsync();
+        if (!includeArchived)
         {
-            return null;
+            query = query.Where(project => project.ArchivedAt == null);
         }
 
-        var userId = currentUser.GetId();
-        var memberships = await members.GetListAsync(item => item.UserId == userId);
-        return [.. memberships.Select(item => item.ProjectId)];
+        if (!await IsSystemAdminAsync())
+        {
+            var userId = currentUser.GetId();
+            var memberOf = (await members.GetQueryableAsync()).Where(item => item.UserId == userId).Select(item => item.ProjectId);
+            query = query.Where(project => memberOf.Contains(project.Id));
+        }
+
+        return await query.Select(project => project.Id).ToListAsync();
     }
+
+    public async Task CheckWritableAsync(Guid projectId)
+    {
+        var project = await projects.GetAsync(projectId);
+        if (project.IsArchived)
+        {
+            throw new BusinessException(ProjectErrors.Archived).WithData("space", project.Key);
+        }
+    }
+
+    public async Task<bool> IsArchivedAsync(Guid projectId) => (await projects.GetAsync(projectId)).IsArchived;
+
+    public async Task<bool> IsActiveAsync(Guid projectId) => await projects.FindAsync(projectId) is { IsArchived: false };
 
     public async Task<string?> GetBranchTemplateAsync(Guid projectId) =>
         (await projects.GetAsync(projectId)).BranchNameTemplate;
@@ -142,5 +190,5 @@ public class ProjectAccess(
 
     private Task<bool> IsSystemAdminAsync() => permissionChecker.IsGrantedAsync(SprintBootPermissions.AccessAllProjects);
 
-    private static ProjectRef ToRef(Project project) => new(project.Id, project.Key, project.Name, project.DefaultBoardType);
+    private static ProjectRef ToRef(Project project) => new(project.Id, project.Key, project.Name, project.DefaultBoardType, project.IsArchived);
 }

@@ -179,6 +179,35 @@ public class GitIntegrationTests(ApiFixture fixture)
         development.Commits.Single().Sha.ShouldBe(sha);
     }
 
+    [Fact]
+    public async Task An_archived_space_takes_no_git_work_from_webhooks()
+    {
+        var (client, project, ticket) = await TicketAsync();
+        var harness = await ConnectAsync(client, project, GitProviderType.Gitea);
+        (await client.Http.PostAsync($"/api/v1/project/{project.Id}/archive", null, Token)).EnsureSuccessStatusCode();
+        var delivery = Guid.NewGuid().ToString();
+
+        (await SendAsync(harness, "push", Push("main", Guid.NewGuid().ToString("N"), $"{ticket.Key} while archived"), delivery)).EnsureSuccessStatusCode();
+
+        // The delivery is handled, and drops the work, rather than waiting for the space to come back.
+        for (var attempt = 0; ; attempt++)
+        {
+            using var scope = fixture.Factory.Services.CreateScope();
+            using var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true);
+            var stored = await scope.ServiceProvider.GetRequiredService<IRepository<GitWebhookDelivery, Guid>>().FirstOrDefaultAsync(item => item.DeliveryId == delivery);
+            if (stored?.ProcessedAt is not null)
+            {
+                break;
+            }
+
+            attempt.ShouldBeLessThan(100, "The webhook was not processed.");
+            await Task.Delay(200, Token);
+        }
+
+        (await DevelopmentAsync(client, ticket))!.Commits.ShouldBeEmpty();
+        (await client.Http.PostAsync($"/api/v1/git-ticket/refresh/{ticket.Id}", null, Token)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
     [Theory]
     [InlineData(GitProviderType.GitHub)]
     [InlineData(GitProviderType.Gitea)]

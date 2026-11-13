@@ -81,6 +81,8 @@ public class McpRunner(IHttpContextAccessor http, IUnitOfWorkManager unitOfWork)
     public static string? Describe(Exception exception) => exception switch
     {
         McpException mcp => mcp.Message,
+        BusinessException { Code: SprintBoot.Projects.ProjectErrors.Archived } archived =>
+            $"The space {archived.Data["space"]} is archived, so it is read-only. Someone who manages it can restore it in its settings.",
         AbpValidationException validation => "Invalid input: " + string.Join("; ", validation.ValidationErrors.Select(error => error.ErrorMessage)),
         BusinessException business => (business.Code ?? "The request was refused.") + Details(business.Data),
         EntityNotFoundException => "Not found.",

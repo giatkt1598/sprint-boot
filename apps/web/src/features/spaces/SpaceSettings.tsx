@@ -24,6 +24,7 @@ import { font, radius, sem, size } from '../../theme/tokens';
 import { SpaceSchemeField } from '../notifications/NotificationPages';
 import { InviteMemberDialog, SpaceInvitations } from '../admin/InvitationPages';
 import { SpacePermission, useMembers, useSpace, type Space, type SpaceMember } from './api';
+import { ArchivedBanner, SpaceDangerZone } from './SpaceLifecycle';
 
 export const ROLE_LABELS: Record<string, string> = {
   ProjectAdmin: 'spaces.roleProjectAdmin',
@@ -73,6 +74,7 @@ export function SpaceSettingsLayout() {
       title={t('spaces.settings')}
       backTo={`/spaces/${space.data.key}/tickets`}
       context={space.data}
+      banner={<ArchivedBanner space={space.data} />}
       menu={
         <>
           <SettingsMenuItem to="general" label={t('spaces.general')} />
@@ -87,7 +89,14 @@ export function SpaceSettingsLayout() {
   );
 }
 
-export function SettingsFrame({ title, backTo, menu, context }: { title: string; backTo: string; menu: ReactNode; context?: unknown }) {
+export function SettingsFrame({ title, backTo, menu, context, banner }: {
+  title: string;
+  backTo: string;
+  menu: ReactNode;
+  context?: unknown;
+  /** Above every page of the frame, such as the notice that an archived space is read-only. */
+  banner?: ReactNode;
+}) {
   return (
     <div className="flex min-h-0 min-w-0 flex-1">
       <SideNav label={title}>
@@ -102,7 +111,8 @@ export function SettingsFrame({ title, backTo, menu, context }: { title: string;
         )}
       </SideNav>
       <main className="sb-content min-w-0 flex-1 overflow-auto p-4 md:p-8">
-        <div className="max-w-4xl">
+        <div className="flex max-w-4xl flex-col gap-4">
+          {banner}
           <Outlet context={context} />
         </div>
       </main>
@@ -223,47 +233,50 @@ export function SpaceGeneralPage() {
   };
 
   return (
-    <form className="flex flex-col gap-4" onSubmit={submit}>
-      <Typography variant="h1">{t('spaces.general')}</Typography>
-      <SpaceLogoField space={space} canManage={Boolean(canManage)} />
-      <TextField label={t('spaces.name')} value={name} disabled={!canManage} onChange={(event) => setName(event.target.value)} />
-      <TextField label={t('spaces.key')} value={space.key ?? ''} disabled />
-      {space.type === 0 && (
-        <>
-          <SelectField
-            label={t('spaces.sprintLength')}
-            value={customLength ? CUSTOM_LENGTH : String(lengthDays)}
-            disabled={!canManage}
-            onChange={(event) => {
-              const custom = event.target.value === CUSTOM_LENGTH;
-              setCustomLength(custom);
-              if (!custom) {
-                setLengthDays(Number(event.target.value));
-              }
-            }}
-            options={[
-              ...SPRINT_PRESETS.map((days) => ({ value: String(days), label: t('agile.lengthWeeks', { count: days / 7 }) })),
-              { value: CUSTOM_LENGTH, label: t('spaces.sprintLengthCustom') },
-            ]}
-          />
-          {customLength && (
-            <TextField
-              label={t('spaces.sprintLengthDays')}
-              type="number"
+    <div className="flex flex-col gap-4">
+      <form className="flex flex-col gap-4" onSubmit={submit}>
+        <Typography variant="h1">{t('spaces.general')}</Typography>
+        <SpaceLogoField space={space} canManage={Boolean(canManage)} />
+        <TextField label={t('spaces.name')} value={name} disabled={!canManage} onChange={(event) => setName(event.target.value)} />
+        <TextField label={t('spaces.key')} value={space.key ?? ''} disabled />
+        {space.type === 0 && (
+          <>
+            <SelectField
+              label={t('spaces.sprintLength')}
+              value={customLength ? CUSTOM_LENGTH : String(lengthDays)}
               disabled={!canManage}
-              value={lengthDays}
-              onChange={(event) => setLengthDays(Math.min(365, Math.max(1, Number(event.target.value) || 1)))}
+              onChange={(event) => {
+                const custom = event.target.value === CUSTOM_LENGTH;
+                setCustomLength(custom);
+                if (!custom) {
+                  setLengthDays(Number(event.target.value));
+                }
+              }}
+              options={[
+                ...SPRINT_PRESETS.map((days) => ({ value: String(days), label: t('agile.lengthWeeks', { count: days / 7 }) })),
+                { value: CUSTOM_LENGTH, label: t('spaces.sprintLengthCustom') },
+              ]}
             />
-          )}
-        </>
-      )}
-      <SpaceSchemeField projectId={space.id!} disabled={!canManage} />
-      {canManage && (
-        <div>
-          <Button type="submit" disabled={!name.trim() || save.isPending}>{t('common.save')}</Button>
-        </div>
-      )}
-    </form>
+            {customLength && (
+              <TextField
+                label={t('spaces.sprintLengthDays')}
+                type="number"
+                disabled={!canManage}
+                value={lengthDays}
+                onChange={(event) => setLengthDays(Math.min(365, Math.max(1, Number(event.target.value) || 1)))}
+              />
+            )}
+          </>
+        )}
+        <SpaceSchemeField projectId={space.id!} disabled={!canManage} />
+        {canManage && (
+          <div>
+            <Button type="submit" disabled={!name.trim() || save.isPending}>{t('common.save')}</Button>
+          </div>
+        )}
+      </form>
+      <SpaceDangerZone space={space} />
+    </div>
   );
 }
 

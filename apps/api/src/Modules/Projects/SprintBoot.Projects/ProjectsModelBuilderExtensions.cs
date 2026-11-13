@@ -17,6 +17,9 @@ public static class ProjectsModelBuilderExtensions
             b.Property(project => project.Name).HasMaxLength(128).IsRequired();
             b.Property(project => project.BranchNameTemplate).HasMaxLength(128);
             b.Property(project => project.SprintLengthDays).HasDefaultValue(14);
+            b.Ignore(project => project.IsArchived);
+
+            // Spans the trash too: a deleted space keeps its key until it is purged.
             b.HasIndex(project => project.Key).IsUnique();
         });
 

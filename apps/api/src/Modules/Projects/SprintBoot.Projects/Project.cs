@@ -22,6 +22,23 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public int SprintLengthDays { get; set; } = 14;
 
+    /// <summary>Set while the space is read-only and hidden from default lists.</summary>
+    public DateTime? ArchivedAt { get; private set; }
+
+    public bool IsArchived => ArchivedAt is not null;
+
+    public void Archive(DateTime now) => ArchivedAt ??= now;
+
+    public void Unarchive() => ArchivedAt = null;
+
+    /// <summary>Out of the trash; the soft delete is undone and the space stays archived.</summary>
+    public void Undelete()
+    {
+        IsDeleted = false;
+        DeletionTime = null;
+        DeleterId = null;
+    }
+
     protected Project()
     {
     }

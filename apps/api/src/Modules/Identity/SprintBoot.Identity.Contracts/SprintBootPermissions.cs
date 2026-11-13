@@ -16,4 +16,7 @@ public static class SprintBootPermissions
     public const string ManageTicketTemplates = Group + ".TicketTemplates.Manage";
     public const string ManageAi = Group + ".Ai.Manage";
     public const string AccessAllProjects = Group + ".Projects.AccessAll";
+
+    /// <summary>Delete archived spaces, and restore them from the trash.</summary>
+    public const string DeleteProjects = Group + ".Projects.Delete";
 }

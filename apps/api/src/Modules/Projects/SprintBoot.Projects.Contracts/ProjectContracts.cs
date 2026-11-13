@@ -36,6 +36,31 @@ public class ProjectDto
 
     /// <summary>Null until an admin uploads one; clients then show the key.</summary>
     public string? LogoUrl { get; set; }
+
+    /// <summary>Set while the space is archived and read-only; its permissions then hold viewing only.</summary>
+    public DateTime? ArchivedAt { get; set; }
+
+    /// <summary>The caller may archive the space or bring it back; true for those who manage it.</summary>
+    public bool CanArchive { get; set; }
+}
+
+/// <summary>A deleted space waiting in the trash until it is purged.</summary>
+public class TrashedProjectDto
+{
+    public required Guid Id { get; set; }
+
+    public required string Key { get; set; }
+
+    public required string Name { get; set; }
+
+    public required DateTime DeletedAt { get; set; }
+
+    public required UserRefDto? DeletedBy { get; set; }
+
+    /// <summary>When the background job removes it for good; until then it can be restored.</summary>
+    public required DateTime PurgeAt { get; set; }
+
+    public string? LogoUrl { get; set; }
 }
 
 public class CreateProjectInput
@@ -116,7 +141,8 @@ public interface IProjectAdminAppService : IApplicationService
 
 public interface IProjectAppService : IApplicationService
 {
-    Task<List<ProjectDto>> GetListAsync();
+    /// <summary>Archived spaces are left out unless asked for.</summary>
+    Task<List<ProjectDto>> GetListAsync(bool includeArchived = false);
 
     /// <summary>The spaces the caller is a member of, with their role in each.</summary>
     Task<List<UserSpaceDto>> GetMySpacesAsync();
@@ -141,6 +167,24 @@ public interface IProjectAppService : IApplicationService
     Task<ProjectDto> UploadLogoAsync(Guid id, IRemoteStreamContent file);
 
     Task<ProjectDto> DeleteLogoAsync(Guid id);
+
+    /// <summary>Makes the space read-only and hides it from default lists. Needs the space's manage permission.</summary>
+    Task<ProjectDto> ArchiveAsync(Guid id);
+
+    /// <summary>Brings an archived space back exactly as it was.</summary>
+    Task<ProjectDto> RestoreAsync(Guid id);
+
+    /// <summary>
+    /// Moves an archived space to the trash; <paramref name="confirmKey"/> must repeat its key. Needs the global
+    /// delete permission. The key stays reserved until the space is purged.
+    /// </summary>
+    Task DeleteAsync(Guid id, string confirmKey);
+
+    /// <summary>Spaces in the trash, for admins.</summary>
+    Task<List<TrashedProjectDto>> GetTrashAsync();
+
+    /// <summary>Takes a space out of the trash; it comes back archived.</summary>
+    Task<ProjectDto> RestoreDeletedAsync(Guid id);
 }
 
 /// <summary>Used by other modules. Every project-scoped call must pass through this.</summary>
@@ -151,8 +195,23 @@ public interface IProjectAccess
     /// <summary>Throws 404 when the caller cannot view the project, 403 when viewing is allowed but the action is not.</summary>
     Task CheckAsync(Guid projectId, string permission);
 
-    /// <summary>Null means every project (system admin).</summary>
-    Task<List<Guid>?> GetVisibleProjectIdsAsync();
+    /// <summary>The projects the caller can open, deleted ones never; archived ones unless left out.</summary>
+    Task<List<Guid>> GetVisibleProjectIdsAsync(bool includeArchived = true);
+
+    /// <summary>
+    /// Refuses a write to an archived project. For writes gated by authorship, such as editing one's own comment,
+    /// that check viewing only; a write that checks any other key is refused by <see cref="CheckAsync"/> already.
+    /// </summary>
+    Task CheckWritableAsync(Guid projectId);
+
+    /// <summary>True when the project is archived. Throws when it does not exist.</summary>
+    Task<bool> IsArchivedAsync(Guid projectId);
+
+    /// <summary>
+    /// For background work with no calling user, such as git events and notifications: true only while the project
+    /// exists and is not archived.
+    /// </summary>
+    Task<bool> IsActiveAsync(Guid projectId);
 
     Task<ProjectRef> GetRefAsync(Guid projectId);
 
@@ -184,11 +243,11 @@ public interface IProjectAccess
 /// <summary>Adds someone without a calling Project Admin, for invitations already authorized.</summary>
 public interface IProjectMembership
 {
-    /// <summary>Does nothing when the project is gone or the user already belongs to it.</summary>
+    /// <summary>Does nothing when the project is gone or archived, or the user already belongs to it.</summary>
     Task AddAsync(Guid projectId, Guid userId, string role, Guid actorId);
 }
 
-public record ProjectRef(Guid Id, string Key, string Name, BoardType Type);
+public record ProjectRef(Guid Id, string Key, string Name, BoardType Type, bool IsArchived = false);
 
 /// <summary>Raised in-process inside the creating transaction so modules can add defaults.</summary>
 public record ProjectCreatedEvent(Guid ProjectId);
@@ -205,8 +264,32 @@ public class ProjectMemberAddedEto
     public Guid ActorId { get; set; }
 }
 
+/// <summary>
+/// Published once a deleted space leaves the trash for good. Every module deletes its own rows for the project,
+/// and blobs it stored; handlers must tolerate running twice.
+/// </summary>
+[Volo.Abp.EventBus.EventName("SprintBoot.Projects.Purged")]
+public class ProjectPurgedEto
+{
+    public Guid ProjectId { get; set; }
+
+    public string Key { get; set; } = null!;
+}
+
+public static class ProjectSettings
+{
+    /// <summary>Days a deleted space stays in the trash before it is purged.</summary>
+    public const string TrashRetentionDays = "SprintBoot.Projects.TrashRetentionDays";
+
+    public const int DefaultTrashRetentionDays = 30;
+}
+
 public static class ProjectErrors
 {
+    /// <summary>A write to an archived space; restore it first.</summary>
+    public const string Archived = "SprintBoot:SpaceArchived";
+    public const string NotArchived = "SprintBoot:SpaceNotArchived";
+    public const string ConfirmKeyMismatch = "SprintBoot:SpaceConfirmKeyMismatch";
     public const string KeyTaken = "SprintBoot:ProjectKeyTaken";
     public const string InvalidRole = "SprintBoot:InvalidProjectRole";
     public const string AlreadyMember = "SprintBoot:AlreadyMember";

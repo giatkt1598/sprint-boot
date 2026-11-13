@@ -36,6 +36,7 @@ import { hasSelectedText } from '../../lib/selection';
 import { formatDateTime, formatRelative, formatSize } from '../../lib/format';
 import { font, hoverPane, radius, sem } from '../../theme/tokens';
 import { useMembers, useSpace } from '../spaces/api';
+import { ArchivedBanner } from '../spaces/SpaceLifecycle';
 import { TicketActivityPanel } from './TicketActivityPanel';
 import { QuickAssignee, QuickStatus, QuickTitle, TitleEditor } from './QuickFields';
 import { TransitionControl } from './TransitionControl';
@@ -203,6 +204,8 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
             </Button>
           </div>
         )}
+        {/* A ticket opened in a panel sits on a space page that already says so. */}
+        {!panelHeader && <ArchivedBanner space={space.data} />}
 
         <nav aria-label="breadcrumb" className="flex items-center gap-1" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>
           <Link component={RouterLink} to={`/spaces/${ticket.projectKey}/backlog`} color="inherit">{ticket.projectName}</Link>

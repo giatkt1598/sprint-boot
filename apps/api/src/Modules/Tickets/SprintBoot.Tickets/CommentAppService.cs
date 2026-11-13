@@ -75,6 +75,7 @@ public class CommentAppService(
     {
         var comment = await comments.GetAsync(id);
         var ticket = await CheckProjectAsync(comment, ProjectPermissions.ViewTickets);
+        await projectAccess.CheckWritableAsync(ticket.ProjectId);
         if (comment.AuthorId != CurrentUser.GetId())
         {
             throw new AbpAuthorizationException("Only the author can edit a comment");
@@ -91,6 +92,7 @@ public class CommentAppService(
     {
         var comment = await comments.GetAsync(id);
         var ticket = await CheckProjectAsync(comment, ProjectPermissions.ViewTickets);
+        await projectAccess.CheckWritableAsync(ticket.ProjectId);
         var isAuthor = comment.AuthorId == CurrentUser.GetId();
         if (!isAuthor && !await projectAccess.IsGrantedAsync(ticket.ProjectId, ProjectPermissions.DeleteAnyComment))
         {

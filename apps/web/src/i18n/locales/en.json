@@ -157,7 +157,7 @@
     "CurrentPasswordInvalid": "Your current password is incorrect.",
     "PasswordRejected": "This password does not meet the requirements.",
     "CannotLockSelf": "You cannot lock your own account.",
-    "ProjectKeyTaken": "This key is already used by another space.",
+    "ProjectKeyTaken": "This key is already used by another space, or by one in the trash.",
     "AlreadyMember": "This person is already a member.",
     "LastProjectAdmin": "A space needs at least one Project Admin.",
     "InvalidProjectRole": "Unknown role.",
@@ -259,7 +259,10 @@
     "TwoFactorExpired": "This sign-in has expired. Sign in again.",
     "TwoFactorRequiredByPolicy": "This workspace requires two-factor authentication, so it cannot be turned off.",
     "TwoFactorAlreadyEnabled": "Two-factor authentication is already on.",
-    "TwoFactorNotEnabled": "Two-factor authentication is not on for this account."
+    "TwoFactorNotEnabled": "Two-factor authentication is not on for this account.",
+    "SpaceArchived": "This space is archived, so it is read-only. Restore it to make changes.",
+    "SpaceNotArchived": "Archive the space before you delete it.",
+    "SpaceConfirmKeyMismatch": "The key you typed does not match this space."
   },
   "auth": {
     "ldapTitle": "Sign in to {{provider}}",
@@ -1711,5 +1714,37 @@
     "turnedOff": "Two-factor authentication is off",
     "newCodes": "New recovery codes",
     "newCodesHint": "Enter a code from your authenticator app. Your old recovery codes stop working."
+  },
+  "spaceArchive": {
+    "banner": "This space is archived, so it is read-only. Nothing in it can change until someone who manages it restores it.",
+    "badge": "Archived",
+    "dangerZone": "Danger zone",
+    "archiveTitle": "Archive this space",
+    "archiveHint": "The space becomes read-only and leaves space lists, ticket pickers and dashboards. Notifications, Git webhooks and automations stop. Links to its tickets keep working, and you can restore it at any time.",
+    "archive": "Archive space",
+    "archiveConfirmTitle": "Archive {{name}}?",
+    "archived": "Space archived",
+    "restoreTitle": "Restore this space",
+    "restoreHint": "The space becomes editable again, exactly as it was when it was archived, and comes back to space lists and pickers.",
+    "restore": "Restore space",
+    "restored": "Space restored",
+    "deleteTitle": "Delete this space",
+    "deleteHint": "Only an archived space can be deleted, by an admin. It waits in the trash for a grace period, where an admin can restore it. After that its tickets, comments, attachments, sprints, boards, workflows, Git links, assistant conversations and notifications are removed for good, and its key is free again.",
+    "deleteNeedsArchive": "Archive the space before you delete it.",
+    "delete": "Delete space",
+    "deleteConfirmTitle": "Delete {{name}}?",
+    "deleteConfirm": "Type {{key}} to confirm",
+    "deleted": "Space moved to the trash",
+    "tabActive": "Active",
+    "tabArchived": "Archived",
+    "tabTrash": "Trash",
+    "archivedAt": "Archived",
+    "deletedAt": "Deleted",
+    "deletedBy": "Deleted by",
+    "purgeAt": "Removed for good",
+    "restoreFromTrash": "Restore",
+    "restoredFromTrash": "Space restored from the trash. It stays archived.",
+    "noArchived": "No archived spaces.",
+    "trashEmpty": "The trash is empty."
   }
 }

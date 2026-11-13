@@ -485,7 +485,8 @@ public class GitPoller(
     {
         var repository = await repositories.FindAsync(repositoryId);
         var connection = repository is null ? null : await connections.FindAsync(repository.ConnectionId);
-        if (repository is null || connection?.ProjectId is not { } projectId || !connection.Uses(repository))
+        if (repository is null || connection?.ProjectId is not { } projectId || !connection.Uses(repository)
+            || !await projects.IsActiveAsync(projectId))
         {
             return;
         }
@@ -575,8 +576,9 @@ public class GitEventProcessor(
     {
         var connection = await connections.GetAsync(connectionId);
 
-        // Without a space there is nobody's tickets to link to.
-        if (connection.ProjectId is not { } projectId || !connection.Covers(gitEvent.Repository.FullName))
+        // Without a space there is nobody's tickets to link to; an archived or deleted one takes no git work.
+        if (connection.ProjectId is not { } projectId || !connection.Covers(gitEvent.Repository.FullName)
+            || !await projects.IsActiveAsync(projectId))
         {
             return;
         }

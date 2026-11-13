@@ -197,6 +197,9 @@ public partial class TicketLinkAppService(
             throw new EntityNotFoundException(typeof(Ticket), input.TicketKey);
         }
 
+        // A link shows on both tickets, so it would change a read-only one.
+        await EnsureNotArchivedAsync([other.ProjectId]);
+
         if (other.Id == ticket.Id)
         {
             throw new BusinessException(TicketLinkErrors.Self);
@@ -217,6 +220,7 @@ public partial class TicketLinkAppService(
     {
         var link = await links.GetAsync(id);
         var sides = await tickets.GetListAsync(item => item.Id == link.SourceTicketId || item.Id == link.TargetTicketId);
+        await EnsureNotArchivedAsync(sides.Select(side => side.ProjectId));
         var allowed = false;
         foreach (var side in sides)
         {
@@ -231,6 +235,14 @@ public partial class TicketLinkAppService(
         var type = await types.GetAsync(link.LinkTypeId);
         await links.DeleteAsync(link);
         await RecordAsync(link, type, sides, added: false);
+    }
+
+    private async Task EnsureNotArchivedAsync(IEnumerable<Guid> projectIds)
+    {
+        foreach (var space in (await projectAccess.GetRefsAsync(projectIds)).Values.Where(space => space.IsArchived))
+        {
+            throw new BusinessException(ProjectErrors.Archived).WithData("space", space.Key);
+        }
     }
 
     /// <summary>Both tickets get a history line, each in its own words: "blocks SB-2" and "is blocked by SB-1".</summary>

@@ -170,6 +170,7 @@ public partial class TicketAppService(
     {
         var ticket = await tickets.GetAsync(id);
         await projectAccess.CheckAsync(ticket.ProjectId, ProjectPermissions.ViewTickets);
+        await projectAccess.CheckWritableAsync(ticket.ProjectId);
 
         var canDeleteAny = await projectAccess.IsGrantedAsync(ticket.ProjectId, ProjectPermissions.DeleteAnyTicket);
         var canDeleteOwn = ticket.CreatorId == CurrentUser.Id
@@ -191,20 +192,15 @@ public partial class TicketAppService(
             await projectAccess.CheckAsync(projectId, ProjectPermissions.ViewTickets);
         }
 
-        var visible = await projectAccess.GetVisibleProjectIdsAsync();
-        var query = await tickets.GetQueryableAsync();
-
-        if (visible is not null)
-        {
-            query = query.Where(ticket => visible.Contains(ticket.ProjectId));
-        }
+        var visible = await projectAccess.GetVisibleProjectIdsAsync(includeArchived: !input.ExcludeArchived);
+        var query = (await tickets.GetQueryableAsync()).Where(ticket => visible.Contains(ticket.ProjectId));
 
         var text = input.Text?.Trim();
         string? exactKey = null;
         if (!string.IsNullOrEmpty(text))
         {
             var exact = await FindByKeyAsync(text.ToUpperInvariant());
-            if (exact is not null && (visible is null || visible.Contains(exact.ProjectId))
+            if (exact is not null && visible.Contains(exact.ProjectId)
                 && (input.ProjectId is null || exact.ProjectId == input.ProjectId))
             {
                 exactKey = text.ToUpperInvariant();

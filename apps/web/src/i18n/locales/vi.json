@@ -157,7 +157,7 @@
     "CurrentPasswordInvalid": "Mật khẩu hiện tại không đúng.",
     "PasswordRejected": "Mật khẩu chưa đạt yêu cầu.",
     "CannotLockSelf": "Bạn không thể tự khóa tài khoản của mình.",
-    "ProjectKeyTaken": "Mã này đã được Space khác dùng.",
+    "ProjectKeyTaken": "Mã này đã được Space khác dùng, kể cả Space trong thùng rác.",
     "AlreadyMember": "Người này đã là thành viên.",
     "LastProjectAdmin": "Space cần ít nhất một Project Admin.",
     "InvalidProjectRole": "Role không hợp lệ.",
@@ -259,7 +259,10 @@
     "TwoFactorExpired": "Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.",
     "TwoFactorRequiredByPolicy": "Workspace này yêu cầu xác thực hai bước nên không thể tắt.",
     "TwoFactorAlreadyEnabled": "Xác thực hai bước đã được bật.",
-    "TwoFactorNotEnabled": "Tài khoản này chưa bật xác thực hai bước."
+    "TwoFactorNotEnabled": "Tài khoản này chưa bật xác thực hai bước.",
+    "SpaceArchived": "Space này đã được lưu trữ nên chỉ đọc. Hãy khôi phục để thay đổi.",
+    "SpaceNotArchived": "Hãy lưu trữ Space trước khi xóa.",
+    "SpaceConfirmKeyMismatch": "Mã bạn nhập không khớp với Space này."
   },
   "auth": {
     "ldapTitle": "Đăng nhập vào {{provider}}",
@@ -1711,5 +1714,37 @@
     "turnedOff": "Đã tắt xác thực hai bước",
     "newCodes": "Tạo mã khôi phục mới",
     "newCodesHint": "Nhập mã từ ứng dụng xác thực. Các mã khôi phục cũ sẽ hết hiệu lực."
+  },
+  "spaceArchive": {
+    "banner": "Space này đã được lưu trữ nên chỉ đọc. Không thể thay đổi gì cho đến khi người quản lý Space khôi phục nó.",
+    "badge": "Đã lưu trữ",
+    "dangerZone": "Vùng nguy hiểm",
+    "archiveTitle": "Lưu trữ Space này",
+    "archiveHint": "Space trở thành chỉ đọc và rời khỏi danh sách Space, bộ chọn ticket và dashboard. Thông báo, Git webhook và tự động hoá dừng lại. Liên kết tới ticket của Space vẫn mở được, và bạn có thể khôi phục bất cứ lúc nào.",
+    "archive": "Lưu trữ Space",
+    "archiveConfirmTitle": "Lưu trữ {{name}}?",
+    "archived": "Đã lưu trữ Space",
+    "restoreTitle": "Khôi phục Space này",
+    "restoreHint": "Space sửa được trở lại, giữ nguyên như lúc lưu trữ, và quay lại danh sách Space cùng các bộ chọn.",
+    "restore": "Khôi phục Space",
+    "restored": "Đã khôi phục Space",
+    "deleteTitle": "Xóa Space này",
+    "deleteHint": "Chỉ Space đã lưu trữ mới xóa được, và chỉ admin được xóa. Space nằm trong thùng rác một thời gian, admin có thể khôi phục trong thời gian đó. Sau đó ticket, bình luận, tệp đính kèm, sprint, board, workflow, liên kết Git, cuộc trò chuyện với trợ lý và thông báo của Space bị xóa vĩnh viễn, và mã Space được dùng lại được.",
+    "deleteNeedsArchive": "Hãy lưu trữ Space trước khi xóa.",
+    "delete": "Xóa Space",
+    "deleteConfirmTitle": "Xóa {{name}}?",
+    "deleteConfirm": "Nhập {{key}} để xác nhận",
+    "deleted": "Đã chuyển Space vào thùng rác",
+    "tabActive": "Đang hoạt động",
+    "tabArchived": "Đã lưu trữ",
+    "tabTrash": "Thùng rác",
+    "archivedAt": "Ngày lưu trữ",
+    "deletedAt": "Ngày xóa",
+    "deletedBy": "Người xóa",
+    "purgeAt": "Xóa vĩnh viễn vào",
+    "restoreFromTrash": "Khôi phục",
+    "restoredFromTrash": "Đã khôi phục Space từ thùng rác. Space vẫn đang được lưu trữ.",
+    "noArchived": "Chưa có Space nào được lưu trữ.",
+    "trashEmpty": "Thùng rác trống."
   }
 }

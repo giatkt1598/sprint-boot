@@ -84,11 +84,7 @@ public class RecentTicketAppService(
 
         // Spaces the person has left, and tickets deleted since, simply drop out.
         var visible = await projectAccess.GetVisibleProjectIdsAsync();
-        var query = (await tickets.GetQueryableAsync()).Where(ticket => ids.Contains(ticket.Id));
-        if (visible is not null)
-        {
-            query = query.Where(ticket => visible.Contains(ticket.ProjectId));
-        }
+        var query = (await tickets.GetQueryableAsync()).Where(ticket => ids.Contains(ticket.Id) && visible.Contains(ticket.ProjectId));
 
         var found = await query.ToListAsync();
         var summaries = (await mapper.ToSummariesAsync(found)).ToDictionary(summary => summary.Id);

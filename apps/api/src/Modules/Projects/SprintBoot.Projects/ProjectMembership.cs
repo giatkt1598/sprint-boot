@@ -13,7 +13,8 @@ public class ProjectMembership(
 {
     public async Task AddAsync(Guid projectId, Guid userId, string role, Guid actorId)
     {
-        if (await projects.FindAsync(projectId) is null
+        // An archived space takes nobody new: its members are settings, and those are frozen.
+        if (await projects.FindAsync(projectId) is not { IsArchived: false }
             || await members.AnyAsync(member => member.ProjectId == projectId && member.UserId == userId))
         {
             return;

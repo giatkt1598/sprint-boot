@@ -1295,6 +1295,9 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime?>("ArchivedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("BranchNameTemplate")
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
