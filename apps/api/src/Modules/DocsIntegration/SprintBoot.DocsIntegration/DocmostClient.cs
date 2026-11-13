@@ -140,6 +140,30 @@ public partial class DocmostClient(IHttpClientFactory httpClients) : ITransientD
         })];
     }
 
+    /// <summary>The Docmost spaces offered on Sprint Boot's authorize page, for a link Docmost started.</summary>
+    public async Task<List<DocmostSpaceDto>> GetLinkSpacesAsync(string docmostUrl, string state)
+    {
+        var data = await PostAsync(new DocmostAccess(docmostUrl, string.Empty), "integrations/sprint-boot/link/request", new { state });
+        return data.TryGetProperty("spaces", out var spaces) && spaces.ValueKind == JsonValueKind.Array
+            ? [.. spaces.EnumerateArray().Select(item => new DocmostSpaceDto
+            {
+                Id = Text(item, "id")!,
+                Name = Text(item, "name") ?? Text(item, "slug")!,
+                Slug = Text(item, "slug")!,
+            })]
+            : [];
+    }
+
+    /// <summary>
+    /// Finishes a link Docmost started: Docmost installs the Sprint Boot integration with the secret and answers with an
+    /// API key of the person who started it.
+    /// </summary>
+    public async Task<string> CompleteLinkAsync(string docmostUrl, string state, string sprintBootUrl, string bridgeSecret)
+    {
+        var data = await PostAsync(new DocmostAccess(docmostUrl, string.Empty), "integrations/sprint-boot/link/complete", new { state, sprintBootUrl, bridgeSecret });
+        return Text(data, "apiKey") ?? throw new DocmostUnavailableException("Docmost did not hand over an API key.");
+    }
+
     /// <summary>Where a page opens: /s/{space}/p/{title-slug}-{slugId}, as Docmost builds it.</summary>
     public static string PageUrl(string baseUrl, string spaceSlug, string slugId, string title) =>
         $"{baseUrl.TrimEnd('/')}/s/{Uri.EscapeDataString(spaceSlug)}/p/{TitleSlug(title)}-{slugId}";
@@ -199,7 +223,10 @@ public partial class DocmostClient(IHttpClientFactory httpClients) : ITransientD
         {
             Content = JsonContent.Create(body, options: Json),
         };
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", access.ApiKey);
+        if (access.ApiKey.Length > 0)
+        {
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", access.ApiKey);
+        }
         request.Headers.Accept.ParseAdd("application/json");
 
         HttpResponseMessage response;

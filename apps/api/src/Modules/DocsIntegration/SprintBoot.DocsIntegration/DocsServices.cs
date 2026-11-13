@@ -13,6 +13,7 @@ using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Security.Encryption;
 using Volo.Abp.Timing;
 using Volo.Abp.Uow;
+using Volo.Abp.Users;
 
 namespace SprintBoot.DocsIntegration;
 
@@ -106,9 +107,18 @@ public class DocsGateway(
 public class DocsAdminAppService(
     IRepository<DocsConnection, Guid> connections,
     DocsGateway gateway,
+    DocsLinker linker,
     IStringEncryptionService encryption)
     : ApplicationService, IDocsAdminAppService
 {
+    public async Task<DocsLinkStartDto> StartLinkAsync(StartDocsLinkInput input)
+    {
+        var docmostUrl = DocsLinker.Normalize(input.DocmostUrl);
+        var state = await linker.StartAsync(docmostUrl, CurrentUser.GetId());
+        var query = $"sprintBootUrl={Uri.EscapeDataString(gateway.PublicUrl)}&state={state}";
+        return new DocsLinkStartDto { AuthorizeUrl = $"{docmostUrl}/integrations/sprint-boot/authorize?{query}" };
+    }
+
     public async Task<DocsConnectionDto> GetAsync() => ToDto(await gateway.FindAsync());
 
     public async Task<DocsConnectionDto> SaveAsync(SaveDocsConnectionInput input)

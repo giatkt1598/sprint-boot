@@ -273,7 +273,8 @@
     "DocsMentionLink": "Trang này nhắc tới ticket; hãy gỡ phần nhắc tới trong Docmost.",
     "DocsSpaceNotFound": "Không tìm thấy Docmost space này.",
     "DocsApiKeyRequired": "Hãy nhập API key.",
-    "DocsUnknownUser": "Không có tài khoản Sprint Boot nào dùng email này."
+    "DocsUnknownUser": "Không có tài khoản Sprint Boot nào dùng email này.",
+    "DocsLinkExpired": "Yêu cầu liên kết đã hết hạn hoặc đã được dùng. Hãy bắt đầu lại từ trang Tích hợp."
   },
   "auth": {
     "ldapTitle": "Đăng nhập vào {{provider}}",
@@ -1817,5 +1818,21 @@
     "searchPages": "Tìm trang",
     "topLevelOption": "Cấp gốc của space",
     "noMatches": "Không có trang nào khớp."
+  },
+  "integrations": {
+    "title": "Tích hợp",
+    "hint": "Kết nối Sprint Boot với các công cụ nhóm đang dùng.",
+    "docmostDescription": "Gắn Docmost space với Space của Sprint Boot: link ticket cập nhật trực tiếp trong Docmost, và các trang liên quan hiện trên từng ticket.",
+    "configure": "Cấu hình",
+    "details": "Chi tiết",
+    "authorize": "Authorize",
+    "connectDocmost": "Kết nối Docmost",
+    "connectDocmostHint": "Nhập địa chỉ Docmost. Bạn sẽ authorize việc liên kết trong Docmost và chọn space cần nối, rồi quay lại đây.",
+    "linked": "Đã kết nối {{name}}",
+    "authorizeTitle": "Kết nối Docmost",
+    "authorizeHint": "Docmost tại {{url}} muốn kết nối với Sprint Boot. Chọn Space của Sprint Boot và Docmost space chứa tài liệu của Space đó, hoặc gắn sau.",
+    "sprintBootSpace": "Space của Sprint Boot",
+    "linkLater": "Gắn sau",
+    "pickBoth": "Chọn cả hai space, hoặc không chọn space nào."
   }
 }

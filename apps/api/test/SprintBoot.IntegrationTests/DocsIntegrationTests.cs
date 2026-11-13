@@ -198,6 +198,83 @@ public class DocsIntegrationTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task A_link_started_in_Sprint_Boot_is_authorized_in_Docmost_without_copying_keys()
+    {
+        var admin = await AdminAsync();
+        var (owner, project, _) = await SpaceAsync();
+
+        var started = await admin.Http.PostAsJsonAsync("/api/v1/docs-admin/start-link", new { docmostUrl = FakeDocmostServer.BaseUrl + "/" }, Token);
+        started.StatusCode.ShouldBe(HttpStatusCode.OK, await started.Content.ReadAsStringAsync(Token));
+        var authorizeUrl = new Uri((await started.Content.ReadFromJsonAsync<DocsLinkStartDto>(Token))!.AuthorizeUrl);
+        authorizeUrl.GetLeftPart(UriPartial.Path).ShouldBe($"{FakeDocmostServer.BaseUrl}/integrations/sprint-boot/authorize");
+        var state = System.Web.HttpUtility.ParseQueryString(authorizeUrl.Query)["state"]!;
+
+        // What Docmost's server does once its admin picks the spaces and authorizes.
+        var anonymous = fixture.Factory.CreateClient();
+        var offered = await anonymous.PostAsJsonAsync("/api/v1/docs-link/request", new { state }, Token);
+        (await offered.Content.ReadAsStringAsync(Token)).ShouldContain(project.Key);
+        (await anonymous.PostAsJsonAsync("/api/v1/docs-link/complete", new { state, docmostUrl = "http://evil.fake", apiKey = FakeDocmostServer.ValidKey }, Token))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        // That failed attempt used the state up; a new one is needed.
+        var again = await admin.Http.PostAsJsonAsync("/api/v1/docs-admin/start-link", new { docmostUrl = FakeDocmostServer.BaseUrl }, Token);
+        state = System.Web.HttpUtility.ParseQueryString(new Uri((await again.Content.ReadFromJsonAsync<DocsLinkStartDto>(Token))!.AuthorizeUrl).Query)["state"]!;
+        var completed = await anonymous.PostAsJsonAsync("/api/v1/docs-link/complete", new
+        {
+            state,
+            docmostUrl = FakeDocmostServer.BaseUrl,
+            apiKey = FakeDocmostServer.ValidKey,
+            spaceKey = project.Key,
+            docmostSpaceId = FakeDocmostServer.SpaceId,
+        }, Token);
+        completed.StatusCode.ShouldBe(HttpStatusCode.OK, await completed.Content.ReadAsStringAsync(Token));
+        var answer = JsonDocument.Parse(await completed.Content.ReadAsStringAsync(Token)).RootElement;
+        answer.GetProperty("returnUrl").GetString().ShouldEndWith("/admin/integrations?linked=docmost");
+
+        // The secret works on the bridge, the key reached the connection, and the spaces are linked.
+        (await Docmost(answer.GetProperty("bridgeSecret").GetString()!).PostAsJsonAsync("/api/v1/docs-bridge/unfurl", new { keys = Array.Empty<string>() }, Token))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await admin.Http.GetFromJsonAsync<DocsConnectionDto>("/api/v1/docs-admin", Token))!.Status.ShouldBe(DocsConnectionStatus.Connected);
+        (await owner.Http.GetFromJsonAsync<ProjectDocsDto>($"/api/v1/docs-project?projectId={project.Id}", Token))!.Space!.Id.ShouldBe(FakeDocmostServer.SpaceId);
+
+        (await anonymous.PostAsJsonAsync("/api/v1/docs-link/complete", new { state, docmostUrl = FakeDocmostServer.BaseUrl, apiKey = FakeDocmostServer.ValidKey }, Token))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task A_link_started_in_Docmost_is_authorized_in_Sprint_Boot()
+    {
+        var admin = await AdminAsync();
+        var (owner, project, _) = await SpaceAsync();
+        var docmostUrl = Uri.EscapeDataString(FakeDocmostServer.BaseUrl);
+
+        var request = await admin.Http.GetFromJsonAsync<DocsLinkRequestDto>(
+            $"/api/v1/docs-link/request?docmostUrl={docmostUrl}&state={FakeDocmostServer.LinkState}", Token);
+        request!.Spaces.ShouldContain(space => space.Key == project.Key);
+        request.DocmostSpaces.ShouldHaveSingleItem().Id.ShouldBe(FakeDocmostServer.SpaceId);
+        (await owner.Http.GetAsync($"/api/v1/docs-link/request?docmostUrl={docmostUrl}&state={FakeDocmostServer.LinkState}", Token))
+            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        var authorized = await admin.Http.PostAsJsonAsync("/api/v1/docs-link/authorize", new
+        {
+            docmostUrl = FakeDocmostServer.BaseUrl,
+            state = FakeDocmostServer.LinkState,
+            projectId = project.Id,
+            docmostSpaceId = FakeDocmostServer.SpaceId,
+        }, Token);
+        authorized.StatusCode.ShouldBe(HttpStatusCode.OK, await authorized.Content.ReadAsStringAsync(Token));
+        (await authorized.Content.ReadFromJsonAsync<DocsLinkDoneDto>(Token))!.ReturnUrl.ShouldBe($"{FakeDocmostServer.BaseUrl}/settings/integrations");
+
+        (await Docmost(FakeDocmostServer.Instance.LinkedSecret!).PostAsJsonAsync("/api/v1/docs-bridge/unfurl", new { keys = Array.Empty<string>() }, Token))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+        FakeDocmostServer.Instance.LinkedSprintBootUrl.ShouldNotBeNullOrEmpty();
+        (await owner.Http.GetFromJsonAsync<ProjectDocsDto>($"/api/v1/docs-project?projectId={project.Id}", Token))!.Space!.Id.ShouldBe(FakeDocmostServer.SpaceId);
+
+        var expired = await admin.Http.PostAsJsonAsync("/api/v1/docs-link/authorize", new { docmostUrl = FakeDocmostServer.BaseUrl, state = "gone" }, Token);
+        (await CodeAsync(expired)).ShouldBe(DocsErrors.LinkExpired);
+    }
+
+    [Fact]
     public async Task A_Docmost_address_resolves_for_a_chip()
     {
         await ConnectAsync(await AdminAsync());

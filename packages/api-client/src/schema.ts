@@ -3682,6 +3682,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/docs-admin/start-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["StartDocsLinkInput"];
+                    "text/json": components["schemas"]["StartDocsLinkInput"];
+                    "application/*+json": components["schemas"]["StartDocsLinkInput"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DocsLinkStartDto"];
+                        "text/json": components["schemas"]["DocsLinkStartDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/docs-admin": {
         parameters: {
             query?: never;
@@ -4002,6 +4104,207 @@ export interface paths {
                     content: {
                         "application/json": components["schemas"]["DocsBridgeSecretDto"];
                         "text/json": components["schemas"]["DocsBridgeSecretDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/docs-link/request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    docmostUrl?: string;
+                    state?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DocsLinkRequestDto"];
+                        "text/json": components["schemas"]["DocsLinkRequestDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/docs-link/authorize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AuthorizeDocsLinkInput"];
+                    "text/json": components["schemas"]["AuthorizeDocsLinkInput"];
+                    "application/*+json": components["schemas"]["AuthorizeDocsLinkInput"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DocsLinkDoneDto"];
+                        "text/json": components["schemas"]["DocsLinkDoneDto"];
                     };
                 };
                 /** @description Bad Request */
@@ -21939,6 +22242,14 @@ export interface components {
             allowedDomains: string | null;
             requireTwoFactor: boolean;
         };
+        AuthorizeDocsLinkInput: {
+            /** Format: uri */
+            docmostUrl: string;
+            state: string;
+            /** Format: uuid */
+            projectId?: string | null;
+            docmostSpaceId?: string | null;
+        };
         AvailableTransitionDto: {
             /** Format: uuid */
             id: string;
@@ -22246,6 +22557,23 @@ export interface components {
         DocsInfoDto: {
             configured: boolean;
             docmostUrl: string | null;
+        };
+        DocsLinkDoneDto: {
+            returnUrl: string | null;
+        };
+        DocsLinkRequestDto: {
+            docmostUrl: string | null;
+            spaces: components["schemas"]["DocsLinkSpaceDto"][] | null;
+            docmostSpaces: components["schemas"]["DocmostSpaceDto"][] | null;
+        };
+        DocsLinkSpaceDto: {
+            /** Format: uuid */
+            id: string;
+            key: string | null;
+            name: string | null;
+        };
+        DocsLinkStartDto: {
+            authorizeUrl: string | null;
         };
         DocsPageHitDto: {
             id: string | null;
@@ -23165,6 +23493,10 @@ export interface components {
         SprintWithTicketsDto: {
             sprint: components["schemas"]["SprintSummaryDto"];
             tickets: components["schemas"]["TicketCardDto"][] | null;
+        };
+        StartDocsLinkInput: {
+            /** Format: uri */
+            docmostUrl: string;
         };
         StartUploadInput: {
             purpose?: components["schemas"]["UploadPurpose"];

@@ -208,8 +208,77 @@ public class LinkDocPageInput
     public string? PageId { get; set; }
 }
 
+public class StartDocsLinkInput
+{
+    [Required]
+    [Url]
+    [StringLength(512)]
+    public required string DocmostUrl { get; set; }
+}
+
+/// <summary>Where the browser goes to authorize the link in Docmost.</summary>
+public class DocsLinkStartDto
+{
+    public required string AuthorizeUrl { get; set; }
+}
+
+/// <summary>A Sprint Boot space as the link pages offer it.</summary>
+public class DocsLinkSpaceDto
+{
+    public required Guid Id { get; set; }
+
+    public required string Key { get; set; }
+
+    public required string Name { get; set; }
+}
+
+/// <summary>What the authorize page shows when Docmost started the link.</summary>
+public class DocsLinkRequestDto
+{
+    public required string DocmostUrl { get; set; }
+
+    public required List<DocsLinkSpaceDto> Spaces { get; set; }
+
+    public required List<DocmostSpaceDto> DocmostSpaces { get; set; }
+}
+
+public class AuthorizeDocsLinkInput
+{
+    [Required]
+    [Url]
+    [StringLength(512)]
+    public required string DocmostUrl { get; set; }
+
+    [Required]
+    [StringLength(128)]
+    public required string State { get; set; }
+
+    /// <summary>The Sprint Boot space to link; none links only the workspaces.</summary>
+    public Guid? ProjectId { get; set; }
+
+    [StringLength(64)]
+    public string? DocmostSpaceId { get; set; }
+}
+
+public class DocsLinkDoneDto
+{
+    /// <summary>Back to Docmost's integrations, where the link started.</summary>
+    public required string ReturnUrl { get; set; }
+}
+
+/// <summary>The authorize page of a link Docmost started; needs the permission to manage the Docmost connection.</summary>
+public interface IDocsLinkAppService : IApplicationService
+{
+    Task<DocsLinkRequestDto> GetRequestAsync(string docmostUrl, string state);
+
+    Task<DocsLinkDoneDto> AuthorizeAsync(AuthorizeDocsLinkInput input);
+}
+
 public interface IDocsAdminAppService : IApplicationService
 {
+    /// <summary>Starts a link from Sprint Boot: the browser goes on to Docmost to authorize it.</summary>
+    Task<DocsLinkStartDto> StartLinkAsync(StartDocsLinkInput input);
+
     Task<DocsConnectionDto> GetAsync();
 
     /// <summary>Saves and checks the connection; a failed check is saved too, with its problem.</summary>
@@ -282,4 +351,7 @@ public static class DocsErrors
 
     /// <summary>Docmost acted for someone with no active Sprint Boot account under that email.</summary>
     public const string UnknownUser = "SprintBoot:DocsUnknownUser";
+
+    /// <summary>The link request expired, was used already, or never existed.</summary>
+    public const string LinkExpired = "SprintBoot:DocsLinkExpired";
 }

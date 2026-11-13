@@ -18,6 +18,14 @@ public sealed class FakeDocmostServer : HttpMessageHandler
 
     public static readonly FakeDocmostServer Instance = new();
 
+    /// <summary>The state of a link Docmost started, as its integrations page would hand it to Sprint Boot.</summary>
+    public const string LinkState = "docmost-link-state";
+
+    /// <summary>The bridge secret Sprint Boot gave on the last completed link.</summary>
+    public string? LinkedSecret { get; private set; }
+
+    public string? LinkedSprintBootUrl { get; private set; }
+
     public bool Down { get; set; }
 
     /// <summary>Bodies of the pages/create calls, newest last.</summary>
@@ -28,6 +36,12 @@ public sealed class FakeDocmostServer : HttpMessageHandler
         if (Down)
         {
             throw new HttpRequestException("Connection refused");
+        }
+
+        var path = request.RequestUri!.AbsolutePath;
+        if (path.StartsWith("/api/integrations/sprint-boot/link/", StringComparison.Ordinal))
+        {
+            return await LinkAsync(request, path, cancellationToken);
         }
 
         if (request.Headers.Authorization?.Parameter != ValidKey)
@@ -75,6 +89,25 @@ public sealed class FakeDocmostServer : HttpMessageHandler
             }),
             _ => new HttpResponseMessage(HttpStatusCode.NotFound),
         };
+    }
+
+    // Docmost's public side of a link it started: the state is the proof, as in Sprint Boot's own.
+    private async Task<HttpResponseMessage> LinkAsync(HttpRequestMessage request, string path, CancellationToken cancellationToken)
+    {
+        var body = JsonNode.Parse(await request.Content!.ReadAsStringAsync(cancellationToken))!;
+        if (body["state"]?.GetValue<string>() != LinkState)
+        {
+            return new HttpResponseMessage(HttpStatusCode.NotFound);
+        }
+
+        if (path.EndsWith("/request", StringComparison.Ordinal))
+        {
+            return Data(new { spaces = new[] { new { id = SpaceId, name = "Engineering", slug = SpaceSlug } } });
+        }
+
+        LinkedSecret = body["bridgeSecret"]!.GetValue<string>();
+        LinkedSprintBootUrl = body["sprintBootUrl"]!.GetValue<string>();
+        return Data(new { apiKey = ValidKey });
     }
 
     private HttpResponseMessage Created(JsonNode body)

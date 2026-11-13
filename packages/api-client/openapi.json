@@ -4461,6 +4461,139 @@
         }
       }
     },
+    "/api/v1/docs-admin/start-link": {
+      "post": {
+        "tags": [
+          "DocsAdmin"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartDocsLinkInput"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartDocsLinkInput"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartDocsLinkInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocsLinkStartDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocsLinkStartDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Not Implemented",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/docs-admin": {
       "get": {
         "tags": [
@@ -4839,6 +4972,269 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DocsBridgeSecretDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Not Implemented",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/docs-link/request": {
+      "get": {
+        "tags": [
+          "DocsLink"
+        ],
+        "parameters": [
+          {
+            "name": "docmostUrl",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocsLinkRequestDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocsLinkRequestDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Not Implemented",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/docs-link/authorize": {
+      "post": {
+        "tags": [
+          "DocsLink"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthorizeDocsLinkInput"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthorizeDocsLinkInput"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthorizeDocsLinkInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocsLinkDoneDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocsLinkDoneDto"
                 }
               }
             }
@@ -28996,6 +29392,38 @@
         },
         "additionalProperties": false
       },
+      "AuthorizeDocsLinkInput": {
+        "required": [
+          "docmostUrl",
+          "state"
+        ],
+        "type": "object",
+        "properties": {
+          "docmostUrl": {
+            "maxLength": 512,
+            "minLength": 0,
+            "type": "string",
+            "format": "uri"
+          },
+          "state": {
+            "maxLength": 128,
+            "minLength": 0,
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "docmostSpaceId": {
+            "maxLength": 64,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "AvailableTransitionDto": {
         "required": [
           "id",
@@ -30185,6 +30613,84 @@
             "type": "boolean"
           },
           "docmostUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DocsLinkDoneDto": {
+        "required": [
+          "returnUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "returnUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DocsLinkRequestDto": {
+        "required": [
+          "docmostSpaces",
+          "docmostUrl",
+          "spaces"
+        ],
+        "type": "object",
+        "properties": {
+          "docmostUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "spaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocsLinkSpaceDto"
+            },
+            "nullable": true
+          },
+          "docmostSpaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocmostSpaceDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DocsLinkSpaceDto": {
+        "required": [
+          "id",
+          "key",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "key": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DocsLinkStartDto": {
+        "required": [
+          "authorizeUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "authorizeUrl": {
             "type": "string",
             "nullable": true
           }
@@ -33471,6 +33977,21 @@
         },
         "additionalProperties": false
       },
+      "StartDocsLinkInput": {
+        "required": [
+          "docmostUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "docmostUrl": {
+            "maxLength": 512,
+            "minLength": 0,
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "additionalProperties": false
+      },
       "StartUploadInput": {
         "required": [
           "fileName"
@@ -35388,6 +35909,9 @@
     },
     {
       "name": "DocsAdmin"
+    },
+    {
+      "name": "DocsLink"
     },
     {
       "name": "DocsPage"

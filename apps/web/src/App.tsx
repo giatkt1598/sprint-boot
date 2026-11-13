@@ -34,6 +34,8 @@ import { SpaceWorkflowsPage } from './features/spaces/SpaceWorkflowsPage';
 import { SpaceTicketTemplatesPage } from './features/spaces/TicketTemplatesPage';
 import { AssistantSettingsPage } from './features/admin/AssistantSettingsPage';
 import { DocsSettingsPage } from './features/docs/DocsSettingsPage';
+import { DocmostAuthorizePage } from './features/docs/DocmostAuthorizePage';
+import { IntegrationsPage } from './features/docs/IntegrationsPage';
 import { SpaceDocsPage } from './features/docs/DocsViews';
 import { AssistantPage } from './features/assistant/AssistantPage';
 import { AssistantHost } from './features/assistant/AssistantPanel';
@@ -61,6 +63,7 @@ export function App() {
           <Route element={<RequireAuth><AssistantHost><Outlet /></AssistantHost></RequireAuth>}>
             <Route element={<BareShell />}>
               <Route path="workflows/:workflowId" element={<WorkflowDesignerPage />} />
+              <Route path="integrations/docmost/authorize" element={<DocmostAuthorizePage />} />
               <Route path="account" element={<AccountLayout />}>
                 <Route index element={<AccountIndex />} />
                 <Route path="profile" element={<ProfilePage />} />
@@ -87,7 +90,9 @@ export function App() {
                 <Route path="notification-schemes/:schemeId" element={<EditSchemePage />} />
                 <Route path="statuses" element={<StatusesPage />} />
                 <Route path="deleted-tickets" element={<DeletedTicketsPage />} />
-                <Route path="docmost" element={<DocsSettingsPage />} />
+                <Route path="integrations" element={<IntegrationsPage />} />
+                <Route path="integrations/docmost" element={<DocsSettingsPage />} />
+                <Route path="docmost" element={<Navigate to="/admin/integrations/docmost" replace />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
               <Route path="spaces/:spaceKey/settings" element={<SpaceSettingsLayout />}>

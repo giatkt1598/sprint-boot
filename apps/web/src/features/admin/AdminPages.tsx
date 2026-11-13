@@ -64,7 +64,7 @@ export function AdminLayout() {
           {canManageSso && <SettingsMenuItem to="sso" label={t('sso.title')} />}
           {canManageEmail && <SettingsMenuItem to="email" label={t('email.title')} />}
           {canManageAi && <SettingsMenuItem to="ai" label={t('assistantAdmin.title')} />}
-          {canManageDocs && <SettingsMenuItem to="docmost" label={t('docs.adminTitle')} />}
+          {canManageDocs && <SettingsMenuItem to="integrations" label={t('integrations.title')} />}
           {canManageWorkflows && <SettingsMenuItem to="workflows" label={t('workflows.title')} />}
           {canManageLinkTypes && <SettingsMenuItem to="ticket-link-types" label={t('linkTypes.title')} />}
           {canManageTemplates && <SettingsMenuItem to="ticket-templates" label={t('globalTemplates.title')} />}

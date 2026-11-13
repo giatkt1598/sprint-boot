@@ -273,7 +273,8 @@
     "DocsMentionLink": "This page mentions the ticket; remove the mention in Docmost instead.",
     "DocsSpaceNotFound": "That Docmost space was not found.",
     "DocsApiKeyRequired": "Enter the API key.",
-    "DocsUnknownUser": "No Sprint Boot account has this email."
+    "DocsUnknownUser": "No Sprint Boot account has this email.",
+    "DocsLinkExpired": "This link request has expired or was already used. Start again from the integrations page."
   },
   "auth": {
     "ldapTitle": "Sign in to {{provider}}",
@@ -1817,5 +1818,21 @@
     "searchPages": "Search pages",
     "topLevelOption": "Top of the space",
     "noMatches": "No pages match."
+  },
+  "integrations": {
+    "title": "Integrations",
+    "hint": "Connect Sprint Boot to the tools your team works in.",
+    "docmostDescription": "Link Docmost spaces to Sprint Boot spaces: live ticket links in Docmost, and the pages about each ticket in Sprint Boot.",
+    "configure": "Configure",
+    "details": "Details",
+    "authorize": "Authorize",
+    "connectDocmost": "Connect Docmost",
+    "connectDocmostHint": "Enter your Docmost address. You will authorize the link in Docmost and pick the space to connect, then come back here.",
+    "linked": "{{name}} is connected",
+    "authorizeTitle": "Connect Docmost",
+    "authorizeHint": "Docmost at {{url}} wants to connect to Sprint Boot. Pick a Sprint Boot space and the Docmost space it keeps its documents in, or link them later.",
+    "sprintBootSpace": "Sprint Boot space",
+    "linkLater": "Link later",
+    "pickBoth": "Pick both spaces, or neither."
   }
 }
