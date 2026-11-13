@@ -74,9 +74,12 @@ public class DocsIntegrationTests(ApiFixture fixture)
         connected.Status.ShouldBe(DocsConnectionStatus.Connected);
         connected.BaseUrl.ShouldBe(FakeDocmostServer.BaseUrl);
         connected.DocmostUser.ShouldBe("Docs Bot");
+        connected.SprintBootUrl.ShouldNotEndWith("/docs-bridge");
 
         var wrong = await admin.Http.PostAsJsonAsync("/api/v1/docs-admin/save", new { baseUrl = FakeDocmostServer.BaseUrl, apiKey = "wrong" }, Token);
-        (await wrong.Content.ReadFromJsonAsync<DocsConnectionDto>(Token))!.Problem.ShouldBe(DocsProblem.Unauthorized);
+        var refused = (await wrong.Content.ReadFromJsonAsync<DocsConnectionDto>(Token))!;
+        refused.Problem.ShouldBe(DocsProblem.Unauthorized);
+        refused.ProblemDetail!.ShouldContain("Invalid API key");
 
         await ConnectAsync(admin);
         FakeDocmostServer.Instance.Down = true;

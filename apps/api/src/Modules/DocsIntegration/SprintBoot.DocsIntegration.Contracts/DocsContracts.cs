@@ -45,8 +45,13 @@ public class DocsConnectionDto
     /// <summary>Who the API key acts as in Docmost, from the last successful check.</summary>
     public required string? DocmostUser { get; set; }
 
-    /// <summary>The address Docmost calls back on; it goes into the Sprint Boot integration in Docmost.</summary>
-    public required string BridgeUrl { get; set; }
+    /// <summary>
+    /// Sprint Boot's own address: it goes into the Sprint Boot integration in Docmost, which calls the bridge under it.
+    /// </summary>
+    public required string SprintBootUrl { get; set; }
+
+    /// <summary>What Docmost answered on the last failed check, to tell a wrong key from a restriction.</summary>
+    public required string? ProblemDetail { get; set; }
 
     public required bool HasBridgeSecret { get; set; }
 }
@@ -68,7 +73,7 @@ public class DocsBridgeSecretDto
 {
     public required string Secret { get; set; }
 
-    public required string BridgeUrl { get; set; }
+    public required string SprintBootUrl { get; set; }
 }
 
 public class DocmostSpaceDto

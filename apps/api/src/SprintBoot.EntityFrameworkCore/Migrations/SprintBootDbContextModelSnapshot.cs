@@ -482,7 +482,6 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
             modelBuilder.Entity("SprintBoot.DocsIntegration.DocsConnection", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("BaseUrl")
@@ -535,6 +534,10 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.Property<int>("Problem")
                         .HasColumnType("integer");
 
+                    b.Property<string>("ProblemDetail")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -550,7 +553,6 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
             modelBuilder.Entity("SprintBoot.DocsIntegration.ProjectDocsSpace", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("DocmostSpaceId")
@@ -584,7 +586,6 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
             modelBuilder.Entity("SprintBoot.DocsIntegration.TicketDocLink", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("PageId")

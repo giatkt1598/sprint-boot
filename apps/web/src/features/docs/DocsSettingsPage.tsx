@@ -47,6 +47,9 @@ function ConnectionStatus({ connection }: { connection: DocsConnection }) {
       {problem === DocsProblem.none && connection.docmostUser && (
         <Typography variant="body2" color="textSecondary">{t('docs.actingAs', { name: connection.docmostUser })}</Typography>
       )}
+      {problem !== DocsProblem.none && connection.problemDetail && (
+        <Typography variant="body2" color="textSecondary" className="basis-full">{connection.problemDetail}</Typography>
+      )}
       {connection.lastCheckedAt && (
         <Typography variant="body2" color="textSecondary">{t('docs.lastChecked', { time: formatDateTime(connection.lastCheckedAt, i18n.language) })}</Typography>
       )}
@@ -131,7 +134,7 @@ function BridgeSection({ connection }: { connection: DocsConnection }) {
         <Typography id="docs-bridge" variant="h2">{t('docs.bridgeTitle')}</Typography>
         <Typography variant="body2" color="textSecondary">{t('docs.bridgeHint')}</Typography>
       </div>
-      <CopyField label={t('docs.bridgeUrl')} value={connection.bridgeUrl ?? ''} copyLabel={t('docs.copy')} copiedMessage={t('docs.copied')} />
+      <CopyField label={t('docs.bridgeUrl')} value={connection.sprintBootUrl ?? ''} copyLabel={t('docs.copy')} copiedMessage={t('docs.copied')} />
       {secret ? (
         <div className="flex flex-col gap-1">
           <CopyField label={t('docs.bridgeSecret')} value={secret} copyLabel={t('docs.copy')} copiedMessage={t('docs.copied')} />

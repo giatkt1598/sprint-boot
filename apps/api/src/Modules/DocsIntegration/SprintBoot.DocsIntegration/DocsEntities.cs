@@ -23,6 +23,9 @@ public class DocsConnection : AuditedAggregateRoot<Guid>, IMultiTenant
 
     public DocsProblem Problem { get; set; }
 
+    /// <summary>Docmost's own words on the last failed check.</summary>
+    public string? ProblemDetail { get; set; }
+
     public DateTime? LastCheckedAt { get; set; }
 
     public string? DocmostUser { get; set; }
@@ -113,6 +116,7 @@ public static class DocsIntegrationModelBuilderExtensions
             b.Property(item => item.BaseUrl).HasMaxLength(512).IsRequired();
             b.Property(item => item.BridgeSecretHash).HasMaxLength(64);
             b.Property(item => item.DocmostUser).HasMaxLength(256);
+            b.Property(item => item.ProblemDetail).HasMaxLength(512);
         });
 
         builder.Entity<ProjectDocsSpace>(b =>

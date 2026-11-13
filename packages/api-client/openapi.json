@@ -29418,8 +29418,8 @@
       },
       "DocsBridgeSecretDto": {
         "required": [
-          "bridgeUrl",
-          "secret"
+          "secret",
+          "sprintBootUrl"
         ],
         "type": "object",
         "properties": {
@@ -29427,7 +29427,7 @@
             "type": "string",
             "nullable": true
           },
-          "bridgeUrl": {
+          "sprintBootUrl": {
             "type": "string",
             "nullable": true
           }
@@ -29437,12 +29437,13 @@
       "DocsConnectionDto": {
         "required": [
           "baseUrl",
-          "bridgeUrl",
           "configured",
           "docmostUser",
           "hasBridgeSecret",
           "lastCheckedAt",
           "problem",
+          "problemDetail",
+          "sprintBootUrl",
           "status"
         ],
         "type": "object",
@@ -29469,7 +29470,11 @@
             "type": "string",
             "nullable": true
           },
-          "bridgeUrl": {
+          "sprintBootUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "problemDetail": {
             "type": "string",
             "nullable": true
           },

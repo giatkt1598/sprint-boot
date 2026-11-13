@@ -34,8 +34,6 @@ public class DocsGateway(
         new[] { configuration["Docs:PublicUrl"], configuration["Auth:SpaBaseUrl"], "http://localhost:5173" }
             .First(value => !string.IsNullOrWhiteSpace(value))!.TrimEnd('/');
 
-    public string BridgeUrl => $"{PublicUrl}/api/v1/docs-bridge";
-
     public string TicketUrl(string key) => $"{PublicUrl}/browse/{key}";
 
     public DocmostAccess Access(DocsConnection connection) =>
@@ -59,7 +57,7 @@ public class DocsGateway(
         }
         catch (DocmostAuthException failure)
         {
-            await MarkAsync(connection.Id, DocsProblem.Unauthorized);
+            await MarkAsync(connection.Id, DocsProblem.Unauthorized, failure.Message);
             throw DocmostFailures.ToBusiness(failure);
         }
         catch (DocmostUnavailableException failure)
@@ -77,11 +75,13 @@ public class DocsGateway(
             connection.DocmostUser = await client.VerifyAsync(Access(connection));
             connection.Status = DocsConnectionStatus.Connected;
             connection.Problem = DocsProblem.None;
+            connection.ProblemDetail = null;
         }
         catch (Exception failure) when (failure is DocmostAuthException or DocmostUnavailableException or DocmostNotFoundException)
         {
             connection.Status = DocsConnectionStatus.NeedsAttention;
             connection.Problem = failure is DocmostAuthException ? DocsProblem.Unauthorized : DocsProblem.Unavailable;
+            connection.ProblemDetail = failure.Message.Length > 512 ? failure.Message[..512] : failure.Message;
         }
 
         await connections.UpdateAsync(connection, autoSave: true);
@@ -89,12 +89,13 @@ public class DocsGateway(
 
     public static string HashSecret(string secret) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(secret)));
 
-    private async Task MarkAsync(Guid id, DocsProblem problem)
+    private async Task MarkAsync(Guid id, DocsProblem problem, string detail)
     {
         using var uow = unitOfWork.Begin(requiresNew: true);
         var connection = await connections.GetAsync(id);
         connection.Status = DocsConnectionStatus.NeedsAttention;
         connection.Problem = problem;
+        connection.ProblemDetail = detail.Length > 512 ? detail[..512] : detail;
         connection.LastCheckedAt = clock.Now;
         await connections.UpdateAsync(connection);
         await uow.CompleteAsync();
@@ -153,7 +154,7 @@ public class DocsAdminAppService(
         var secret = $"sbd_{Convert.ToHexString(RandomNumberGenerator.GetBytes(32)).ToLowerInvariant()}";
         connection.BridgeSecretHash = DocsGateway.HashSecret(secret);
         await connections.UpdateAsync(connection, autoSave: true);
-        return new DocsBridgeSecretDto { Secret = secret, BridgeUrl = gateway.BridgeUrl };
+        return new DocsBridgeSecretDto { Secret = secret, SprintBootUrl = gateway.PublicUrl };
     }
 
     private DocsConnectionDto ToDto(DocsConnection? connection) => new()
@@ -164,7 +165,8 @@ public class DocsAdminAppService(
         Problem = connection?.Problem ?? DocsProblem.None,
         LastCheckedAt = connection?.LastCheckedAt,
         DocmostUser = connection?.DocmostUser,
-        BridgeUrl = gateway.BridgeUrl,
+        SprintBootUrl = gateway.PublicUrl,
+        ProblemDetail = connection?.ProblemDetail,
         HasBridgeSecret = connection?.BridgeSecretHash is not null,
     };
 }

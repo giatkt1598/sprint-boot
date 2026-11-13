@@ -174,14 +174,14 @@ public partial class DocmostClient(IHttpClientFactory httpClients) : ITransientD
             switch (response.StatusCode)
             {
                 case HttpStatusCode.Unauthorized:
-                    throw new DocmostAuthException("Docmost refused the API key.");
+                    throw new DocmostAuthException(await ReasonAsync(response, "Docmost refused the API key."));
                 case HttpStatusCode.NotFound or HttpStatusCode.Forbidden:
                     throw new DocmostNotFoundException();
             }
 
             if (!response.IsSuccessStatusCode)
             {
-                throw new DocmostUnavailableException($"Docmost answered {(int)response.StatusCode}.");
+                throw new DocmostUnavailableException(await ReasonAsync(response, $"Docmost answered {(int)response.StatusCode}."));
             }
 
             try
@@ -194,6 +194,23 @@ public partial class DocmostClient(IHttpClientFactory httpClients) : ITransientD
                 // An address that is not Docmost, such as a login page in front of it.
                 throw new DocmostUnavailableException("Docmost did not answer with JSON.", failure);
             }
+        }
+    }
+
+    /// <summary>Docmost's own message, such as "API access is restricted to workspace admins".</summary>
+    private static async Task<string> ReasonAsync(HttpResponseMessage response, string fallback)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            return document.RootElement.TryGetProperty("message", out var message) && message.ValueKind == JsonValueKind.String
+                && message.GetString() is { Length: > 0 } text
+                ? $"{fallback} Docmost said: {text}"
+                : fallback;
+        }
+        catch (JsonException)
+        {
+            return fallback;
         }
     }
 

@@ -32,7 +32,10 @@ public sealed class FakeDocmostServer : HttpMessageHandler
 
         if (request.Headers.Authorization?.Parameter != ValidKey)
         {
-            return new HttpResponseMessage(HttpStatusCode.Unauthorized);
+            return new HttpResponseMessage(HttpStatusCode.Unauthorized)
+            {
+                Content = new StringContent("""{"message":"Invalid API key","error":"Unauthorized","statusCode":401}""", Encoding.UTF8, "application/json"),
+            };
         }
 
         var body = request.Content is null ? null : JsonNode.Parse(await request.Content.ReadAsStringAsync(cancellationToken));

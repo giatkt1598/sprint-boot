@@ -21722,7 +21722,7 @@ export interface components {
         };
         DocsBridgeSecretDto: {
             secret: string | null;
-            bridgeUrl: string | null;
+            sprintBootUrl: string | null;
         };
         DocsConnectionDto: {
             configured: boolean;
@@ -21732,7 +21732,8 @@ export interface components {
             /** Format: date-time */
             lastCheckedAt: string | null;
             docmostUser: string | null;
-            bridgeUrl: string | null;
+            sprintBootUrl: string | null;
+            problemDetail: string | null;
             hasBridgeSecret: boolean;
         };
         /**
