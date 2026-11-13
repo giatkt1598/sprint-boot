@@ -382,4 +382,74 @@ describe('ChatThread', () => {
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(get).toHaveBeenCalledWith('/api/v1/assistant/{id}', expect.anything()));
   });
+
+  /** A two-step answer whose second step is still arriving; `end` closes the stream the given way. */
+  const twoStepAnswer = (id: string) => {
+    const encoder = new TextEncoder();
+    const event = (data: object) => encoder.encode(`data: ${JSON.stringify(data)}\n\n`);
+    const step = { id: `${id}-m1`, role: 'assistant', text: 'Looking', html: '<p>Looking</p>', tools: [], actions: [], sources: [] };
+    const control: { end: (how: 'drop' | 'done') => void } = { end: () => undefined };
+    vi.stubGlobal('fetch', vi.fn((_: string, init: RequestInit) => Promise.resolve(new Response(new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(event({ type: 'delta', text: 'Looking ' }));
+        controller.enqueue(event({ type: 'message', message: step }));
+        controller.enqueue(event({ type: 'delta', text: 'Here is a much longer second step that keeps arriving ' }));
+        init.signal?.addEventListener('abort', () => controller.error(new DOMException('Aborted', 'AbortError')));
+        control.end = (how) => {
+          if (how === 'drop') {
+            controller.error(new TypeError('network error'));
+          } else {
+            controller.enqueue(event({ type: 'done' }));
+            controller.close();
+          }
+        };
+      },
+    }), { headers: { 'content-type': 'text/event-stream' } }))));
+    return { step, control };
+  };
+
+  /** Asks a question, waits for the second step to stream, then refetches a conversation that holds the first step. */
+  const askAndRefetchMidAnswer = async (id: string, step: object) => {
+    get.mockResolvedValue({ conversation: { id, title: 'Hi' }, messages: [] });
+    const client = new QueryClient();
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter>
+          <ChatThread conversationId={id} onConversation={() => undefined} />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    await waitFor(() => expect(get).toHaveBeenCalled());
+    const box = screen.getByRole('textbox', { name: 'Ask the assistant' });
+    fireEvent.change(box, { target: { value: 'Go' } });
+    await act(async () => {
+      fireEvent.keyDown(box, { key: 'Enter' });
+    });
+    await waitFor(() => expect(document.body.textContent).toContain('Here is'));
+
+    // The network comes back or the window regains focus, and the refetch already holds the saved first step.
+    const question = { id: `${id}-u1`, role: 'user', text: 'Go', tools: [], actions: [], sources: [] };
+    get.mockResolvedValue({ conversation: { id, title: 'Hi' }, messages: [question, step] });
+    await act(async () => {
+      await client.refetchQueries({ queryKey: ['assistant', 'conversation', id] });
+    });
+  };
+
+  it('gives the Send button back when a refetch hides the answer that was still being revealed', async () => {
+    const { step, control } = twoStepAnswer('c10');
+    await askAndRefetchMidAnswer('c10', step);
+
+    await act(async () => control.end('drop'));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeTruthy());
+  });
+
+  it('stops the answer even once a refetch has hidden it', async () => {
+    const { step } = twoStepAnswer('c11');
+    await askAndRefetchMidAnswer('c11', step);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Stop' }));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeTruthy());
+  });
 });

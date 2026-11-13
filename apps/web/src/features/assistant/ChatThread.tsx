@@ -323,6 +323,17 @@ export function ChatThread({ conversationId, ticketId, onConversation, intro, on
   const input = useRef<HTMLTextAreaElement>(null);
   const scroller = useStickToBottom<HTMLDivElement, HTMLDivElement>();
 
+  const messages = detail.data?.messages ?? [];
+  // Once the refetched conversation holds the answer, the live copy would only show it twice.
+  const saved = new Set(messages.map((message) => message.id));
+  const persisted = live.segments.some((segment) => segment.message && saved.has(segment.message.id));
+  // Earlier steps are done; only the latest one is still being revealed.
+  const earlier = live.segments.slice(0, -1);
+  const current = live.segments[live.segments.length - 1];
+  // Only a streaming answer on screen can still be revealing words. A refetch that already holds the answer hides it,
+  // and with it the only one who would ever report it caught up.
+  const shownAll = revealed || persisted || !current;
+
   useEffect(() => () => abort.current?.abort(), []);
   useEffect(() => onBusyChange?.(busy), [busy, onBusyChange]);
   useEffect(() => {
@@ -344,7 +355,7 @@ export function ChatThread({ conversationId, ticketId, onConversation, intro, on
 
   // Once the stream has ended and its last words have shown, the saved conversation replaces the live copy.
   useEffect(() => {
-    if (!ending || !revealed) {
+    if (!ending || !shownAll) {
       return;
     }
     setEnding(null);
@@ -361,7 +372,7 @@ export function ChatThread({ conversationId, ticketId, onConversation, intro, on
       setSkip(false);
       setBusy(false);
     })();
-  }, [ending, revealed, queryClient]);
+  }, [ending, shownAll, queryClient]);
 
   const describe = (event: AssistantEvent) => {
     const key = `errors.${event.code?.split(':')[1]}`;
@@ -462,17 +473,9 @@ export function ChatThread({ conversationId, ticketId, onConversation, intro, on
     }
   };
 
-  const messages = detail.data?.messages ?? [];
-  // Once the refetched conversation holds the answer, the live copy would only show it twice.
-  const saved = new Set(messages.map((message) => message.id));
-  const persisted = live.segments.some((segment) => segment.message && saved.has(segment.message.id));
   // A refetch while the answer streams (say, on window focus) already holds the question: the live copy shows it until
   // the answer is saved too, so nothing shows twice.
   const shownMessages = mergeToolSteps(baseline !== null && !persisted ? messages.slice(0, baseline) : messages);
-  // Earlier steps are done; only the latest one is still being revealed.
-  const earlier = live.segments.slice(0, -1);
-  const current = live.segments[live.segments.length - 1];
-
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div ref={scroller.scroll} onScroll={scroller.onScroll} className="min-h-0 flex-1 overflow-y-auto" aria-live="polite">
@@ -557,8 +560,10 @@ export function ChatThread({ conversationId, ticketId, onConversation, intro, on
                 size="small"
                 aria-label={t('assistant.stop')}
                 onClick={() => {
-                  // Stopping also shows at once whatever had arrived.
+                  // Stopping also shows at once whatever had arrived, and gives Send back as soon as the stream ends,
+                  // whatever is or is not left on screen to report.
                   setSkip(true);
+                  setRevealed(true);
                   abort.current?.abort();
                 }}
                 sx={{ width: 28, height: 28, backgroundColor: sem('text-primary'), color: sem('bg-surface'), '&:hover': { backgroundColor: sem('text-primary') } }}
