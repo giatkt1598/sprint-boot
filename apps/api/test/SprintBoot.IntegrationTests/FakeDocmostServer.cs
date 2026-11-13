@@ -57,6 +57,16 @@ public sealed class FakeDocmostServer : HttpMessageHandler
             "/api/pages/info" when body?["pageId"]?.GetValue<string>() is PageId or PageSlugId => Data(page),
             "/api/pages/info" => new HttpResponseMessage(HttpStatusCode.NotFound),
             "/api/pages/create" => Created(body!),
+            // Most recently changed first; the older page was created last.
+            "/api/pages/recent" => Data(new
+            {
+                items = new object[]
+                {
+                    new { id = "44444444-4444-4444-4444-444444444444", slugId = "old111", title = "Old but edited", spaceId = SpaceId, createdAt = "2026-01-01T00:00:00Z" },
+                    new { id = "55555555-5555-5555-5555-555555555555", slugId = "new222", title = "Brand new", spaceId = SpaceId, createdAt = "2026-11-01T00:00:00Z" },
+                },
+                meta,
+            }),
             "/api/search" => Data(new
             {
                 items = (body?["query"]?.GetValue<string>() ?? string.Empty).Contains("design", StringComparison.OrdinalIgnoreCase)

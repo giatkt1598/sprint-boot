@@ -1811,9 +1811,11 @@
     "pageTitle": "Title",
     "parentPage": "Parent page",
     "underParent": "The page goes under {{title}}.",
-    "topLevel": "Leave empty to put the page at the top of the space's Docmost space.",
+    "topLevel": "The page goes at the top of the space's Docmost space.",
     "mentionsTitle": "Mentions",
-    "mentionsHint": "Docmost pages that link to this ticket.",
-    "sourceText": "Linked from the ticket's text"
+    "sourceText": "Linked from the ticket's text",
+    "searchPages": "Search pages",
+    "topLevelOption": "Top of the space",
+    "noMatches": "No pages match."
   }
 }

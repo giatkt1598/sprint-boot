@@ -86,6 +86,24 @@ public class DocsTicketAppService(
                 DocsHits.From(await client.SearchPagesAsync(access, query.Trim(), null), connection));
     }
 
+    public async Task<List<DocsPageHitDto>> GetNewestPagesAsync(Guid ticketId)
+    {
+        var projectId = await tickets.GetProjectIdAsync(ticketId);
+        await projectAccess.CheckAsync(projectId, ProjectPermissions.EditTickets);
+        var space = await spaces.FirstOrDefaultAsync(item => item.ProjectId == projectId);
+        if (space is null || !await gateway.IsConfiguredAsync())
+        {
+            return [];
+        }
+
+        return await gateway.CallAsync(async (access, connection) =>
+            DocsHits.From(
+                (await client.GetNewestPagesAsync(access, space.DocmostSpaceId, NewestPages)).Select(page => (page, (DocmostSpaceDto?)null)),
+                connection, space.Slug, space.Name));
+    }
+
+    private const int NewestPages = 10;
+
     public async Task<TicketDocPageDto> LinkAsync(Guid ticketId, LinkDocPageInput input)
     {
         var projectId = await tickets.GetProjectIdAsync(ticketId);

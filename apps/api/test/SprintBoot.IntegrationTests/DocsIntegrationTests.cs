@@ -183,6 +183,21 @@ public class DocsIntegrationTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task Adding_a_document_offers_the_newest_pages_of_the_linked_space()
+    {
+        await ConnectAsync(await AdminAsync());
+        var (owner, project, ticket) = await SpaceAsync();
+        (await owner.Http.GetFromJsonAsync<List<DocsPageHitDto>>($"/api/v1/docs-ticket/newest-pages/{ticket.Id}", Token))!.ShouldBeEmpty();
+
+        (await owner.Http.PostAsJsonAsync($"/api/v1/docs-project/link/{project.Id}", new { docmostSpaceId = FakeDocmostServer.SpaceId }, Token)).EnsureSuccessStatusCode();
+        var newest = await owner.Http.GetFromJsonAsync<List<DocsPageHitDto>>($"/api/v1/docs-ticket/newest-pages/{ticket.Id}", Token);
+
+        newest!.Select(page => page.Title).ShouldBe(["Brand new", "Old but edited"]);
+        newest[0].SpaceName.ShouldBe("Engineering");
+        newest[0].Url.ShouldEndWith($"/s/{FakeDocmostServer.SpaceSlug}/p/brand-new-new222");
+    }
+
+    [Fact]
     public async Task A_Docmost_address_resolves_for_a_chip()
     {
         await ConnectAsync(await AdminAsync());

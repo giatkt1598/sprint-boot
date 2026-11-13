@@ -1811,9 +1811,11 @@
     "pageTitle": "Tiêu đề",
     "parentPage": "Trang cha",
     "underParent": "Trang sẽ nằm dưới {{title}}.",
-    "topLevel": "Để trống để đặt trang ở cấp gốc của Docmost space gắn với Space này.",
+    "topLevel": "Trang sẽ nằm ở cấp gốc của Docmost space gắn với Space này.",
     "mentionsTitle": "Được nhắc tới trong",
-    "mentionsHint": "Các trang Docmost có liên kết tới ticket này.",
-    "sourceText": "Liên kết từ nội dung ticket"
+    "sourceText": "Liên kết từ nội dung ticket",
+    "searchPages": "Tìm trang",
+    "topLevelOption": "Cấp gốc của space",
+    "noMatches": "Không có trang nào khớp."
   }
 }

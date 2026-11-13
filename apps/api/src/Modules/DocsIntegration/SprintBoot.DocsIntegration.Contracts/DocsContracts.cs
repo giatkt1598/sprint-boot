@@ -249,6 +249,9 @@ public interface IDocsTicketAppService : IApplicationService
     /// <summary>Pages of every Docmost space the connection can read whose title matches.</summary>
     Task<List<DocsPageHitDto>> GetSearchPagesAsync(Guid ticketId, string? query);
 
+    /// <summary>The newest pages of the space's Docmost space, offered before anything is typed; empty without one.</summary>
+    Task<List<DocsPageHitDto>> GetNewestPagesAsync(Guid ticketId);
+
     /// <summary>Removes a link made by hand; links from mentions follow the page.</summary>
     Task DeleteAsync(Guid id);
 

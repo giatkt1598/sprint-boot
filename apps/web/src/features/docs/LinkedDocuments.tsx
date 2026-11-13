@@ -15,11 +15,12 @@ import { TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { font, sem } from '../../theme/tokens';
+import { ParentPagePicker, type ParentPage } from './ParentPagePicker';
 import { DocLinkSource, useTicketDocs, useTicketDocsActions, type DocsPageHit, type TicketDocPage } from './api';
 
 const SEARCH_DELAY = 250;
-// The ticket's text links settle a moment after a description or comment is saved.
-const POLL_MILLISECONDS = 10_000;
+// Mentions arrive from Docmost while its page is edited, and text links a moment after a save: poll often.
+const POLL_MILLISECONDS = 3_000;
 
 /** Waits for a pause in typing before searching. */
 function useDebounced(value: string) {
@@ -35,12 +36,14 @@ function useDebounced(value: string) {
 type Picked = DocsPageHit | string;
 
 /** Finds Docmost pages by title, or takes a pasted page address, like the ticket picker of Linked tickets. */
-function PageField({ label, value, onInput, onPick, search, autoFocus }: {
+function PageField({ label, value, onInput, onPick, search, suggestions, autoFocus }: {
   label: string;
   value: string;
   onInput: (text: string) => void;
   onPick: (page: DocsPageHit | null) => void;
   search: (query: string) => Promise<DocsPageHit[]>;
+  /** Offered while nothing is typed. */
+  suggestions?: DocsPageHit[];
   autoFocus?: boolean;
 }) {
   const id = useId();
@@ -62,7 +65,8 @@ function PageField({ label, value, onInput, onPick, search, autoFocus }: {
         id={id}
         size="small"
         freeSolo
-        options={searching ? (found.data ?? []) : []}
+        options={searching ? (found.data ?? []) : query.length === 0 ? (suggestions ?? []) : []}
+        openOnFocus
         loading={found.isFetching}
         filterOptions={(list) => list}
         inputValue={value}
@@ -105,6 +109,13 @@ function AddDocumentRow({ ticketId, onClose }: { ticketId: string; onClose: () =
 
   const search = (query: string) =>
     unwrap(apiClient.GET('/api/v1/docs-ticket/search-pages/{ticketId}', { params: { path: { ticketId }, query: { query } } }));
+  // The newest pages of the space's Docmost space, before anything is typed.
+  const newest = useQuery({
+    queryKey: ['docs', 'ticket', ticketId, 'newest'],
+    staleTime: 30_000,
+    retry: false,
+    queryFn: () => unwrap(apiClient.GET('/api/v1/docs-ticket/newest-pages/{ticketId}', { params: { path: { ticketId } } })),
+  });
 
   const submit = () =>
     link.mutate(picked ? { pageId: picked.id! } : { url: text.trim() }, {
@@ -125,7 +136,7 @@ function AddDocumentRow({ ticketId, onClose }: { ticketId: string; onClose: () =
         }
       }}
     >
-      <PageField label={t('docs.findPage')} value={text} onInput={setText} onPick={setPicked} search={search} autoFocus />
+      <PageField label={t('docs.findPage')} value={text} onInput={setText} onPick={setPicked} search={search} suggestions={newest.data} autoFocus />
       <div className="flex justify-end gap-2">
         <Button kind="ghost" onClick={onClose}>{t('common.cancel')}</Button>
         <Button disabled={!ready} onClick={submit}>{t('docs.linkPage')}</Button>
@@ -146,11 +157,7 @@ function CreateDocumentDialog({ ticketId, projectId, defaultTitle, onClose }: {
   const toMessage = useErrorMessage();
   const { createPage } = useTicketDocsActions(ticketId);
   const [title, setTitle] = useState(defaultTitle);
-  const [parentText, setParentText] = useState('');
-  const [parent, setParent] = useState<DocsPageHit | null>(null);
-
-  const search = (query: string) =>
-    unwrap(apiClient.GET('/api/v1/docs-project/search-pages/{projectId}', { params: { path: { projectId }, query: { query } } }));
+  const [parent, setParent] = useState<ParentPage | null>(null);
 
   const create = () =>
     createPage.mutate(
@@ -172,17 +179,14 @@ function CreateDocumentDialog({ ticketId, projectId, defaultTitle, onClose }: {
       footer={
         <DialogFooter
           confirmLabel={t('docs.createDocument')}
-          confirmDisabled={!title.trim() || Boolean(parentText.trim() && !parent) || createPage.isPending}
+          confirmDisabled={!title.trim() || createPage.isPending}
           onCancel={onClose}
           onConfirm={create}
         />
       }
     >
       <TextField label={t('docs.pageTitle')} autoFocus value={title} onChange={(event) => setTitle(event.target.value)} />
-      <div className="flex flex-col gap-1">
-        <PageField label={t('docs.parentPage')} value={parentText} onInput={setParentText} onPick={setParent} search={search} />
-        <Typography variant="body2" color="textSecondary">{parent ? t('docs.underParent', { title: parent.title }) : t('docs.topLevel')}</Typography>
-      </div>
+      <ParentPagePicker projectId={projectId} value={parent} onChange={setParent} />
       {createPage.isError && <Typography role="alert" color="error" variant="body2">{toMessage(createPage.error)}</Typography>}
     </Dialog>
   );
@@ -285,7 +289,6 @@ export function LinkedDocuments({ ticketId, projectId, defaultTitle }: { ticketI
         <section className="flex flex-col" aria-labelledby={`docs-mentions-${ticketId}`}>
           <div className="pb-2">
             <Typography id={`docs-mentions-${ticketId}`} variant="h2" component="h2">{t('docs.mentionsTitle')}</Typography>
-            <Typography variant="body2" color="textSecondary">{t('docs.mentionsHint')}</Typography>
           </div>
           <DocumentRows pages={mentions} label={t('docs.mentionsTitle')} />
         </section>

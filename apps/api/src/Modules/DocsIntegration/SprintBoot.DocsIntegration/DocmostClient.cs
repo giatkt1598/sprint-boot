@@ -99,6 +99,25 @@ public partial class DocmostClient(IHttpClientFactory httpClients) : ITransientD
             ? new { spaceId, title, content, format = "json" }
             : (object)new { spaceId, parentPageId, title, content, format = "json" }));
 
+    /// <summary>
+    /// The newest pages of a space. Docmost lists a space's pages by when they last changed; of the most recently
+    /// changed ones, those created last come first.
+    /// </summary>
+    public async Task<List<DocmostPage>> GetNewestPagesAsync(DocmostAccess access, string spaceId, int count)
+    {
+        var data = await PostAsync(access, "pages/recent", new { spaceId, limit = 50 });
+        if (!data.TryGetProperty("items", out var items) || items.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        return [.. items.EnumerateArray()
+            .Select(item => (Page: ToPage(item), Created: Text(item, "createdAt")))
+            .OrderByDescending(item => DateTime.TryParse(item.Created, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var at) ? at : DateTime.MinValue)
+            .Take(count)
+            .Select(item => item.Page)];
+    }
+
     /// <summary>Pages whose title matches, in the spaces the service user reads; one space when given.</summary>
     public async Task<List<(DocmostPage Page, DocmostSpaceDto? Space)>> SearchPagesAsync(DocmostAccess access, string query, string? spaceId)
     {
