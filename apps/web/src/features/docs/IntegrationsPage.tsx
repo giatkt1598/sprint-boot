@@ -7,12 +7,11 @@ import { apiClient, unwrap } from '../../api';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { Dialog, DialogConfirm, DialogFooter } from '../../components/Dialog';
-import { DocumentIcon } from '../../components/icons';
 import { ErrorState, LoadingState } from '../../components/StateViews';
 import { TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
-import { radius, sem } from '../../theme/tokens';
+import { sem } from '../../theme/tokens';
 import { DocsProblem, useDocsConnection } from './api';
 
 /** Enter Docmost's address and go there to authorize; Docmost hands back what both sides need. */
@@ -47,7 +46,7 @@ function ConnectDocmostDialog({ initialUrl, onClose }: { initialUrl: string; onC
   );
 }
 
-/** Admin › Integrations: what Sprint Boot connects to, one card each, as Docmost lists its own. */
+/** Admin › Integrations: what Sprint Boot connects to, one row each, laid out as Docmost lists its own. */
 export function IntegrationsPage() {
   const { t } = useTranslation();
   const toast = useToast();
@@ -81,44 +80,51 @@ export function IntegrationsPage() {
   const problem = data?.problem ?? DocsProblem.none;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <Typography variant="h1">{t('integrations.title')}</Typography>
-        <Typography variant="body2" color="textSecondary">{t('integrations.hint')}</Typography>
+    <div className="flex flex-col gap-4">
+      <Typography variant="h1" className="pb-3" style={{ borderBottom: `1px solid ${sem('border-default')}` }}>{t('integrations.title')}</Typography>
+      <div className="flex flex-col gap-2">
+        <Typography variant="body2">{t('integrations.hint')}</Typography>
+        <ol className="m-0 flex flex-col gap-1 pl-6">
+          {(['step1', 'step2', 'step3'] as const).map((step) => (
+            <Typography key={step} component="li" variant="body2" color="textSecondary">{t(`integrations.${step}`)}</Typography>
+          ))}
+        </ol>
       </div>
       {connection.isPending && <LoadingState />}
       {connection.isError && <ErrorState onRetry={() => void connection.refetch()} />}
       {data && (
-        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-          <section
+        <ul className="m-0 list-none p-0">
+          <li
             aria-labelledby="integration-docmost"
-            className="flex flex-col gap-3 p-4"
-            style={{ border: `1px solid ${sem('border-default')}`, borderRadius: radius.card, backgroundColor: sem('bg-surface') }}
+            className="flex items-center gap-4 py-3"
+            style={{ borderBottom: `1px solid ${sem('border-default')}` }}
           >
-            <div className="flex items-center gap-3">
-              <span aria-hidden className="flex size-10 shrink-0 items-center justify-center" style={{ backgroundColor: sem('bg-subtle'), borderRadius: radius.card, color: sem('text-accent') }}>
-                <DocumentIcon size={22} strokeWidth={1.5} />
-              </span>
-              <div className="min-w-0 flex-1">
+            <img src="/integrations/docmost.png" alt="" aria-hidden className="size-7 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
                 <Typography id="integration-docmost" variant="h3">Docmost</Typography>
-                {connected && (problem === DocsProblem.none
-                  ? <Badge tone="success">{t('docs.connected')}</Badge>
-                  : <Badge tone="danger">{t(problem === DocsProblem.unauthorized ? 'docs.problemUnauthorized' : 'docs.problemUnavailable')}</Badge>)}
+                {!connected && <Badge tone="subtle">{t('integrations.notConfigured')}</Badge>}
+                {connected && problem !== DocsProblem.none && (
+                  <Badge tone="danger">{t(problem === DocsProblem.unauthorized ? 'docs.problemUnauthorized' : 'docs.problemUnavailable')}</Badge>
+                )}
               </div>
+              <Typography variant="body2" color="textSecondary">{t('integrations.docmostDescription')}</Typography>
             </div>
-            <Typography variant="body2" color="textSecondary" className="flex-1">{t('integrations.docmostDescription')}</Typography>
-            {connected && data.baseUrl && <Typography variant="caption" color="textSecondary" className="truncate">{data.baseUrl}</Typography>}
-            <div className="flex flex-wrap gap-2">
-              <Button kind={connected ? 'secondary' : 'primary'} onClick={() => setConfiguring(true)}>{t('integrations.configure')}</Button>
-              {connected && <Button kind="ghost" component={RouterLink} to="docmost">{t('integrations.details')}</Button>}
-              {connected && (
-                <Button kind="ghost" sx={{ color: sem('feedback-danger-text') }} disabled={uninstall.isPending} onClick={() => setUninstalling(true)}>
-                  {t('integrations.uninstall')}
-                </Button>
+            <div className="flex shrink-0 gap-2">
+              {connected ? (
+                <>
+                  <Button kind="secondary" component={RouterLink} to="docmost">{t('integrations.configure')}</Button>
+                  <Button kind="secondary" disabled={uninstall.isPending} onClick={() => setUninstalling(true)}>{t('integrations.uninstall')}</Button>
+                </>
+              ) : (
+                <>
+                  <Button kind="secondary" onClick={() => setConfiguring(true)}>{t('integrations.configure')}</Button>
+                  <Button kind="secondary" onClick={() => setConfiguring(true)}>{t('integrations.install')}</Button>
+                </>
               )}
             </div>
-          </section>
-        </div>
+          </li>
+        </ul>
       )}
       {configuring && <ConnectDocmostDialog initialUrl={data?.baseUrl ?? ''} onClose={() => setConfiguring(false)} />}
       <DialogConfirm

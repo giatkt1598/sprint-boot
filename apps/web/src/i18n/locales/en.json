@@ -1821,8 +1821,8 @@
   },
   "integrations": {
     "title": "Integrations",
-    "hint": "Connect Sprint Boot to the tools your team works in.",
-    "docmostDescription": "Link Docmost spaces to Sprint Boot spaces: live ticket links in Docmost, and the pages about each ticket in Sprint Boot.",
+    "hint": "Integrations connect Sprint Boot with the apps your team works in. Link a Docmost space to a Sprint Boot space and ticket links in Docmost show live, while each ticket lists the pages about it.",
+    "docmostDescription": "Live ticket links in Docmost, and the pages about each ticket shown in Sprint Boot",
     "configure": "Configure",
     "details": "Details",
     "authorize": "Authorize",
@@ -1837,6 +1837,11 @@
     "uninstall": "Uninstall",
     "uninstalled": "{{name}} is disconnected",
     "uninstallTitle": "Uninstall {{name}}?",
-    "uninstallBody": "Sprint Boot stops talking to Docmost, and Docmost uninstalls its Sprint Boot integration and revokes the key it gave. Linked spaces and pages are kept, so linking the same Docmost again brings them back."
+    "uninstallBody": "Sprint Boot stops talking to Docmost, and Docmost uninstalls its Sprint Boot integration and revokes the key it gave. Linked spaces and pages are kept, so linking the same Docmost again brings them back.",
+    "step1": "An admin presses Install and enters the address of the other app.",
+    "step2": "In the other app, an admin there picks the spaces to link and presses Authorize. Both sides are set up at once, with no keys to copy.",
+    "step3": "People are matched by email, so each person only sees what their own account can open.",
+    "notConfigured": "Not configured",
+    "install": "Install"
   }
 }
