@@ -3,6 +3,7 @@ import hljs from 'highlight.js/lib/common';
 import { AttachmentIcon, CalloutIcon, CodeBlockIcon, Heading1Icon, Heading2Icon, Heading3Icon, ImageIcon, ListIcon, MentionIcon, MinusIcon, OrderedListIcon, QuoteIcon, TableIcon, TaskListIcon, TextIcon, type IconComponent } from '../../components/icons';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import Typography from '@mui/material/Typography';
 import { Dialog, DialogFooter } from '../../components/Dialog';
@@ -14,6 +15,7 @@ import { uploadRichTextFile } from './api';
 import { resolveDocsPage, useDocsInfo } from '../docs/api';
 import { EditorMenus, EditorToolbar, normalizeUrl } from './RichTextMenus';
 import { createExtensions, type MentionUser, type PopupState, type SlashCommand } from './richTextExtensions';
+import { TicketChips } from './TicketChip';
 
 export type { MentionUser } from './richTextExtensions';
 
@@ -325,6 +327,7 @@ export function RichTextEditor({ label, initialValue = '', people, autoFocus, sh
 /** Backend-sanitized HTML, the only place user markup reaches the DOM. */
 export function RichTextView({ html }: { html: string }) {
   const view = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   // Before paint: a streaming answer replaces this HTML every frame, and code highlighted only after paint would flash.
   useLayoutEffect(() => {
@@ -336,5 +339,20 @@ export function RichTextView({ html }: { html: string }) {
     });
   }, [html]);
 
-  return <div ref={view} className="rich-text" dangerouslySetInnerHTML={{ __html: html }} />;
+  // A ticket chip opens the ticket in the app, unless the person asks for a new tab or window.
+  const openTicket = (event: React.MouseEvent) => {
+    const chip = (event.target as HTMLElement).closest<HTMLElement>('a.ticket-mention[data-ticket-key]');
+    if (!chip || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      return;
+    }
+    event.preventDefault();
+    void navigate(`/browse/${chip.dataset.ticketKey}`);
+  };
+
+  return (
+    <>
+      <div ref={view} className="rich-text" onClick={openTicket} dangerouslySetInnerHTML={{ __html: html }} />
+      <TicketChips container={view} html={html} />
+    </>
+  );
 }

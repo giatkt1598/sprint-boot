@@ -25,6 +25,7 @@ public class RichTextSanitizerTests
     [InlineData("<a href=\"mailto:a@b.c\" rel=\"noopener noreferrer\" target=\"_blank\">a</a>", "mailto:a@b.c")]
     [InlineData("<span data-type=\"mention\" data-id=\"1\" class=\"mention\">@a</span>", "class=\"mention\"")]
     [InlineData("<a data-type=\"doc-mention\" class=\"doc-mention\" data-page-id=\"p1\" href=\"https://docs.test/p/abc\">Spec</a>", "data-page-id=\"p1\"")]
+    [InlineData("<a data-type=\"ticket-mention\" class=\"ticket-mention\" data-ticket-key=\"SB-1\" href=\"https://sb.test/browse/SB-1\">SB-1 Login</a>", "class=\"ticket-mention\" data-ticket-key=\"SB-1\"")]
     public void Everything_the_editor_writes_survives(string html, string expected)
     {
         Clean(html).ShouldContain(expected);

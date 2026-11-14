@@ -40,6 +40,13 @@ public class RichTextMarkdownTests
     }
 
     [Fact]
+    public void A_chip_for_a_ticket_reads_as_a_link()
+    {
+        RichTextMarkdown.ToMarkdown("<p>See <a data-type=\"ticket-mention\" class=\"ticket-mention\" data-ticket-key=\"SB-1\" href=\"https://sb.test/browse/SB-1\">SB-1 Login</a></p>")
+            .ShouldContain("[SB-1 Login](https://sb.test/browse/SB-1)");
+    }
+
+    [Fact]
     public void Invented_tags_keep_their_text()
     {
         var html = Clean(Html("<badge color=\"success\">Comment **added**</badge>\n\nNext <script>alert(1)</script>"));

@@ -522,3 +522,38 @@
 .rich-text a.doc-mention:hover {
   text-decoration: underline;
 }
+
+/* A ticket chip: type, key, title and status, filled in live by the app. */
+.rich-text .ticket-mention {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 0 4px;
+  border-radius: 4px;
+  background-color: var(--sb-bg-subtle);
+  color: var(--sb-text-primary);
+  text-decoration: none;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.rich-text .ticket-mention:hover {
+  box-shadow: inset 0 0 0 1px var(--sb-border-default);
+}
+
+.rich-text .ticket-mention-key {
+  color: var(--sb-text-accent);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.rich-text .ticket-mention-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rich-text .ticket-mention.ProseMirror-selectednode {
+  outline: 2px solid var(--sb-border-focus);
+}

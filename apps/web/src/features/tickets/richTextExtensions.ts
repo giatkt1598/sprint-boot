@@ -14,7 +14,10 @@ import { PluginKey } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
 import Suggestion, { type SuggestionKeyDownProps, type SuggestionProps } from '@tiptap/suggestion';
 import { common, createLowlight } from 'lowlight';
+import { ReactNodeViewRenderer } from '@tiptap/react';
 import { DocMention, type DocRef } from './docMention';
+import { resolveTicketUrl, TicketChipView } from './TicketChip';
+import { TicketMention, ticketKeyFromUrl } from './ticketMention';
 
 export interface MentionUser {
   id?: string;
@@ -208,6 +211,14 @@ export function createExtensions(options: RichTextOptions) {
     BlockMover,
     SlashMenu.configure({ commands: options.commands, onChange: options.onSlashPopup }),
     DocMention.configure({ docmostUrl: options.docmostUrl, resolve: options.resolveDoc }),
+    // Shown live while editing: type, title and status as they are now.
+    TicketMention.extend({ addNodeView: () => ReactNodeViewRenderer(TicketChipView) }).configure({
+      appUrl: () => window.location.origin,
+      resolve: (url) => {
+        const key = ticketKeyFromUrl(url, window.location.origin);
+        return key ? resolveTicketUrl(url, key) : Promise.resolve(null);
+      },
+    }),
     Mention.configure({
       HTMLAttributes: { class: 'mention' },
       suggestion: {

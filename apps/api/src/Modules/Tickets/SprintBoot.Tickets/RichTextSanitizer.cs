@@ -60,7 +60,7 @@ public partial class RichTextSanitizer : ISingletonDependency
         }
     }
 
-    [GeneratedRegex("^(mention|doc-mention|callout|language-[a-z0-9+#-]+)$")]
+    [GeneratedRegex("^(mention|doc-mention|ticket-mention|callout|language-[a-z0-9+#-]+)$")]
     private static partial Regex AllowedClass();
 
     /// <summary>True when the HTML holds a chip for a Docmost page, which the Docs module links to the ticket.</summary>
