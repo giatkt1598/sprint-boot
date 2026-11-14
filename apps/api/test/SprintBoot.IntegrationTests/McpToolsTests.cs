@@ -179,12 +179,17 @@ public class McpToolsTests(ApiFixture fixture)
             space = agent.Space.Key, title = "Old", description = "# Plan\n\nDraft\n\n## Risks\n\nMany", labels = new[] { "a", "b" }, assignee = "me", dueDate = "2026-12-01",
         }), "key");
 
+        // A write answers with only what it changed.
         var updated = await CallAsync(agent.Http, "update_ticket", new { key, title = "New", priority = "Low", addLabels = new[] { "c" }, removeLabels = new[] { "a" }, clear = new[] { "assignee", "dueDate" } });
-        Text(updated, "title").ShouldBe("New");
-        Text(updated, "priority").ShouldBe("Low");
-        updated.GetProperty("labels").EnumerateArray().Select(item => item.GetString()).ShouldBe(["b", "c"], ignoreOrder: true);
-        updated.TryGetProperty("assignee", out _).ShouldBeFalse();
-        updated.TryGetProperty("dueDate", out _).ShouldBeFalse();
+        var changed = updated.GetProperty("changed");
+        Text(changed, "title").ShouldBe("New");
+        Text(changed, "priority").ShouldBe("Low");
+        changed.GetProperty("labels").EnumerateArray().Select(item => item.GetString()).ShouldBe(["b", "c"], ignoreOrder: true);
+        changed.GetProperty("assignee").ValueKind.ShouldBe(JsonValueKind.Null);
+        changed.GetProperty("dueDate").ValueKind.ShouldBe(JsonValueKind.Null);
+        changed.TryGetProperty("status", out _).ShouldBeFalse();
+        updated.TryGetProperty("description", out _).ShouldBeFalse();
+        Text(updated, "concurrencyStamp").ShouldNotBeNullOrEmpty();
 
         var edited = await CallAsync(agent.Http, "edit_description", new
         {
@@ -196,7 +201,9 @@ public class McpToolsTests(ApiFixture fixture)
                 new { op = "append", text = $"Thanks @[Me](user:{agent.Owner.UserId})" },
             },
         });
-        Text(edited, "description").ShouldBe($"# Plan\n\nFinal\n\n## Risks\n\nNone\n\nThanks @[Me](user:{agent.Owner.UserId})");
+        edited.TryGetProperty("description", out _).ShouldBeFalse();
+        Text(await CallAsync(agent.Http, "get_ticket", new { key, includeComments = false }), "description")
+            .ShouldBe($"# Plan\n\nFinal\n\n## Risks\n\nNone\n\nThanks @[Me](user:{agent.Owner.UserId})");
 
         var stale = Should.ThrowAsync<ToolError>(() => CallAsync(agent.Http, "update_ticket", new { key, title = "X", concurrencyStamp = "stale" }));
         (await stale).Message.ShouldContain("changed since");
@@ -224,9 +231,10 @@ public class McpToolsTests(ApiFixture fixture)
         var comment = await CallAsync(agent.Http, "add_comment", new { key, body = "First *note*" });
         var id = Text(comment, "id");
         await CallAsync(agent.Http, "add_comment", new { key, body = "A reply", replyTo = id });
-        Text(await CallAsync(agent.Http, "update_comment", new { id, body = "First **note**" }), "body").ShouldBe("First **note**");
+        (await CallAsync(agent.Http, "update_comment", new { id, body = "First **note**" })).TryGetProperty("body", out _).ShouldBeFalse();
         var thread = await CallAsync(agent.Http, "list_comments", new { key });
         var root = thread.GetProperty("comments").EnumerateArray().Single(item => Text(item, "id") == id);
+        Text(root, "body").ShouldBe("First **note**");
         Text(root.GetProperty("replies")[0], "body").ShouldBe("A reply");
 
         var log = await CallAsync(agent.Http, "log_work", new { key, time = "1h 30m", date = "2026-11-02", note = "Pairing" });

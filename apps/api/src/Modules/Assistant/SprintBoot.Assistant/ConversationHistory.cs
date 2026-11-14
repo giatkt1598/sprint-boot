@@ -1,44 +1,8 @@
-using System.Security.Cryptography;
 using System.Text;
-using System.Text.RegularExpressions;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace SprintBoot.Assistant;
-
-/// <summary>How a ticket goes with a question: tagged with a version, so the same content is sent only once.</summary>
-public static partial class TicketContext
-{
-    public static string Block(string key, string content)
-    {
-        var version = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(content)))[..12];
-        return $"<ticket key=\"{key}\" version=\"{version}\">\n{content}\n</ticket>";
-    }
-
-    /// <summary>The opening tag, which finds earlier questions that already carried this exact content.</summary>
-    public static string Marker(string block) => block[..(block.IndexOf('>') + 1)];
-
-    public static string Unchanged(string block)
-    {
-        var match = Opening().Match(block);
-        return $"<ticket key=\"{match.Groups[1].Value}\" version=\"{match.Groups[2].Value}\" unchanged=\"true\">The content is the same as the earlier copy with this version above.</ticket>";
-    }
-
-    /// <summary>Full copies in a text, by version.</summary>
-    public static IEnumerable<(string Version, string Block)> Copies(string text) =>
-        Full().Matches(text).Select(match => (match.Groups[2].Value, match.Value));
-
-    /// <summary>The versions a text refers to without carrying them.</summary>
-    public static IEnumerable<(string Version, string Reference)> References(string text) =>
-        Reference().Matches(text).Select(match => (match.Groups[2].Value, match.Value));
-
-    [GeneratedRegex("""^<ticket key="([^"]+)" version="([0-9a-f]+)">""")]
-    private static partial Regex Opening();
-
-    [GeneratedRegex("""<ticket key="([^"]+)" version="([0-9a-f]+)">\n.*?\n</ticket>""", RegexOptions.Singleline)]
-    private static partial Regex Full();
-
-    [GeneratedRegex("""<ticket key="([^"]+)" version="([0-9a-f]+)" unchanged="true">.*?</ticket>""", RegexOptions.Singleline)]
-    private static partial Regex Reference();
-}
 
 /// <summary>Which turns of a conversation go to the provider when it takes only so much.</summary>
 public static class ConversationHistory
@@ -101,25 +65,17 @@ public static class ConversationHistory
             return result;
         }
 
-        return Restore(result, dropped);
+        return Restore(history, result, dropped);
     }
 
-    /// <summary>Marks the first kept question after the gap, and gives back ticket copies only left-out turns had.</summary>
-    private static List<ConversationMessage> Restore(List<ConversationMessage> kept, List<ConversationMessage> dropped)
+    /// <summary>
+    /// Marks the first kept question after the gap. A ticket whose whole copy only a left-out turn carried comes back whole
+    /// where the kept turns first mention it, worked out from everything the history said about it.
+    /// </summary>
+    private static List<ConversationMessage> Restore(List<ConversationMessage> history, List<ConversationMessage> kept, List<ConversationMessage> dropped)
     {
-        var copies = new Dictionary<string, string>();
-        foreach (var message in dropped.Where(item => item.Role == ConversationRole.User && item.Prompt is not null))
-        {
-            foreach (var (version, block) in TicketContext.Copies(message.Prompt!))
-            {
-                copies[version] = block;
-            }
-        }
-
-        var present = kept
-            .Where(item => item.Role == ConversationRole.User && item.Prompt is not null)
-            .SelectMany(item => TicketContext.Copies(item.Prompt!).Select(copy => copy.Version))
-            .ToHashSet();
+        var known = TicketContext.Known(history.Where(item => item.Role == ConversationRole.User).Select(item => item.Prompt ?? item.Text));
+        var whole = new HashSet<string>();
         var firstDropped = dropped.Min(item => item.Sequence);
         var marked = false;
         var result = new List<ConversationMessage>();
@@ -132,13 +88,16 @@ public static class ConversationHistory
             }
 
             var prompt = message.Prompt ?? message.Text;
-            foreach (var (version, reference) in TicketContext.References(prompt).ToList())
+            foreach (var mention in TicketContext.Mentions(prompt).ToList())
             {
-                if (!present.Contains(version) && copies.TryGetValue(version, out var block))
+                if (mention.Kind != TicketContext.MentionKind.Full
+                    && !whole.Contains(mention.Key)
+                    && known.States.GetValueOrDefault(mention.Version) is { } state)
                 {
-                    prompt = prompt.Replace(reference, block, StringComparison.Ordinal);
-                    present.Add(version);
+                    prompt = prompt.Replace(mention.Text, TicketContext.FullFromState(mention.Key, mention.Version, state), StringComparison.Ordinal);
                 }
+
+                whole.Add(mention.Key);
             }
 
             if (!marked && message.Sequence > firstDropped)
@@ -151,6 +110,149 @@ public static class ConversationHistory
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Old turns, before the question being answered, lose what they no longer need: long tool results and long tool call
+    /// arguments become a short note, and the model calls the tool again when it needs them. The turn in progress stays
+    /// whole. Only the request changes; the stored turns stay as they are.
+    /// </summary>
+    public static List<ConversationMessage> Compact(List<ConversationMessage> history)
+    {
+        var current = history.FindLastIndex(item => item.Role == ConversationRole.User);
+        if (current <= 0)
+        {
+            return history;
+        }
+
+        var calls = new Dictionary<string, AssistantToolCall>();
+        var result = new List<ConversationMessage>(history.Count);
+        for (var index = 0; index < history.Count; index++)
+        {
+            var message = history[index];
+            if (message.Role == ConversationRole.Assistant)
+            {
+                foreach (var call in AssistantViews.ToolCalls(message))
+                {
+                    calls[call.Id] = call;
+                }
+            }
+
+            result.Add(index < current ? CompactTurn(message, calls) : message);
+        }
+
+        return result;
+    }
+
+    /// <summary>Tool results and arguments longer than this many characters are left out of old turns.</summary>
+    public const int CompactAbove = 2048;
+
+    /// <summary>String values longer than this, inside long arguments, are left out; the rest stays, so the call still reads.</summary>
+    private const int ArgumentValueLength = 200;
+
+    private static ConversationMessage CompactTurn(ConversationMessage message, Dictionary<string, AssistantToolCall> calls)
+    {
+        if (message.Role == ConversationRole.ToolResults && message.ToolsJson is { } resultsJson)
+        {
+            var results = JsonSerializer.Deserialize<List<AssistantToolOutcome>>(resultsJson, AssistantViews.Json) ?? [];
+            if (!results.Any(result => result.Content.Length > CompactAbove))
+            {
+                return message;
+            }
+
+            var compacted = results.Select(result => result.Content.Length <= CompactAbove
+                ? result
+                : result with { Content = LeftOutResult(calls.GetValueOrDefault(result.ToolCallId), result.Content.Length) }).ToList();
+            return message.WithTools(JsonSerializer.Serialize(compacted, AssistantViews.Json), message.NativeJson);
+        }
+
+        if (message.Role == ConversationRole.Assistant && message.ToolsJson is { } callsJson)
+        {
+            var list = AssistantViews.ToolCalls(message);
+            if (!list.Any(call => call.Arguments.Length > CompactAbove))
+            {
+                return message;
+            }
+
+            var compacted = list.Select(call => call.Arguments.Length <= CompactAbove ? call : call with { Arguments = ShrinkArguments(call.Arguments) }).ToList();
+            return message.WithTools(JsonSerializer.Serialize(compacted, AssistantViews.Json), ShrinkNative(message.NativeJson));
+        }
+
+        return message;
+    }
+
+    private static string LeftOutResult(AssistantToolCall? call, int length)
+    {
+        var what = call is null ? "tool" : $"{call.Name}{Subject(call.Arguments)}";
+        return $"({what} result, {length:N0} characters, left out of this old turn; call the tool again if you need it)";
+    }
+
+    // The ticket or space a call was about, so the note says which result it was.
+    private static string Subject(string arguments)
+    {
+        try
+        {
+            var node = JsonNode.Parse(arguments) as JsonObject;
+            foreach (var name in new[] { "key", "space", "id" })
+            {
+                if (node?[name] is JsonValue value && value.TryGetValue<string>(out var text) && text.Length is > 0 and <= 64)
+                {
+                    return $" {text}";
+                }
+            }
+        }
+        catch (JsonException)
+        {
+        }
+
+        return string.Empty;
+    }
+
+    /// <summary>The same arguments, still valid JSON, with every long string replaced by a note of its length.</summary>
+    public static string ShrinkArguments(string arguments)
+    {
+        try
+        {
+            return Shrink(JsonNode.Parse(arguments))?.ToJsonString() ?? "{}";
+        }
+        catch (JsonException)
+        {
+            return "{}";
+        }
+    }
+
+    private static JsonNode? Shrink(JsonNode? node) => node switch
+    {
+        JsonObject obj => new JsonObject(obj.Select(pair => KeyValuePair.Create(pair.Key, Shrink(pair.Value)))),
+        JsonArray array => new JsonArray([.. array.Select(Shrink)]),
+        JsonValue value when value.TryGetValue<string>(out var text) && text.Length > ArgumentValueLength
+            => JsonValue.Create($"({text.Length:N0} characters, left out of this old turn)"),
+        _ => node?.DeepClone(),
+    };
+
+    /// <summary>Claude's own blocks of the turn, with the input of long tool_use blocks shrunk the same way.</summary>
+    private static string? ShrinkNative(string? native)
+    {
+        if (native is null)
+        {
+            return null;
+        }
+
+        var blocks = JsonNode.Parse(native) as JsonArray;
+        if (blocks is null)
+        {
+            return native;
+        }
+
+        foreach (var block in blocks.OfType<JsonObject>())
+        {
+            if (block["type"]?.GetValue<string>() == "tool_use" && block["input"] is { } input && input.ToJsonString().Length > CompactAbove)
+            {
+                block["input"] = Shrink(input);
+            }
+        }
+
+        return blocks.ToJsonString();
     }
 
     /// <summary>Roughly what the turns weigh in the request body, in bytes.</summary>

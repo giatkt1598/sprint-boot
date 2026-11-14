@@ -41,7 +41,8 @@ public class CommentTools(McpRunner runner, McpResolver resolver, ICommentAppSer
         {
             Body = await RichTextMarkdown.ToHtmlAsync(body, resolver.MentionAsync),
         });
-        return McpViews.Comment(comment);
+        // The model wrote the text, so it does not need it back.
+        return new { comment.Id, Edited = true };
     });
 
     private static Guid Id(string text) =>

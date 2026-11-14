@@ -221,15 +221,52 @@ public class AssistantTests(ApiFixture fixture)
 
         var second = UserTexts(Ai.Bodies.Single());
         second[0].ShouldContain("Checkout totals are off by a cent");
-        second[1].ShouldNotContain("Checkout totals are off by a cent");
         second[1].ShouldContain("unchanged=\"true\"");
+        second[1].Length.ShouldBeLessThan(second[0].Length);
 
         var current = (await owner.Http.GetFromJsonAsync<TicketDto>($"/api/v1/ticket/by-key?key={ticket.Key}", Token))!;
         (await owner.Http.PutAsJsonAsync($"/api/v1/ticket/{ticket.Id}", new { concurrencyStamp = current.ConcurrencyStamp, fields = new { title = "Checkout totals are off by two cents" } }, Token))
             .EnsureSuccessStatusCode();
         Ai.Script(new FakeAiReply("Then it grew."));
         await AskAsync(owner, conversation.Id, "And now?");
-        UserTexts(Ai.Bodies.Single())[2].ShouldContain("Checkout totals are off by two cents");
+        var changed = UserTexts(Ai.Bodies.Single())[2];
+        changed.ShouldContain("changes-from=");
+        changed.ShouldContain("Checkout totals are off by two cents");
+        changed.ShouldNotContain("\"reporter\"");
+    }
+
+    [Fact]
+    public async Task A_long_ticket_conversation_stays_small_and_grows_only_with_what_is_said()
+    {
+        await UseAsync(AiProvider.OpenAiCompatible);
+        var owner = await fixture.CreateUserClientAsync(Token);
+        var (_, ticket) = await TicketAsync(owner, "Checkout totals are off");
+        var description = $"Steps {new string('x', 7000)}";
+        (await owner.Http.PutAsJsonAsync($"/api/v1/ticket/{ticket.Id}", new { concurrencyStamp = ticket.ConcurrencyStamp, fields = new { description = $"<p>{description}</p>" } }, Token))
+            .EnsureSuccessStatusCode();
+        var conversation = await ConversationAsync(owner, ticket.Id);
+
+        for (var index = 0; index < 5; index++)
+        {
+            Ai.Script(new FakeAiReply("", ("get_ticket", new { key = ticket.Key })), new FakeAiReply($"Answer {index}."));
+            await AskAsync(owner, conversation.Id, $"Question {index}");
+        }
+
+        var last = Ai.Bodies[1];
+        // The conversation itself; the tool definitions and system prompt are the same on every request.
+        var conversationBytes = Encoding.UTF8.GetByteCount(last["messages"]!.ToJsonString());
+        conversationBytes.ShouldBeLessThan(25 * 1024, $"messages: {conversationBytes}, whole request: {Encoding.UTF8.GetByteCount(last.ToJsonString())}");
+
+        // The ticket went whole once; later questions carry a header.
+        var questions = UserTexts(last);
+        questions[0].ShouldContain(description);
+        questions.Skip(1).ShouldAllBe(text => text.Contains("unchanged=\"true\"") && !text.Contains("xxxxxxxxxx"));
+
+        // Old tool results are notes; the one the model is working with now is whole.
+        var results = last["messages"]!.AsArray().Where(message => message!["role"]!.GetValue<string>() == "tool").Select(Content).ToList();
+        results.Count.ShouldBe(5);
+        results.Take(4).ShouldAllBe(text => text.StartsWith($"(get_ticket {ticket.Key} result,") && text.Contains("call the tool again"));
+        results[^1].ShouldContain(description);
     }
 
     [Fact]

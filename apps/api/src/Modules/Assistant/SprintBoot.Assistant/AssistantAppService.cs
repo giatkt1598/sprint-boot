@@ -561,9 +561,9 @@ public class AssistantChatAppService(
     }
 
     /// <summary>
-    /// The key, and the content the get_ticket tool gives the person, or null when they cannot read it. Content already sent
-    /// in this conversation, unchanged, is replaced by a pointer to it: the whole history goes with every request, and an
-    /// ticket repeated with every question was what made long ticket chats too large for some providers.
+    /// The key, and what the question carries of the content the get_ticket tool gives the person, or null when they cannot
+    /// read it. The whole history goes with every request, so only the first question carries the whole ticket; later ones
+    /// carry a header, or what changed since (see <see cref="TicketContext"/>).
     /// </summary>
     private async Task<(string? Key, string? Content)> ReadTicketAsync(Guid conversationId, Guid ticketId, CancellationToken cancellationToken)
     {
@@ -585,16 +585,16 @@ public class AssistantChatAppService(
             return (key, null);
         }
 
-        var block = TicketContext.Block(key, Clip(ticket.Content));
-        bool seen;
+        List<string> earlier;
         using (var uow = unitOfWork.Begin(requiresNew: true))
         {
-            var marker = TicketContext.Marker(block);
-            seen = await messages.AnyAsync(item => item.ConversationId == conversationId && item.Role == ConversationRole.User && item.Prompt != null && item.Prompt.Contains(marker));
+            earlier = [.. (await messages.GetListAsync(item => item.ConversationId == conversationId && item.Role == ConversationRole.User && item.Prompt != null))
+                .OrderBy(item => item.Sequence)
+                .Select(item => item.Prompt!)];
             await uow.CompleteAsync();
         }
 
-        return (key, seen ? TicketContext.Unchanged(block) : block);
+        return (key, TicketContext.ForQuestion(key, Clip(ticket.Content), earlier));
     }
 
     /// <summary>At most <see cref="AssistantConsts.MaxToolResultLength"/> characters, telling the model what was cut.</summary>
@@ -618,7 +618,7 @@ public class AssistantChatAppService(
             await uow.CompleteAsync();
         }
 
-        return [.. ConversationHistory.Fit(history, budget).Select(message => message.Role switch
+        return [.. ConversationHistory.Fit(ConversationHistory.Compact(history), budget).Select(message => message.Role switch
         {
             ConversationRole.User => (ChatTurn)new UserTurn(message.Prompt ?? message.Text),
             ConversationRole.Assistant => new AssistantTurn(message.Text, AssistantViews.ToolCalls(message), message.NativeJson, message.Provider),

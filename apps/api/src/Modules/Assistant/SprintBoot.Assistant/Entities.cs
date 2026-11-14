@@ -169,6 +169,15 @@ public class ConversationMessage : Entity<Guid>
         copy.Prompt = prompt;
         return copy;
     }
+
+    /// <summary>A copy, never saved, that sends other tool calls or results; the stored turn stays as it was written.</summary>
+    internal ConversationMessage WithTools(string? toolsJson, string? nativeJson)
+    {
+        var copy = (ConversationMessage)MemberwiseClone();
+        copy.ToolsJson = toolsJson;
+        copy.NativeJson = nativeJson;
+        return copy;
+    }
 }
 
 /// <summary>A tool call of the assistant. Writes run only once the person confirms them.</summary>

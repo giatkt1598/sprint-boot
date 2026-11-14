@@ -339,13 +339,13 @@ public class TicketTools(
             Parent = parent, Labels = labels, AddLabels = addLabels, RemoveLabels = removeLabels, StoryPoints = storyPoints,
             StartDate = startDate, DueDate = dueDate, Sprint = sprint, Clear = clear,
         }, concurrencyStamp);
-        return Updated(updated);
+        return Updated(ticket, updated);
     });
 
     [McpServerTool(Name = "edit_description", Destructive = false), Description(
         "Changes part of a ticket description without resending it. Edits apply in order to the Markdown get_ticket returns: " +
         "replace (find must match exactly once unless all), append, prepend, replace_section (new body under a heading), " +
-        "insert_after_section. Returns the new description.")]
+        "insert_after_section. Returns the new length and concurrencyStamp; read the ticket to see the result.")]
     public Task<string> EditDescription(
         [Description("Ticket key.")] string key,
         [Description("The edits, applied in order.")] List<DescriptionEdit> edits,
@@ -355,7 +355,8 @@ public class TicketTools(
         var ticket = await resolver.TicketAsync(key);
         var markdown = MarkdownEdits.Apply(RichTextMarkdown.ToMarkdown(ticket.Description), edits);
         var updated = await ApplyAsync(ticket, new Changes { Description = markdown, ClearDescriptionWhenEmpty = true }, concurrencyStamp);
-        return new { updated.Key, Description = RichTextMarkdown.ToMarkdown(updated.Description), updated.ConcurrencyStamp };
+        // Briefly: the model wrote the edits, and get_ticket shows the result when it needs it.
+        return new { updated.Key, DescriptionLength = RichTextMarkdown.ToMarkdown(updated.Description).Length, updated.ConcurrencyStamp };
     });
 
     [McpServerTool(Name = "update_tickets", Destructive = false), Description(
@@ -669,7 +670,30 @@ public class TicketTools(
         Replayed = replayed ? true : (bool?)null,
     };
 
-    private static object Updated(TicketDto ticket) => new
+    /// <summary>Only what the change did: the fields that now differ, and the version to edit from next.</summary>
+    private static object Updated(TicketDto before, TicketDto after)
+    {
+        var old = JsonSerializer.SerializeToNode(View(before), McpRunner.Json)!.AsObject();
+        var now = JsonSerializer.SerializeToNode(View(after), McpRunner.Json)!.AsObject();
+        var changed = new System.Text.Json.Nodes.JsonObject();
+        foreach (var name in old.Select(pair => pair.Key).Union(now.Select(pair => pair.Key)))
+        {
+            if (!System.Text.Json.Nodes.JsonNode.DeepEquals(old[name], now[name]))
+            {
+                changed[name] = now[name]?.DeepClone();
+            }
+        }
+
+        return new
+        {
+            after.Key,
+            Changed = changed,
+            DescriptionChanged = before.Description != after.Description ? true : (bool?)null,
+            after.ConcurrencyStamp,
+        };
+    }
+
+    private static object View(TicketDto ticket) => new
     {
         ticket.Key,
         ticket.Title,
@@ -681,6 +705,6 @@ public class TicketTools(
         ticket.StartDate,
         ticket.DueDate,
         Parent = ticket.Parent?.Key,
-        ticket.ConcurrencyStamp,
+        Type = ticket.Type.Name,
     };
 }
