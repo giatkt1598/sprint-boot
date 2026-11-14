@@ -17,6 +17,15 @@ export interface TicketMentionOptions {
 
 const TICKET_PATH = /^\/(?:browse|tickets|issues)\/([A-Za-z][A-Za-z0-9]*-\d+)\/?$/;
 
+/** The key in a pasted ticket address on any Sprint Boot server, or null when the text is no ticket address. */
+export function ticketKeyInAddress(text: string): string | null {
+  try {
+    return TICKET_PATH.exec(new URL(text.trim()).pathname)?.[1]?.toUpperCase() ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /** The ticket key of a Sprint Boot ticket address (/browse/KEY-12), or null for any other address. */
 export function ticketKeyFromUrl(url: string, appUrl: string): string | null {
   try {

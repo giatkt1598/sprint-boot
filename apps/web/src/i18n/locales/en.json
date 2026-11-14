@@ -957,7 +957,8 @@
     "link": "Link",
     "empty": "No linked tickets.",
     "restricted": "A ticket you cannot open",
-    "remove": "Remove link to {{key}}"
+    "remove": "Remove link to {{key}}",
+    "notFound": "This ticket does not exist or you cannot view it."
   },
   "linkTypes": {
     "title": "Ticket link types",

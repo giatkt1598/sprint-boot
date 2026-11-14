@@ -16,9 +16,10 @@ import { CollapseHeading } from '../../components/CollapseHeading';
 import { TicketTypeIcon, type TicketType as IconType } from '../../components/TicketIcons';
 import { SelectField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
-import { useErrorMessage } from '../../lib/errors';
+import { isNotFound, useErrorMessage } from '../../lib/errors';
 import { font, sem } from '../../theme/tokens';
 import type { Ticket, TicketSummary } from './api';
+import { ticketKeyInAddress } from './ticketMention';
 
 type TicketLink = components['schemas']['TicketLinkDto'];
 
@@ -64,7 +65,8 @@ function TicketKeyField({ label, value, onChange, excludeId }: { label: string; 
         options={options}
         filterOptions={(list) => list}
         inputValue={value}
-        onInputChange={(_, text, reason) => reason !== 'reset' && onChange(text)}
+        // A pasted ticket address becomes its key, which is what the link needs and what the search finds.
+        onInputChange={(_, text, reason) => reason !== 'reset' && onChange(ticketKeyInAddress(text) ?? text)}
         onChange={(_, picked) => onChange(typeof picked === 'string' ? picked : (picked?.key ?? ''))}
         getOptionLabel={(option) => (typeof option === 'string' ? option : (option.key ?? ''))}
         renderOption={({ key, ...props }, option) => (
@@ -112,7 +114,7 @@ function AddLinkRow({ ticket, onClose }: { ticket: Ticket; onClose: () => void }
       setKey('');
       onClose();
     },
-    onError: (failure) => toast('error', toMessage(failure)),
+    onError: (failure) => toast('error', isNotFound(failure) ? t('links.notFound') : toMessage(failure)),
   });
   const ready = Boolean(chosen && key.trim()) && !add.isPending;
 

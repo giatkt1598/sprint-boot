@@ -1,7 +1,7 @@
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { TicketMention, ticketKeyFromUrl, type TicketRef } from './ticketMention';
+import { TicketMention, ticketKeyFromUrl, ticketKeyInAddress, type TicketRef } from './ticketMention';
 
 const APP = 'https://sprint.acme.test';
 const TICKET = `${APP}/browse/SB-12`;
@@ -17,6 +17,14 @@ describe('ticketKeyFromUrl', () => {
     expect(ticketKeyFromUrl(`${APP}/spaces/SB/board`, APP)).toBeNull();
     expect(ticketKeyFromUrl('https://elsewhere.test/browse/SB-12', APP)).toBeNull();
     expect(ticketKeyFromUrl('not a url', APP)).toBeNull();
+  });
+});
+
+describe('ticketKeyInAddress', () => {
+  it('reads the key of a pasted ticket address from any Sprint Boot server', () => {
+    expect(ticketKeyInAddress(' https://sprint-boot.example.com/browse/doc-4?tab=history ')).toBe('DOC-4');
+    expect(ticketKeyInAddress('SB-12')).toBeNull();
+    expect(ticketKeyInAddress('https://sprint-boot.example.com/spaces/SB/board')).toBeNull();
   });
 });
 

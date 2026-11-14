@@ -102,6 +102,12 @@ public class TicketLinkTests(ApiFixture fixture)
         var other = await CreateTicketAsync(owner, shared, "Other space");
         (await LinkAsync(owner, ticket, blocks.Id, other.Key)).EnsureSuccessStatusCode();
 
+        // A pasted ticket address works as well as its key.
+        var third = await CreateTicketAsync(owner, shared, "Pasted");
+        (await LinkAsync(owner, other, blocks.Id, $"https://sprint-boot.example.com/browse/{third.Key}?tab=history")).EnsureSuccessStatusCode();
+        (await LinksAsync(owner, other)).ShouldContain(link => link.Ticket!.Key == third.Key);
+        (await LinkAsync(owner, third, blocks.Id, $"http://localhost:5173/browse/{third.Key}")).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
         // A member of only the first space sees the link, not what is behind it.
         var member = await fixture.CreateUserClientAsync(Token);
         (await owner.Http.PostAsJsonAsync($"/api/v1/project/{mine.Id}/member", new { userId = member.UserId, role = ProjectRoleNames.Viewer }, Token)).EnsureSuccessStatusCode();

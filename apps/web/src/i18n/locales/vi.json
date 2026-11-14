@@ -957,7 +957,8 @@
     "link": "Liên kết",
     "empty": "Chưa có ticket liên kết.",
     "restricted": "Một ticket bạn không có quyền mở",
-    "remove": "Gỡ liên kết tới {{key}}"
+    "remove": "Gỡ liên kết tới {{key}}",
+    "notFound": "Ticket này không tồn tại hoặc bạn không có quyền xem."
   },
   "linkTypes": {
     "title": "Loại liên kết ticket",

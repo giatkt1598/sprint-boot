@@ -174,6 +174,18 @@ public partial class TicketLinkAppService(
     [GeneratedRegex("^([A-Z][A-Z0-9]{1,9})-([0-9]+)$")]
     private static partial Regex KeyPattern();
 
+    // A pasted ticket address: /browse/KEY-12, or the older /tickets and /issues.
+    [GeneratedRegex(@"/(?:browse|tickets|issues)/([A-Za-z][A-Za-z0-9]*-[0-9]+)(?:[/?#]|$)")]
+    private static partial Regex AddressPattern();
+
+    /// <summary>The key typed, or the key in a pasted ticket address.</summary>
+    public static string KeyOf(string text)
+    {
+        var trimmed = text.Trim();
+        var address = AddressPattern().Match(trimmed);
+        return (address.Success ? address.Groups[1].Value : trimmed).ToUpperInvariant();
+    }
+
     public async Task<List<TicketLinkDto>> GetListAsync(Guid ticketId)
     {
         var ticket = await tickets.GetAsync(ticketId);
@@ -190,7 +202,7 @@ public partial class TicketLinkAppService(
         var type = await types.GetAsync(input.LinkTypeId);
 
         // Another space is fine, but only one the caller can open: otherwise its keys would leak through errors.
-        var other = await FindByKeyAsync(input.TicketKey.Trim().ToUpperInvariant())
+        var other = await FindByKeyAsync(KeyOf(input.TicketKey))
             ?? throw new EntityNotFoundException(typeof(Ticket), input.TicketKey);
         if (!await projectAccess.IsGrantedAsync(other.ProjectId, ProjectPermissions.ViewTickets))
         {
