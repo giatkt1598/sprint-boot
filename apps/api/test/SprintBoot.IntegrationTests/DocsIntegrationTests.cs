@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Shouldly;
 using SprintBoot.DocsIntegration;
+using SprintBoot.Identity;
 using SprintBoot.Projects;
 using SprintBoot.Tickets;
 using Xunit;
@@ -438,6 +439,37 @@ public class DocsIntegrationTests(ApiFixture fixture)
         }
 
         throw new TimeoutException("The ticket's text links did not settle.");
+    }
+
+    [Fact]
+    public async Task The_mcp_ticket_lists_its_documents_and_the_pages_that_mention_it()
+    {
+        var secret = await ConnectAsync(await AdminAsync());
+        var (owner, _, ticket) = await SpaceAsync();
+        (await owner.Http.PostAsJsonAsync($"/api/v1/docs-ticket/link/{ticket.Id}", new { pageId = FakeDocmostServer.PageId }, Token)).EnsureSuccessStatusCode();
+        (await Docmost(secret).PostAsJsonAsync("/api/v1/docs-bridge/page-links", new { pageId = Guid.NewGuid().ToString(), title = "Release notes", url = "http://docmost.fake/s/e/p/notes-1", keys = new[] { ticket.Key } }, Token))
+            .EnsureSuccessStatusCode();
+
+        var created = await owner.Http.PostAsJsonAsync("/api/v1/personal-token", new { name = "Agent", kind = PersonalTokenKind.Mcp, readOnly = true, expiresInDays = 30 }, Token);
+        created.EnsureSuccessStatusCode();
+        var mcp = fixture.Factory.CreateClient();
+        mcp.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", (await created.Content.ReadFromJsonAsync<CreatedPersonalTokenDto>(Token))!.Token);
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/mcp")
+        {
+            Content = JsonContent.Create(new { jsonrpc = "2.0", id = 1, method = "tools/call", @params = new { name = "get_ticket", arguments = new { key = ticket.Key } } }),
+        };
+        request.Headers.Accept.ParseAdd("application/json");
+        request.Headers.Accept.ParseAdd("text/event-stream");
+        var body = await (await mcp.SendAsync(request, Token)).Content.ReadAsStringAsync(Token);
+        var json = body.Split('\n').FirstOrDefault(line => line.StartsWith("data:", StringComparison.Ordinal))?[5..] ?? body;
+        var text = JsonDocument.Parse(json).RootElement.GetProperty("result").GetProperty("content")[0].GetProperty("text").GetString()!;
+        var read = JsonDocument.Parse(text).RootElement;
+
+        var document = read.GetProperty("documents").EnumerateArray().ShouldHaveSingleItem();
+        document.GetProperty("title").GetString().ShouldBe("Design notes");
+        document.GetProperty("linkedBy").GetString().ShouldBe("hand");
+        document.GetProperty("url").GetString().ShouldStartWith(FakeDocmostServer.BaseUrl);
+        read.GetProperty("mentionedIn").EnumerateArray().ShouldHaveSingleItem().GetProperty("title").GetString().ShouldBe("Release notes");
     }
 
     [Fact]

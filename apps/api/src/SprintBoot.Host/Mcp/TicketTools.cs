@@ -3,6 +3,7 @@ using System.Text.Json;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
 using SprintBoot.Agile;
+using SprintBoot.DocsIntegration;
 using SprintBoot.Tickets;
 using SprintBoot.Projects;
 using SprintBoot.Workflows;
@@ -65,6 +66,7 @@ public class TicketTools(
     ITransitionAppService transitions,
     ISprintAppService sprints,
     ITicketLinkAppService links,
+    IDocsTicketAppService documents,
     IAbpDistributedLock locks,
     IDistributedCache<IdempotentCreation> created,
     ICurrentUser currentUser)
@@ -181,7 +183,8 @@ public class TicketTools(
     });
 
     [McpServerTool(Name = "get_ticket", ReadOnly = true), Description(
-        "Reads one ticket with every field, its description as Markdown, its children, its linked tickets and, by default, its comments.")]
+        "Reads one ticket with every field, its description as Markdown, its children, its linked tickets, its linked Docmost " +
+        "documents and the Docmost pages that mention it, and, by default, its comments.")]
     public Task<string> GetTicket(
         [Description("Ticket key, such as BANK-12.")] string key,
         [Description("markdown (default) or html, for the description and comments.")] string format = "markdown",
@@ -192,6 +195,7 @@ public class TicketTools(
         var sprint = await sprints.GetForTicketAsync(ticket.Id);
         var thread = includeComments ? await comments.GetListAsync(ticket.Id) : null;
         var linked = await links.GetListAsync(ticket.Id);
+        var docs = await documents.GetListAsync(ticket.Id);
         return new
         {
             ticket.Key,
@@ -207,6 +211,16 @@ public class TicketTools(
             Children = ticket.Children.Count == 0 ? null : ticket.Children.Select(McpViews.Ref),
             // Each reads from this ticket: "blocks BANK-4". A ticket the caller cannot open shows no key.
             Links = linked.Count == 0 ? null : linked.Select(link => new { Relationship = link.Phrase, Ticket = link.Ticket is null ? null : McpViews.Ref(link.Ticket) }),
+            // Docmost pages linked to the ticket by hand or by a chip in its text, and pages that mention it; read them with the Docmost tools.
+            Documents = !docs.Configured || docs.Linked.Count == 0 ? null : docs.Linked.Select(page => new
+            {
+                page.Title,
+                page.Url,
+                Space = page.SpaceName,
+                LinkedBy = page.Source == DocLinkSource.Manual ? "hand" : "text",
+                page.UpdatedAt,
+            }),
+            MentionedIn = !docs.Configured || docs.Mentions.Count == 0 ? null : docs.Mentions.Select(page => new { page.Title, page.Url, Space = page.SpaceName, page.UpdatedAt }),
             ticket.Labels,
             ticket.StoryPoints,
             ticket.StartDate,
