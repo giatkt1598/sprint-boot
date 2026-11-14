@@ -175,6 +175,17 @@ export function createAppTheme(themeId: string, accent: Accent) {
           },
         },
       },
+      // A suggestion list floats like a menu: the same border, shadow and corners as a popover.
+      MuiAutocomplete: {
+        styleOverrides: {
+          paper: {
+            marginTop: 4,
+            borderRadius: radius.card,
+            boxShadow: 'var(--sb-shadow-popover)',
+            border: `1px solid ${sem('border-default')}`,
+          },
+        },
+      },
       MuiTab: {
         styleOverrides: {
           root: { minHeight: size.control, padding: '4px 12px', minWidth: 0 },
