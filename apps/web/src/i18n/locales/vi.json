@@ -587,7 +587,8 @@
       "attachment": "Đính kèm",
       "status": "Trạng thái",
       "sprint": "Sprint",
-      "branch": "Branch"
+      "branch": "Branch",
+      "document": "Tài liệu"
     },
     "addReaction": "Thêm cảm xúc",
     "reactWith": "Thả {{emoji}}",

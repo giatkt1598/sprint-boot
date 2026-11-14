@@ -587,7 +587,8 @@
       "attachment": "Attachment",
       "status": "Status",
       "sprint": "Sprint",
-      "branch": "Branch"
+      "branch": "Branch",
+      "document": "Document"
     },
     "addReaction": "Add reaction",
     "reactWith": "React with {{emoji}}",

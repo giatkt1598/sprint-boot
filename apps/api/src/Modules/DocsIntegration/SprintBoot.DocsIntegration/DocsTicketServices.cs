@@ -1,4 +1,5 @@
 using System.Net;
+using System.Security.Claims;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using SprintBoot.Projects;
@@ -10,6 +11,7 @@ using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.Guids;
+using Volo.Abp.Security.Claims;
 using Volo.Abp.Timing;
 using Volo.Abp.Uow;
 
@@ -48,6 +50,9 @@ public class DocsTicketAppService(
 {
     /// <summary>The provider name Docmost's Sprint Boot integration renders cards with.</summary>
     public const string DocmostProvider = "sprint-boot";
+
+    /// <summary>The ticket history field for documents linked to it or unlinked from it.</summary>
+    public const string DocumentField = "document";
 
     public async Task<TicketDocsDto> GetListAsync(Guid ticketId)
     {
@@ -125,6 +130,7 @@ public class DocsTicketAppService(
         var link = await links.InsertAsync(new TicketDocLink(
             GuidGenerator.Create(), ticketId, projectId, page.Id, DocLinkSource.Manual, page.Title,
             DocmostClient.PageUrl(connection.BaseUrl, space.Slug, page.SlugId, page.Title), space.Name, clock.Now), autoSave: true);
+        await tickets.RecordActivityAsync(ticketId, DocumentField, null, link.Title);
         return ToDto(link);
     }
 
@@ -138,6 +144,7 @@ public class DocsTicketAppService(
         }
 
         await links.DeleteAsync(link);
+        await tickets.RecordActivityAsync(link.TicketId, DocumentField, link.Title, null);
     }
 
     public async Task<TicketDocPageDto> CreatePageAsync(Guid ticketId, CreateDocPageInput input)
@@ -170,6 +177,7 @@ public class DocsTicketAppService(
 
         var row = await links.InsertAsync(new TicketDocLink(
             GuidGenerator.Create(), ticketId, projectId, created.Id, DocLinkSource.Manual, created.Title, link, space.Name, clock.Now), autoSave: true);
+        await tickets.RecordActivityAsync(ticketId, DocumentField, null, row.Title);
         return ToDto(row);
     }
 
@@ -224,6 +232,8 @@ public partial class TicketTextChangedHandler(
     IRepository<TicketDocLink, Guid> links,
     ITicketRichTextReader texts,
     IProjectAccess projectAccess,
+    ITicketPlanningGateway tickets,
+    ICurrentPrincipalAccessor principal,
     IGuidGenerator guids,
     IClock clock)
     : IDistributedEventHandler<TicketTextChangedEto>, ITransientDependency
@@ -240,12 +250,14 @@ public partial class TicketTextChangedHandler(
         var chips = Chips(await texts.GetAsync(eventData.TicketId));
         var existing = await links.GetListAsync(item => item.TicketId == eventData.TicketId && item.Source == DocLinkSource.Text);
         var now = clock.Now;
+        var removed = existing.Where(link => !chips.ContainsKey(link.PageId)).ToList();
 
-        foreach (var link in existing.Where(link => !chips.ContainsKey(link.PageId)))
+        foreach (var link in removed)
         {
             await links.DeleteAsync(link);
         }
 
+        var added = new List<string>();
         foreach (var (pageId, chip) in chips)
         {
             var link = existing.FirstOrDefault(item => item.PageId == pageId);
@@ -253,6 +265,7 @@ public partial class TicketTextChangedHandler(
             {
                 await links.InsertAsync(new TicketDocLink(
                     guids.Create(), eventData.TicketId, eventData.ProjectId, pageId, DocLinkSource.Text, chip.Title, chip.Url, null, now));
+                added.Add(chip.Title);
             }
             else if (link.Title != chip.Title || link.Url != chip.Url)
             {
@@ -260,6 +273,32 @@ public partial class TicketTextChangedHandler(
                 link.Url = chip.Url;
                 link.UpdatedAt = now;
                 await links.UpdateAsync(link);
+            }
+        }
+
+        await RecordAsync(eventData, removed.Select(link => link.Title), added);
+    }
+
+    // Recorded as whoever saved the text.
+    private async Task RecordAsync(TicketTextChangedEto eventData, IEnumerable<string> removed, List<string> added)
+    {
+        var dropped = removed.ToList();
+        if (eventData.ActorId is not { } actorId || (dropped.Count == 0 && added.Count == 0))
+        {
+            return;
+        }
+
+        var identity = new ClaimsIdentity([new Claim(AbpClaimTypes.UserId, actorId.ToString())], "TicketText");
+        using (principal.Change(new ClaimsPrincipal(identity)))
+        {
+            foreach (var title in dropped)
+            {
+                await tickets.RecordActivityAsync(eventData.TicketId, DocsTicketAppService.DocumentField, title, null);
+            }
+
+            foreach (var title in added)
+            {
+                await tickets.RecordActivityAsync(eventData.TicketId, DocsTicketAppService.DocumentField, null, title);
             }
         }
     }

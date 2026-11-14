@@ -165,7 +165,16 @@ public class DocsIntegrationTests(ApiFixture fixture)
 
         (await owner.Http.DeleteAsync($"/api/v1/docs-ticket/{page.Id}", Token)).EnsureSuccessStatusCode();
         (await PagesAsync(owner, ticket))!.Linked.Count.ShouldBe(2);
+
+        var history = await DocumentHistoryAsync(owner, ticket);
+        history.Where(item => item.OldValue is null).Select(item => item.NewValue)
+            .ShouldBe(["Design notes", $"{ticket.Key} Login page", "Login design"], ignoreOrder: true);
+        history.Where(item => item.NewValue is null).Select(item => item.OldValue).ShouldBe(["Design notes"]);
     }
+
+    private static async Task<List<TicketActivityDto>> DocumentHistoryAsync(AuthClient client, TicketDto ticket) =>
+        [.. (await client.Http.GetFromJsonAsync<List<TicketActivityDto>>($"/api/v1/ticket/{ticket.Id}/activity", Token))!
+            .Where(item => item.Field == "document")];
 
     [Fact]
     public async Task A_page_found_by_search_links_by_id()
@@ -345,6 +354,12 @@ public class DocsIntegrationTests(ApiFixture fixture)
         // Taking the chip out of the comment takes its page out; the description's stays.
         (await owner.Http.PutAsJsonAsync($"/api/v1/comment/{comment!.Id}", new { body = "<p>never mind</p>" }, Token)).EnsureSuccessStatusCode();
         (await WaitForAsync(owner, ticket, docs => docs.Linked.Count == 1)).Linked.Single().Title.ShouldBe("Spec A");
+
+        // The history records them as whoever saved the text.
+        var history = await DocumentHistoryAsync(owner, ticket);
+        history.ShouldAllBe(item => item.Actor != null && item.Actor.Id == owner.UserId);
+        history.Where(item => item.OldValue is null).Select(item => item.NewValue).ShouldBe(["Spec A", "Spec B"], ignoreOrder: true);
+        history.Where(item => item.NewValue is null).Select(item => item.OldValue).ShouldBe(["Spec B"]);
 
         // A chip cannot be unlinked by hand: it goes with its text.
         var chipLink = (await PagesAsync(owner, ticket))!.Linked.Single();

@@ -23,6 +23,9 @@ public class TicketTextChangedEto
     public Guid TicketId { get; set; }
 
     public Guid ProjectId { get; set; }
+
+    /// <summary>Who saved the text; the links it adds or drops are recorded in the ticket's history as theirs.</summary>
+    public Guid? ActorId { get; set; }
 }
 
 [EventName("SprintBoot.Tickets.TicketUpdated")]

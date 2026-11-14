@@ -150,7 +150,7 @@ public class CommentAppService(
     {
         if (bodies.Any(RichTextSanitizer.HasDocMention))
         {
-            await eventBus.PublishAsync(new TicketTextChangedEto { TicketId = ticket.Id, ProjectId = ticket.ProjectId }, useOutbox: true);
+            await eventBus.PublishAsync(new TicketTextChangedEto { TicketId = ticket.Id, ProjectId = ticket.ProjectId, ActorId = CurrentUser.Id }, useOutbox: true);
         }
     }
 
