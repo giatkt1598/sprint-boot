@@ -30244,11 +30244,6 @@
             "format": "uuid",
             "nullable": true
           },
-          "reporterId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
           "parentId": {
             "type": "string",
             "format": "uuid",
@@ -30603,7 +30598,8 @@
         "enum": [
           0,
           1,
-          2
+          2,
+          3
         ],
         "type": "integer",
         "format": "int32"

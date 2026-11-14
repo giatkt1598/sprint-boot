@@ -12,7 +12,7 @@ import { DatePicker } from '../../components/DatePicker';
 import { TicketTypeIcon, PriorityIcon, type TicketType as IconType } from '../../components/TicketIcons';
 import { TagInput } from '../../components/TagInput';
 import { Dialog, DialogFooter } from '../../components/Dialog';
-import { BufferedTextField, SelectField } from '../../components/TextField';
+import { BufferedTextField, SelectField, TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { UserPicker, type PickerUser } from '../../components/UserPicker';
 import { useErrorMessage } from '../../lib/errors';
@@ -51,7 +51,6 @@ export function CreateTicketDialog({ onClose, epic }: CreateTicketDialogProps) {
   const [priorityId, setPriorityId] = useState('');
   const [assignee, setAssignee] = useState<PickerUser | null>(null);
   const me = useCurrentUser();
-  const [reporter, setReporter] = useState<PickerUser | null>({ id: me.id, name: me.name });
   const [epicId, setEpicId] = useState('');
   const [points, setPoints] = useState('');
   const [labels, setLabels] = useState<string[]>([]);
@@ -120,7 +119,6 @@ export function CreateTicketDialog({ onClose, epic }: CreateTicketDialogProps) {
             description: description || null,
             priorityId: priorityId || null,
             assigneeId: assignee?.id ?? null,
-            reporterId: reporter?.id ?? null,
             parentId: canHaveEpic && epicId ? epicId : null,
             storyPoints: points ? Number(points) : null,
             labels,
@@ -239,7 +237,8 @@ export function CreateTicketDialog({ onClose, epic }: CreateTicketDialogProps) {
             icon: <PriorityIcon priority={priorityLevel(priority)} />,
           }))}
         />
-        <UserPicker label={t('tickets.reporter')} options={people} value={reporter} onChange={setReporter} />
+        {/* Always whoever creates the ticket. */}
+        <TextField label={t('tickets.reporter')} value={me.name ?? ''} disabled />
         <BufferedTextField label={t('tickets.points')} type="number" value={points} onCommit={setPoints} />
         {canHaveEpic && (
           <SelectField

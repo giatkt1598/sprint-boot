@@ -156,8 +156,6 @@ public class CreateTicketInput
 
     public Guid? AssigneeId { get; set; }
 
-    public Guid? ReporterId { get; set; }
-
     public Guid? ParentId { get; set; }
 
     public string[]? Labels { get; set; }

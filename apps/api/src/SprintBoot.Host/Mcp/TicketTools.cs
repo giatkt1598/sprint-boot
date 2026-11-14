@@ -29,9 +29,6 @@ public class TicketDraft
     [Description("Assignee: me, an email, a name or a user id.")]
     public string? Assignee { get; set; }
 
-    [Description("Reporter: me, an email, a name or a user id. Defaults to you.")]
-    public string? Reporter { get; set; }
-
     [Description("Key of an existing parent ticket, such as BANK-3.")]
     public string? Parent { get; set; }
 
@@ -235,7 +232,6 @@ public class TicketTools(
         [Description("Description in Markdown. Mention people with @[Name](user:email).")] string? description = null,
         [Description("Priority name.")] string? priority = null,
         [Description("Assignee: me, an email, a name or a user id.")] string? assignee = null,
-        [Description("Reporter; defaults to you.")] string? reporter = null,
         [Description("Parent ticket key: the epic, or the ticket a subtask belongs to.")] string? parent = null,
         List<string>? labels = null,
         decimal? storyPoints = null,
@@ -247,7 +243,7 @@ public class TicketTools(
         runner.EnsureWritable();
         var draft = new TicketDraft
         {
-            Title = title, Type = type, Description = description, Priority = priority, Assignee = assignee, Reporter = reporter,
+            Title = title, Type = type, Description = description, Priority = priority, Assignee = assignee,
             Parent = parent, Labels = labels, StoryPoints = storyPoints, StartDate = startDate, DueDate = dueDate, Sprint = sprint,
         };
 
@@ -466,7 +462,6 @@ public class TicketTools(
             Description = draft.Description is null ? null : await HtmlAsync(draft.Description),
             PriorityId = draft.Priority is null ? null : (await resolver.PriorityAsync(draft.Priority)).Id,
             AssigneeId = draft.Assignee is null ? null : (await resolver.UserAsync(draft.Assignee)).Id,
-            ReporterId = draft.Reporter is null ? null : (await resolver.UserAsync(draft.Reporter)).Id,
             ParentId = parentKey is null ? null : (await resolver.TicketAsync(parentKey)).Id,
             Labels = draft.Labels?.ToArray(),
             StoryPoints = draft.StoryPoints,

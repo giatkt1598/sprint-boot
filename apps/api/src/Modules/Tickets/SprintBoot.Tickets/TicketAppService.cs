@@ -84,7 +84,8 @@ public partial class TicketAppService(
         {
             AssigneeId = input.AssigneeId,
             AssigneeType = input.AssigneeId.HasValue ? ActorType.User : null,
-            ReporterId = input.ReporterId ?? actor.Id,
+            // The reporter is always whoever creates the ticket.
+            ReporterId = actor.Id,
             ParentId = input.ParentId,
             StoryPoints = input.StoryPoints,
             StartDate = input.StartDate,

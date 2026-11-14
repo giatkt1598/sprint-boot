@@ -387,9 +387,12 @@ public class DocsIntegrationTests(ApiFixture fixture)
 
         // Saving the text with the chip still in it does not link the page again.
         ticket = await SaveAsync(ticket, chip + "<p>more</p>");
-        ticket = await SaveAsync(ticket, "<p>chip gone</p>");
         await Task.Delay(1500, Token);
         (await PagesAsync(owner, ticket))!.Linked.ShouldBeEmpty();
+
+        // The handler reads the text as it is then, so it must see the chip gone before it comes back.
+        ticket = await SaveAsync(ticket, "<p>chip gone</p>");
+        await Task.Delay(3000, Token);
 
         // Taken out and put back, it links again.
         ticket = await SaveAsync(ticket, chip);

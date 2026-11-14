@@ -22531,8 +22531,6 @@ export interface components {
             /** Format: uuid */
             assigneeId?: string | null;
             /** Format: uuid */
-            reporterId?: string | null;
-            /** Format: uuid */
             parentId?: string | null;
             labels?: string[] | null;
             /** Format: double */
@@ -22627,7 +22625,7 @@ export interface components {
          * Format: int32
          * @enum {integer}
          */
-        DocLinkSource: 0 | 1 | 2;
+        DocLinkSource: 0 | 1 | 2 | 3;
         DocmostSpaceDto: {
             id: string | null;
             name: string | null;
