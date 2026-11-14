@@ -26,6 +26,9 @@ public sealed class FakeDocmostServer : HttpMessageHandler
 
     public string? LinkedSprintBootUrl { get; private set; }
 
+    /// <summary>How many times Sprint Boot said it uninstalled its side.</summary>
+    public int Unlinked { get; private set; }
+
     public bool Down { get; set; }
 
     /// <summary>Bodies of the pages/create calls, newest last.</summary>
@@ -71,6 +74,7 @@ public sealed class FakeDocmostServer : HttpMessageHandler
             "/api/pages/info" when body?["pageId"]?.GetValue<string>() is PageId or PageSlugId => Data(page),
             "/api/pages/info" => new HttpResponseMessage(HttpStatusCode.NotFound),
             "/api/pages/create" => Created(body!),
+            "/api/integrations/sprint-boot/unlinked" => Unlink(),
             // Most recently changed first; the older page was created last.
             "/api/pages/recent" => Data(new
             {
@@ -108,6 +112,12 @@ public sealed class FakeDocmostServer : HttpMessageHandler
         LinkedSecret = body["bridgeSecret"]!.GetValue<string>();
         LinkedSprintBootUrl = body["sprintBootUrl"]!.GetValue<string>();
         return Data(new { apiKey = ValidKey });
+    }
+
+    private HttpResponseMessage Unlink()
+    {
+        Unlinked++;
+        return Data(new { uninstalled = true });
     }
 
     private HttpResponseMessage Created(JsonNode body)

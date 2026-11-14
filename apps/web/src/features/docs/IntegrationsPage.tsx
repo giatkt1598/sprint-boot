@@ -1,12 +1,12 @@
 import Typography from '@mui/material/Typography';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useSearchParams } from 'react-router';
 import { apiClient, unwrap } from '../../api';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
-import { Dialog, DialogFooter } from '../../components/Dialog';
+import { Dialog, DialogConfirm, DialogFooter } from '../../components/Dialog';
 import { DocumentIcon } from '../../components/icons';
 import { ErrorState, LoadingState } from '../../components/StateViews';
 import { TextField } from '../../components/TextField';
@@ -54,6 +54,18 @@ export function IntegrationsPage() {
   const [params, setParams] = useSearchParams();
   const connection = useDocsConnection();
   const [configuring, setConfiguring] = useState(false);
+  const [uninstalling, setUninstalling] = useState(false);
+  const toMessage = useErrorMessage();
+  const queryClient = useQueryClient();
+  const uninstall = useMutation({
+    mutationFn: () => unwrap(apiClient.POST('/api/v1/docs-admin/uninstall')),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['docs'] });
+      toast('success', t('integrations.uninstalled', { name: 'Docmost' }));
+    },
+    onError: (failure) => toast('error', toMessage(failure)),
+    onSettled: () => setUninstalling(false),
+  });
 
   // Back from Docmost after authorizing there.
   const linked = params.get('linked');
@@ -99,11 +111,24 @@ export function IntegrationsPage() {
             <div className="flex flex-wrap gap-2">
               <Button kind={connected ? 'secondary' : 'primary'} onClick={() => setConfiguring(true)}>{t('integrations.configure')}</Button>
               {connected && <Button kind="ghost" component={RouterLink} to="docmost">{t('integrations.details')}</Button>}
+              {connected && (
+                <Button kind="ghost" sx={{ color: sem('feedback-danger-text') }} disabled={uninstall.isPending} onClick={() => setUninstalling(true)}>
+                  {t('integrations.uninstall')}
+                </Button>
+              )}
             </div>
           </section>
         </div>
       )}
       {configuring && <ConnectDocmostDialog initialUrl={data?.baseUrl ?? ''} onClose={() => setConfiguring(false)} />}
+      <DialogConfirm
+        open={uninstalling}
+        title={t('integrations.uninstallTitle', { name: 'Docmost' })}
+        description={t('integrations.uninstallBody')}
+        confirmLabel={t('integrations.uninstall')}
+        onCancel={() => setUninstalling(false)}
+        onConfirm={() => uninstall.mutate()}
+      />
     </div>
   );
 }

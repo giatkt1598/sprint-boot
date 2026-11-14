@@ -1833,6 +1833,10 @@
     "authorizeHint": "Docmost at {{url}} wants to connect to Sprint Boot. Pick a Sprint Boot space and the Docmost space it keeps its documents in, or link them later.",
     "sprintBootSpace": "Sprint Boot space",
     "linkLater": "Link later",
-    "pickBoth": "Pick both spaces, or neither."
+    "pickBoth": "Pick both spaces, or neither.",
+    "uninstall": "Uninstall",
+    "uninstalled": "{{name}} is disconnected",
+    "uninstallTitle": "Uninstall {{name}}?",
+    "uninstallBody": "Sprint Boot stops talking to Docmost, and Docmost uninstalls its Sprint Boot integration and revokes the key it gave. Linked spaces and pages are kept, so linking the same Docmost again brings them back."
   }
 }

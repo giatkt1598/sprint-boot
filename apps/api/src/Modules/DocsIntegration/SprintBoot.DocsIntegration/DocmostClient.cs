@@ -140,6 +140,9 @@ public partial class DocmostClient(IHttpClientFactory httpClients) : ITransientD
         })];
     }
 
+    /// <summary>Asks Docmost to uninstall its Sprint Boot integration, with the key it gave for the link.</summary>
+    public Task NotifyUnlinkedAsync(DocmostAccess access) => PostAsync(access, "integrations/sprint-boot/unlinked", new { });
+
     /// <summary>The Docmost spaces offered on Sprint Boot's authorize page, for a link Docmost started.</summary>
     public async Task<List<DocmostSpaceDto>> GetLinkSpacesAsync(string docmostUrl, string state)
     {

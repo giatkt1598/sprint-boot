@@ -276,6 +276,12 @@ public interface IDocsLinkAppService : IApplicationService
 
 public interface IDocsAdminAppService : IApplicationService
 {
+    /// <summary>
+    /// Drops the Docmost connection here and asks Docmost to uninstall its side and revoke the key it gave. Space
+    /// and ticket links are kept for a later link to the same Docmost.
+    /// </summary>
+    Task UninstallAsync();
+
     /// <summary>Starts a link from Sprint Boot: the browser goes on to Docmost to authorize it.</summary>
     Task<DocsLinkStartDto> StartLinkAsync(StartDocsLinkInput input);
 

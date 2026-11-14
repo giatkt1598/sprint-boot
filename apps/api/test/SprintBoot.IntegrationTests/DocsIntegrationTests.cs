@@ -275,6 +275,41 @@ public class DocsIntegrationTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task Uninstalling_here_tells_Docmost_and_keeps_the_space_links_for_later()
+    {
+        var admin = await AdminAsync();
+        var secret = await ConnectAsync(admin);
+        var (owner, project, _) = await SpaceAsync();
+        (await owner.Http.PostAsJsonAsync($"/api/v1/docs-project/link/{project.Id}", new { docmostSpaceId = FakeDocmostServer.SpaceId }, Token)).EnsureSuccessStatusCode();
+        var before = FakeDocmostServer.Instance.Unlinked;
+
+        (await admin.Http.PostAsync("/api/v1/docs-admin/uninstall", null, Token)).EnsureSuccessStatusCode();
+
+        FakeDocmostServer.Instance.Unlinked.ShouldBe(before + 1);
+        (await admin.Http.GetFromJsonAsync<DocsConnectionDto>("/api/v1/docs-admin", Token))!.Configured.ShouldBeFalse();
+        var docs = (await owner.Http.GetFromJsonAsync<ProjectDocsDto>($"/api/v1/docs-project?projectId={project.Id}", Token))!;
+        docs.Configured.ShouldBeFalse();
+        docs.Space.ShouldNotBeNull();
+        (await Docmost(secret).PostAsJsonAsync("/api/v1/docs-bridge/unfurl", new { keys = Array.Empty<string>() }, Token))
+            .StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Uninstalling_in_Docmost_drops_the_link_here()
+    {
+        var admin = await AdminAsync();
+        var secret = await ConnectAsync(admin);
+        var before = FakeDocmostServer.Instance.Unlinked;
+
+        (await Docmost(secret).PostAsJsonAsync("/api/v1/docs-bridge/unlink", new { }, Token)).EnsureSuccessStatusCode();
+
+        (await admin.Http.GetFromJsonAsync<DocsConnectionDto>("/api/v1/docs-admin", Token))!.Configured.ShouldBeFalse();
+        // Docmost started it, so it is not told back.
+        FakeDocmostServer.Instance.Unlinked.ShouldBe(before);
+        (await Docmost(secret).PostAsJsonAsync("/api/v1/docs-bridge/unlink", new { }, Token)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
     public async Task A_Docmost_address_resolves_for_a_chip()
     {
         await ConnectAsync(await AdminAsync());

@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using SprintBoot.Identity;
 using SprintBoot.Projects;
 using SprintBoot.Tickets;
@@ -108,9 +109,34 @@ public class DocsAdminAppService(
     IRepository<DocsConnection, Guid> connections,
     DocsGateway gateway,
     DocsLinker linker,
+    DocmostClient client,
     IStringEncryptionService encryption)
     : ApplicationService, IDocsAdminAppService
 {
+    public async Task UninstallAsync()
+    {
+        var connection = await gateway.FindAsync();
+        if (connection is null)
+        {
+            return;
+        }
+
+        if (connection.EncryptedApiKey is not null)
+        {
+            try
+            {
+                await client.NotifyUnlinkedAsync(gateway.Access(connection));
+            }
+            catch (Exception failure) when (failure is DocmostAuthException or DocmostUnavailableException or DocmostNotFoundException)
+            {
+                // Docmost is gone or the key already revoked: there is nothing left to tell it.
+                Logger.LogWarning("Docmost was not told about the uninstall: {Reason}", failure.Message);
+            }
+        }
+
+        await connections.DeleteAsync(connection, autoSave: true);
+    }
+
     public async Task<DocsLinkStartDto> StartLinkAsync(StartDocsLinkInput input)
     {
         var docmostUrl = DocsLinker.Normalize(input.DocmostUrl);

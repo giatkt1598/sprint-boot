@@ -105,6 +105,7 @@ public class BridgeSpacesInput
 /// <summary>What Docmost's Sprint Boot integration asks of Sprint Boot.</summary>
 public partial class DocsBridge(
     DocsGateway gateway,
+    IRepository<DocsConnection, Guid> connections,
     IRepository<TicketDocLink, Guid> links,
     IRepository<ProjectDocsSpace, Guid> spaces,
     ITicketKeyResolver resolver,
@@ -254,6 +255,18 @@ public partial class DocsBridge(
         return wanted.Count;
     }
 
+    /// <summary>Space and ticket links stay, for a later link to the same Docmost.</summary>
+    public async Task<bool> UnlinkAsync()
+    {
+        if (await gateway.FindAsync() is not { } connection)
+        {
+            return false;
+        }
+
+        await connections.DeleteAsync(connection, autoSave: true);
+        return true;
+    }
+
     /// <summary>Creates a ticket as the Docmost user, so their permissions decide.</summary>
     public async Task<BridgeTicketView> CreateTicketAsync(BridgeCreateTicketInput input)
     {
@@ -368,6 +381,11 @@ public class DocsBridgeController(DocsBridge bridge) : ControllerBase
     [HttpPost("search")]
     public async Task<ActionResult<object>> SearchAsync([FromBody] BridgeSearchInput input) =>
         await AcceptedAsync() ? (ActionResult<object>)new { tickets = await bridge.SearchAsync(input) } : Unauthorized();
+
+    /// <summary>Docmost uninstalled its side: drop this one too.</summary>
+    [HttpPost("unlink")]
+    public async Task<ActionResult<object>> UnlinkAsync() =>
+        await AcceptedAsync() ? (ActionResult<object>)new { unlinked = await bridge.UnlinkAsync() } : Unauthorized();
 
     [HttpPost("spaces")]
     public async Task<ActionResult<object>> SpacesAsync([FromBody] BridgeSpacesInput input) =>

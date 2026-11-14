@@ -1833,6 +1833,10 @@
     "authorizeHint": "Docmost tại {{url}} muốn kết nối với Sprint Boot. Chọn Space của Sprint Boot và Docmost space chứa tài liệu của Space đó, hoặc gắn sau.",
     "sprintBootSpace": "Space của Sprint Boot",
     "linkLater": "Gắn sau",
-    "pickBoth": "Chọn cả hai space, hoặc không chọn space nào."
+    "pickBoth": "Chọn cả hai space, hoặc không chọn space nào.",
+    "uninstall": "Gỡ cài đặt",
+    "uninstalled": "Đã ngắt kết nối {{name}}",
+    "uninstallTitle": "Gỡ cài đặt {{name}}?",
+    "uninstallBody": "Sprint Boot ngừng kết nối với Docmost; Docmost cũng gỡ integration Sprint Boot và thu hồi key đã cấp. Các space và trang đã gắn được giữ lại, nên liên kết lại đúng Docmost đó sẽ khôi phục chúng."
   }
 }

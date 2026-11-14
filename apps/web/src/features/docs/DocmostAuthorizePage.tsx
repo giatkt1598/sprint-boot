@@ -45,7 +45,8 @@ export function DocmostAuthorizePage() {
   const half = Boolean(projectId) !== Boolean(docmostSpaceId);
 
   return (
-    <main className="flex min-h-full items-start justify-center p-4 md:p-12">
+    // Centred on the screen, as a consent step.
+    <main className="flex min-h-full flex-1 items-center justify-center p-4 md:p-12" style={{ minHeight: '100%' }}>
       <section
         aria-labelledby="authorize-title"
         className="flex w-full max-w-lg flex-col gap-5 p-6"
