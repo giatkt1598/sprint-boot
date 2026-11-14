@@ -29,6 +29,9 @@ public sealed class FakeDocmostServer : HttpMessageHandler
     /// <summary>How many times Sprint Boot said it uninstalled its side.</summary>
     public int Unlinked { get; private set; }
 
+    /// <summary>Pages put in Docmost's trash; any other id starting with "page-" is a page that exists.</summary>
+    public System.Collections.Concurrent.ConcurrentDictionary<string, bool> Trashed { get; } = new();
+
     public bool Down { get; set; }
 
     /// <summary>Bodies of the pages/create calls, newest last.</summary>
@@ -72,6 +75,15 @@ public sealed class FakeDocmostServer : HttpMessageHandler
                 meta,
             }),
             "/api/pages/info" when body?["pageId"]?.GetValue<string>() is PageId or PageSlugId => Data(page),
+            "/api/pages/info" when body?["pageId"]?.GetValue<string>() is { } other && other.StartsWith("page-", StringComparison.Ordinal) => Data(new
+            {
+                id = other,
+                slugId = other,
+                title = other,
+                spaceId = SpaceId,
+                deletedAt = Trashed.ContainsKey(other) ? "2026-11-14T00:00:00Z" : null,
+                space,
+            }),
             "/api/pages/info" => new HttpResponseMessage(HttpStatusCode.NotFound),
             "/api/pages/create" => Created(body!),
             "/api/integrations/sprint-boot/unlinked" => Unlink(),

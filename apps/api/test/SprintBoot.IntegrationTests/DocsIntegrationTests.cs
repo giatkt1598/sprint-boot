@@ -363,9 +363,62 @@ public class DocsIntegrationTests(ApiFixture fixture)
         history.Where(item => item.OldValue is null).Select(item => item.NewValue).ShouldBe(["Spec A", "Spec B"], ignoreOrder: true);
         history.Where(item => item.NewValue is null).Select(item => item.OldValue).ShouldBe(["Spec B"]);
 
-        // A chip cannot be unlinked by hand: it goes with its text.
-        var chipLink = (await PagesAsync(owner, ticket))!.Linked.Single();
-        (await CodeAsync(await owner.Http.DeleteAsync($"/api/v1/docs-ticket/{chipLink.Id}", Token))).ShouldBe(DocsErrors.MentionLink);
+    }
+
+    [Fact]
+    public async Task A_chip_unlinked_by_hand_stays_unlinked_until_it_is_put_back()
+    {
+        await ConnectAsync(await AdminAsync());
+        var (owner, _, ticket) = await SpaceAsync();
+        var pageId = $"page-{Guid.NewGuid():N}";
+        var chip = $"<p><a data-type=\"doc-mention\" class=\"doc-mention\" data-page-id=\"{pageId}\" href=\"{FakeDocmostServer.BaseUrl}/p/{pageId}\">Spec</a></p>";
+        async Task<TicketDto> SaveAsync(TicketDto current, string description)
+        {
+            (await owner.Http.PutAsJsonAsync($"/api/v1/ticket/{current.Id}", new { concurrencyStamp = current.ConcurrencyStamp, fields = new { description } }, Token))
+                .EnsureSuccessStatusCode();
+            return (await owner.Http.GetFromJsonAsync<TicketDto>($"/api/v1/ticket/by-key?key={current.Key}", Token))!;
+        }
+
+        ticket = await SaveAsync(ticket, chip);
+        var link = (await WaitForAsync(owner, ticket, docs => docs.Linked.Count == 1)).Linked.Single();
+
+        (await owner.Http.DeleteAsync($"/api/v1/docs-ticket/{link.Id}", Token)).EnsureSuccessStatusCode();
+        (await PagesAsync(owner, ticket))!.Linked.ShouldBeEmpty();
+
+        // Saving the text with the chip still in it does not link the page again.
+        ticket = await SaveAsync(ticket, chip + "<p>more</p>");
+        ticket = await SaveAsync(ticket, "<p>chip gone</p>");
+        await Task.Delay(1500, Token);
+        (await PagesAsync(owner, ticket))!.Linked.ShouldBeEmpty();
+
+        // Taken out and put back, it links again.
+        ticket = await SaveAsync(ticket, chip);
+        await WaitForAsync(owner, ticket, docs => docs.Linked.Count == 1);
+    }
+
+    [Fact]
+    public async Task A_page_deleted_in_Docmost_is_unlinked_and_its_chip_links_nothing()
+    {
+        var admin = await AdminAsync();
+        var secret = await ConnectAsync(admin);
+        var (owner, _, ticket) = await SpaceAsync();
+        var pageId = $"page-{Guid.NewGuid():N}";
+        var chip = $"<p><a data-type=\"doc-mention\" class=\"doc-mention\" data-page-id=\"{pageId}\" href=\"{FakeDocmostServer.BaseUrl}/p/{pageId}\">Spec</a></p>";
+        (await owner.Http.PutAsJsonAsync($"/api/v1/ticket/{ticket.Id}", new { concurrencyStamp = ticket.ConcurrencyStamp, fields = new { description = chip } }, Token))
+            .EnsureSuccessStatusCode();
+        await WaitForAsync(owner, ticket, docs => docs.Linked.Count == 1);
+
+        // Docmost reports the page deleted when it goes to the trash.
+        FakeDocmostServer.Instance.Trashed[pageId] = true;
+        (await Docmost(secret).PostAsJsonAsync("/api/v1/docs-bridge/page-links", new { pageId, deleted = true }, Token)).EnsureSuccessStatusCode();
+        (await PagesAsync(owner, ticket))!.Linked.ShouldBeEmpty();
+
+        // The chip is still in the text, but saving it links nothing.
+        var current = (await owner.Http.GetFromJsonAsync<TicketDto>($"/api/v1/ticket/by-key?key={ticket.Key}", Token))!;
+        (await owner.Http.PutAsJsonAsync($"/api/v1/ticket/{ticket.Id}", new { concurrencyStamp = current.ConcurrencyStamp, fields = new { description = chip + "<p>edited</p>" } }, Token))
+            .EnsureSuccessStatusCode();
+        await Task.Delay(1500, Token);
+        (await PagesAsync(owner, ticket))!.Linked.ShouldBeEmpty();
     }
 
     private static async Task<TicketDocsDto> WaitForAsync(AuthClient client, TicketDto ticket, Func<TicketDocsDto, bool> done)

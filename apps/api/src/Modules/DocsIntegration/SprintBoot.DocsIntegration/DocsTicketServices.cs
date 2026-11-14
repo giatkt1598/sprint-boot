@@ -68,7 +68,7 @@ public class DocsTicketAppService(
             CanEdit = canEdit,
             CanCreatePage = configured && canEdit && await spaces.AnyAsync(item => item.ProjectId == projectId),
             Linked = [.. rows
-                .Where(item => item.Source != DocLinkSource.Mention)
+                .Where(item => item.Source is DocLinkSource.Manual or DocLinkSource.Text)
                 .GroupBy(item => item.PageId)
                 // A hand link can be removed; a chip only goes with the text it is in.
                 .Select(group => group.OrderBy(item => item.Source == DocLinkSource.Manual ? 0 : 1).First())
@@ -134,16 +134,31 @@ public class DocsTicketAppService(
         return ToDto(link);
     }
 
+    /// <summary>
+    /// Unlinks a page from the ticket, however it was linked there. A chip for it stays in the text but no longer links
+    /// it, until the chip is taken out and put back.
+    /// </summary>
     public async Task DeleteAsync(Guid id)
     {
         var link = await links.GetAsync(id);
         await projectAccess.CheckAsync(link.ProjectId, ProjectPermissions.EditTickets);
-        if (link.Source != DocLinkSource.Manual)
+        if (link.Source is not (DocLinkSource.Manual or DocLinkSource.Text))
         {
             throw new BusinessException(DocsErrors.MentionLink);
         }
 
-        await links.DeleteAsync(link);
+        var rows = await links.GetListAsync(item => item.TicketId == link.TicketId && item.PageId == link.PageId
+            && (item.Source == DocLinkSource.Manual || item.Source == DocLinkSource.Text));
+        foreach (var row in rows)
+        {
+            await links.DeleteAsync(row);
+            if (row.Source == DocLinkSource.Text)
+            {
+                await links.InsertAsync(new TicketDocLink(
+                    GuidGenerator.Create(), row.TicketId, row.ProjectId, row.PageId, DocLinkSource.Dismissed, row.Title, row.Url, row.SpaceName, row.UpdatedAt));
+            }
+        }
+
         await tickets.RecordActivityAsync(link.TicketId, DocumentField, link.Title, null);
     }
 
@@ -234,6 +249,8 @@ public partial class TicketTextChangedHandler(
     IProjectAccess projectAccess,
     ITicketPlanningGateway tickets,
     ICurrentPrincipalAccessor principal,
+    DocsGateway gateway,
+    DocmostClient client,
     IGuidGenerator guids,
     IClock clock)
     : IDistributedEventHandler<TicketTextChangedEto>, ITransientDependency
@@ -248,7 +265,19 @@ public partial class TicketTextChangedHandler(
         }
 
         var chips = Chips(await texts.GetAsync(eventData.TicketId));
-        var existing = await links.GetListAsync(item => item.TicketId == eventData.TicketId && item.Source == DocLinkSource.Text);
+        var rows = await links.GetListAsync(item => item.TicketId == eventData.TicketId
+            && (item.Source == DocLinkSource.Text || item.Source == DocLinkSource.Dismissed));
+        var existing = rows.Where(item => item.Source == DocLinkSource.Text).ToList();
+        var dismissed = rows.Where(item => item.Source == DocLinkSource.Dismissed).ToList();
+        // A chip for a page deleted in Docmost links nothing, and the link it made goes.
+        foreach (var pageId in chips.Keys.ToList())
+        {
+            if (!await ExistsAsync(pageId))
+            {
+                chips.Remove(pageId);
+            }
+        }
+
         var now = clock.Now;
         var removed = existing.Where(link => !chips.ContainsKey(link.PageId)).ToList();
 
@@ -257,10 +286,21 @@ public partial class TicketTextChangedHandler(
             await links.DeleteAsync(link);
         }
 
+        // Taking the chip out ends its page's dismissal: putting it back links the page again.
+        foreach (var link in dismissed.Where(link => !chips.ContainsKey(link.PageId)))
+        {
+            await links.DeleteAsync(link);
+        }
+
         var added = new List<string>();
         foreach (var (pageId, chip) in chips)
         {
             var link = existing.FirstOrDefault(item => item.PageId == pageId);
+            if (link is null && dismissed.Any(item => item.PageId == pageId))
+            {
+                continue;
+            }
+
             if (link is null)
             {
                 await links.InsertAsync(new TicketDocLink(
@@ -277,6 +317,19 @@ public partial class TicketTextChangedHandler(
         }
 
         await RecordAsync(eventData, removed.Select(link => link.Title), added);
+    }
+
+    // Unknown when Docmost cannot say: the chip then stands, and the next save of the text checks again.
+    private async Task<bool> ExistsAsync(string pageId)
+    {
+        try
+        {
+            return await gateway.CallAsync((access, _) => client.FindPageAsync(access, pageId)) is not null;
+        }
+        catch (BusinessException)
+        {
+            return true;
+        }
     }
 
     // Recorded as whoever saved the text.

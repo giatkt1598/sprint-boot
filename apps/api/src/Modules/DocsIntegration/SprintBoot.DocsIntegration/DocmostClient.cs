@@ -92,7 +92,9 @@ public partial class DocmostClient(IHttpClientFactory httpClients) : ITransientD
         var space = data.TryGetProperty("space", out var element) && element.ValueKind == JsonValueKind.Object
             ? new DocmostSpaceDto { Id = Text(element, "id")!, Name = Text(element, "name") ?? string.Empty, Slug = Text(element, "slug")! }
             : null;
-        return space is null ? null : (ToPage(data), space);
+        // A page in Docmost's trash is gone as far as a ticket is concerned.
+        var trashed = data.TryGetProperty("deletedAt", out var deleted) && deleted.ValueKind == JsonValueKind.String;
+        return space is null || trashed ? null : (ToPage(data), space);
     }
 
     public async Task<DocmostPage> CreatePageAsync(DocmostAccess access, string spaceId, string? parentPageId, string title, object content) =>

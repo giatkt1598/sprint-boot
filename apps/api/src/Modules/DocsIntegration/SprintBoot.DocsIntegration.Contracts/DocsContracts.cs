@@ -31,6 +31,12 @@ public enum DocLinkSource
 
     /// <summary>The ticket's description or a comment holds a chip for the page; saving the text keeps it current.</summary>
     Text = 2,
+
+    /// <summary>
+    /// A chip's page someone unlinked from the ticket while the chip stays in the text. Never listed; it keeps the chip
+    /// from linking the page again, until the chip is taken out of the text.
+    /// </summary>
+    Dismissed = 3,
 }
 
 public class DocsConnectionDto

@@ -283,7 +283,7 @@ export function LinkedDocuments({ ticketId, projectId, defaultTitle }: { ticketI
           <DocumentRows
             pages={linked}
             label={t('docs.linkedTitle')}
-            canRemove={data.canEdit ? (page) => page.source === DocLinkSource.manual : undefined}
+            canRemove={data.canEdit ? (page) => page.source === DocLinkSource.manual || page.source === DocLinkSource.text : undefined}
             removing={unlink.isPending}
             onRemove={(page) => unlink.mutate(page.id!, { onError: (failure) => toast('error', toMessage(failure)) })}
           />

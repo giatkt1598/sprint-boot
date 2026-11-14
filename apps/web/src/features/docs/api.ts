@@ -9,7 +9,7 @@ export type DocmostSpace = components['schemas']['DocmostSpaceDto'];
 
 /** As the API numbers DocsProblem and DocLinkSource. */
 export const DocsProblem = { none: 0, unauthorized: 1, unavailable: 2 } as const;
-export const DocLinkSource = { mention: 0, manual: 1, text: 2 } as const;
+export const DocLinkSource = { mention: 0, manual: 1, text: 2, dismissed: 3 } as const;
 
 export const MANAGE_DOCS = 'SprintBoot.Docs.Manage';
 
