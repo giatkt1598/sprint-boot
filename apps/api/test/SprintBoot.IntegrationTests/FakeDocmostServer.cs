@@ -57,7 +57,7 @@ public sealed class FakeDocmostServer : HttpMessageHandler
 
         var body = request.Content is null ? null : JsonNode.Parse(await request.Content.ReadAsStringAsync(cancellationToken));
         var space = new { id = SpaceId, name = "Engineering", slug = SpaceSlug };
-        var page = new { id = PageId, slugId = PageSlugId, title = "Design notes", icon = (string?)null, spaceId = SpaceId, hasChildren = true, space };
+        var page = new { id = PageId, slugId = PageSlugId, title = "Design notes", icon = (string?)null, spaceId = SpaceId, hasChildren = true, updatedAt = "2026-03-04T05:06:07Z", space };
         var meta = new { hasNextPage = false, nextCursor = (string?)null };
 
         return request.RequestUri!.AbsolutePath switch

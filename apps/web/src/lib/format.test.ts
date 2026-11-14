@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { formatDate, formatDateTime, formatMinutes, parseDuration, setDisplayTimeZone, todayIso } from './format';
+import { formatDate, formatDateTime, formatMinutes, formatRecent, parseDuration, setDisplayTimeZone, todayIso } from './format';
 
 describe('duration', () => {
   it.each([
@@ -42,5 +42,21 @@ describe('time zone', () => {
   it('gives today in the chosen zone', () => {
     setDisplayTimeZone('Pacific/Kiritimati');
     expect(todayIso()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+describe('recent', () => {
+  afterEach(() => setDisplayTimeZone(null));
+  const now = Date.parse('2026-11-14T12:00:00Z');
+
+  it('is relative within a week', () => {
+    expect(formatRecent('2026-11-14T10:00:00Z', 'en', now)).toBe('2 hours ago');
+    expect(formatRecent('2026-11-08T12:00:00Z', 'en', now)).toBe('6 days ago');
+  });
+
+  it('is a year, month and day after that', () => {
+    setDisplayTimeZone('Asia/Ho_Chi_Minh');
+    expect(formatRecent('2026-03-04T05:06:07Z', 'en', now)).toBe('2026 Mar 04');
+    expect(formatRecent('2026-11-01T12:00:00Z', 'en', now)).toBe('2026 Nov 01');
   });
 });

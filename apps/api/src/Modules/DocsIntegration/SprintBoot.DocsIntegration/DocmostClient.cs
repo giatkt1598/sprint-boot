@@ -18,7 +18,8 @@ public class DocmostUnavailableException(string message, Exception? inner = null
 
 public record DocmostAccess(string BaseUrl, string ApiKey);
 
-public record DocmostPage(string Id, string SlugId, string Title, string? Icon, bool HasChildren, string SpaceId);
+/// <summary>A Docmost page; <see cref="UpdatedAt"/> is when its content last changed, when Docmost says.</summary>
+public record DocmostPage(string Id, string SlugId, string Title, string? Icon, bool HasChildren, string SpaceId, DateTime? UpdatedAt = null);
 
 /// <summary>
 /// Docmost's own API, as its service user. Every call is a POST under /api and answers {"data": ...}.
@@ -209,7 +210,10 @@ public partial class DocmostClient(IHttpClientFactory httpClients) : ITransientD
         Text(item, "title") is { Length: > 0 } title ? title : "Untitled",
         Text(item, "icon"),
         item.TryGetProperty("hasChildren", out var children) && children.ValueKind == JsonValueKind.True,
-        Text(item, "spaceId") ?? string.Empty);
+        Text(item, "spaceId") ?? string.Empty,
+        Text(item, "updatedAt") is { } updated && DateTime.TryParse(updated, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out var at)
+            ? at
+            : null);
 
     private static string? Text(JsonElement element, string name) =>
         element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;

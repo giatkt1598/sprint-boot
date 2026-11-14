@@ -23,6 +23,24 @@ export const todayIso = () =>
 export const formatRelative = (value: string | null | undefined, language: string) =>
   (value ? dayjs(value).locale(language.startsWith('vi') ? 'vi' : 'en').fromNow() : '');
 
+const RECENT_DAYS = 7;
+
+/** "2 hours ago" within the last week; older than that, "2026 Mar 04" in the person's time zone. */
+export const formatRecent = (value: string | null | undefined, language: string, now = Date.now()) => {
+  if (!value) {
+    return '';
+  }
+
+  if (now - new Date(value).getTime() < RECENT_DAYS * 24 * 60 * 60 * 1000) {
+    return dayjs(value).locale(language.startsWith('vi') ? 'vi' : 'en').from(now);
+  }
+
+  const parts = new Intl.DateTimeFormat(language, { year: 'numeric', month: 'short', day: '2-digit', timeZone: zoneOf(value) })
+    .formatToParts(new Date(value));
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value ?? '';
+  return `${part('year')} ${part('month')} ${part('day')}`;
+};
+
 export const formatDate = (value: string | null | undefined, language: string) =>
   value ? new Intl.DateTimeFormat(language, { dateStyle: 'medium', timeZone: zoneOf(value) }).format(new Date(value)) : '';
 

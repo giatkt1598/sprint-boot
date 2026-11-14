@@ -3,6 +3,7 @@ import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import MuiLink from '@mui/material/Link';
 import MuiTextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useId, useState } from 'react';
@@ -14,6 +15,7 @@ import { AddIcon, CloseIcon, DocumentIcon } from '../../components/icons';
 import { TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
+import { formatDateTime, formatRecent } from '../../lib/format';
 import { font, sem } from '../../theme/tokens';
 import { ParentPagePicker, type ParentPage } from './ParentPagePicker';
 import { DocLinkSource, useTicketDocs, useTicketDocsActions, type DocsPageHit, type TicketDocPage } from './api';
@@ -199,7 +201,7 @@ function DocumentRows({ pages, label, canRemove, onRemove, removing }: {
   onRemove?: (page: TicketDocPage) => void;
   removing?: boolean;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   return (
     <table className="w-full" aria-label={label} style={{ borderCollapse: 'collapse', borderTop: `1px solid ${sem('border-default')}` }}>
@@ -217,7 +219,11 @@ function DocumentRows({ pages, label, canRemove, onRemove, removing }: {
               </MuiLink>
             </td>
             <td className="whitespace-nowrap pr-3">
-              <Typography variant="body2" color="textSecondary">{page.spaceName}</Typography>
+              <Tooltip title={formatDateTime(page.updatedAt, i18n.language)}>
+                <Typography variant="body2" color="textSecondary" component="time" dateTime={page.updatedAt ?? undefined}>
+                  {formatRecent(page.updatedAt, i18n.language)}
+                </Typography>
+              </Tooltip>
             </td>
             {canRemove && (
               <td className="pr-2" style={{ width: 40 }}>

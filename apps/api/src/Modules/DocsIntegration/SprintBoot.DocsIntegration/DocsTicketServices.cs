@@ -129,7 +129,7 @@ public class DocsTicketAppService(
 
         var link = await links.InsertAsync(new TicketDocLink(
             GuidGenerator.Create(), ticketId, projectId, page.Id, DocLinkSource.Manual, page.Title,
-            DocmostClient.PageUrl(connection.BaseUrl, space.Slug, page.SlugId, page.Title), space.Name, clock.Now), autoSave: true);
+            DocmostClient.PageUrl(connection.BaseUrl, space.Slug, page.SlugId, page.Title), space.Name, page.UpdatedAt ?? clock.Now), autoSave: true);
         await tickets.RecordActivityAsync(ticketId, DocumentField, null, link.Title);
         return ToDto(link);
     }
@@ -176,7 +176,7 @@ public class DocsTicketAppService(
         });
 
         var row = await links.InsertAsync(new TicketDocLink(
-            GuidGenerator.Create(), ticketId, projectId, created.Id, DocLinkSource.Manual, created.Title, link, space.Name, clock.Now), autoSave: true);
+            GuidGenerator.Create(), ticketId, projectId, created.Id, DocLinkSource.Manual, created.Title, link, space.Name, created.UpdatedAt ?? clock.Now), autoSave: true);
         await tickets.RecordActivityAsync(ticketId, DocumentField, null, row.Title);
         return ToDto(row);
     }

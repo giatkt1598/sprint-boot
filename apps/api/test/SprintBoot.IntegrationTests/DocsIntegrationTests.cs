@@ -137,6 +137,8 @@ public class DocsIntegrationTests(ApiFixture fixture)
         var page = (await PagesAsync(owner, ticket))!.Linked.ShouldHaveSingleItem();
         page.Title.ShouldBe("Design notes");
         page.Source.ShouldBe(DocLinkSource.Manual);
+        // When Docmost last changed the page, not when it was linked.
+        page.UpdatedAt.ShouldBe(new DateTime(2026, 3, 4, 5, 6, 7, DateTimeKind.Utc));
 
         // Creating a page needs the space linked first.
         var unlinked = await owner.Http.PostAsJsonAsync($"/api/v1/docs-ticket/page/{ticket.Id}", new { }, Token);
