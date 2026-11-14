@@ -72,6 +72,36 @@ public class RichTextMarkdownTests
         html.ShouldContain("&lt;div&gt;kept&lt;/div&gt;\n\n\nin code");
     }
 
+    private static string Answer(string markdown) => Clean(RichTextMarkdown.AnswerToHtmlAsync(markdown).GetAwaiter().GetResult());
+
+    [Theory]
+    [InlineData(@"Total $4! = 24$ ways", @"<p>Total <span data-type=""inline-math"" data-latex=""4! = 24"">4! = 24</span> ways</p>")]
+    [InlineData(@"Half is \(\frac{1}{2}\).", @"<span data-type=""inline-math"" data-latex=""\frac{1}{2}"">")]
+    [InlineData(@"So $24 \\times \\frac{1}{2} = 12$", @"data-latex=""24 \times \frac{1}{2} = 12""")]
+    [InlineData("$$\na_1 + b_1\n$$", @"<div data-type=""block-math"" data-latex=""a_1 + b_1"">")]
+    [InlineData(@"\[ x^2 \]", @"data-type=""block-math"" data-latex=""x^2""")]
+    public void Answer_formulas_keep_their_tex(string markdown, string expected)
+    {
+        Answer(markdown).ShouldContain(expected);
+    }
+
+    [Theory]
+    [InlineData("It costs $5 and $10.", "<p>It costs $5 and $10.</p>")]
+    [InlineData(@"Use `\(x\)` here", @"<code>\(x\)</code>")]
+    public void Answer_dollars_and_code_stay_text(string markdown, string expected)
+    {
+        var html = Answer(markdown);
+
+        html.ShouldContain(expected);
+        html.ShouldNotContain("math");
+    }
+
+    [Fact]
+    public void Ticket_text_keeps_dollar_signs()
+    {
+        Html("Price $a_1$").ShouldNotContain("math");
+    }
+
     [Fact]
     public void Task_lists_take_the_editor_shape()
     {

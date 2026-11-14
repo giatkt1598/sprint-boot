@@ -407,6 +407,14 @@
   font-family: inherit;
 }
 
+/* A wide formula scrolls on its own instead of widening the answer. */
+.rich-text [data-type='block-math'] {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
 .rich-text .hljs-comment,
 .rich-text .hljs-quote {
   color: var(--sb-text-secondary);

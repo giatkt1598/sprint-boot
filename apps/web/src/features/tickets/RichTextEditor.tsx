@@ -16,6 +16,7 @@ import { resolveDocsPage, useDocsInfo } from '../docs/api';
 import { EditorMenus, EditorToolbar, normalizeUrl } from './RichTextMenus';
 import { createExtensions, type MentionUser, type PopupState, type SlashCommand } from './richTextExtensions';
 import { TicketChips } from './TicketChip';
+import { typesetMath } from '../../lib/math';
 
 export type { MentionUser } from './richTextExtensions';
 
@@ -332,6 +333,9 @@ export function RichTextView({ html }: { html: string }) {
   // Before paint: a streaming answer replaces this HTML every frame, and code highlighted only after paint would flash.
   useLayoutEffect(() => {
     view.current?.querySelectorAll<HTMLElement>('pre code[class*="language-"]').forEach((block) => hljs.highlightElement(block));
+    if (view.current) {
+      typesetMath(view.current);
+    }
 
     // The editor names checkboxes only while editing; screen readers need a name in saved text too.
     view.current?.querySelectorAll('input[type="checkbox"]').forEach((box) => {

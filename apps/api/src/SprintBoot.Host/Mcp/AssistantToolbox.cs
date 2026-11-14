@@ -56,7 +56,7 @@ public class AssistantToolbox(IServiceProvider services, RichTextSanitizer sanit
     }
 
     public async Task<string> RenderAsync(string markdown) =>
-        sanitizer.Clean(await RichTextMarkdown.ToHtmlAsync(RichTextMarkdown.FlattenHtmlBlocks(markdown))).Html;
+        sanitizer.Clean(await RichTextMarkdown.AnswerToHtmlAsync(markdown)).Html;
 
     private static Exception Unwrap(Exception failure) =>
         failure is TargetInvocationException { InnerException: { } inner } ? Unwrap(inner) : failure;

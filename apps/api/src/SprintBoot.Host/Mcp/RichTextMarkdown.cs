@@ -6,6 +6,7 @@ using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
 using Markdig;
 using Markdig.Extensions.CustomContainers;
+using Markdig.Extensions.Mathematics;
 using Markdig.Renderers.Html;
 using Markdig.Syntax;
 using ModelContextProtocol;
@@ -23,14 +24,18 @@ public static partial class RichTextMarkdown
 {
     private const string MentionScheme = "user:";
 
-    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
+    private static readonly MarkdownPipeline Pipeline = Builder().Build();
+
+    /// <summary>Assistant answers also read TeX between dollar signs, which models write for formulas.</summary>
+    private static readonly MarkdownPipeline AnswerPipeline = Builder().UseMathematics().Build();
+
+    private static MarkdownPipelineBuilder Builder() => new MarkdownPipelineBuilder()
         .UsePipeTables()
         .UseTaskLists()
         .UseEmphasisExtras(Markdig.Extensions.EmphasisExtras.EmphasisExtraOptions.Strikethrough | Markdig.Extensions.EmphasisExtras.EmphasisExtraOptions.Marked)
         .UseAutoLinks()
         .UseCustomContainers()
-        .UseSoftlineBreakAsHardlineBreak()
-        .Build();
+        .UseSoftlineBreakAsHardlineBreak();
 
     private static readonly HtmlParser Parser = new();
 
@@ -41,14 +46,24 @@ public static partial class RichTextMarkdown
         ["body", "ul", "ol", "table", "thead", "tbody", "tfoot", "tr", "blockquote", "div"];
 
     /// <summary>Mentions are written as @[Name](user:id-or-email); the resolver turns emails into users.</summary>
-    public static async Task<string> ToHtmlAsync(string? markdown, Func<string, Task<MentionTarget?>>? resolveUser = null)
+    public static Task<string> ToHtmlAsync(string? markdown, Func<string, Task<MentionTarget?>>? resolveUser = null) =>
+        ToHtmlAsync(markdown, resolveUser, Pipeline);
+
+    /// <summary>
+    /// An assistant answer as HTML: HTML layouts flattened, and formulas kept as TeX for the web app to typeset.
+    /// Mirrored by renderStreamingMarkdown in apps/web/src/features/assistant/streaming.ts.
+    /// </summary>
+    public static Task<string> AnswerToHtmlAsync(string markdown) =>
+        ToHtmlAsync(NormalizeMathDelimiters(FlattenHtmlBlocks(markdown)), null, AnswerPipeline);
+
+    private static async Task<string> ToHtmlAsync(string? markdown, Func<string, Task<MentionTarget?>>? resolveUser, MarkdownPipeline pipeline)
     {
         if (string.IsNullOrWhiteSpace(markdown))
         {
             return string.Empty;
         }
 
-        var parsed = Markdown.Parse(markdown.Replace("\r\n", "\n"), Pipeline);
+        var parsed = Markdown.Parse(markdown.Replace("\r\n", "\n"), pipeline);
         foreach (var container in parsed.Descendants<CustomContainer>())
         {
             var attributes = container.GetAttributes();
@@ -57,12 +72,18 @@ public static partial class RichTextMarkdown
             attributes.AddProperty("data-type", "callout");
         }
 
+        // $$…$$ inside a paragraph is still a displayed formula.
+        foreach (var math in parsed.Descendants<MathInline>().Where(math => math.DelimiterCount > 1))
+        {
+            math.GetAttributes().AddClass("display");
+        }
+
         foreach (var heading in parsed.Descendants<HeadingBlock>())
         {
             heading.Level = Math.Min(heading.Level, 3);
         }
 
-        var document = Parser.ParseDocument(parsed.ToHtml(Pipeline));
+        var document = Parser.ParseDocument(parsed.ToHtml(pipeline));
         var body = document.Body!;
 
         foreach (var list in body.QuerySelectorAll("ul.contains-task-list").ToList())
@@ -100,9 +121,46 @@ public static partial class RichTextMarkdown
             }
         }
 
+        foreach (var math in body.QuerySelectorAll("span.math, div.math").ToList())
+        {
+            ToMath(document, math);
+        }
+
         UnwrapUnknownTags(body);
         RemoveLayoutWhitespace(body);
         return body.InnerHtml;
+    }
+
+    /// <summary>
+    /// Models also write formulas between \( \) and \[ \], which Markdown reads as escaped brackets: outside code they
+    /// become dollar signs. Mirrored by normalizeMathDelimiters in apps/web/src/lib/math.ts.
+    /// </summary>
+    public static string NormalizeMathDelimiters(string markdown) =>
+        MathDelimiters().Replace(markdown, match =>
+            match.Groups["code"].Success ? match.Value
+            : match.Groups["display"].Success ? $"$${match.Groups["display"].Value.Trim()}$$"
+            : $"${match.Groups["inline"].Value.Trim()}$");
+
+    /// <summary>
+    /// Markdig writes a formula as a span or div of class math holding \(…\) or \[…\]. The web app typesets elements
+    /// with data-type inline-math or block-math from data-latex, and shows the TeX until then.
+    /// </summary>
+    private static void ToMath(IDocument document, IElement math)
+    {
+        var tex = math.TextContent.Trim();
+        var display = math.LocalName == "div" || math.ClassList.Contains("display");
+        if (tex.Length >= 4 && (tex.StartsWith(@"\(", StringComparison.Ordinal) || tex.StartsWith(@"\[", StringComparison.Ordinal)))
+        {
+            tex = tex[2..^2].Trim();
+        }
+
+        // A command written with its backslash doubled, as if escaped in a string, means the command, not a line break.
+        tex = DoubledCommand().Replace(tex, @"\");
+        var element = document.CreateElement(math.LocalName);
+        element.SetAttribute("data-type", display ? "block-math" : "inline-math");
+        element.SetAttribute("data-latex", tex);
+        element.TextContent = tex;
+        math.Replace(element);
     }
 
     /// <summary>
@@ -595,6 +653,12 @@ public static partial class RichTextMarkdown
 
     [GeneratedRegex(@"</?[A-Za-z][^<>]*>")]
     private static partial Regex AnyTag();
+
+    [GeneratedRegex(@"(?<code>```[\s\S]*?(?:```|$)|~~~[\s\S]*?(?:~~~|$)|`[^`\n]*`)|\\\[(?<display>[\s\S]+?)\\\]|\\\((?<inline>[^\n]+?)\\\)")]
+    private static partial Regex MathDelimiters();
+
+    [GeneratedRegex(@"\\\\(?=[A-Za-z])")]
+    private static partial Regex DoubledCommand();
 
     [GeneratedRegex(@"\n{3,}")]
     private static partial Regex ExtraBlankLines();

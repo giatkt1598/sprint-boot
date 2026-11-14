@@ -1,6 +1,10 @@
 import DOMPurify from 'dompurify';
-import { marked, type Token } from 'marked';
+import { Marked, marked, type Token } from 'marked';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { markedMath, normalizeMathDelimiters } from '../../lib/math';
+
+/** Renders answers as the server does: GFM, single newlines break, formulas kept as TeX. */
+const answerMarked = new Marked({ gfm: true, breaks: true, async: false }, markedMath);
 
 const prefersReducedMotion = () =>
   typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -84,7 +88,7 @@ export function flattenHtmlBlocks(text: string): string {
 
 /** The answer so far as safe DOM, rendered like the server renders the finished one (GFM, single newlines break). */
 function markdownFragment(text: string): DocumentFragment {
-  const html = text.trim() ? marked.parse(flattenHtmlBlocks(closeOpenMarkdown(text)), { gfm: true, breaks: true, async: false }) : '';
+  const html = text.trim() ? (answerMarked.parse(normalizeMathDelimiters(flattenHtmlBlocks(closeOpenMarkdown(text)))) as string) : '';
   // Model output: never trusted as HTML.
   const root = DOMPurify.sanitize(html, { RETURN_DOM_FRAGMENT: true });
   removeLayoutWhitespace(root);
