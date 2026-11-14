@@ -126,6 +126,7 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
   const [description, setDescription] = useState(ticket.description ?? '');
   const [descriptionOpen, setDescriptionOpen] = useState(true);
   const [detailsOpen, setDetailsOpen] = useState(true);
+  const [subtasksOpen, setSubtasksOpen] = useState(true);
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [addingSubtask, setAddingSubtask] = useState(false);
@@ -311,13 +312,20 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
           {ticket.type?.hierarchy !== 0 && (
             <section className="flex flex-col">
               <div className="flex items-center pb-2">
-                <Typography variant="h2" component="h2" className="flex-1">{t(ticket.type?.hierarchy === 2 ? 'agile.childTickets' : 'tickets.subtasks')}</Typography>
+                <CollapseHeading
+                  variant="h2"
+                  className="flex-1"
+                  label={t(ticket.type?.hierarchy === 2 ? 'agile.childTickets' : 'tickets.subtasks')}
+                  open={subtasksOpen}
+                  onToggle={() => setSubtasksOpen(!subtasksOpen)}
+                />
                 {canEdit && ticket.type?.hierarchy === 1 && (
-                  <Button kind="link" startIcon={<AddIcon size={16} strokeWidth={1.5} aria-hidden />} onClick={() => setAddingSubtask(true)}>
+                  <Button kind="link" startIcon={<AddIcon size={16} strokeWidth={1.5} aria-hidden />} onClick={() => { setSubtasksOpen(true); setAddingSubtask(true); }}>
                     {t('tickets.addSubtask')}
                   </Button>
                 )}
               </div>
+              {subtasksOpen && <>
               {ticket.type?.hierarchy === 2 && <EpicProgress total={ticket.children?.length ?? 0} done={countIn(ticket, 2)} inProgress={countIn(ticket, 1)} />}
               {(ticket.children?.length ?? 0) > 0 && (
                 <table className="w-full" aria-label={t(ticket.type?.hierarchy === 2 ? 'agile.childTickets' : 'tickets.subtasks')} style={{ borderCollapse: 'collapse', borderTop: `1px solid ${sem('border-default')}` }}>
@@ -349,6 +357,7 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
                 </Typography>
               )}
               {addingSubtask && <SubtaskRow ticket={ticket} onClose={() => setAddingSubtask(false)} />}
+              </>}
             </section>
           )}
 
@@ -404,18 +413,9 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
               <Button kind="link" sx={{ minHeight: 0, padding: 0 }} onClick={() => update.mutate({ assignee: me.id })}>{t('tickets.assignToMe')}</Button>
             </div>
           )}
+          {/* Whoever created the ticket; it never changes. */}
           <DetailRow label={t('tickets.reporter')}>
-            {canEdit ? (
-              <UserPicker
-                hideLabel
-                label={t('tickets.reporter')}
-                options={people}
-                value={ticket.reporter ?? null}
-                onChange={(user) => update.mutate({ reporter: user?.id ?? null })}
-              />
-            ) : (
-              <Person name={ticket.reporter?.name} src={ticket.reporter?.avatarUrl} />
-            )}
+            <Person name={ticket.reporter?.name} src={ticket.reporter?.avatarUrl} />
           </DetailRow>
           <DetailRow label={t('tickets.priority')}>
             {canEdit ? (
@@ -879,6 +879,7 @@ function Attachments({ ticket, canEdit }: { ticket: Ticket; canEdit: boolean }) 
   const [uploading, setUploading] = useState<{ name: string; percent: number } | null>(null);
   // Kept after a failure, so the same file can be sent again with one click.
   const [failed, setFailed] = useState<{ file: File; message: string } | null>(null);
+  const [open, setOpen] = useState(true);
 
   const list = useQuery({
     queryKey: ['tickets', ticket.id, 'attachments'],
@@ -926,16 +927,17 @@ function Attachments({ ticket, canEdit }: { ticket: Ticket; canEdit: boolean }) 
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-center">
-        <Typography variant="h2" component="h2" className="flex-1">{t('tickets.attachments')}</Typography>
+        <CollapseHeading variant="h2" className="flex-1" label={t('tickets.attachments')} open={open} onToggle={() => setOpen(!open)} />
         {canEdit && (
           <>
             <input ref={input} type="file" hidden aria-label={t('tickets.upload')} onChange={onPick} />
-            <Button kind="link" startIcon={<UploadIcon size={16} strokeWidth={1.5} aria-hidden />} onClick={() => input.current?.click()}>
+            <Button kind="link" startIcon={<UploadIcon size={16} strokeWidth={1.5} aria-hidden />} onClick={() => { setOpen(true); input.current?.click(); }}>
               {t('tickets.upload')}
             </Button>
           </>
         )}
       </div>
+      {open && <>
       {uploading && (
         <Typography role="status" variant="body2" color="textSecondary">
           {t('tickets.uploadingPercent', { name: uploading.name, percent: uploading.percent })}
@@ -976,6 +978,7 @@ function Attachments({ ticket, canEdit }: { ticket: Ticket; canEdit: boolean }) 
           </div>
         ))}
       </div>
+      </>}
     </section>
   );
 }

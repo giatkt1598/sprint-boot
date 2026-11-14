@@ -1807,7 +1807,7 @@
     "unlinkPage": "Bỏ liên kết {{title}}",
     "linkedTitle": "Tài liệu liên kết",
     "linkedEmpty": "Chưa có tài liệu nào. Liên kết một trang Docmost, hoặc dán địa chỉ trang vào mô tả hay bình luận.",
-    "add": "Thêm",
+    "add": "Liên kết tài liệu",
     "findPage": "Tìm trong Docmost hoặc dán địa chỉ trang",
     "createDocument": "Tạo tài liệu",
     "pageTitle": "Tiêu đề",

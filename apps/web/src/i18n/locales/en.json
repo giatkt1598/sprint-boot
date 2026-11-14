@@ -1807,7 +1807,7 @@
     "unlinkPage": "Unlink {{title}}",
     "linkedTitle": "Linked documents",
     "linkedEmpty": "No documents yet. Link a Docmost page, or paste a page address in the description or a comment.",
-    "add": "Add",
+    "add": "Link document",
     "findPage": "Search Docmost or paste a page address",
     "createDocument": "Create document",
     "pageTitle": "Title",

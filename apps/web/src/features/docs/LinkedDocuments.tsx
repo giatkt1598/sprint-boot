@@ -10,6 +10,7 @@ import { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiClient, unwrap } from '../../api';
 import { Button } from '../../components/Button';
+import { CollapseHeading } from '../../components/CollapseHeading';
 import { Dialog, DialogFooter } from '../../components/Dialog';
 import { AddIcon, CloseIcon, DocumentIcon } from '../../components/icons';
 import { TextField } from '../../components/TextField';
@@ -255,6 +256,8 @@ export function LinkedDocuments({ ticketId, projectId, defaultTitle }: { ticketI
   const { unlink } = useTicketDocsActions(ticketId);
   const [adding, setAdding] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [linkedOpen, setLinkedOpen] = useState(true);
+  const [mentionsOpen, setMentionsOpen] = useState(true);
   const data = docs.data;
 
   // No Docmost connection, or a failed read that must not disturb the ticket.
@@ -271,14 +274,15 @@ export function LinkedDocuments({ ticketId, projectId, defaultTitle }: { ticketI
     <>
       <section className="flex flex-col" aria-labelledby={`docs-${ticketId}`}>
         <div className="flex items-center gap-3 pb-2">
-          <Typography id={`docs-${ticketId}`} variant="h2" component="h2" className="flex-1">{t('docs.linkedTitle')}</Typography>
+          <CollapseHeading id={`docs-${ticketId}`} variant="h2" className="flex-1" label={t('docs.linkedTitle')} open={linkedOpen} onToggle={() => setLinkedOpen(!linkedOpen)} />
           {data.canEdit && data.canCreatePage && (
             <Button kind="link" onClick={() => setCreating(true)}>{t('docs.createDocument')}</Button>
           )}
           {data.canEdit && (
-            <Button kind="link" startIcon={<AddIcon size={16} strokeWidth={1.5} aria-hidden />} onClick={() => setAdding(true)}>{t('docs.add')}</Button>
+            <Button kind="link" startIcon={<AddIcon size={16} strokeWidth={1.5} aria-hidden />} onClick={() => { setLinkedOpen(true); setAdding(true); }}>{t('docs.add')}</Button>
           )}
         </div>
+        {linkedOpen && <>
         {linked.length > 0 && (
           <DocumentRows
             pages={linked}
@@ -290,13 +294,14 @@ export function LinkedDocuments({ ticketId, projectId, defaultTitle }: { ticketI
         )}
         {linked.length === 0 && !adding && <Typography variant="body2" color="textSecondary" className="px-2">{t('docs.linkedEmpty')}</Typography>}
         {adding && <AddDocumentRow ticketId={ticketId} onClose={() => setAdding(false)} />}
+        </>}
       </section>
       {mentions.length > 0 && (
         <section className="flex flex-col" aria-labelledby={`docs-mentions-${ticketId}`}>
           <div className="pb-2">
-            <Typography id={`docs-mentions-${ticketId}`} variant="h2" component="h2">{t('docs.mentionsTitle')}</Typography>
+            <CollapseHeading id={`docs-mentions-${ticketId}`} variant="h2" label={t('docs.mentionsTitle')} open={mentionsOpen} onToggle={() => setMentionsOpen(!mentionsOpen)} />
           </div>
-          <DocumentRows pages={mentions} label={t('docs.mentionsTitle')} />
+          {mentionsOpen && <DocumentRows pages={mentions} label={t('docs.mentionsTitle')} />}
         </section>
       )}
       {creating && <CreateDocumentDialog ticketId={ticketId} projectId={projectId} defaultTitle={defaultTitle} onClose={() => setCreating(false)} />}

@@ -12,6 +12,7 @@ import { Link as RouterLink } from 'react-router';
 import type { components } from '@sprint-boot/api-client';
 import { apiClient, unwrap } from '../../api';
 import { Button } from '../../components/Button';
+import { CollapseHeading } from '../../components/CollapseHeading';
 import { TicketTypeIcon, type TicketType as IconType } from '../../components/TicketIcons';
 import { SelectField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
@@ -145,6 +146,7 @@ export function LinkedTickets({ ticket, canEdit }: { ticket: Ticket; canEdit: bo
   const toMessage = useErrorMessage();
   const queryClient = useQueryClient();
   const [adding, setAdding] = useState(false);
+  const [open, setOpen] = useState(true);
 
   const links = useQuery({
     queryKey: ticketLinksKey(ticket.id),
@@ -168,13 +170,14 @@ export function LinkedTickets({ ticket, canEdit }: { ticket: Ticket; canEdit: bo
   return (
     <section className="flex flex-col" aria-labelledby={`links-${ticket.id}`}>
       <div className="flex items-center pb-2">
-        <Typography id={`links-${ticket.id}`} variant="h2" component="h2" className="flex-1">{t('links.title')}</Typography>
+        <CollapseHeading id={`links-${ticket.id}`} variant="h2" className="flex-1" label={t('links.title')} open={open} onToggle={() => setOpen(!open)} />
         {canEdit && (
-          <Button kind="link" startIcon={<AddIcon size={16} strokeWidth={1.5} aria-hidden />} onClick={() => setAdding(true)}>
+          <Button kind="link" startIcon={<AddIcon size={16} strokeWidth={1.5} aria-hidden />} onClick={() => { setOpen(true); setAdding(true); }}>
             {t('links.add')}
           </Button>
         )}
       </div>
+      {open && <>
       {[...groups.entries()].map(([phrase, items]) => (
         <div key={phrase} className="flex flex-col">
           <Typography variant="caption" color="textSecondary" className="px-2 pb-1 pt-2">{phrase}</Typography>
@@ -229,6 +232,7 @@ export function LinkedTickets({ ticket, canEdit }: { ticket: Ticket; canEdit: bo
         <Typography variant="body2" color="textSecondary" className="px-2">{t('links.empty')}</Typography>
       )}
       {adding && <AddLinkRow ticket={ticket} onClose={() => setAdding(false)} />}
+      </>}
     </section>
   );
 }

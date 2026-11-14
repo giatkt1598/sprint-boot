@@ -76,7 +76,7 @@ public class TicketTools(
     private const int MaxBulkUpdate = 50;
 
     private static readonly string[] Clearable =
-        [TicketFieldKeys.Description, TicketFieldKeys.Assignee, TicketFieldKeys.Reporter, TicketFieldKeys.Parent, TicketFieldKeys.Labels,
+        [TicketFieldKeys.Description, TicketFieldKeys.Assignee, TicketFieldKeys.Parent, TicketFieldKeys.Labels,
          TicketFieldKeys.StoryPoints, TicketFieldKeys.StartDate, TicketFieldKeys.DueDate];
 
     private static readonly string[] FieldKeys =
@@ -316,7 +316,7 @@ public class TicketTools(
 
     [McpServerTool(Name = "update_ticket", Destructive = false), Description(
         "Changes any fields of a ticket; leave out what should stay. Use clear to empty a field. " +
-        "Status changes only through transition_ticket.")]
+        "Status changes only through transition_ticket. The reporter is set when the ticket is created and never changes.")]
     public Task<string> UpdateTicket(
         [Description("Ticket key.")] string key,
         string? title = null,
@@ -324,7 +324,6 @@ public class TicketTools(
         [Description("Ticket type name.")] string? type = null,
         [Description("Priority name.")] string? priority = null,
         [Description("Assignee: me, an email, a name or a user id.")] string? assignee = null,
-        string? reporter = null,
         [Description("Parent ticket key.")] string? parent = null,
         [Description("Replaces all labels.")] List<string>? labels = null,
         [Description("Labels to add, keeping the others.")] List<string>? addLabels = null,
@@ -333,14 +332,14 @@ public class TicketTools(
         [Description("Date like 2026-11-30.")] string? startDate = null,
         [Description("Date like 2026-11-30.")] string? dueDate = null,
         [Description("Sprint name, active, or backlog.")] string? sprint = null,
-        [Description("Fields to empty: description, assignee, reporter, parent, labels, storyPoints, startDate, dueDate.")] List<string>? clear = null,
+        [Description("Fields to empty: description, assignee, parent, labels, storyPoints, startDate, dueDate.")] List<string>? clear = null,
         [Description("The concurrencyStamp from get_ticket, to refuse the change if someone edited the ticket since.")] string? concurrencyStamp = null)
         => runner.WriteAsync(async () =>
     {
         var ticket = await resolver.TicketAsync(key);
         var updated = await ApplyAsync(ticket, new Changes
         {
-            Title = title, Description = description, Type = type, Priority = priority, Assignee = assignee, Reporter = reporter,
+            Title = title, Description = description, Type = type, Priority = priority, Assignee = assignee,
             Parent = parent, Labels = labels, AddLabels = addLabels, RemoveLabels = removeLabels, StoryPoints = storyPoints,
             StartDate = startDate, DueDate = dueDate, Sprint = sprint, Clear = clear,
         }, concurrencyStamp);
@@ -370,7 +369,6 @@ public class TicketTools(
         string? type = null,
         string? priority = null,
         [Description("Assignee: me, an email, a name or a user id.")] string? assignee = null,
-        string? reporter = null,
         [Description("Parent ticket key.")] string? parent = null,
         [Description("Labels to add.")] List<string>? addLabels = null,
         [Description("Labels to remove.")] List<string>? removeLabels = null,
@@ -378,7 +376,7 @@ public class TicketTools(
         string? startDate = null,
         string? dueDate = null,
         [Description("Sprint name, active, or backlog.")] string? sprint = null,
-        [Description("Fields to empty: assignee, reporter, parent, labels, storyPoints, startDate, dueDate.")] List<string>? clear = null)
+        [Description("Fields to empty: assignee, parent, labels, storyPoints, startDate, dueDate.")] List<string>? clear = null)
         => runner.WriteAsync(async () =>
     {
         if (keys.Count is 0 or > MaxBulkUpdate)
@@ -388,7 +386,7 @@ public class TicketTools(
 
         var changes = new Changes
         {
-            Type = type, Priority = priority, Assignee = assignee, Reporter = reporter, Parent = parent, AddLabels = addLabels,
+            Type = type, Priority = priority, Assignee = assignee, Parent = parent, AddLabels = addLabels,
             RemoveLabels = removeLabels, StoryPoints = storyPoints, StartDate = startDate, DueDate = dueDate, Sprint = sprint, Clear = clear,
         };
         var results = new List<BatchResult>();
@@ -498,8 +496,6 @@ public class TicketTools(
 
         public string? Assignee { get; init; }
 
-        public string? Reporter { get; init; }
-
         public string? Parent { get; init; }
 
         public List<string>? Labels { get; init; }
@@ -552,11 +548,6 @@ public class TicketTools(
         if (changes.Assignee is not null)
         {
             Set(TicketFieldKeys.Assignee, (await resolver.UserAsync(changes.Assignee)).Id);
-        }
-
-        if (changes.Reporter is not null)
-        {
-            Set(TicketFieldKeys.Reporter, (await resolver.UserAsync(changes.Reporter)).Id);
         }
 
         if (changes.Parent is not null)

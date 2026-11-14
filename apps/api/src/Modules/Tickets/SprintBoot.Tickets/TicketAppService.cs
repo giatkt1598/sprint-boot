@@ -129,7 +129,8 @@ public partial class TicketAppService(
         var changed = new List<string>();
         foreach (var (field, value) in input.Fields)
         {
-            if (field == TicketFieldKeys.Status)
+            // Status moves only along the workflow; the reporter is whoever created the ticket and stays so.
+            if (field is TicketFieldKeys.Status or TicketFieldKeys.Reporter)
             {
                 throw new BusinessException(TicketErrors.FieldNotWritable).WithData("field", field);
             }
@@ -535,6 +536,12 @@ public partial class TicketAppService(
     /// <summary>Same path as the update API: one activity row per real change.</summary>
     public async Task SetFieldForWorkflowAsync(Ticket ticket, string field, JsonElement value)
     {
+        // A transition may ask for a reporter only on a ticket that has none; it never replaces one.
+        if (field == TicketFieldKeys.Reporter && ticket.ReporterId is not null)
+        {
+            throw new BusinessException(TicketErrors.FieldNotWritable).WithData("field", field);
+        }
+
         var change = await ApplyFieldAsync(ticket, field, value);
         if (change is not null)
         {

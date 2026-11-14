@@ -93,6 +93,18 @@ public class TicketTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task The_reporter_is_the_creator_and_cannot_be_changed()
+    {
+        var client = await fixture.CreateUserClientAsync(Token);
+        var ticket = await CreateTicketAsync(client, await CreateProjectAsync(client));
+        ticket.Reporter!.Id.ShouldBe(client.UserId);
+
+        var response = await PatchAsync(client, ticket, new { reporter = (Guid?)null });
+
+        (await response.Content.ReadAsStringAsync(Token)).ShouldContain(TicketErrors.FieldNotWritable);
+    }
+
+    [Fact]
     public async Task Each_field_change_writes_exactly_one_activity_row()
     {
         var client = await fixture.CreateUserClientAsync(Token);
