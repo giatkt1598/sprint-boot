@@ -93,8 +93,9 @@ public class BoardAppService(
 
         if (input.CardFields is { } fields)
         {
-            // Stored in the catalogue's order, whatever order they were ticked in.
-            board.CardFields = string.Join(',', BoardCardFields.All.Where(fields.Contains));
+            // Built-in fields in the catalogue's order, whatever order they were ticked in; custom fields ("cf." keys)
+            // after them, in the order given.
+            board.CardFields = string.Join(',', BoardCardFields.All.Where(fields.Contains).Concat(fields.Where(BoardCardFields.IsCustom).Distinct()));
             await boardRepository.UpdateAsync(board);
         }
 

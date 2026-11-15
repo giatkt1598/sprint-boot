@@ -23,7 +23,8 @@ public class TicketPlanningGateway(
     IUserDirectory userDirectory,
     ICurrentActor currentActor,
     IClock clock,
-    IGuidGenerator guids)
+    IGuidGenerator guids,
+    CustomFieldStore customFieldStore)
     : ITicketPlanningGateway, ITransientDependency
 {
     public async Task<List<TicketCardDto>> GetCardsAsync(Guid projectId, IReadOnlyCollection<Guid> ticketIds)
@@ -105,6 +106,7 @@ public class TicketPlanningGateway(
 
         var parentIds = list.Where(ticket => ticket.ParentId.HasValue).Select(ticket => ticket.ParentId!.Value).Distinct().ToList();
         var parents = (await tickets.GetListAsync(ticket => parentIds.Contains(ticket.Id))).ToDictionary(ticket => ticket.Id);
+        var custom = await customFieldStore.ReadAsync(list);
 
         return [.. list.Select(ticket => new TicketCardDto
         {
@@ -123,6 +125,8 @@ public class TicketPlanningGateway(
             CreatedAt = ticket.CreationTime,
             UpdatedAt = ticket.LastModificationTime ?? ticket.CreationTime,
             ConcurrencyStamp = ticket.ConcurrencyStamp,
+            // Cards only show what has a value.
+            CustomFields = [.. custom[ticket.Id].Where(CustomFieldStore.HasValue)],
         })];
     }
 }

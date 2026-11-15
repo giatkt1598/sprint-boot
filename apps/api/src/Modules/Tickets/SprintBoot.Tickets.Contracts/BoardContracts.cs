@@ -34,6 +34,9 @@ public class TicketCardDto
     public required DateTime UpdatedAt { get; set; }
 
     public required string ConcurrencyStamp { get; set; }
+
+    /// <summary>The custom fields of the card that have a value, for boards that show them.</summary>
+    public List<TicketCustomFieldDto> CustomFields { get; set; } = [];
 }
 
 public record TicketFacts(Guid Id, string Key, string Title, Guid? AssigneeId, Guid? ReporterId, IReadOnlyCollection<Guid> Watchers);

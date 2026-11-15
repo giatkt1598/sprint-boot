@@ -80,6 +80,10 @@ public static class BoardCardFields
     public static readonly string[] All = ["type", "key", "priority", "assignee", "epic", "labels", "points"];
 
     public static readonly string[] Default = ["type", "key", "priority", "assignee"];
+
+    /// <summary>A custom field of the ticket: "cf." and its key.</summary>
+    public static bool IsCustom(string field) =>
+        field.Length is > 3 and <= 51 && field.StartsWith("cf.", StringComparison.Ordinal) && field[3..].All(character => char.IsAsciiLetterLower(character) || char.IsAsciiDigit(character) || character == '_');
 }
 
 public class SprintSummaryDto

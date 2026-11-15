@@ -62,5 +62,19 @@ test('a custom field is set on create, edited in the sidebar and kept in history
   await expect(page.getByText(/Severity/).first()).toBeVisible();
   await expect(page.getByText('High → Low')).toBeVisible();
 
+  // The list filters by the field and shows it as a column.
+  await page.goto(`/spaces/${key}/tickets`);
+  await page.getByRole('button', { name: 'Fields', exact: true }).click();
+  await page.getByLabel('Show as a column').check();
+  // The filter lives in the address, so the box ticks once the navigation lands.
+  await page.getByLabel('High', { exact: true }).click();
+  await expect(page.getByLabel('High', { exact: true })).toBeChecked();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', { name: /Severity: High/ })).toBeVisible();
+  await expect(page.getByText('No matching tickets')).toBeVisible();
+  await page.getByRole('button', { name: /Severity: High/ }).getByTestId('CancelIcon').click();
+  await expect(page.getByRole('columnheader', { name: /Severity/ })).toBeVisible();
+  await expect(page.getByRole('row', { name: /Login fails on Safari/ }).getByText('Low')).toBeVisible();
+
   await api(page, 'POST', `/api/v1/project/${space.id}/archive`).catch(() => undefined);
 });

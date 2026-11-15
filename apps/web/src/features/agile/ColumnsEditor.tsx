@@ -20,6 +20,7 @@ import { radius, sem } from '../../theme/tokens';
 import { useStatuses } from '../tickets/api';
 import type { Space } from '../spaces/api';
 import { boardKey, useBoard } from './api';
+import { fieldKey, useSpaceFields } from '../customFields/api';
 
 interface DraftColumn {
   key: number;
@@ -120,6 +121,9 @@ function ColumnRow({ column, canManage, free, nameOf, onChange, onRemove }: Colu
 
 /** The whole board setup, shared by space settings and the board's own Configure Columns. */
 export function ColumnsEditor({ space, canManage, onDone }: { space: Space; canManage: boolean; onDone?: () => void }) {
+  // The space's custom fields can show on cards too, after the built-in ones.
+  const spaceFields = useSpaceFields(space.id);
+  const customCardFields = (spaceFields.data ?? []).filter((item) => item.enabled).map((item) => ({ field: fieldKey(item.field!), label: item.field!.name ?? '' }));
   const { t } = useTranslation();
   const toMessage = useErrorMessage();
   const toast = useToast();
@@ -240,10 +244,10 @@ export function ColumnsEditor({ space, canManage, onDone }: { space: Space; canM
         <div className="flex flex-col gap-1">
           <Typography variant="h3" component="h3">{t('agile.cardFields')}</Typography>
           <div role="group" aria-label={t('agile.cardFields')} className="flex flex-wrap gap-x-4">
-            {CARD_FIELDS.map((field) => (
+            {[...CARD_FIELDS.map((field) => ({ field, label: t(`agile.cardField.${field}`) })), ...customCardFields].map(({ field, label }) => (
               <Checkbox
                 key={field}
-                label={t(`agile.cardField.${field}`)}
+                label={label}
                 disabled={!canManage}
                 checked={fields.includes(field)}
                 onChange={(event) => setFields(event.target.checked ? [...fields, field] : fields.filter((item) => item !== field))}

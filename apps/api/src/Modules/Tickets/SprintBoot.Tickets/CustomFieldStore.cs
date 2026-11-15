@@ -148,6 +148,9 @@ public class CustomFieldStore(
             ?? throw new BusinessException(TicketErrors.UnknownField).WithData("field", CustomFieldConsts.KeyPrefix + plain);
     }
 
+    public static bool HasValue(TicketCustomFieldDto item) =>
+        item.Text is not null || item.Number is not null || item.Date is not null || item.Checked is not null || item.User is not null || item.Options.Count > 0;
+
     /// <summary>Whether the ticket has a value in the field.</summary>
     public async Task<bool> HasValueAsync(Guid ticketId, Guid fieldId) =>
         await values.AnyAsync(value => value.TicketId == ticketId && value.FieldId == fieldId);

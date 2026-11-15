@@ -23397,6 +23397,23 @@
             }
           },
           {
+            "name": "Custom",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "IncludeCustomFields",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "ProjectId",
             "in": "query",
             "schema": {
@@ -35672,6 +35689,13 @@
           "concurrencyStamp": {
             "type": "string",
             "nullable": true
+          },
+          "customFields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TicketCustomFieldDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -36162,6 +36186,13 @@
           },
           "concurrencyStamp": {
             "type": "string",
+            "nullable": true
+          },
+          "customFields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TicketCustomFieldDto"
+            },
             "nullable": true
           }
         },

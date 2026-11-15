@@ -2007,6 +2007,19 @@
       "8": "Link"
     },
     "yes": "Yes",
-    "openLink": "Open link"
+    "openLink": "Open link",
+    "listButton": "Fields",
+    "showColumn": "Show as a column",
+    "filterBy": "Filter",
+    "filterAny": "Has a value",
+    "filterEmpty": "No value",
+    "no": "No",
+    "atLeast": "At least",
+    "atMost": "At most",
+    "contains": "Contains",
+    "chipIs": "{{name}}: {{value}}",
+    "chipAtLeast": "{{name}} ≥ {{value}}",
+    "chipAtMost": "{{name}} ≤ {{value}}",
+    "chipHas": "{{name}} contains “{{value}}”"
   }
 }

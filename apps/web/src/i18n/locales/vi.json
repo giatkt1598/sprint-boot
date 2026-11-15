@@ -2007,6 +2007,19 @@
       "8": "Liên kết"
     },
     "yes": "Có",
-    "openLink": "Mở liên kết"
+    "openLink": "Mở liên kết",
+    "listButton": "Trường",
+    "showColumn": "Hiện thành cột",
+    "filterBy": "Lọc",
+    "filterAny": "Có giá trị",
+    "filterEmpty": "Chưa có giá trị",
+    "no": "Không",
+    "atLeast": "Từ",
+    "atMost": "Đến",
+    "contains": "Có chứa",
+    "chipIs": "{{name}}: {{value}}",
+    "chipAtLeast": "{{name}} ≥ {{value}}",
+    "chipAtMost": "{{name}} ≤ {{value}}",
+    "chipHas": "{{name}} chứa “{{value}}”"
   }
 }

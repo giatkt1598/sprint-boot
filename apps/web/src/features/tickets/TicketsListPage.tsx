@@ -22,6 +22,9 @@ import { FilterChips, FilterControls, useTicketFilters, useSearchText } from './
 import { QuickAssignee, QuickPriority, QuickStatus } from './QuickFields';
 import type { TicketSummary } from './api';
 import { usePageTitle } from '../../lib/pageTitle';
+import { fieldKey, useSpaceFields } from '../customFields/api';
+import { CustomFieldInput, valueOf } from '../customFields/CustomFieldInput';
+import { CustomFieldsButton, CustomFilterChips, useCustomColumns, useCustomFilters } from '../customFields/ListControls';
 
 const PAGE_SIZE = 25;
 
@@ -55,6 +58,12 @@ export function TicketsListPage() {
   // Search across spaces has no single space to check, so its rows stay read-only.
   const canEdit = space.data?.permissions?.includes('Ticket.Edit') ?? false;
   const { values, createdRange, updatedRange } = filters;
+  // Custom fields: the space's fields in use, filters kept in the address, columns remembered in this browser.
+  const spaceFields = useSpaceFields(spaceKey ? projectId : undefined);
+  const customFields = useMemo(() => (spaceFields.data ?? []).filter((item) => item.enabled).map((item) => item.field!), [spaceFields.data]);
+  const customFilters = useCustomFilters();
+  const { columns: customColumns, toggle: toggleColumn } = useCustomColumns(projectId);
+  const shownFields = customColumns.map((key) => customFields.find((field) => field.key === key)).filter((field) => field !== undefined);
 
   const [text, setText] = useSearchText();
   const [skip, setSkip] = useState(0);
@@ -63,7 +72,7 @@ export function TicketsListPage() {
   const sorting = sort ? `${sort.key} ${sort.direction}` : undefined;
 
   const search = useQuery({
-    queryKey: ['tickets', 'search', projectId, text, values, filters.created, filters.updated, sorting, skip],
+    queryKey: ['tickets', 'search', projectId, text, values, filters.created, filters.updated, customFilters.filters, shownFields.length > 0, sorting, skip],
     enabled: !spaceKey || Boolean(projectId),
     placeholderData: keepPreviousData,
     queryFn: () =>
@@ -85,6 +94,8 @@ export function TicketsListPage() {
               CreatedTo: createdRange.to,
               UpdatedFrom: updatedRange.from,
               UpdatedTo: updatedRange.to,
+              Custom: customFilters.filters.length ? customFilters.filters : undefined,
+              IncludeCustomFields: shownFields.length > 0 || undefined,
               Sorting: sorting,
               SkipCount: skip,
               MaxResultCount: PAGE_SIZE,
@@ -94,13 +105,16 @@ export function TicketsListPage() {
       ),
   });
 
-  const filtering = filters.chips.length > 0 || Boolean(text);
+  const filtering = filters.chips.length > 0 || customFilters.filters.length > 0 || Boolean(text);
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <Typography variant="h1" className="flex-1 max-sm:basis-full">{t(spaceKey ? 'tickets.title' : 'tickets.searchResults')}</Typography>
         {spaceKey && <FilterControls filters={filters} onChange={() => setSkip(0)} />}
+        {spaceKey && (
+          <CustomFieldsButton fields={customFields} people={people} filters={customFilters} columns={customColumns} onToggleColumn={toggleColumn} onChange={() => setSkip(0)} />
+        )}
         <SearchInput label={t('tickets.search')} value={text} onChange={(event) => { setText(event.target.value); setSkip(0); }} sx={{ flex: { xs: '1 1 140px', md: '0 0 auto' } }} />
       </div>
       {compact && (
@@ -125,6 +139,7 @@ export function TicketsListPage() {
       )}
 
       <FilterChips filters={filters} onClear={() => setSkip(0)} />
+      <CustomFilterChips fields={customFields} people={people} filters={customFilters} onChange={() => setSkip(0)} />
 
       {search.isPending && <LoadingState />}
       {search.isError && <ErrorState onRetry={() => void search.refetch()} />}
@@ -197,6 +212,15 @@ export function TicketsListPage() {
                   header: t('agile.sprint'),
                   render: (ticket) => <span title={ticket.sprintName ?? undefined} className="block truncate" style={{ maxWidth: PERSON_MAX }}>{ticket.sprintName}</span>,
                 },
+                ...shownFields.map((field) => ({
+                  key: fieldKey(field),
+                  sortable: true,
+                  header: field.name ?? '',
+                  render: (ticket: TicketSummary) => {
+                    const item = ticket.customFields?.find((value) => value.field?.id === field.id);
+                    return item ? <CustomFieldInput field={item.field!} value={valueOf(item)} disabled people={people} onChange={() => undefined} /> : null;
+                  },
+                })),
                 { key: 'created', sortable: true, header: t('tickets.createdAt'), render: (ticket) => formatDate(ticket.createdAt, i18n.language) },
                 { key: 'updated', sortable: true, header: t('tickets.updatedAt'), render: (ticket) => formatDate(ticket.updatedAt, i18n.language) },
               ]}

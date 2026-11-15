@@ -18029,6 +18029,8 @@ export interface paths {
             parameters: {
                 query?: {
                     Sorting?: string;
+                    Custom?: string[];
+                    IncludeCustomFields?: boolean;
                     ProjectId?: string;
                     Text?: string;
                     ExcludeArchived?: boolean;
@@ -24398,6 +24400,7 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
             concurrencyStamp: string | null;
+            customFields?: components["schemas"]["TicketCustomFieldDto"][] | null;
         };
         TicketCustomFieldDto: {
             field: components["schemas"]["CustomFieldDto"];
@@ -24536,6 +24539,7 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
             concurrencyStamp: string | null;
+            customFields?: components["schemas"]["TicketCustomFieldDto"][] | null;
         };
         TicketTemplateDto: {
             /** Format: uuid */

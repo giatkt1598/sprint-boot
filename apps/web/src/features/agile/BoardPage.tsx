@@ -45,6 +45,7 @@ import { TicketPanel } from './TicketPanel';
 import { CompleteSprintDialog } from './SprintDialogs';
 import { boardKey, useBacklog, useBoard, useBoardLive, type BoardView, type Card } from './api';
 import { usePageTitle } from '../../lib/pageTitle';
+import { CardValues } from '../customFields/CardValues';
 
 type Column = NonNullable<BoardView['columns']>[number];
 
@@ -65,6 +66,7 @@ function CardBody({ card }: { card: Card }) {
       {has('labels') && (card.labels?.length ?? 0) > 0 && (
         <span style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>{card.labels?.join(', ')}</span>
       )}
+      <CardValues keys={fields.filter((field) => field.startsWith('cf.'))} items={card.customFields} />
       <span className="flex items-center gap-2">
         {has('type') && <TicketTypeIcon type={card.type?.icon as IconType} />}
         <span className="flex-1" style={{ fontSize: font.size.xs, color: sem('text-secondary') }}>{has('key') && card.key}</span>

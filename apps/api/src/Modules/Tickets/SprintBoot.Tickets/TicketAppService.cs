@@ -28,6 +28,7 @@ public partial class TicketAppService(
     IRepository<TicketActivity, Guid> activities,
     IRepository<CustomField, Guid> customFields,
     CustomFieldStore customFieldStore,
+    CustomFieldQueries customFieldQueries,
     IProjectAccess projectAccess,
     ITicketFieldPolicy fieldPolicy,
     IWorkflowRuntime workflowRuntime,
@@ -249,18 +250,53 @@ public partial class TicketAppService(
             query = query.Where(ticket => labelledIds.Contains(ticket.Id));
         }
 
+        if (input.Custom is { Length: > 0 } filters)
+        {
+            query = await customFieldQueries.FilterAsync(query, input.ProjectId, filters);
+        }
+
         var total = await query.LongCountAsync();
-        var page = await (await sorting.ApplyAsync(query, input.Sorting))
+        var page = await (await SortAsync(query, input))
             .Skip(input.SkipCount)
             .Take(input.MaxResultCount)
             .ToListAsync();
 
+        var items = await mapper.ToSummariesAsync(page);
+        if (input.IncludeCustomFields)
+        {
+            var custom = await customFieldStore.ReadAsync(page);
+            foreach (var item in items)
+            {
+                item.CustomFields = custom.GetValueOrDefault(item.Id) ?? [];
+            }
+        }
+
         return new TicketSearchResultDto
         {
             TotalCount = total,
-            Items = await mapper.ToSummariesAsync(page),
+            Items = items,
             ExactKey = exactKey,
         };
+    }
+
+    /// <summary>A built-in column through TicketSorting, a custom field ("cf.key asc") here.</summary>
+    private async Task<IOrderedQueryable<Ticket>> SortAsync(IQueryable<Ticket> query, TicketSearchInput input)
+    {
+        if (input.Sorting?.Trim() is not { } sortingText || !sortingText.StartsWith(CustomFieldConsts.KeyPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return await sorting.ApplyAsync(query, input.Sorting);
+        }
+
+        var parts = sortingText.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var direction = parts.Length > 1 ? parts[1].ToLowerInvariant() : "asc";
+        var key = CustomFieldRules.StripPrefix(parts[0].ToLowerInvariant());
+        var field = (await customFieldQueries.VisibleAsync(input.ProjectId)).FirstOrDefault(item => item.Key == key);
+        if (parts.Length > 2 || field is null || direction is not ("asc" or "desc"))
+        {
+            throw new BusinessException(TicketErrors.InvalidSorting).WithData("field", sortingText);
+        }
+
+        return (await customFieldQueries.SortAsync(query, field, direction == "desc")).ThenBy(ticket => ticket.Id);
     }
 
     public async Task<List<string>> GetLabelsAsync(Guid projectId)

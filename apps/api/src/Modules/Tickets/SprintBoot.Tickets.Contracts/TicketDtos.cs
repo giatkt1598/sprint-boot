@@ -139,6 +139,9 @@ public class TicketSummaryDto
     public required DateTime UpdatedAt { get; set; }
 
     public required string ConcurrencyStamp { get; set; }
+
+    /// <summary>Filled when the search asks for it (IncludeCustomFields): the fields of the ticket's type, with values.</summary>
+    public List<TicketCustomFieldDto>? CustomFields { get; set; }
 }
 
 public class CreateTicketInput
@@ -194,9 +197,19 @@ public class TicketSearchInput : PagedResultRequestDto, ISortedResultRequest
 {
     /// <summary>
     /// A column and an optional direction, such as "priority desc": key, title, status, priority, assignee,
-    /// reporter, created or updated. Empty means most recently updated first.
+    /// reporter, created, updated, or a custom field as "cf." and its key. Empty means most recently updated first.
     /// </summary>
     public string? Sorting { get; set; }
+
+    /// <summary>
+    /// Custom field filters, all of which must match, each "key:operator:value" with the key with or without "cf.":
+    /// in (option or user ids, comma separated), is (true or false), gte and lte (number or date), has (text),
+    /// empty and any (no value needed). Without a space, only workspace fields can be filtered.
+    /// </summary>
+    public string[]? Custom { get; set; }
+
+    /// <summary>Return each ticket's custom fields, for lists that show them as columns.</summary>
+    public bool IncludeCustomFields { get; set; }
 
     public Guid? ProjectId { get; set; }
 

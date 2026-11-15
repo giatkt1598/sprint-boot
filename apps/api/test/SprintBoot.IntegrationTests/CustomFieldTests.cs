@@ -233,4 +233,56 @@ public class CustomFieldTests(ApiFixture fixture)
         }, Token);
         unknown.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
+
+    [Fact]
+    public async Task Searches_filter_and_sort_by_custom_fields_and_return_them_on_request()
+    {
+        var owner = await fixture.CreateUserClientAsync(Token);
+        var (project, types) = await SpaceAsync(owner);
+        async Task<CustomFieldDto> Own(string name, CustomFieldType type, object? options = null) =>
+            await CreateFieldAsync(owner, new { projectId = project.Id, name, type, options });
+        var impact = await Own("Impact", CustomFieldType.Number);
+        var due = await Own("Release", CustomFieldType.Date);
+        var severity = await Own("Severity", CustomFieldType.Select, new[] { new { label = "Low" }, new { label = "High" } });
+        var regression = await Own("Regression", CustomFieldType.Checkbox);
+        var customer = await Own("Customer", CustomFieldType.Text);
+        var reviewer = await Own("Reviewer", CustomFieldType.User);
+        var low = severity.Options.Single(option => option.Label == "Low").Id;
+        var high = severity.Options.Single(option => option.Label == "High").Id;
+
+        async Task<TicketDto> Bug(string title, Dictionary<string, object?> values) =>
+            await ReadAsync<TicketDto>(await owner.Http.PostAsJsonAsync("/api/v1/ticket", new { projectId = project.Id, typeId = types["Bug"], title, customFields = values }, Token));
+        var a = await Bug("A", new() { [impact.Key] = 1, [due.Key] = "2026-01-10", [severity.Key] = high, [regression.Key] = true, [customer.Key] = "ACME Corp", [reviewer.Key] = owner.UserId });
+        var b = await Bug("B", new() { [impact.Key] = 5, [due.Key] = "2026-02-10", [severity.Key] = low, [customer.Key] = "Globex" });
+        var c = await Bug("C", new() { [impact.Key] = 9, [severity.Key] = high });
+        var d = await Bug("D", new());
+
+        async Task<List<string>> Keys(string query) =>
+            [.. (await owner.Http.GetFromJsonAsync<TicketSearchResultDto>($"/api/v1/ticket/search?projectId={project.Id}&{query}", Token))!.Items!.Select(item => item.Title)];
+        string F(CustomFieldDto field, string rest) => $"custom={Uri.EscapeDataString($"cf.{field.Key}:{rest}")}";
+
+        (await Keys(F(severity, $"in:{high}"))).Order().ShouldBe(["A", "C"]);
+        (await Keys($"{F(impact, "gte:2")}&{F(impact, "lte:9")}")).Order().ShouldBe(["B", "C"]);
+        (await Keys(F(due, "lte:2026-01-31"))).ShouldBe(["A"]);
+        (await Keys(F(regression, "is:true"))).ShouldBe(["A"]);
+        (await Keys(F(regression, "is:false"))).Order().ShouldBe(["B", "C", "D"]);
+        (await Keys(F(customer, "has:acme"))).ShouldBe(["A"]);
+        (await Keys(F(reviewer, $"in:{owner.UserId}"))).ShouldBe(["A"]);
+        (await Keys(F(severity, "empty"))).ShouldBe(["D"]);
+        (await Keys(F(customer, "any"))).Order().ShouldBe(["A", "B"]);
+
+        (await Keys($"sorting={Uri.EscapeDataString($"cf.{impact.Key} desc")}")).ShouldBe(["C", "B", "A", "D"]);
+        (await Keys($"sorting={Uri.EscapeDataString($"cf.{severity.Key}")}")).Take(1).ShouldBe(["B"]);
+        (await Keys($"sorting={Uri.EscapeDataString($"cf.{customer.Key} desc")}")).Take(2).ShouldBe(["B", "A"]);
+
+        var withFields = await owner.Http.GetFromJsonAsync<TicketSearchResultDto>($"/api/v1/ticket/search?projectId={project.Id}&includeCustomFields=true&{F(impact, "gte:9")}", Token);
+        withFields!.Items!.Single().CustomFields!.Single(item => item.Field.Id == impact.Id).Number.ShouldBe(9m);
+        (await owner.Http.GetFromJsonAsync<TicketSearchResultDto>($"/api/v1/ticket/search?projectId={project.Id}", Token))!.Items!.First().CustomFields.ShouldBeNull();
+
+        (await owner.Http.GetAsync($"/api/v1/ticket/search?projectId={project.Id}&custom=cf.nope:any", Token)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await owner.Http.GetAsync($"/api/v1/ticket/search?projectId={project.Id}&{F(impact, "has:x")}", Token)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        // A space's own field cannot be used outside the space.
+        (await owner.Http.GetAsync($"/api/v1/ticket/search?{F(impact, "any")}", Token)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        _ = (a, b, c, d);
+    }
 }
