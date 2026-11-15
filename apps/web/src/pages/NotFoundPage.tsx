@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router';
 import { Button } from '../components/Button';
 import { ThemedIllustration } from '../theme/ThemedIllustration';
 import { radius, sem } from '../theme/tokens';
+import { usePageTitle } from '../lib/pageTitle';
 
 /** React Router numbers its history entries; the first page of a visit is 0, so there is nowhere to go back to. */
 const hasHistory = () => ((window.history.state as { idx?: number } | null)?.idx ?? 0) > 0;
@@ -16,6 +17,7 @@ const hasHistory = () => ((window.history.state as { idx?: number } | null)?.idx
 export function NotFoundPage({ title, description }: { title?: string; description?: string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  usePageTitle(title ?? t('notFound.title'));
 
   return (
     <section className="flex min-h-[60vh] w-full flex-col items-center justify-center gap-2 px-4 py-12 text-center">

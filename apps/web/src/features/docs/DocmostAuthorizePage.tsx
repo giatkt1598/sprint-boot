@@ -12,6 +12,7 @@ import { SelectField } from '../../components/TextField';
 import { useErrorMessage } from '../../lib/errors';
 import { radius, sem } from '../../theme/tokens';
 import { MANAGE_DOCS } from './api';
+import { usePageTitle } from '../../lib/pageTitle';
 
 const NONE = '';
 
@@ -21,6 +22,7 @@ const NONE = '';
  */
 export function DocmostAuthorizePage() {
   const { t } = useTranslation();
+  usePageTitle(t('integrations.authorizeTitle'));
   const toMessage = useErrorMessage();
   const [params] = useSearchParams();
   const docmostUrl = (params.get('docmostUrl') ?? '').replace(/\/+$/, '');

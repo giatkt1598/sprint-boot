@@ -7,6 +7,7 @@ import { Button } from '../../components/Button';
 import { ErrorState, LoadingState } from '../../components/StateViews';
 import { CreateSpaceDialog } from './SpacesPage';
 import { useSpaces } from './api';
+import { usePageTitle } from '../../lib/pageTitle';
 
 const storageKey = (userId: string | undefined) => `sb.lastSpace.${userId}`;
 
@@ -23,6 +24,7 @@ export const HomePageKind = { lastSpace: 0, space: 1, search: 2, notifications: 
  */
 export function HomePage() {
   const { t } = useTranslation();
+  usePageTitle(t('home.title'));
   const me = useCurrentUser();
   const spaces = useSpaces();
   const [creating, setCreating] = useState(false);

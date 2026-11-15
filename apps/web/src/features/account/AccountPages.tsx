@@ -23,6 +23,7 @@ import { SettingsFrame, SettingsMenuItem } from '../spaces/SpaceSettings';
 import { HomePageKind, SPACE_VIEWS } from '../spaces/HomePage';
 import { useSpaces } from '../spaces/api';
 import { TwoFactorSection } from '../../auth/TwoFactor';
+import { usePageTitle } from '../../lib/pageTitle';
 
 export function AccountLayout() {
   const { t } = useTranslation();
@@ -386,6 +387,7 @@ const BROWSER_ZONE = 'browser';
 
 export function ProfilePage() {
   const { t, i18n } = useTranslation();
+  usePageTitle(t('account.profile'));
   const user = useCurrentUser();
   const toMessage = useErrorMessage();
   const toast = useToast();
@@ -446,6 +448,7 @@ export function ProfilePage() {
 
 export function SecurityPage() {
   const { t } = useTranslation();
+  usePageTitle(t('account.security'));
   const toMessage = useErrorMessage();
   const toast = useToast();
   const [currentPassword, setCurrent] = useState('');

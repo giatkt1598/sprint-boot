@@ -44,6 +44,7 @@ import { ColumnsEditor } from './ColumnsEditor';
 import { TicketPanel } from './TicketPanel';
 import { CompleteSprintDialog } from './SprintDialogs';
 import { boardKey, useBacklog, useBoard, useBoardLive, type BoardView, type Card } from './api';
+import { usePageTitle } from '../../lib/pageTitle';
 
 type Column = NonNullable<BoardView['columns']>[number];
 
@@ -178,6 +179,7 @@ function ColumnView({ column, cards, total, canDrag, dragging, transitions, onOp
 
 export function BoardPage() {
   const { t } = useTranslation();
+  usePageTitle(t('nav.board'));
   const { spaceKey } = useParams();
   const space = useSpace(spaceKey);
   const projectId = space.data?.id;

@@ -10,6 +10,7 @@ import { GoalsTab } from './GoalsTab';
 import { IntroductionTab } from './IntroductionTab';
 import { SummaryTab } from './SummaryTab';
 import { TimelineTab } from './TimelineTab';
+import { usePageTitle } from '../../lib/pageTitle';
 
 const TABS = ['summary', 'introduction', 'goals', 'docs', 'timeline'] as const;
 type Tab = (typeof TABS)[number];
@@ -22,6 +23,7 @@ export function OverviewPage() {
   const [params, setParams] = useSearchParams();
   const requested = params.get('tab') as Tab | null;
   const tab: Tab = requested && TABS.includes(requested) ? requested : 'summary';
+  usePageTitle(t(`overview.tab.${tab}`), t('overview.title'));
 
   return (
     <div className="flex flex-col gap-4">

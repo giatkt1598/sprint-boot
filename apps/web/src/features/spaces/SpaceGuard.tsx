@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Outlet, useParams } from 'react-router';
 import { isNotFound } from '../../lib/errors';
+import { PageTitleScope } from '../../lib/pageTitle';
 import { NotFoundPage } from '../../pages/NotFoundPage';
 import { useSpace } from './api';
 import { ArchivedBanner } from './SpaceLifecycle';
@@ -15,10 +16,11 @@ export function SpaceGuard() {
     return <NotFoundPage title={t('notFound.spaceTitle')} description={t('notFound.spaceDescription')} />;
   }
   return (
-    <>
+    // The space's name follows the name of whichever page of it is open, in the tab title.
+    <PageTitleScope parts={[space.data?.name]}>
       {/* Every page of an archived space is read-only; the banner says so once, above whichever page is open. */}
       {space.data?.archivedAt && <div className="pb-4"><ArchivedBanner space={space.data} /></div>}
       <Outlet />
-    </>
+    </PageTitleScope>
   );
 }

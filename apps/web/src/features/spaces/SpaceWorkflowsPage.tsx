@@ -13,6 +13,7 @@ import { useErrorMessage } from '../../lib/errors';
 import { StatusMappingFields, WorkflowsPage } from '../admin/WorkflowPages';
 import { useTicketTypes, useStatuses, type TicketType } from '../tickets/api';
 import { SpacePermission, type Space } from './api';
+import { usePageTitle } from '../../lib/pageTitle';
 
 interface PendingChange {
   ticketTypeId: string;
@@ -22,6 +23,7 @@ interface PendingChange {
 
 export function SpaceWorkflowsPage() {
   const { t } = useTranslation();
+  usePageTitle(t('workflows.title'));
   const space = useOutletContext<Space>();
   const toMessage = useErrorMessage();
   const toast = useToast();

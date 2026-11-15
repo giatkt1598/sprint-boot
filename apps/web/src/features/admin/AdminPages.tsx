@@ -26,6 +26,7 @@ import { NotFoundPage } from '../../pages/NotFoundPage';
 import { sem } from '../../theme/tokens';
 import { useSpaces } from '../spaces/api';
 import { SettingsFrame, SettingsMenuItem } from '../spaces/SpaceSettings';
+import { usePageTitle } from '../../lib/pageTitle';
 
 type User = components['schemas']['UserSummaryDto'];
 type DeletedTicket = components['schemas']['DeletedTicketDto'];
@@ -133,6 +134,7 @@ const StatusOf = ({ user }: { user: User }) => {
 
 export function UsersPage() {
   const { t, i18n } = useTranslation();
+  usePageTitle(t('admin.users'));
   const [search, setSearch] = useState('');
   const [skip, setSkip] = useState(0);
   const [creating, setCreating] = useState(false);
@@ -296,6 +298,7 @@ export function ManageUserPage() {
     queryKey: ['admin', 'users', userId],
     queryFn: () => unwrap(apiClient.GET('/api/v1/user-admin/{id}', { params: { path: { id: userId! } } })),
   });
+  usePageTitle(user.data?.name, t('admin.users'));
   const spaces = useQuery({
     queryKey: ['admin', 'users', userId, 'spaces'],
     queryFn: () => unwrap(apiClient.GET('/api/v1/project-admin/user-spaces/{userId}', { params: { path: { userId: userId! } } })),
@@ -497,6 +500,7 @@ export function ManageUserPage() {
 
 export function DeletedTicketsPage() {
   const { t, i18n } = useTranslation();
+  usePageTitle(t('admin.deletedTickets'));
   const toMessage = useErrorMessage();
   const toast = useToast();
   const queryClient = useQueryClient();

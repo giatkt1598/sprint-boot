@@ -48,6 +48,7 @@ import { RichTextEditor, RichTextView } from './RichTextEditor';
 import { priorityLevel, uploadAttachment, useEpics, useTicketTypes, useLabels, usePriorities, type Ticket } from './api';
 import { DatePicker } from '../../components/DatePicker';
 import { useCompact } from '../../lib/responsive';
+import { PageTitleScope, usePageTitle } from '../../lib/pageTitle';
 
 const DETAIL_LABEL_WIDTH = 88;
 const DETAIL_GAP = 12;
@@ -102,9 +103,36 @@ export function TicketContent({ ticketKey, compact: inPanel, panelHeader }: { ti
     ) : (
       <ErrorState onRetry={() => void ticket.refetch()} />
     );
-    return panelHeader ? <div className="flex flex-col gap-4 pt-6">{panelHeader.close}{state}</div> : state;
+    return (
+      <TicketTabTitle ticketKey={ticketKey}>
+        {panelHeader ? <div className="flex flex-col gap-4 pt-6">{panelHeader.close}{state}</div> : state}
+      </TicketTabTitle>
+    );
   }
-  return <TicketView key={ticket.data.id} ticket={ticket.data} compact={compact} panelHeader={panelHeader} />;
+  return (
+    <TicketTabTitle ticketKey={ticketKey} ticket={ticket.data}>
+      <TicketView key={ticket.data.id} ticket={ticket.data} compact={compact} panelHeader={panelHeader} />
+    </TicketTabTitle>
+  );
+}
+
+/**
+ * "<KEY> - <title> - <space>" in the tab, the key alone while the ticket loads. Its own scope, so a ticket opened in a
+ * panel over the board names the tab until the panel closes, without the board's parts.
+ */
+function TicketTabTitle({ ticketKey, ticket, children }: { ticketKey: string | undefined; ticket?: Ticket; children: ReactNode }) {
+  return (
+    <PageTitleScope reset>
+      <TicketTitleParts ticketKey={ticket?.key ?? ticketKey} title={ticket?.title} spaceKey={ticket?.projectKey} />
+      {children}
+    </PageTitleScope>
+  );
+}
+
+function TicketTitleParts({ ticketKey, title, spaceKey }: { ticketKey: string | undefined; title?: string | null; spaceKey?: string | null }) {
+  const space = useSpace(spaceKey ?? undefined);
+  usePageTitle(ticketKey, title, space.data?.name);
+  return null;
 }
 
 // Wide enough that the assignee and reporter pickers show a full name next to the label column.

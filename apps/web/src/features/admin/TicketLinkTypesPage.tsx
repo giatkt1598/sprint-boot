@@ -14,6 +14,7 @@ import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { sem } from '../../theme/tokens';
 import { useLinkTypes } from '../tickets/LinkedTickets';
+import { usePageTitle } from '../../lib/pageTitle';
 
 type LinkType = components['schemas']['TicketLinkTypeDto'];
 
@@ -66,6 +67,7 @@ function LinkTypeDialog({ draft, onClose }: { draft: Draft; onClose: () => void 
 /** Workspace-wide: every space links tickets with the same relationships. */
 export function TicketLinkTypesPage() {
   const { t } = useTranslation();
+  usePageTitle(t('linkTypes.title'));
   const toast = useToast();
   const toMessage = useErrorMessage();
   const queryClient = useQueryClient();

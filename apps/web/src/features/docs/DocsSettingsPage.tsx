@@ -12,10 +12,12 @@ import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { formatDateTime } from '../../lib/format';
 import { docsKeys, DocsProblem, useDocsConnection, type DocsConnection } from './api';
+import { usePageTitle } from '../../lib/pageTitle';
 
 /** Admin › Docmost: where Sprint Boot reads Docmost from, and the secret Docmost calls back with. */
 export function DocsSettingsPage() {
   const { t } = useTranslation();
+  usePageTitle(t('docs.adminTitle'), t('integrations.title'));
   const connection = useDocsConnection();
 
   return (

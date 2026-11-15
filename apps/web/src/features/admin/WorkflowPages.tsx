@@ -15,6 +15,7 @@ import { SelectField, TextField } from '../../components/TextField';
 import { useErrorMessage } from '../../lib/errors';
 import { formatDate } from '../../lib/format';
 import type { Status } from '../tickets/api';
+import { usePageTitle } from '../../lib/pageTitle';
 
 type StatusRow = components['schemas']['StatusAdminDto'];
 type WorkflowRow = components['schemas']['WorkflowSummaryDto'];
@@ -88,6 +89,7 @@ function StatusDialog({ status, onClose }: { status?: StatusRow; onClose: () => 
 
 export function StatusesPage() {
   const { t, i18n } = useTranslation();
+  usePageTitle(t('workflows.statuses'));
   const [editing, setEditing] = useState<StatusRow | 'new' | null>(null);
 
   const statuses = useQuery({
@@ -203,6 +205,13 @@ export function StatusMappingFields({
       ))}
     </div>
   );
+}
+
+/** The workflows of Administration, under its own name in the tab title. */
+export function AdminWorkflowsPage() {
+  const { t } = useTranslation();
+  usePageTitle(t('workflows.title'));
+  return <WorkflowsPage />;
 }
 
 /** Administration passes no space. A space lists global workflows too, which it can use but not edit. */

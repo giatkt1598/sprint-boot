@@ -21,6 +21,7 @@ import { useMembers, useSpace } from '../spaces/api';
 import { FilterChips, FilterControls, useTicketFilters, useSearchText } from './TicketFilters';
 import { QuickAssignee, QuickPriority, QuickStatus } from './QuickFields';
 import type { TicketSummary } from './api';
+import { usePageTitle } from '../../lib/pageTitle';
 
 const PAGE_SIZE = 25;
 
@@ -33,6 +34,8 @@ export function TicketsListPage() {
   const { spaceKey } = useParams();
   const space = useSpace(spaceKey);
   const projectId = space.data?.id;
+  // In a space, the space's name follows from its pages' scope; on its own the page is the search.
+  usePageTitle(t(spaceKey ? 'nav.tickets' : 'tickets.searchResults'));
   // The overview links here with the types or statuses a figure counted; the filters read them from the address.
   // Only a Scrum space has sprints to filter by; closed ones stay listed, after the open ones.
   const backlog = useBacklog(projectId);

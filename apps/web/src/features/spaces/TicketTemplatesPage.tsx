@@ -33,6 +33,7 @@ import {
 import { RichTextEditor, RichTextView } from '../tickets/RichTextEditor';
 import { TemplateModeField } from '../tickets/TemplateModeField';
 import { SpacePermission, type Space } from './api';
+import { usePageTitle } from '../../lib/pageTitle';
 
 /** Epic first, then the standard types; subtasks have no templates. */
 const typeOrder = (type: TicketType) => (type.hierarchy === 2 ? 0 : 1);
@@ -143,6 +144,7 @@ function TemplateDialog({ draft, types, projectId, onClose }: { draft: Draft; ty
 
 export function SpaceTicketTemplatesPage() {
   const { t } = useTranslation();
+  usePageTitle(t('templates.title'));
   const space = useOutletContext<Space>();
   const projectId = space.id!;
   const canManage = space.permissions?.includes(SpacePermission.manage) ?? false;

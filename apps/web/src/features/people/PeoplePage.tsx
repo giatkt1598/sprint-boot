@@ -10,10 +10,12 @@ import { formatDate } from '../../lib/format';
 import { sem } from '../../theme/tokens';
 import { useMembers, useSpace, type SpaceMember } from '../spaces/api';
 import { ROLE_LABELS } from '../spaces/SpaceSettings';
+import { usePageTitle } from '../../lib/pageTitle';
 
 /** Everyone in the space, as read-only profiles; changing roles stays in the space settings. */
 export function PeoplePage() {
   const { t, i18n } = useTranslation();
+  usePageTitle(t('people.title'));
   const { spaceKey } = useParams();
   const space = useSpace(spaceKey);
   const members = useMembers(space.data?.id);

@@ -31,6 +31,7 @@ import { useCompact } from '../../lib/responsive';
 import { TicketPanel } from './TicketPanel';
 import { CompleteSprintDialog, SprintDialog } from './SprintDialogs';
 import { backlogKey, useBacklog, useBoardLive, type Backlog, type Card, type SprintSummary } from './api';
+import { usePageTitle } from '../../lib/pageTitle';
 
 const BACKLOG_LIST = 'backlog';
 
@@ -343,6 +344,7 @@ function moveInCache(data: Backlog, card: Card, listId: string, index: number): 
 
 export function BacklogPage() {
   const { t } = useTranslation();
+  usePageTitle(t('nav.backlog'));
   const { spaceKey } = useParams();
   const space = useSpace(spaceKey);
   const projectId = space.data?.id;

@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { useOutletContext } from 'react-router';
 import { ColumnsEditor } from '../agile/ColumnsEditor';
 import { SpacePermission, type Space } from './api';
+import { usePageTitle } from '../../lib/pageTitle';
 
 export function SpaceBoardPage() {
   const { t } = useTranslation();
+  usePageTitle(t('agile.board'));
   const space = useOutletContext<Space>();
 
   return (

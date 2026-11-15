@@ -27,6 +27,7 @@ import { StatusOrderList, WorkflowHistory } from './WorkflowSidePanels';
 import { TransitionRules, type DraftRule } from './TransitionRules';
 import { ANY, arrow, edgeTypes, facingSides, nodeTypes, parallelOffset } from './WorkflowCanvas';
 import { layeredLayout, replaceStatus, unreachableStatuses, type DraftTransition } from './workflowGraph';
+import { usePageTitle } from '../../lib/pageTitle';
 
 type Definition = components['schemas']['WorkflowDefinitionDto'];
 type Point = { x: number; y: number };
@@ -108,6 +109,7 @@ export function WorkflowDesignerPage() {
     queryKey: ['admin', 'workflows', workflowId],
     queryFn: () => unwrap(apiClient.GET('/api/v1/workflow/{id}', { params: { path: { id: workflowId } } })),
   });
+  usePageTitle(detail.data?.name, t('workflows.title'));
   const projectId = detail.data?.projectId ?? undefined;
   const statuses = useStatuses(projectId);
   const summaries = useQuery({

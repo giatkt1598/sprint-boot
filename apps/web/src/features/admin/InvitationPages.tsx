@@ -20,6 +20,7 @@ import { useErrorMessage } from '../../lib/errors';
 import { formatDate } from '../../lib/format';
 import { font, sem } from '../../theme/tokens';
 import { useMembers, useSpaces } from '../spaces/api';
+import { usePageTitle } from '../../lib/pageTitle';
 
 type Invitation = components['schemas']['InvitationDto'];
 type InvitationLink = components['schemas']['InvitationLinkDto'];
@@ -179,6 +180,7 @@ const describeAccess = (invitation: Invitation, t: (key: string) => string) => {
 
 export function InvitationsPage() {
   const { t, i18n } = useTranslation();
+  usePageTitle(t('invitations.title'));
   const toast = useToast();
   const toMessage = useErrorMessage();
   const queryClient = useQueryClient();

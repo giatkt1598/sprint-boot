@@ -18,6 +18,7 @@ import { formatDateTime } from '../../lib/format';
 import { font, radius, sem } from '../../theme/tokens';
 import { assistantKeys, useAssistantStatus, useConversations, type Conversation } from './api';
 import { ChatThread } from './ChatThread';
+import { usePageTitle } from '../../lib/pageTitle';
 
 function RenameDialog({ conversation, onClose }: { conversation: Conversation; onClose: () => void }) {
   const { t } = useTranslation();
@@ -60,6 +61,7 @@ export function AssistantPage() {
   const [renaming, setRenaming] = useState<Conversation | null>(null);
   const [removing, setRemoving] = useState<Conversation | null>(null);
   const selected = list.data?.find((item) => item.id === conversationId);
+  usePageTitle(selected ? selected.title || t('assistant.untitled') : null, t('assistant.title'));
 
   const remove = useMutation({
     mutationFn: (id: string) => unwrap(apiClient.DELETE('/api/v1/assistant/{id}', { params: { path: { id } } })),

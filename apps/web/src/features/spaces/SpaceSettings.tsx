@@ -5,6 +5,7 @@ import { BackIcon } from '../../components/icons';
 import { useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Navigate, Outlet, useOutletContext, useParams } from 'react-router';
+import { PageTitleScope, usePageTitle } from '../../lib/pageTitle';
 import ButtonBase from '@mui/material/ButtonBase';
 import { apiClient, unwrap } from '../../api';
 import { Avatar } from '../../components/Avatar';
@@ -74,6 +75,7 @@ export function SpaceSettingsLayout() {
       title={t('spaces.settings')}
       backTo={`/spaces/${space.data.key}/tickets`}
       context={space.data}
+      titleParts={[t('nav.settings'), space.data.name]}
       banner={<ArchivedBanner space={space.data} />}
       menu={
         <>
@@ -90,8 +92,10 @@ export function SpaceSettingsLayout() {
   );
 }
 
-export function SettingsFrame({ title, backTo, menu, context, banner }: {
+export function SettingsFrame({ title, backTo, menu, context, banner, titleParts }: {
   title: string;
+  /** What follows each page's own name in the tab title; the frame's title unless given. */
+  titleParts?: (string | null | undefined)[];
   backTo: string;
   menu: ReactNode;
   context?: unknown;
@@ -114,7 +118,9 @@ export function SettingsFrame({ title, backTo, menu, context, banner }: {
       <main className="sb-content min-w-0 flex-1 overflow-auto p-4 md:p-8">
         <div className="flex max-w-4xl flex-col gap-4">
           {banner}
-          <Outlet context={context} />
+          <PageTitleScope parts={titleParts ?? [title]}>
+            <Outlet context={context} />
+          </PageTitleScope>
         </div>
       </main>
     </div>
@@ -203,6 +209,7 @@ function SpaceLogoField({ space, canManage }: { space: Space; canManage: boolean
 
 export function SpaceGeneralPage() {
   const { t } = useTranslation();
+  usePageTitle(t('spaces.general'));
   const space = useOutletContext<Space>();
   const toMessage = useErrorMessage();
   const toast = useToast();
@@ -283,6 +290,7 @@ export function SpaceGeneralPage() {
 
 export function SpaceMembersPage() {
   const { t, i18n } = useTranslation();
+  usePageTitle(t('spaces.members'));
   const space = useOutletContext<Space>();
   const toMessage = useErrorMessage();
   const toast = useToast();

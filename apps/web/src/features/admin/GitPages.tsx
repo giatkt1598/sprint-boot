@@ -22,6 +22,7 @@ import { useErrorMessage } from '../../lib/errors';
 import { formatDate } from '../../lib/format';
 import { radius, sem } from '../../theme/tokens';
 import { SpacePermission, type Space } from '../spaces/api';
+import { usePageTitle } from '../../lib/pageTitle';
 
 type Connection = components['schemas']['GitConnectionDto'];
 type Repository = components['schemas']['GitRepositoryDto'];
@@ -273,6 +274,7 @@ function BranchTemplateSection({ space }: { space: Space }) {
 
 export function GitConnectionsPage() {
   const { t, i18n } = useTranslation();
+  usePageTitle(t('git.title'));
   const space = useOutletContext<Space>();
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Connection | null>(null);
@@ -388,6 +390,7 @@ export function GitRepositoriesPage() {
     queryKey: ['admin', 'git', 'connection', id],
     queryFn: () => unwrap(apiClient.GET('/api/v1/git-connection/{id}', { params: { path: { id } } })),
   });
+  usePageTitle(connection.data?.name, t('git.title'));
   const repositories = useQuery({
     queryKey: ['admin', 'git', 'repositories', id, search],
     queryFn: () => unwrap(apiClient.GET('/api/v1/git-connection/{id}/repositories', { params: { path: { id }, query: { search } } })),

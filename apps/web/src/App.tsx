@@ -16,7 +16,7 @@ import { InvitationsPage } from './features/admin/InvitationPages';
 import { SsoPage, SsoProviderPage } from './features/admin/SsoPages';
 import { GlobalTicketTemplatesPage } from './features/admin/GlobalTicketTemplatesPage';
 import { TicketLinkTypesPage } from './features/admin/TicketLinkTypesPage';
-import { StatusesPage, WorkflowsPage } from './features/admin/WorkflowPages';
+import { AdminWorkflowsPage, StatusesPage } from './features/admin/WorkflowPages';
 import { BacklogPage } from './features/agile/BacklogPage';
 import { BoardPage } from './features/agile/BoardPage';
 import { ClosedSprintPage } from './features/agile/ClosedSprintPage';
@@ -83,7 +83,7 @@ export function App() {
                 <Route path="sso/:providerId" element={<SsoProviderPage />} />
                 <Route path="email" element={<EmailSettingsPage />} />
                 <Route path="ai" element={<AssistantSettingsPage />} />
-                <Route path="workflows" element={<WorkflowsPage />} />
+                <Route path="workflows" element={<AdminWorkflowsPage />} />
                 <Route path="ticket-link-types" element={<TicketLinkTypesPage />} />
                 <Route path="ticket-templates" element={<GlobalTicketTemplatesPage />} />
                 <Route path="notification-schemes" element={<NotificationSchemesPage />} />

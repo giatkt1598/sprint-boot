@@ -18,6 +18,7 @@ import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { NotificationItem, eventKey, useMarkAllRead, useOpenNotification } from './NotificationBell';
 import { useNotifications } from './api';
+import { usePageTitle } from '../../lib/pageTitle';
 
 type Scheme = components['schemas']['NotificationSchemeDto'];
 type Rule = components['schemas']['NotificationRuleDto'];
@@ -43,6 +44,7 @@ const ROLES = [
 
 export function NotificationsPage() {
   const { t } = useTranslation();
+  usePageTitle(t('topBar.notifications'));
   const [skip, setSkip] = useState(0);
   const [unreadOnly, setUnreadOnly] = useState(false);
   const list = useNotifications(skip, PAGE_SIZE, unreadOnly);
@@ -69,6 +71,7 @@ export function NotificationsPage() {
 
 export function NotificationPreferencesPage() {
   const { t } = useTranslation();
+  usePageTitle(t('topBar.notifications'));
   const toMessage = useErrorMessage();
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -107,6 +110,7 @@ export function NotificationPreferencesPage() {
 
 export function NotificationSchemesPage() {
   const { t } = useTranslation();
+  usePageTitle(t('notifications.schemes'));
   const toMessage = useErrorMessage();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -225,6 +229,7 @@ export function EditSchemePage() {
     queryKey: ['admin', 'notification-schemes', schemeId],
     queryFn: () => unwrap(apiClient.GET('/api/v1/notification-scheme/{id}', { params: { path: { id: schemeId! } } })),
   });
+  usePageTitle(scheme.data?.name, t('notifications.schemes'));
 
   useEffect(() => {
     if (scheme.data) {

@@ -17,6 +17,7 @@ import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { font, sem, size } from '../../theme/tokens';
 import { assistantKeys, Provider, type AiConnection } from '../assistant/api';
+import { usePageTitle } from '../../lib/pageTitle';
 
 const KEY = ['admin', 'assistant'];
 
@@ -285,6 +286,7 @@ function ConnectionDialog({ draft, onClose }: { draft: Draft; onClose: () => voi
 /** Connections to AI providers, the default one the assistant uses, and the switch for the whole feature. */
 export function AssistantSettingsPage() {
   const { t } = useTranslation();
+  usePageTitle(t('assistantAdmin.title'));
   const toast = useToast();
   const toMessage = useErrorMessage();
   const queryClient = useQueryClient();

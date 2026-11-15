@@ -19,6 +19,7 @@ import { CreateTicketDialog } from '../tickets/CreateTicketDialog';
 import { QuickAssignee, QuickPriority, QuickStatus } from '../tickets/QuickFields';
 import { useMembers, useSpace } from '../spaces/api';
 import { EpicProgress } from './EpicProgress';
+import { usePageTitle } from '../../lib/pageTitle';
 
 type EpicRow = components['schemas']['EpicRowDto'];
 
@@ -45,6 +46,7 @@ function sortEpics(rows: EpicRow[], sort: TableSort | null) {
 
 export function EpicsPage() {
   const { t, i18n } = useTranslation();
+  usePageTitle(t('nav.epics'));
   const { spaceKey } = useParams();
   const space = useSpace(spaceKey);
   const projectId = space.data?.id;

@@ -15,6 +15,7 @@ import { FONT_CHOICES } from '../../theme/fonts';
 import { themeById } from '../../theme/themes';
 import { font, radius, sem } from '../../theme/tokens';
 import { ThemeGallery } from './ThemeGallery';
+import { usePageTitle } from '../../lib/pageTitle';
 
 type Preferences = components['schemas']['PreferencesDto'];
 
@@ -25,6 +26,7 @@ const OPACITY_STEP = 5;
 /** How the app looks for this person; every change applies at once and is saved with their account. */
 export function PreferencesPage() {
   const { t } = useTranslation();
+  usePageTitle(t('account.preferencesMenu'));
   const user = useCurrentUser();
   const appearance = useAppearance();
   const toMessage = useErrorMessage();

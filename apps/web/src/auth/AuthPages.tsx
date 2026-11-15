@@ -16,9 +16,12 @@ import { useErrorMessage } from '../lib/errors';
 import { font, radius, sem } from '../theme/tokens';
 import { userManager } from './oidc';
 import { markSignedIn } from './signedInHint';
+import { usePageTitle } from '../lib/pageTitle';
 
 export function AuthCard({ title, children }: { title: string; children: ReactNode }) {
   const { t } = useTranslation();
+  // Every sign-in page is a card: its heading names the tab.
+  usePageTitle(title);
 
   return (
     <main className="flex min-h-dvh items-center justify-center p-4">

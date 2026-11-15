@@ -15,6 +15,7 @@ import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { radius, sem } from '../../theme/tokens';
 import type { Space } from '../spaces/api';
+import { usePageTitle } from '../../lib/pageTitle';
 import {
   docsKeys,
   MANAGE_DOCS,
@@ -142,6 +143,7 @@ export function DocsTab({ space }: { space: Space }) {
 /** Space settings › Docs: which Docmost space holds this space's documents. */
 export function SpaceDocsPage() {
   const { t } = useTranslation();
+  usePageTitle(t('docs.spaceSettingsTitle'));
   const space = useOutletContext<Space>();
   const toast = useToast();
   const toMessage = useErrorMessage();

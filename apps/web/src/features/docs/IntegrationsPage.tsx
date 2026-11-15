@@ -13,6 +13,7 @@ import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { sem } from '../../theme/tokens';
 import { DocsProblem, useDocsConnection } from './api';
+import { usePageTitle } from '../../lib/pageTitle';
 
 /** Enter Docmost's address and go there to authorize; Docmost hands back what both sides need. */
 function ConnectDocmostDialog({ initialUrl, onClose }: { initialUrl: string; onClose: () => void }) {
@@ -49,6 +50,7 @@ function ConnectDocmostDialog({ initialUrl, onClose }: { initialUrl: string; onC
 /** Admin › Integrations: what Sprint Boot connects to, one row each, laid out as Docmost lists its own. */
 export function IntegrationsPage() {
   const { t } = useTranslation();
+  usePageTitle(t('integrations.title'));
   const toast = useToast();
   const [params, setParams] = useSearchParams();
   const connection = useDocsConnection();

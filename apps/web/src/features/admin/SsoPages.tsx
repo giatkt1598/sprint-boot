@@ -19,6 +19,7 @@ import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { NotFoundPage } from '../../pages/NotFoundPage';
 import { radius, sem } from '../../theme/tokens';
+import { usePageTitle } from '../../lib/pageTitle';
 
 type Provider = components['schemas']['ExternalProviderDto'];
 type SaveProvider = components['schemas']['SaveProviderInput'];
@@ -411,6 +412,7 @@ function ProviderToggle({ provider }: { provider: Provider }) {
 
 export function SsoPage() {
   const { t } = useTranslation();
+  usePageTitle(t('sso.title'));
   const providers = useProviders();
   const [adding, setAdding] = useState(false);
 
@@ -571,8 +573,11 @@ function ProviderForm({ provider }: { provider: Provider }) {
 }
 
 export function SsoProviderPage() {
+  const { t } = useTranslation();
   const { providerId } = useParams();
   const providers = useProviders();
+  const provider = providers.data?.find((item) => item.id === providerId);
+  usePageTitle(provider?.displayName ?? provider?.name, t('sso.title'));
 
   if (providers.isPending) {
     return <LoadingState />;
@@ -581,6 +586,5 @@ export function SsoProviderPage() {
     return <ErrorState onRetry={() => void providers.refetch()} />;
   }
 
-  const provider = providers.data.find((item) => item.id === providerId);
   return provider ? <ProviderForm key={provider.id} provider={provider} /> : <NotFoundPage />;
 }

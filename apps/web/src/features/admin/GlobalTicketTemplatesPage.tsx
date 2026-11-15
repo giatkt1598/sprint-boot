@@ -26,6 +26,7 @@ import {
 } from '../tickets/api';
 import { RichTextEditor } from '../tickets/RichTextEditor';
 import { TemplateModeField } from '../tickets/TemplateModeField';
+import { usePageTitle } from '../../lib/pageTitle';
 
 interface Draft {
   id?: string;
@@ -98,6 +99,7 @@ function GlobalTemplateDialog({ draft, onClose }: { draft: Draft; onClose: () =>
 /** Workspace-wide templates by ticket type; every space can use them for its type of the same kind. */
 export function GlobalTicketTemplatesPage() {
   const { t } = useTranslation();
+  usePageTitle(t('globalTemplates.title'));
   const toast = useToast();
   const toMessage = useErrorMessage();
   const queryClient = useQueryClient();

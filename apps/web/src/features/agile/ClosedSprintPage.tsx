@@ -15,6 +15,7 @@ import { useSpace } from '../spaces/api';
 import { SectionCard, StaticTicketList } from './BacklogPage';
 import { TicketPanel } from './TicketPanel';
 import { useBacklog, type Card } from './api';
+import { usePageTitle } from '../../lib/pageTitle';
 
 /** A closed sprint on its own address, so it can be shared, reloaded and left with the browser's Back. */
 export function ClosedSprintPage() {
@@ -30,6 +31,7 @@ export function ClosedSprintPage() {
     enabled: listed,
     queryFn: () => unwrap(apiClient.GET('/api/v1/sprint/{id}/closed', { params: { path: { id: sprintId! } } })),
   });
+  usePageTitle(backlog.data?.closedSprints?.find((item) => item.id === sprintId)?.name ?? t('agile.sprint'));
 
   const missing = <NotFoundPage title={t('notFound.sprintTitle')} description={t('notFound.sprintDescription')} />;
   if (space.isPending || backlog.isPending || (listed && closed.isPending)) {

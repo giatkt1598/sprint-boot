@@ -10,6 +10,7 @@ import { ErrorState, LoadingState } from '../../components/StateViews';
 import { TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
+import { usePageTitle } from '../../lib/pageTitle';
 
 type Settings = components['schemas']['EmailSettingsDto'];
 
@@ -93,6 +94,7 @@ function EmailSettingsForm({ settings }: { settings: Settings }) {
 
 export function EmailSettingsPage() {
   const { t } = useTranslation();
+  usePageTitle(t('email.title'));
   const settings = useQuery({ queryKey: KEY, queryFn: () => unwrap(apiClient.GET('/api/v1/email-settings')) });
 
   return (

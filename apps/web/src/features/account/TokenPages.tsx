@@ -22,6 +22,7 @@ import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
 import { formatDate, formatRelative } from '../../lib/format';
 import { radius, sem } from '../../theme/tokens';
+import { usePageTitle } from '../../lib/pageTitle';
 
 type PersonalToken = components['schemas']['PersonalTokenDto'];
 type Kind = 0 | 1;
@@ -216,6 +217,7 @@ function TokenSection({ kind, tokens, title, hint, docs, createLabel }: {
 
 export function TokensPage() {
   const { t } = useTranslation();
+  usePageTitle(t('tokens.title'));
   const tokens = useQuery({ queryKey: KEY, queryFn: () => unwrap(apiClient.GET('/api/v1/personal-token')) });
 
   if (tokens.isPending) {
@@ -301,6 +303,7 @@ function CodeBlock({ code, copyLabel }: { code: string; copyLabel?: string }) {
 
 export function McpDocsPage() {
   const { t } = useTranslation();
+  usePageTitle(t('mcp.title'));
   const { url } = mcpSetup(MCP_PLACEHOLDER);
 
   return (

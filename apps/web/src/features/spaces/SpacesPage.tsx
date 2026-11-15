@@ -21,6 +21,7 @@ import { formatDate } from '../../lib/format';
 import { sem } from '../../theme/tokens';
 import { DELETE_SPACES, useSpaceLifecycle, useSpaces, useTrashedSpaces, type Space, type TrashedSpace } from './api';
 import { DeleteSpaceDialog } from './SpaceLifecycle';
+import { usePageTitle } from '../../lib/pageTitle';
 
 const KEY_PATTERN = /^[A-Z][A-Z0-9]{1,9}$/;
 
@@ -89,6 +90,7 @@ type Matcher = (space: { name?: string | null; key?: string | null }) => boolean
 /** Admin › Spaces: active spaces, archived ones to restore or delete, and the trash for those who may delete. */
 export function SpacesPage() {
   const { t } = useTranslation();
+  usePageTitle(t('spaces.title'));
   const canDelete = useCan(DELETE_SPACES);
   const [params, setParams] = useSearchParams();
   const requested = params.get('tab');
