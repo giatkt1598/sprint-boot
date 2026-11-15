@@ -254,6 +254,7 @@ export function TokensPage() {
 
 const MCP_TOOLS: { name: string; write: boolean }[] = [
   { name: 'list_spaces', write: false },
+  { name: 'get_space_fields', write: false },
   { name: 'search_tickets', write: false },
   { name: 'get_ticket', write: false },
   { name: 'list_transitions', write: false },

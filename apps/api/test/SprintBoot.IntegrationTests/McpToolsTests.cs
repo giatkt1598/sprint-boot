@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Shouldly;
+using SprintBoot.Tickets;
 using SprintBoot.Identity;
 using SprintBoot.Projects;
 using Xunit;
@@ -80,6 +81,47 @@ public class McpToolsTests(ApiFixture fixture)
         tools["edit_description"].TryGetProperty("edits", out _).ShouldBeTrue();
         tools["update_ticket"].TryGetProperty("labels", out _).ShouldBeTrue();
         tools["transition_ticket"].TryGetProperty("fields", out _).ShouldBeTrue();
+        tools["create_ticket"].TryGetProperty("customFields", out _).ShouldBeTrue();
+        tools["update_ticket"].TryGetProperty("customFields", out _).ShouldBeTrue();
+        tools["search_tickets"].TryGetProperty("customFields", out _).ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Agents_read_write_and_filter_custom_fields_by_key_label_and_person()
+    {
+        var agent = await AgentAsync();
+        var key = agent.Space.Key;
+        var severity = await (await agent.Owner.Http.PostAsJsonAsync("/api/v1/custom-field", new
+        {
+            projectId = agent.Space.Id, name = "Severity", type = CustomFieldType.Select, options = new[] { new { label = "Low" }, new { label = "High" } },
+        }, Token)).Content.ReadFromJsonAsync<CustomFieldDto>(Token);
+        var reviewer = await (await agent.Owner.Http.PostAsJsonAsync("/api/v1/custom-field", new { projectId = agent.Space.Id, name = "Reviewer", type = CustomFieldType.User }, Token))
+            .Content.ReadFromJsonAsync<CustomFieldDto>(Token);
+
+        var fields = await CallAsync(agent.Http, "get_space_fields", new { space = key });
+        var described = fields.GetProperty("customFields").EnumerateArray().ToList();
+        described.Select(item => Text(item, "key")).ShouldBe([$"cf.{severity!.Key}", $"cf.{reviewer!.Key}"]);
+        described[0].GetProperty("options").EnumerateArray().Select(option => option.GetString()).ShouldBe(["Low", "High"]);
+
+        var created = await CallAsync(agent.Http, "create_ticket", new
+        {
+            space = key, title = "Crash on save", type = "Bug",
+            customFields = new Dictionary<string, object> { [$"cf.{severity.Key}"] = "High", [$"cf.{reviewer.Key}"] = "me" },
+        });
+        var read = await CallAsync(agent.Http, "get_ticket", new { key = Text(created, "key"), includeComments = false });
+        Text(read.GetProperty("customFields"), $"cf.{severity.Key}").ShouldBe("High");
+        Text(read.GetProperty("customFields"), $"cf.{reviewer.Key}").ShouldContain("<");
+
+        await CallAsync(agent.Http, "create_ticket", new { space = key, title = "Typo", type = "Bug", customFields = new Dictionary<string, object> { ["Severity"] = "low" } });
+        var found = await CallAsync(agent.Http, "search_tickets", new { space = key, customFields = new[] { $"cf.{severity.Key}:in:High" }, includeCustomFields = true });
+        found.GetProperty("tickets").EnumerateArray().Select(item => Text(item, "title")).ShouldBe(["Crash on save"]);
+
+        var updated = await CallAsync(agent.Http, "update_ticket", new { key = Text(created, "key"), clear = new[] { $"cf.{reviewer.Key}" } });
+        updated.GetProperty("changed").GetProperty("customFields").GetProperty($"cf.{reviewer.Key}").ValueKind.ShouldBe(JsonValueKind.Null);
+
+        var wrong = await Should.ThrowAsync<ToolError>(() => CallAsync(agent.Http, "update_ticket", new { key = Text(created, "key"), customFields = new Dictionary<string, object> { [$"cf.{severity.Key}"] = "Critical" } }));
+        wrong.Message.ShouldNotBeNullOrWhiteSpace();
+        await Should.ThrowAsync<ToolError>(() => CallAsync(agent.Http, "update_ticket", new { key = Text(created, "key"), customFields = new Dictionary<string, object> { ["cf.nope"] = "x" } }));
     }
 
     [Fact]

@@ -1354,13 +1354,14 @@
     "purpose": "Chức năng",
     "tools": {
       "list_spaces": "Liệt kê các Space bạn thấy được, kèm key.",
-      "search_tickets": "Tìm ticket theo nội dung, có thể giới hạn trong một Space.",
-      "get_ticket": "Đọc một ticket cùng mô tả, comment và subtask.",
+      "search_tickets": "Tìm ticket theo nội dung, trường và trường tuỳ chỉnh, có thể giới hạn trong một Space.",
+      "get_ticket": "Đọc một ticket cùng mô tả, trường tuỳ chỉnh, comment và subtask.",
       "list_transitions": "Liệt kê các status ticket có thể chuyển sang lúc này.",
-      "create_ticket": "Tạo ticket trong một Space.",
-      "update_ticket": "Đổi tiêu đề hoặc mô tả của ticket.",
+      "create_ticket": "Tạo ticket trong một Space, kể cả trường tuỳ chỉnh.",
+      "update_ticket": "Đổi bất kỳ trường nào của ticket, kể cả trường tuỳ chỉnh.",
       "transition_ticket": "Chuyển ticket sang status khác theo workflow.",
-      "add_comment": "Thêm comment vào ticket."
+      "add_comment": "Thêm comment vào ticket.",
+      "get_space_fields": "Liệt kê loại ticket, status, priority và trường tuỳ chỉnh một Space dùng."
     },
     "securityTitle": "Bảo mật",
     "securityBody": "Token hoạt động dưới tên bạn nên rule workflow và quyền Space vẫn được áp dụng. Không để token trong tệp dùng chung, mỗi client một token, và thu hồi ngay khi không cần nữa."

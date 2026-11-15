@@ -31,6 +31,10 @@ The assistant uses the same tools as the [MCP server](../apps/api/src/SprintBoot
 - Tools that change something (create or edit tickets, comment, transition, log work, move to a sprint, …) **never run on
   their own**. The assistant proposes them as a card with the arguments, and nothing happens until the person clicks
   **Confirm**. **Decline** tells the assistant the change was refused. Asking something else declines what is pending.
+- Custom fields work like the built-in ones: `get_space_fields` lists a space's fields with their `cf.` keys, kinds and
+  options; `get_ticket` and `search_tickets` return them; `create_ticket`, `update_ticket` and `transition_ticket` take
+  values by key (options by label, people as for the assignee); `search_tickets` filters by them. Writing a custom field is
+  a change like any other, so it waits for **Confirm** too.
 
 The ticket a conversation is about, and the ticket the person has open while asking, go along with every question with
 their comments, so "this ticket" or "this page" needs no explaining and answers follow the ticket as it changes. A ticket

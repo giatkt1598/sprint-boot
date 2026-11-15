@@ -48,6 +48,9 @@ public class TicketDraft
 
     [Description("Sprint name, active for the running sprint, or backlog.")]
     public string? Sprint { get; set; }
+
+    [Description("Custom field values by \"cf.\" key from get_space_fields: text, a number, a date like 2026-11-30, true or false, an option label (a list of labels for multi-select), or a person as for assignee.")]
+    public Dictionary<string, JsonElement>? CustomFields { get; set; }
 }
 
 public class IdempotentCreation
@@ -69,7 +72,8 @@ public class TicketTools(
     IDocsTicketAppService documents,
     IAbpDistributedLock locks,
     IDistributedCache<IdempotentCreation> created,
-    ICurrentUser currentUser)
+    ICurrentUser currentUser,
+    McpCustomFields mcpFields)
 {
     private const int MaxBatch = 20;
     private const int MaxBulkUpdate = 50;
@@ -100,6 +104,9 @@ public class TicketTools(
         [Description("Created on or before.")] string? createdTo = null,
         [Description("Updated on or after.")] string? updatedFrom = null,
         [Description("Updated on or before.")] string? updatedTo = null,
+        [Description("Custom field filters, all of which must match, each \"cf.key:operator:value\": in (option labels or people, comma separated), is (true or false), gte or lte (a number or a date), has (text), empty or any (no value). Without space, only workspace fields.")]
+        List<string>? customFields = null,
+        [Description("Return each ticket's custom fields.")] bool includeCustomFields = false,
         [Description("How many to skip, from nextOffset of the previous page.")] int offset = 0,
         [Description("How many to return, at most 50.")] int limit = 20) => runner.ReadAsync(async () =>
     {
@@ -115,6 +122,8 @@ public class TicketTools(
             CreatedTo = createdTo is null ? null : EndOfDay(createdTo, "createdTo"),
             UpdatedFrom = updatedFrom is null ? null : McpResolver.Time(updatedFrom, "updatedFrom"),
             UpdatedTo = updatedTo is null ? null : EndOfDay(updatedTo, "updatedTo"),
+            Custom = customFields is { Count: > 0 } ? await mcpFields.ResolveFiltersAsync(project?.Id, customFields) : null,
+            IncludeCustomFields = includeCustomFields,
         };
 
         if (types is { Count: > 0 })
@@ -178,6 +187,7 @@ public class TicketTools(
                 Assignee = McpViews.Person(ticket.Assignee),
                 Sprint = ticket.SprintName,
                 ticket.UpdatedAt,
+                CustomFields = McpCustomFields.View(ticket.CustomFields),
             }),
         };
     });
@@ -225,6 +235,8 @@ public class TicketTools(
             ticket.StoryPoints,
             ticket.StartDate,
             ticket.DueDate,
+            // The fields the space shows for the type, by "cf." key; null means empty.
+            CustomFields = McpCustomFields.View(ticket.CustomFields),
             Sprint = sprint is null ? null : $"{sprint.Name} ({sprint.State})",
             TimeLogged = ticket.TotalMinutesLogged == 0 ? null : McpViews.Duration(ticket.TotalMinutesLogged),
             ticket.CreatedAt,
@@ -252,6 +264,8 @@ public class TicketTools(
         [Description("Date like 2026-11-30.")] string? startDate = null,
         [Description("Date like 2026-11-30.")] string? dueDate = null,
         [Description("Sprint name, or active for the running sprint.")] string? sprint = null,
+        [Description("Custom field values by \"cf.\" key from get_space_fields: text, a number, a date like 2026-11-30, true or false, an option label (a list of labels for multi-select), or a person as for assignee.")]
+        Dictionary<string, JsonElement>? customFields = null,
         [Description("Any unique string for this creation; repeats within a day return the same ticket.")] string? idempotencyKey = null)
     {
         runner.EnsureWritable();
@@ -259,6 +273,7 @@ public class TicketTools(
         {
             Title = title, Type = type, Description = description, Priority = priority, Assignee = assignee,
             Parent = parent, Labels = labels, StoryPoints = storyPoints, StartDate = startDate, DueDate = dueDate, Sprint = sprint,
+            CustomFields = customFields,
         };
 
         if (string.IsNullOrWhiteSpace(idempotencyKey))
@@ -342,7 +357,9 @@ public class TicketTools(
         [Description("Date like 2026-11-30.")] string? startDate = null,
         [Description("Date like 2026-11-30.")] string? dueDate = null,
         [Description("Sprint name, active, or backlog.")] string? sprint = null,
-        [Description("Fields to empty: description, assignee, parent, labels, storyPoints, startDate, dueDate.")] List<string>? clear = null,
+        [Description("Custom field values by \"cf.\" key from get_space_fields: text, a number, a date like 2026-11-30, true or false, an option label (a list of labels for multi-select), or a person as for assignee.")]
+        Dictionary<string, JsonElement>? customFields = null,
+        [Description("Fields to empty: description, assignee, parent, labels, storyPoints, startDate, dueDate, or a custom field by \"cf.\" key.")] List<string>? clear = null,
         [Description("The concurrencyStamp from get_ticket, to refuse the change if someone edited the ticket since.")] string? concurrencyStamp = null)
         => runner.WriteAsync(async () =>
     {
@@ -351,7 +368,7 @@ public class TicketTools(
         {
             Title = title, Description = description, Type = type, Priority = priority, Assignee = assignee,
             Parent = parent, Labels = labels, AddLabels = addLabels, RemoveLabels = removeLabels, StoryPoints = storyPoints,
-            StartDate = startDate, DueDate = dueDate, Sprint = sprint, Clear = clear,
+            StartDate = startDate, DueDate = dueDate, Sprint = sprint, Clear = clear, CustomFields = customFields,
         }, concurrencyStamp);
         return Updated(ticket, updated);
     });
@@ -387,7 +404,9 @@ public class TicketTools(
         string? startDate = null,
         string? dueDate = null,
         [Description("Sprint name, active, or backlog.")] string? sprint = null,
-        [Description("Fields to empty: assignee, parent, labels, storyPoints, startDate, dueDate.")] List<string>? clear = null)
+        [Description("Custom field values by \"cf.\" key from get_space_fields: text, a number, a date like 2026-11-30, true or false, an option label (a list of labels for multi-select), or a person as for assignee.")]
+        Dictionary<string, JsonElement>? customFields = null,
+        [Description("Fields to empty: assignee, parent, labels, storyPoints, startDate, dueDate, or a custom field by \"cf.\" key.")] List<string>? clear = null)
         => runner.WriteAsync(async () =>
     {
         if (keys.Count is 0 or > MaxBulkUpdate)
@@ -399,6 +418,7 @@ public class TicketTools(
         {
             Type = type, Priority = priority, Assignee = assignee, Parent = parent, AddLabels = addLabels,
             RemoveLabels = removeLabels, StoryPoints = storyPoints, StartDate = startDate, DueDate = dueDate, Sprint = sprint, Clear = clear,
+            CustomFields = customFields,
         };
         var results = new List<BatchResult>();
         foreach (var key in keys.Distinct(StringComparer.OrdinalIgnoreCase))
@@ -449,7 +469,14 @@ public class TicketTools(
             ?? throw new McpException($"{ticket.Key} cannot move to {status} now. It can move to: {(available.Count == 0 ? "nothing" : string.Join(", ", available.Select(item => item.ToStatus.Name).Distinct()))}.");
 
         var values = new Dictionary<string, JsonElement>();
-        foreach (var (field, value) in fields ?? [])
+        // Custom fields ("cf." keys) the move requires resolve like in update_ticket.
+        var custom = (fields ?? []).Where(pair => pair.Key.Trim().StartsWith(CustomFieldConsts.KeyPrefix, StringComparison.OrdinalIgnoreCase)).ToDictionary();
+        foreach (var (field, value) in await mcpFields.ResolveAsync(ticket.ProjectId, custom))
+        {
+            values[field] = value;
+        }
+
+        foreach (var (field, value) in (fields ?? []).Where(pair => !custom.ContainsKey(pair.Key)))
         {
             var canonical = FieldKey(field);
             values[canonical] = await ResolveFieldAsync(ticket.ProjectId, canonical, value);
@@ -482,6 +509,7 @@ public class TicketTools(
             StoryPoints = draft.StoryPoints,
             StartDate = draft.StartDate is null ? null : McpResolver.Date(draft.StartDate, "startDate"),
             DueDate = draft.DueDate is null ? null : McpResolver.Date(draft.DueDate, "dueDate"),
+            CustomFields = await mcpFields.ResolveAsync(project.Id, draft.CustomFields),
         });
 
         if (draft.Sprint is not null && (await resolver.SprintAsync(project.Id, draft.Sprint)).Id is { } sprintId)
@@ -523,6 +551,8 @@ public class TicketTools(
         public string? Sprint { get; init; }
 
         public List<string>? Clear { get; init; }
+
+        public Dictionary<string, JsonElement>? CustomFields { get; init; }
     }
 
     private async Task<TicketDto> ApplyAsync(TicketDto ticket, Changes changes, string? concurrencyStamp)
@@ -589,7 +619,19 @@ public class TicketTools(
             Set(TicketFieldKeys.DueDate, McpResolver.Date(changes.DueDate, "dueDate").ToString("O"));
         }
 
-        foreach (var name in changes.Clear ?? [])
+        foreach (var (field, value) in await mcpFields.ResolveAsync(ticket.ProjectId, changes.CustomFields))
+        {
+            fields[field] = value;
+        }
+
+        var clearCustom = (changes.Clear ?? []).Where(name => name.Trim().StartsWith(CustomFieldConsts.KeyPrefix, StringComparison.OrdinalIgnoreCase))
+            .ToDictionary(name => name, _ => JsonSerializer.SerializeToElement<object?>(null));
+        foreach (var (field, value) in await mcpFields.ResolveAsync(ticket.ProjectId, clearCustom))
+        {
+            fields[field] = value;
+        }
+
+        foreach (var name in (changes.Clear ?? []).Where(name => !clearCustom.ContainsKey(name)))
         {
             var field = FieldKey(name);
             if (!Clearable.Contains(field))
@@ -720,5 +762,6 @@ public class TicketTools(
         ticket.DueDate,
         Parent = ticket.Parent?.Key,
         Type = ticket.Type.Name,
+        CustomFields = McpCustomFields.View(ticket.CustomFields),
     };
 }

@@ -15,7 +15,8 @@ public class LookupTools(
     IProjectAppService projects,
     ITicketAppService tickets,
     ISprintAppService sprints,
-    IUserDirectoryAppService users)
+    IUserDirectoryAppService users,
+    McpCustomFields customFields)
 {
     [McpServerTool(Name = "list_spaces", ReadOnly = true), Description(
         "Lists the spaces you can see, with their keys. Archived spaces are read-only and left out unless includeArchived is true.")]
@@ -32,24 +33,27 @@ public class LookupTools(
         }));
 
     [McpServerTool(Name = "get_space_fields", ReadOnly = true), Description(
-        "Lists the values the ticket fields of a space accept: ticket types, priorities, statuses, labels, epics and open sprints.")]
+        "Lists the values the ticket fields of a space accept: ticket types, priorities, statuses, labels, epics, open sprints, " +
+        "and the space's custom fields with their \"cf.\" keys, kinds, the ticket types that show them and their options.")]
     public Task<string> GetSpaceFields([Description("Space key.")] string space) => runner.ReadAsync(async () =>
     {
         var project = await resolver.SpaceAsync(space);
         var openSprints = project.Type == BoardType.Scrum
             ? (await sprints.GetBacklogAsync(project.Id)).Sprints.Select(item => $"{item.Sprint.Name} ({item.Sprint.State})").ToList()
             : null;
+        var types = await resolver.TypesAsync(project.Id);
         return new
         {
             project.Key,
             project.Name,
             Board = project.Type.ToString(),
-            Types = (await resolver.TypesAsync(project.Id)).Select(type => new { type.Name, Level = type.Hierarchy.ToString() }),
+            Types = types.Select(type => new { type.Name, Level = type.Hierarchy.ToString() }),
             Priorities = (await tickets.GetPrioritiesAsync()).OrderBy(priority => priority.Order).Select(priority => priority.Name),
             Statuses = (await resolver.StatusesAsync(project.Id)).Select(status => new { status.Name, Category = status.Category.ToString() }),
             Labels = await tickets.GetLabelsAsync(project.Id),
             Epics = (await tickets.GetEpicsAsync(project.Id)).Select(epic => new { epic.Key, epic.Title, Status = epic.Status.Name }),
             Sprints = openSprints,
+            CustomFields = await customFields.DescribeAsync(project.Id, types),
         };
     });
 

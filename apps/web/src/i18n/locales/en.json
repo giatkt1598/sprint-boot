@@ -1354,13 +1354,14 @@
     "purpose": "What it does",
     "tools": {
       "list_spaces": "Lists the spaces you can see, with their keys.",
-      "search_tickets": "Finds tickets by text, optionally within one space.",
-      "get_ticket": "Reads one ticket with its description, comments and subtasks.",
+      "search_tickets": "Finds tickets by text, fields and custom fields, optionally within one space.",
+      "get_ticket": "Reads one ticket with its description, custom fields, comments and subtasks.",
       "list_transitions": "Lists the statuses a ticket can move to now.",
-      "create_ticket": "Creates a ticket in a space.",
-      "update_ticket": "Changes the title or description of a ticket.",
+      "create_ticket": "Creates a ticket in a space, custom fields included.",
+      "update_ticket": "Changes any fields of a ticket, custom fields included.",
       "transition_ticket": "Moves a ticket to another status, following its workflow.",
-      "add_comment": "Adds a comment to a ticket."
+      "add_comment": "Adds a comment to a ticket.",
+      "get_space_fields": "Lists the types, statuses, priorities and custom fields a space accepts."
     },
     "securityTitle": "Security",
     "securityBody": "A token acts as you, so workflow rules and space permissions still apply. Keep tokens out of shared files, give each client its own, and revoke one as soon as it is no longer needed."
