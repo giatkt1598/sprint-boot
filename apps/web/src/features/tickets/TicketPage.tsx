@@ -8,7 +8,7 @@ import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { DevelopmentPanel } from './DevelopmentPanel';
 import { AddIcon, DeleteIcon, LinkIcon, MoreIcon, ShowIcon, UploadIcon } from '../../components/icons';
-import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
+import { Fragment, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router';
 import { ApiError, apiClient, unwrap } from '../../api';
@@ -50,7 +50,7 @@ import { DatePicker } from '../../components/DatePicker';
 import { useCompact } from '../../lib/responsive';
 import { PageTitleScope, usePageTitle } from '../../lib/pageTitle';
 import { DETAIL_GAP, DETAIL_INSET, DETAIL_LABEL_WIDTH, DetailRow, DetailText } from './DetailLayout';
-import { fieldKey } from '../customFields/api';
+import { BUILT_IN_FIELDS, fieldKey, useFieldLayout } from '../customFields/api';
 import { CustomFieldInput, valueOf } from '../customFields/CustomFieldInput';
 
 const useTicket = (key: string | undefined) =>
@@ -151,6 +151,7 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
   const [addingSubtask, setAddingSubtask] = useState(false);
   const [tab, setTab] = useState('comments');
   const details = usePersistentWidth('sprint-boot.ticket-sidebar-width', DETAILS_WIDTH);
+  const fieldLayout = useFieldLayout(ticket.projectId);
   const sidebarWidth = details.width;
   const [fieldError, setFieldError] = useState<string | null>(null);
 
@@ -208,6 +209,121 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
     await navigator.clipboard.writeText(`${window.location.origin}/browse/${ticket.key}`);
     toast('success', t('tickets.linkCopied'));
   };
+
+  // The Details rows by field key; the space's layout decides their order and which built-in ones show.
+  const detailRows: Record<string, ReactNode> = {
+    status: (
+      <DetailRow key="status" label={t('tickets.status')}>
+        <span className="flex" style={{ paddingLeft: DETAIL_INSET }}>
+          <TransitionControl ticket={ticket} people={people} onConflict={() => setConflict(true)} />
+        </span>
+      </DetailRow>
+    ),
+    assignee: (
+      <Fragment key="assignee">
+        <DetailRow label={t('tickets.assignee')}>
+          {canEdit ? (
+            <UserPicker
+              hideLabel
+              label={t('tickets.assignee')}
+              options={people}
+              value={ticket.assignee ?? null}
+              emptyLabel={t('common.unassigned')}
+              onChange={(user) => update.mutate({ assignee: user?.id ?? null })}
+            />
+          ) : (
+            <DetailText><Person name={ticket.assignee?.name} src={ticket.assignee?.avatarUrl} /></DetailText>
+          )}
+        </DetailRow>
+        {canEdit && !ticket.assignee && (
+          <div style={{ paddingLeft: DETAIL_LABEL_WIDTH + DETAIL_GAP + DETAIL_INSET }}>
+            <Button kind="link" sx={{ minHeight: 0, padding: 0 }} onClick={() => update.mutate({ assignee: me.id })}>{t('tickets.assignToMe')}</Button>
+          </div>
+        )}
+      </Fragment>
+    ),
+    // Whoever created the ticket; it never changes.
+    reporter: (
+      <DetailRow key="reporter" label={t('tickets.reporter')}>
+        <DetailText><Person name={ticket.reporter?.name} src={ticket.reporter?.avatarUrl} /></DetailText>
+      </DetailRow>
+    ),
+    priority: (
+      <DetailRow key="priority" label={t('tickets.priority')}>
+        {canEdit ? (
+          <SelectField
+            quiet
+            label={t('tickets.priority')}
+            value={ticket.priority?.id ?? ''}
+            onChange={(event) => update.mutate({ priority: event.target.value })}
+            options={(priorities.data ?? []).map((item) => ({
+              value: item.id!,
+              label: item.name!,
+              icon: <PriorityIcon priority={priorityLevel(item)} />,
+            }))}
+          />
+        ) : (
+          <DetailText><PriorityIcon priority={priorityLevel(ticket.priority)} />{ticket.priority?.name}</DetailText>
+        )}
+      </DetailRow>
+    ),
+    sprint: ticket.type?.hierarchy === 1 && space.data?.type === 0 && (
+      <DetailRow key="sprint" label={t('agile.sprint')}>
+        <SprintField ticket={ticket} canEdit={canEdit} onError={(failure) => toast('error', toMessage(failure))} />
+      </DetailRow>
+    ),
+    epic: ticket.type?.hierarchy === 1 && (
+      <DetailRow key="epic" label={t('tickets.epic')}>
+        <EpicField ticket={ticket} canEdit={canEdit} epics={epics.data?.items ?? []} onPick={(epicId) => update.mutate({ parent: epicId })} />
+      </DetailRow>
+    ),
+    labels: (
+      <DetailRow key="labels" label={t('tickets.labels')}>
+        <LabelsField
+          ticket={ticket}
+          disabled={!canEdit}
+          onSave={(labels, onSettled) => update.mutate({ labels }, { onSettled: (_, failure) => onSettled(!failure) })}
+        />
+      </DetailRow>
+    ),
+    storyPoints: (
+      <DetailRow key="storyPoints" label={t('tickets.points')}>
+        <PointsField
+          value={ticket.storyPoints?.toString() ?? ''}
+          disabled={!canEdit}
+          onSave={(text, onSettled) => update.mutate({ storyPoints: text ? Number(text) : null }, { onSettled })}
+        />
+      </DetailRow>
+    ),
+    startDate: (
+      <DetailRow key="startDate" label={t('tickets.startDate')}>
+        <DatePicker quiet label={t('tickets.startDate')} value={ticket.startDate ?? ''} rangeEnd={ticket.dueDate ?? ''} disabled={!canEdit} onChange={(text) => update.mutate({ startDate: text || null })} />
+      </DetailRow>
+    ),
+    dueDate: (
+      <DetailRow key="dueDate" label={t('tickets.dueDate')}>
+        <DatePicker quiet label={t('tickets.dueDate')} value={ticket.dueDate ?? ''} rangeStart={ticket.startDate ?? ''} disabled={!canEdit} onChange={(text) => update.mutate({ dueDate: text || null })} />
+      </DetailRow>
+    ),
+    ...Object.fromEntries((ticket.customFields ?? []).map((item) => [
+      fieldKey(item.field!),
+      <DetailRow key={item.field!.id} label={item.field!.name ?? ''} hint={item.field!.description}>
+        <CustomFieldInput
+          quiet
+          field={item.field!}
+          value={valueOf(item)}
+          disabled={!canEdit}
+          people={people}
+          onChange={(value) => update.mutate({ [fieldKey(item.field!)]: value })}
+        />
+      </DetailRow>,
+    ])),
+  };
+  // Until the layout loads, and for fields it does not know yet, the default order.
+  const hiddenFields = fieldLayout.data?.hidden ?? [];
+  const layoutOrder = fieldLayout.data?.order ?? Object.keys(BUILT_IN_FIELDS);
+  const fieldOrder = [...layoutOrder, ...Object.keys(detailRows).filter((key) => !layoutOrder.includes(key))]
+    .filter((key) => !hiddenFields.includes(key));
 
   return (
     <div className={compact ? 'flex flex-col gap-4' : 'flex h-full min-h-0 flex-col gap-4'}>
@@ -410,94 +526,7 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
           <CollapseHeading label={t('tickets.details')} open={detailsOpen} onToggle={() => setDetailsOpen(!detailsOpen)} />
           {detailsOpen && (
           <>
-          <DetailRow label={t('tickets.status')}>
-            <span className="flex" style={{ paddingLeft: DETAIL_INSET }}>
-              <TransitionControl ticket={ticket} people={people} onConflict={() => setConflict(true)} />
-            </span>
-          </DetailRow>
-          <DetailRow label={t('tickets.assignee')}>
-            {canEdit ? (
-              <UserPicker
-                hideLabel
-                label={t('tickets.assignee')}
-                options={people}
-                value={ticket.assignee ?? null}
-                emptyLabel={t('common.unassigned')}
-                onChange={(user) => update.mutate({ assignee: user?.id ?? null })}
-              />
-            ) : (
-              <DetailText><Person name={ticket.assignee?.name} src={ticket.assignee?.avatarUrl} /></DetailText>
-            )}
-          </DetailRow>
-          {canEdit && !ticket.assignee && (
-            <div style={{ paddingLeft: DETAIL_LABEL_WIDTH + DETAIL_GAP + DETAIL_INSET }}>
-              <Button kind="link" sx={{ minHeight: 0, padding: 0 }} onClick={() => update.mutate({ assignee: me.id })}>{t('tickets.assignToMe')}</Button>
-            </div>
-          )}
-          {/* Whoever created the ticket; it never changes. */}
-          <DetailRow label={t('tickets.reporter')}>
-            <DetailText><Person name={ticket.reporter?.name} src={ticket.reporter?.avatarUrl} /></DetailText>
-          </DetailRow>
-          <DetailRow label={t('tickets.priority')}>
-            {canEdit ? (
-              <SelectField
-                quiet
-                label={t('tickets.priority')}
-                value={ticket.priority?.id ?? ''}
-                onChange={(event) => update.mutate({ priority: event.target.value })}
-                options={(priorities.data ?? []).map((item) => ({
-                  value: item.id!,
-                  label: item.name!,
-                  icon: <PriorityIcon priority={priorityLevel(item)} />,
-                }))}
-              />
-            ) : (
-              <DetailText><PriorityIcon priority={priorityLevel(ticket.priority)} />{ticket.priority?.name}</DetailText>
-            )}
-          </DetailRow>
-          {ticket.type?.hierarchy === 1 && space.data?.type === 0 && (
-            <DetailRow label={t('agile.sprint')}>
-              <SprintField ticket={ticket} canEdit={canEdit} onError={(failure) => toast('error', toMessage(failure))} />
-            </DetailRow>
-          )}
-          {ticket.type?.hierarchy === 1 && (
-            <DetailRow label={t('tickets.epic')}>
-              <EpicField ticket={ticket} canEdit={canEdit} epics={epics.data?.items ?? []} onPick={(epicId) => update.mutate({ parent: epicId })} />
-            </DetailRow>
-          )}
-          <DetailRow label={t('tickets.labels')}>
-            <LabelsField
-              ticket={ticket}
-              disabled={!canEdit}
-              onSave={(labels, onSettled) => update.mutate({ labels }, { onSettled: (_, failure) => onSettled(!failure) })}
-            />
-          </DetailRow>
-          <DetailRow label={t('tickets.points')}>
-            <PointsField
-              value={ticket.storyPoints?.toString() ?? ''}
-              disabled={!canEdit}
-              onSave={(text, onSettled) => update.mutate({ storyPoints: text ? Number(text) : null }, { onSettled })}
-            />
-          </DetailRow>
-          <DetailRow label={t('tickets.startDate')}>
-            <DatePicker quiet label={t('tickets.startDate')} value={ticket.startDate ?? ''} rangeEnd={ticket.dueDate ?? ''} disabled={!canEdit} onChange={(text) => update.mutate({ startDate: text || null })} />
-          </DetailRow>
-          <DetailRow label={t('tickets.dueDate')}>
-            <DatePicker quiet label={t('tickets.dueDate')} value={ticket.dueDate ?? ''} rangeStart={ticket.startDate ?? ''} disabled={!canEdit} onChange={(text) => update.mutate({ dueDate: text || null })} />
-          </DetailRow>
-          {/* The space's custom fields for this type, in its order, after the built-in ones. */}
-          {(ticket.customFields ?? []).map((item) => (
-            <DetailRow key={item.field!.id} label={item.field!.name ?? ''} hint={item.field!.description}>
-              <CustomFieldInput
-                quiet
-                field={item.field!}
-                value={valueOf(item)}
-                disabled={!canEdit}
-                people={people}
-                onChange={(value) => update.mutate({ [fieldKey(item.field!)]: value })}
-              />
-            </DetailRow>
-          ))}
+          {fieldOrder.map((key) => detailRows[key]).filter(Boolean)}
           {fieldError && <Typography role="alert" variant="body2" color="error">{fieldError}</Typography>}
           </>
           )}

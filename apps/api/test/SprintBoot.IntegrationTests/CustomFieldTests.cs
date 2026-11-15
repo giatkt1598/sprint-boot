@@ -285,4 +285,33 @@ public class CustomFieldTests(ApiFixture fixture)
         (await owner.Http.GetAsync($"/api/v1/ticket/search?{F(impact, "any")}", Token)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         _ = (a, b, c, d);
     }
+
+    [Fact]
+    public async Task A_space_orders_built_in_and_custom_fields_together_and_hides_built_in_ones()
+    {
+        var owner = await fixture.CreateUserClientAsync(Token);
+        var (project, _) = await SpaceAsync(owner);
+        var field = await CreateFieldAsync(owner, new { projectId = project.Id, name = "Customer", type = CustomFieldType.Text });
+        var custom = $"cf.{field.Key}";
+
+        var initial = await owner.Http.GetFromJsonAsync<FieldLayoutDto>($"/api/v1/custom-field/layout/{project.Id}", Token);
+        initial!.Order.ShouldBe([.. TicketDetailFields.All, custom]);
+        initial.Hidden.ShouldBeEmpty();
+
+        var spaceFields = await owner.Http.GetFromJsonAsync<List<SpaceCustomFieldDto>>($"/api/v1/custom-field/space-fields/{project.Id}", Token);
+        var saved = await owner.Http.PostAsJsonAsync($"/api/v1/custom-field/set-space-fields/{project.Id}", new
+        {
+            items = spaceFields!.Where(item => item.Enabled).Select(item => new { fieldId = item.Field.Id, ticketTypeIds = item.TicketTypeIds }),
+            order = new[] { "status", custom, "priority", "assignee", "nope" },
+            hidden = new[] { "reporter", "status", "sprint" },
+        }, Token);
+        saved.StatusCode.ShouldBe(HttpStatusCode.OK, await saved.Content.ReadAsStringAsync(Token));
+
+        var layout = await owner.Http.GetFromJsonAsync<FieldLayoutDto>($"/api/v1/custom-field/layout/{project.Id}", Token);
+        layout!.Order.Take(4).ShouldBe(["status", custom, "priority", "assignee"]);
+        layout.Order.ShouldBe(layout.Order.Distinct());
+        layout.Order.Length.ShouldBe(TicketDetailFields.All.Length + 1);
+        // The status always shows.
+        layout.Hidden.ShouldBe(["reporter", "sprint"], ignoreOrder: true);
+    }
 }

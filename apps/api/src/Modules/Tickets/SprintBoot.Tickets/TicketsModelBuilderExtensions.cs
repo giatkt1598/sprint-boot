@@ -229,6 +229,13 @@ public static class TicketsModelBuilderExtensions
             b.HasOne<CustomField>().WithMany().HasForeignKey(row => row.FieldId).OnDelete(DeleteBehavior.Cascade);
         });
 
+        builder.Entity<ProjectFieldLayout>(b =>
+        {
+            b.ToTable("project_field_layouts", Schema);
+            b.ConfigureByConvention();
+            b.HasIndex(layout => layout.ProjectId).IsUnique();
+        });
+
         // One column per kind, each indexed with the field, so a filter or a sort by a custom field reads an index.
         builder.Entity<TicketFieldValue>(b =>
         {

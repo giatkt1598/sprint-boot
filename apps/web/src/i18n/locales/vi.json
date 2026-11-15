@@ -1948,7 +1948,7 @@
     "title": "Trường tuỳ chỉnh",
     "subtitle": "Các trường mọi space có thể bật cho ticket. Mỗi space cũng có thể có trường riêng.",
     "spaceTitle": "Trường",
-    "spaceSubtitle": "Các trường tuỳ chỉnh space này dùng, theo thứ tự ticket hiển thị, và loại ticket hiện từng trường.",
+    "spaceSubtitle": "Mọi trường trong phần Chi tiết của ticket, theo thứ tự hiển thị. Trường có sẵn có thể ẩn; trường tuỳ chỉnh hiện ở các loại ticket bạn chọn.",
     "add": "Thêm trường",
     "createTitle": "Thêm trường",
     "editTitle": "Sửa {{name}}",
@@ -1978,7 +1978,6 @@
     "deleteBody_other": "Trường sẽ biến mất khỏi mọi ticket. {{count}} ticket đang có giá trị; giá trị vẫn được lưu nhưng không hiện nữa.",
     "deleteBodyUnused": "Trường sẽ biến mất khỏi mọi ticket. Chưa ticket nào có giá trị.",
     "empty": "Chưa có trường tuỳ chỉnh nào.",
-    "spaceEmpty": "Chưa có trường tuỳ chỉnh nào. Thêm trường cho space này, hoặc nhờ admin thêm trường dùng chung.",
     "workspace": "Dùng chung",
     "thisSpace": "Space này",
     "on": "Bật",
@@ -2021,6 +2020,10 @@
     "chipIs": "{{name}}: {{value}}",
     "chipAtLeast": "{{name}} ≥ {{value}}",
     "chipAtMost": "{{name}} ≤ {{value}}",
-    "chipHas": "{{name}} chứa “{{value}}”"
+    "chipHas": "{{name}} chứa “{{value}}”",
+    "builtIn": "Có sẵn",
+    "showInDetails": "Hiện trong chi tiết ticket",
+    "alwaysShown": "Luôn hiện: status dùng để chuyển ticket theo workflow.",
+    "alwaysShownShort": "Luôn hiện"
   }
 }

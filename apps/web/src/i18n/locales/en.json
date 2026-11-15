@@ -1948,7 +1948,7 @@
     "title": "Custom fields",
     "subtitle": "Fields every space can turn on for its tickets. A space can also have fields of its own.",
     "spaceTitle": "Fields",
-    "spaceSubtitle": "The custom fields this space uses, in the order tickets show them, and the ticket types that show each one.",
+    "spaceSubtitle": "Every field of a ticket’s Details, in the order they show. Built-in fields can be hidden; custom fields show on the ticket types you pick.",
     "add": "Add field",
     "createTitle": "Add a field",
     "editTitle": "Edit {{name}}",
@@ -1978,7 +1978,6 @@
     "deleteBody_other": "The field leaves every ticket. {{count}} tickets have a value in it; the values stay stored but are no longer shown.",
     "deleteBodyUnused": "The field leaves every ticket. No ticket has a value in it yet.",
     "empty": "No custom fields yet.",
-    "spaceEmpty": "No custom fields yet. Add one for this space, or ask an admin to add workspace fields.",
     "workspace": "Workspace",
     "thisSpace": "This space",
     "on": "On",
@@ -2021,6 +2020,10 @@
     "chipIs": "{{name}}: {{value}}",
     "chipAtLeast": "{{name}} ≥ {{value}}",
     "chipAtMost": "{{name}} ≤ {{value}}",
-    "chipHas": "{{name}} contains “{{value}}”"
+    "chipHas": "{{name}} contains “{{value}}”",
+    "builtIn": "Built-in",
+    "showInDetails": "Show in ticket details",
+    "alwaysShown": "Always shown: the status moves the ticket along its workflow.",
+    "alwaysShownShort": "Always shown"
   }
 }

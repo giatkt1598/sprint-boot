@@ -98,6 +98,8 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
 
     public DbSet<TicketFieldValue> TicketFieldValues { get; set; } = null!;
 
+    public DbSet<ProjectFieldLayout> ProjectFieldLayouts { get; set; } = null!;
+
     public DbSet<ProjectIntroduction> ProjectIntroductions { get; set; } = null!;
 
     public DbSet<RecentTicket> RecentTickets { get; set; } = null!;

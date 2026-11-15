@@ -11,7 +11,7 @@ import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { Checkbox } from '../../components/Checkbox';
 import { ArrowDownIcon, ArrowUpIcon } from '../../components/icons';
-import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews';
+import { ErrorState, LoadingState } from '../../components/StateViews';
 import { TicketTypeIcon, type TicketType as IconType } from '../../components/TicketIcons';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
@@ -19,21 +19,44 @@ import { usePageTitle } from '../../lib/pageTitle';
 import { radius, sem } from '../../theme/tokens';
 import { SpacePermission, type Space } from '../spaces/api';
 import { useTicketTypes } from '../tickets/api';
-import { useRefreshFields, useSpaceFields, type CustomField, type SpaceCustomField } from './api';
+import {
+  ALWAYS_SHOWN,
+  BUILT_IN_FIELDS,
+  fieldKey,
+  useFieldLayout,
+  useRefreshFields,
+  useSpaceFields,
+  type CustomField,
+  type SpaceCustomField,
+} from './api';
 import { CustomFieldDialog } from './CustomFieldDialog';
 import { DeleteFieldDialog, OptionChips } from './CustomFieldsAdminPage';
 
-interface Row {
-  field: CustomField;
-  enabled: boolean;
-  typeIds: string[];
+/** A built-in field (shown or hidden, never removed) or a custom one (on or off, for some ticket types). */
+type Row =
+  | { kind: 'builtIn'; key: string; shown: boolean }
+  | { kind: 'custom'; key: string; field: CustomField; enabled: boolean; typeIds: string[] };
+
+/** In the layout's order: the fields in use, then the workspace fields the space has not turned on. */
+function toRows(fields: SpaceCustomField[], order: string[], hidden: string[]): Row[] {
+  const custom = new Map(fields.map((item) => [fieldKey(item.field!), item]));
+  const inOrder = order.flatMap((key): Row[] => {
+    if (key in BUILT_IN_FIELDS) {
+      return [{ kind: 'builtIn', key, shown: !hidden.includes(key) }];
+    }
+    const item = custom.get(key);
+    return item?.enabled ? [{ kind: 'custom', key, field: item.field!, enabled: true, typeIds: item.ticketTypeIds ?? [] }] : [];
+  });
+  const off = fields.filter((item) => !item.enabled).map((item): Row => ({ kind: 'custom', key: fieldKey(item.field!), field: item.field!, enabled: false, typeIds: [] }));
+  return [...inOrder, ...off];
 }
 
-const toRows = (list: SpaceCustomField[]): Row[] => list.map((item) => ({ field: item.field!, enabled: item.enabled ?? false, typeIds: item.ticketTypeIds ?? [] }));
+const inUse = (row: Row) => row.kind === 'builtIn' || row.enabled;
 
 /**
- * Space settings → Fields: which custom fields the space uses, the ticket types that show each, and their order. The
- * space's own fields are always on; workspace fields can be turned on and off.
+ * Space settings → Fields: every field of a ticket's Details sidebar, built-in and custom, in the order the sidebar
+ * shows them. Built-in fields can be hidden but not removed; custom fields are on for some ticket types; the space's own
+ * custom fields can be edited and deleted here.
  */
 export function SpaceFieldsPage() {
   const { t } = useTranslation();
@@ -44,6 +67,7 @@ export function SpaceFieldsPage() {
   const toMessage = useErrorMessage();
   const refresh = useRefreshFields();
   const fields = useSpaceFields(space.id);
+  const layout = useFieldLayout(space.id);
   const types = useTicketTypes(space.id);
   const [rows, setRows] = useState<Row[]>([]);
   const [dirty, setDirty] = useState(false);
@@ -51,16 +75,20 @@ export function SpaceFieldsPage() {
   const [removing, setRemoving] = useState<CustomField | null>(null);
 
   useEffect(() => {
-    if (fields.data && !dirty) {
-      setRows(toRows(fields.data));
+    if (fields.data && layout.data && !dirty) {
+      setRows(toRows(fields.data, layout.data.order ?? [], layout.data.hidden ?? []));
     }
-  }, [fields.data, dirty]);
+  }, [fields.data, layout.data, dirty]);
 
   const save = useMutation({
     mutationFn: () =>
       unwrap(apiClient.POST('/api/v1/custom-field/set-space-fields/{projectId}', {
         params: { path: { projectId: space.id! } },
-        body: { items: rows.filter((row) => row.enabled).map((row) => ({ fieldId: row.field.id!, ticketTypeIds: row.typeIds })) },
+        body: {
+          items: rows.flatMap((row) => (row.kind === 'custom' && row.enabled ? [{ fieldId: row.field.id!, ticketTypeIds: row.typeIds }] : [])),
+          order: rows.filter(inUse).map((row) => row.key),
+          hidden: rows.flatMap((row) => (row.kind === 'builtIn' && !row.shown ? [row.key] : [])),
+        },
       })),
     onSuccess: async () => {
       setDirty(false);
@@ -70,10 +98,10 @@ export function SpaceFieldsPage() {
     onError: (failure) => toast('error', toMessage(failure)),
   });
 
-  const change = (index: number, patch: Partial<Row>) => {
-    const next = rows.map((row, at) => (at === index ? { ...row, ...patch } : row));
+  const change = (index: number, next: Row) => {
+    const list = rows.map((row, at) => (at === index ? next : row));
     // The fields in use come first, in their order; turning one on puts it last among them.
-    setRows([...next.filter((row) => row.enabled), ...next.filter((row) => !row.enabled)]);
+    setRows([...list.filter(inUse), ...list.filter((row) => !inUse(row))]);
     setDirty(true);
   };
   const move = (index: number, step: number) => {
@@ -82,7 +110,8 @@ export function SpaceFieldsPage() {
     setRows(next);
     setDirty(true);
   };
-  const enabledCount = rows.filter((row) => row.enabled).length;
+  const usedCount = rows.filter(inUse).length;
+  const standardTypes = (types.data ?? []).filter((type) => type.hierarchy !== 0).map((type) => type.id!);
 
   return (
     <div className="flex flex-col gap-6">
@@ -93,72 +122,90 @@ export function SpaceFieldsPage() {
         </div>
         {canManage && <Button kind="secondary" onClick={() => setEditing('new')}>{t('customFields.add')}</Button>}
       </div>
-      {(fields.isPending || types.isPending) && <LoadingState />}
-      {fields.isError && <ErrorState onRetry={() => void fields.refetch()} />}
-      {fields.data?.length === 0 && <EmptyState title={t('customFields.spaceEmpty')} />}
+      {(fields.isPending || layout.isPending || types.isPending) && <LoadingState />}
+      {(fields.isError || layout.isError) && <ErrorState onRetry={() => { void fields.refetch(); void layout.refetch(); }} />}
       {rows.length > 0 && types.data && (
         <ul className="m-0 flex list-none flex-col gap-3 p-0" aria-label={t('customFields.spaceTitle')}>
           {rows.map((row, index) => {
-            const own = row.field.projectId === space.id;
+            const name = row.kind === 'builtIn' ? t(BUILT_IN_FIELDS[row.key]) : row.field.name ?? '';
+            const own = row.kind === 'custom' && row.field.projectId === space.id;
+            const muted = row.kind === 'builtIn' ? !row.shown : !row.enabled;
             return (
               <Box
                 component="li"
-                key={row.field.id}
+                key={row.key}
                 className="flex flex-col gap-2 p-3"
-                sx={{ border: `1px solid ${sem('border-default')}`, borderRadius: `${radius.card}px`, opacity: row.enabled ? 1 : 0.75 }}
+                sx={{ border: `1px solid ${sem('border-default')}`, borderRadius: `${radius.card}px`, opacity: muted ? 0.75 : 1 }}
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  {own || !canManage ? (
-                    <Typography sx={{ fontWeight: 500 }}>{row.field.name}</Typography>
+                  {row.kind === 'custom' && !own && canManage ? (
+                    <Checkbox
+                      label={name}
+                      checked={row.enabled}
+                      onChange={(_, checked) => change(index, { ...row, enabled: checked, typeIds: checked && row.typeIds.length === 0 ? standardTypes : row.typeIds })}
+                    />
+                  ) : (
+                    <Typography sx={{ fontWeight: 500 }}>{name}</Typography>
+                  )}
+                  {row.kind === 'custom' && <Badge tone="subtle">{t(`customFields.types.${row.field.type}`)}</Badge>}
+                  <Badge tone={row.kind === 'builtIn' ? 'subtle' : own ? 'info' : 'neutral'}>
+                    {t(row.kind === 'builtIn' ? 'customFields.builtIn' : own ? 'customFields.thisSpace' : 'customFields.workspace')}
+                  </Badge>
+                  <span className="flex-1" />
+                  {/* Built-in fields: one line, shown or hidden; the status always shows. */}
+                  {row.kind === 'builtIn' && (ALWAYS_SHOWN.includes(row.key) ? (
+                    <Typography variant="body2" color="textSecondary" title={t('customFields.alwaysShown')}>{t('customFields.alwaysShownShort')}</Typography>
                   ) : (
                     <Checkbox
-                      label={row.field.name ?? ''}
-                      checked={row.enabled}
-                      onChange={(_, checked) => change(index, { enabled: checked, typeIds: checked && row.typeIds.length === 0 ? (types.data ?? []).filter((type) => type.hierarchy !== 0).map((type) => type.id!) : row.typeIds })}
+                      label={t('customFields.showInDetails')}
+                      disabled={!canManage}
+                      checked={row.shown}
+                      onChange={(_, checked) => change(index, { ...row, shown: checked })}
                     />
-                  )}
-                  <Badge tone="subtle">{t(`customFields.types.${row.field.type}`)}</Badge>
-                  <Badge tone={own ? 'info' : 'neutral'}>{t(own ? 'customFields.thisSpace' : 'customFields.workspace')}</Badge>
-                  <span className="flex-1" />
+                  ))}
                   {canManage && own && (
                     <span className="flex gap-3 whitespace-nowrap">
-                      <Link component="button" variant="body2" aria-label={`${t('common.edit')} ${row.field.name}`} onClick={() => setEditing(row.field)}>{t('common.edit')}</Link>
-                      <Link component="button" variant="body2" aria-label={`${t('common.delete')} ${row.field.name}`} sx={{ color: sem('feedback-danger-text') }} onClick={() => setRemoving(row.field)}>
+                      <Link component="button" variant="body2" aria-label={`${t('common.edit')} ${name}`} onClick={() => setEditing(row.field)}>{t('common.edit')}</Link>
+                      <Link component="button" variant="body2" aria-label={`${t('common.delete')} ${name}`} sx={{ color: sem('feedback-danger-text') }} onClick={() => setRemoving(row.field)}>
                         {t('common.delete')}
                       </Link>
                     </span>
                   )}
-                  {canManage && row.enabled && (
+                  {canManage && inUse(row) && (
                     <span className="flex">
-                      <IconButton size="small" aria-label={t('customFields.moveUp', { name: row.field.name })} disabled={index === 0} onClick={() => move(index, -1)}>
+                      <IconButton size="small" aria-label={t('customFields.moveUp', { name })} disabled={index === 0} onClick={() => move(index, -1)}>
                         <ArrowUpIcon size={16} strokeWidth={1.5} aria-hidden />
                       </IconButton>
-                      <IconButton size="small" aria-label={t('customFields.moveDown', { name: row.field.name })} disabled={index >= enabledCount - 1} onClick={() => move(index, 1)}>
+                      <IconButton size="small" aria-label={t('customFields.moveDown', { name })} disabled={index >= usedCount - 1} onClick={() => move(index, 1)}>
                         <ArrowDownIcon size={16} strokeWidth={1.5} aria-hidden />
                       </IconButton>
                     </span>
                   )}
                 </div>
-                {row.field.description && <Typography variant="body2" color="textSecondary">{row.field.description}</Typography>}
-                <OptionChips field={row.field} />
-                {row.enabled ? (
-                  <fieldset className="flex flex-wrap items-center gap-x-4" style={{ border: 'none', margin: 0, padding: 0 }}>
-                    <legend className="sr-only">{`${t('customFields.ticketTypes')}: ${row.field.name}`}</legend>
-                    <Typography variant="body2" color="textSecondary" aria-hidden>{t('customFields.ticketTypes')}</Typography>
-                    {(types.data ?? []).map((type) => (
-                      <span key={type.id} className="flex items-center gap-1">
-                        <TicketTypeIcon type={type.icon as IconType} />
-                        <Checkbox
-                          label={type.name ?? ''}
-                          disabled={!canManage}
-                          checked={row.typeIds.includes(type.id!)}
-                          onChange={(_, checked) => change(index, { typeIds: checked ? [...row.typeIds, type.id!] : row.typeIds.filter((id) => id !== type.id) })}
-                        />
-                      </span>
-                    ))}
-                  </fieldset>
-                ) : (
-                  <Typography variant="body2" color="textSecondary">{t('customFields.off')}</Typography>
+                {row.kind === 'custom' && (
+                  <>
+                    {row.field.description && <Typography variant="body2" color="textSecondary">{row.field.description}</Typography>}
+                    <OptionChips field={row.field} />
+                    {row.enabled ? (
+                      <fieldset className="flex flex-wrap items-center gap-x-4" style={{ border: 'none', margin: 0, padding: 0 }}>
+                        <legend className="sr-only">{`${t('customFields.ticketTypes')}: ${name}`}</legend>
+                        <Typography variant="body2" color="textSecondary" aria-hidden>{t('customFields.ticketTypes')}</Typography>
+                        {(types.data ?? []).map((type) => (
+                          <span key={type.id} className="flex items-center gap-1">
+                            <TicketTypeIcon type={type.icon as IconType} />
+                            <Checkbox
+                              label={type.name ?? ''}
+                              disabled={!canManage}
+                              checked={row.typeIds.includes(type.id!)}
+                              onChange={(_, checked) => change(index, { ...row, typeIds: checked ? [...row.typeIds, type.id!] : row.typeIds.filter((id) => id !== type.id) })}
+                            />
+                          </span>
+                        ))}
+                      </fieldset>
+                    ) : (
+                      <Typography variant="body2" color="textSecondary">{t('customFields.off')}</Typography>
+                    )}
+                  </>
                 )}
               </Box>
             );

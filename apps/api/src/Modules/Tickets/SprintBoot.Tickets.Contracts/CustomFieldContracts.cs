@@ -49,6 +49,24 @@ public static class CustomFieldConsts
     public const string KeyPrefix = "cf.";
 }
 
+/// <summary>The built-in fields of a ticket's Details sidebar, in their default order.</summary>
+public static class TicketDetailFields
+{
+    public static readonly string[] All = ["status", "assignee", "reporter", "priority", "sprint", "epic", "labels", "storyPoints", "startDate", "dueDate"];
+
+    /// <summary>The status moves the ticket along its workflow, so it always shows.</summary>
+    public static readonly string[] AlwaysShown = ["status"];
+}
+
+/// <summary>How a space lays out a ticket's Details sidebar: every field in order, built-in and custom ("cf." keys).</summary>
+public class FieldLayoutDto
+{
+    public required string[] Order { get; set; }
+
+    /// <summary>Built-in fields the space does not show.</summary>
+    public required string[] Hidden { get; set; }
+}
+
 public static class CustomFieldErrors
 {
     public const string NameRequired = "SprintBoot:CustomFieldNameRequired";
@@ -177,6 +195,15 @@ public class SaveSpaceCustomFieldsInput
 {
     [Required]
     public required List<SpaceCustomFieldInput> Items { get; set; }
+
+    /// <summary>
+    /// The order of the Details sidebar: built-in keys (TicketDetailFields) and custom fields as "cf." keys. Left out, the
+    /// order stays. Fields missing from it go after the others.
+    /// </summary>
+    public string[]? Order { get; set; }
+
+    /// <summary>Built-in fields to hide; the status always shows. Left out, nothing changes.</summary>
+    public string[]? Hidden { get; set; }
 }
 
 /// <summary>One custom field of a ticket and its value.</summary>
@@ -215,4 +242,7 @@ public interface ICustomFieldAppService : IApplicationService
     Task<List<SpaceCustomFieldDto>> GetSpaceFieldsAsync(Guid projectId);
 
     Task<List<SpaceCustomFieldDto>> SetSpaceFieldsAsync(Guid projectId, SaveSpaceCustomFieldsInput input);
+
+    /// <summary>The order of a ticket's Details sidebar in the space, and the built-in fields it hides.</summary>
+    Task<FieldLayoutDto> GetLayoutAsync(Guid projectId);
 }

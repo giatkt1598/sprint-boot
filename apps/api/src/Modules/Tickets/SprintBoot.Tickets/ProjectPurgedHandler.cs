@@ -34,6 +34,7 @@ public class ProjectPurgedHandler(
     IRepository<CustomFieldOption, Guid> customFieldOptions,
     IRepository<ProjectCustomField, Guid> spaceFields,
     IRepository<TicketFieldValue, Guid> fieldValues,
+    IRepository<ProjectFieldLayout, Guid> fieldLayouts,
     IBlobContainer<AttachmentContainer> container,
     IUploadStorage uploadStorage,
     IDataFilter dataFilter)
@@ -92,6 +93,7 @@ public class ProjectPurgedHandler(
         await spaceFields.DeleteDirectAsync(row => row.ProjectId == projectId || ownFieldIds.Contains(row.FieldId));
         await customFieldOptions.DeleteDirectAsync(option => ownFieldIds.Contains(option.FieldId));
         await customFields.DeleteDirectAsync(field => field.ProjectId == projectId);
+        await fieldLayouts.DeleteDirectAsync(layout => layout.ProjectId == projectId);
         await tickets.DeleteDirectAsync(ticket => ticket.ProjectId == projectId);
         await types.DeleteDirectAsync(type => type.ProjectId == projectId);
     }

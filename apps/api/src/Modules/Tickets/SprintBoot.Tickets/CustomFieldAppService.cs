@@ -19,6 +19,7 @@ public class CustomFieldAppService(
     IRepository<ProjectCustomField, Guid> spaceFields,
     IRepository<TicketFieldValue, Guid> values,
     IRepository<TicketType, Guid> types,
+    IRepository<ProjectFieldLayout, Guid> layouts,
     IProjectAccess projectAccess)
     : ApplicationService, ICustomFieldAppService
 {
@@ -126,7 +127,60 @@ public class CustomFieldAppService(
         var kept = items.Select(item => item.FieldId).Concat(own.Select(item => item.FieldId)).ToHashSet();
         await spaceFields.DeleteManyAsync(rows.Values.Where(row => !kept.Contains(row.FieldId)));
         await CurrentUnitOfWork!.SaveChangesAsync();
+        await SaveLayoutAsync(projectId, input);
         return await GetSpaceFieldsAsync(projectId);
+    }
+
+    public async Task<FieldLayoutDto> GetLayoutAsync(Guid projectId)
+    {
+        await projectAccess.CheckAsync(projectId, ProjectPermissions.ViewTickets);
+        var layout = await layouts.FirstOrDefaultAsync(item => item.ProjectId == projectId);
+        var custom = await CustomKeysAsync(projectId);
+        var known = TicketDetailFields.All.Concat(custom).ToList();
+        // Fields the stored order does not know yet (a new field, a new built-in) go after the others.
+        var order = (layout?.Order ?? []).Where(known.Contains).Distinct().ToList();
+        order.AddRange(known.Where(key => !order.Contains(key)));
+        return new FieldLayoutDto
+        {
+            Order = [.. order],
+            Hidden = [.. (layout?.Hidden ?? []).Where(key => TicketDetailFields.All.Contains(key) && !TicketDetailFields.AlwaysShown.Contains(key))],
+        };
+    }
+
+    private async Task SaveLayoutAsync(Guid projectId, SaveSpaceCustomFieldsInput input)
+    {
+        if (input.Order is null && input.Hidden is null)
+        {
+            return;
+        }
+
+        var layout = await layouts.FirstOrDefaultAsync(item => item.ProjectId == projectId);
+        if (layout is null)
+        {
+            layout = await layouts.InsertAsync(new ProjectFieldLayout(GuidGenerator.Create(), projectId), autoSave: true);
+        }
+
+        var known = TicketDetailFields.All.Concat(await CustomKeysAsync(projectId)).ToHashSet();
+        if (input.Order is { } order)
+        {
+            layout.Order = [.. order.Where(known.Contains).Distinct()];
+        }
+
+        if (input.Hidden is { } hidden)
+        {
+            layout.Hidden = [.. hidden.Where(key => TicketDetailFields.All.Contains(key) && !TicketDetailFields.AlwaysShown.Contains(key)).Distinct()];
+        }
+
+        await layouts.UpdateAsync(layout, autoSave: true);
+    }
+
+    /// <summary>The fields on in the space as "cf." keys, in their order.</summary>
+    private async Task<List<string>> CustomKeysAsync(Guid projectId)
+    {
+        var rows = await spaceFields.GetListAsync(row => row.ProjectId == projectId);
+        var ids = rows.Select(row => row.FieldId).ToList();
+        var keys = (await fields.GetListAsync(field => ids.Contains(field.Id))).ToDictionary(field => field.Id, field => field.Key);
+        return [.. rows.OrderBy(row => row.Order).Where(row => keys.ContainsKey(row.FieldId)).Select(row => CustomFieldConsts.KeyPrefix + keys[row.FieldId])];
     }
 
     private async Task CheckManageAsync(Guid? projectId)

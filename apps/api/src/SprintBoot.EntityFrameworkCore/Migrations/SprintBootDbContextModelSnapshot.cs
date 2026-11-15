@@ -2050,6 +2050,30 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                     b.ToTable("project_custom_fields", "tickets");
                 });
 
+            modelBuilder.Entity("SprintBoot.Tickets.ProjectFieldLayout", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.PrimitiveCollection<List<string>>("Hidden")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.PrimitiveCollection<List<string>>("Order")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId")
+                        .IsUnique();
+
+                    b.ToTable("project_field_layouts", "tickets");
+                });
+
             modelBuilder.Entity("SprintBoot.Tickets.ProjectIntroduction", b =>
                 {
                     b.Property<Guid>("Id")

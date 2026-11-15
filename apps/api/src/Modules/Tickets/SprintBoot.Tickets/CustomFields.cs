@@ -90,6 +90,26 @@ public class ProjectCustomField : Entity<Guid>
     }
 }
 
+/// <summary>The order of a space's Details sidebar, built-in and custom fields together, and the built-in ones it hides.</summary>
+public class ProjectFieldLayout : Entity<Guid>
+{
+    public Guid ProjectId { get; private set; }
+
+    public List<string> Order { get; set; } = [];
+
+    public List<string> Hidden { get; set; } = [];
+
+    protected ProjectFieldLayout()
+    {
+    }
+
+    public ProjectFieldLayout(Guid id, Guid projectId)
+        : base(id)
+    {
+        ProjectId = projectId;
+    }
+}
+
 /// <summary>
 /// A value of one ticket in one field, in the column of its kind, so filters and sorting use plain indexes. A
 /// multi-select field keeps one row per chosen option.

@@ -38,7 +38,33 @@ export const customFieldKeys = {
   all: ['custom-fields'] as const,
   list: (projectId: string | undefined) => ['custom-fields', 'list', projectId ?? 'workspace'] as const,
   space: (projectId: string | undefined) => ['custom-fields', 'space', projectId] as const,
+  layout: (projectId: string | undefined) => ['custom-fields', 'layout', projectId] as const,
 };
+
+/** The built-in fields of a ticket's Details sidebar and the locale keys of their names, in their default order. */
+export const BUILT_IN_FIELDS: Record<string, string> = {
+  status: 'tickets.status',
+  assignee: 'tickets.assignee',
+  reporter: 'tickets.reporter',
+  priority: 'tickets.priority',
+  sprint: 'agile.sprint',
+  epic: 'tickets.epic',
+  labels: 'tickets.labels',
+  storyPoints: 'tickets.points',
+  startDate: 'tickets.startDate',
+  dueDate: 'tickets.dueDate',
+};
+
+/** The status moves the ticket along its workflow, so it always shows. */
+export const ALWAYS_SHOWN = ['status'];
+
+/** The order of a space's Details sidebar, built-in and custom fields together, and the built-in fields it hides. */
+export const useFieldLayout = (projectId: string | undefined) =>
+  useQuery({
+    queryKey: customFieldKeys.layout(projectId),
+    enabled: Boolean(projectId),
+    queryFn: () => unwrap(apiClient.GET('/api/v1/custom-field/layout/{projectId}', { params: { path: { projectId: projectId! } } })),
+  });
 
 /** Workspace fields, or a space's own ones. */
 export const useCustomFields = (projectId?: string) =>

@@ -76,5 +76,21 @@ test('a custom field is set on create, edited in the sidebar and kept in history
   await expect(page.getByRole('columnheader', { name: /Severity/ })).toBeVisible();
   await expect(page.getByRole('row', { name: /Login fails on Safari/ }).getByText('Low')).toBeVisible();
 
+  // Space settings → Fields orders built-in and custom fields together and hides built-in ones; the sidebar follows.
+  await page.goto(`/spaces/${key}/settings/fields`);
+  const severityRow = page.getByRole('listitem').filter({ hasText: 'Severity' });
+  for (let step = 0; step < 10; step++) {
+    await severityRow.getByRole('button', { name: 'Move Severity up' }).click();
+  }
+  await page.getByRole('listitem').filter({ hasText: 'Reporter' }).getByLabel('Show in ticket details').uncheck();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByText('Fields saved')).toBeVisible();
+  await page.goto(`/browse/${key}-1`);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Login fails on Safari');
+  const details = page.locator('aside').filter({ has: page.getByText('Details', { exact: true }) });
+  await expect(details.getByText('Reporter')).toHaveCount(0);
+  const labels = await details.locator('div.flex.min-h-9 > span').allTextContents();
+  expect(labels[0]).toBe('Severity');
+
   await api(page, 'POST', `/api/v1/project/${space.id}/archive`).catch(() => undefined);
 });
