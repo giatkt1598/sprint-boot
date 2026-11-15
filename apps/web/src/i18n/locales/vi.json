@@ -1845,5 +1845,88 @@
     "step3": "Người dùng được khớp theo email, nên mỗi người chỉ thấy những gì tài khoản của mình mở được.",
     "notConfigured": "Chưa cấu hình",
     "install": "Cài đặt"
+  },
+  "landing": {
+    "appName": "Sprint Boot",
+    "title": "Sprint Boot: quản lý công việc mã nguồn mở, tự host",
+    "description": "Lên kế hoạch sprint, theo dõi ticket và hoàn thành công việc cùng nhóm trên bảng do chính bạn host. Mã nguồn mở theo giấy phép MIT, có trợ lý AI, workflow, tích hợp Git và SSO.",
+    "skipToContent": "Bỏ qua đến nội dung",
+    "nav": {
+      "features": "Tính năng",
+      "selfHosted": "Tự host",
+      "signIn": "Đăng nhập"
+    },
+    "language": "Ngôn ngữ",
+    "hero": {
+      "eyebrow": "Mã nguồn mở · Giấy phép MIT",
+      "title": "Lên kế hoạch, theo dõi và hoàn thành trên bảng của riêng bạn",
+      "lead": "Sprint Boot là ứng dụng quản lý công việc kiểu Jira chạy trên máy chủ của bạn: board, backlog, sprint và epic, kèm sẵn trợ lý AI.",
+      "signIn": "Đăng nhập",
+      "source": "Xem mã nguồn",
+      "imageAlt": "Một board Sprint Boot với các ticket ở cột To Do, In Progress và Done"
+    },
+    "features": {
+      "title": "Mọi thứ nhóm cần để hoàn thành công việc",
+      "lead": "Một ứng dụng cho cả lập kế hoạch lẫn việc hằng ngày, không tính phí theo người dùng.",
+      "board": {
+        "title": "Board, backlog và sprint",
+        "body": "Kéo ticket qua các cột, sắp xếp backlog và chạy sprint với story point."
+      },
+      "epics": {
+        "title": "Epic và timeline",
+        "body": "Gom việc vào epic và xem ngày bắt đầu, hạn chót xếp trên timeline."
+      },
+      "assistant": {
+        "title": "Trợ lý AI",
+        "body": "Hỏi về ticket bằng lời thường. Mọi thay đổi chỉ chạy sau khi bạn xác nhận."
+      },
+      "workflows": {
+        "title": "Workflow và tự động hoá",
+        "body": "Tuỳ chỉnh trạng thái và chuyển trạng thái cho từng space, kèm trường bắt buộc và quy tắc."
+      },
+      "git": {
+        "title": "Tích hợp Git",
+        "body": "Branch, commit, pull request và build hiện ngay trên ticket được nhắc tới."
+      },
+      "themes": {
+        "title": "Giao diện",
+        "body": "Mười ba phong cách, từ Classic, Dark đến Glass và Vietnamese, bằng tiếng Anh và tiếng Việt."
+      },
+      "mcp": {
+        "title": "MCP cho AI agent",
+        "body": "Cho AI agent đọc và cập nhật ticket qua MCP server có sẵn, theo đúng quyền của bạn."
+      }
+    },
+    "selfHosted": {
+      "title": "Mã nguồn mở và tự host",
+      "lead": "Dữ liệu nằm trên máy chủ của bạn. Đọc mã nguồn, sửa đổi và chạy ở bất cứ đâu bạn muốn.",
+      "data": {
+        "title": "Dữ liệu của bạn, máy chủ của bạn",
+        "body": "PostgreSQL, Redis và RabbitMQ do bạn vận hành. Không có gì rời khỏi mạng của bạn."
+      },
+      "sso": {
+        "title": "Đăng nhập một lần",
+        "body": "Đăng nhập bằng Google, GitHub, bất kỳ nhà cung cấp OpenID Connect nào, SAML 2.0 hoặc LDAP."
+      },
+      "docker": {
+        "title": "Triển khai bằng Docker",
+        "body": "Hai image API và web, dùng với Docker Compose hoặc Kubernetes."
+      },
+      "license": {
+        "title": "Giấy phép MIT",
+        "body": "Tự do sử dụng, sửa đổi và chia sẻ, cho nhóm ở mọi quy mô."
+      }
+    },
+    "footer": {
+      "signIn": "Đăng nhập",
+      "source": "Mã nguồn",
+      "license": "Giấy phép MIT",
+      "copyright": "Mã nguồn mở theo giấy phép MIT."
+    },
+    "languages": {
+      "en": "English",
+      "vi": "Tiếng Việt"
+    },
+    "home": "Trang chủ Sprint Boot"
   }
 }

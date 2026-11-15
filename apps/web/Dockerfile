@@ -16,6 +16,9 @@ FROM nginxinc/nginx-unprivileged:alpine
 # worker_processes auto starts one worker per node core, which can exceed the memory limit on a big node.
 RUN sed -i "s/^worker_processes .*;/worker_processes 2;/" /etc/nginx/nginx.conf \
     && grep -q "^worker_processes 2;" /etc/nginx/nginx.conf
-COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
+# The entrypoint renders templates/*.template into conf.d at start, filling in the environment variables below.
+# LANDING_PAGE_ENABLED=true shows the landing page (welcome.html) to guests at /.
+ENV LANDING_PAGE_ENABLED=false
+COPY apps/web/nginx/default.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /src/apps/web/dist /usr/share/nginx/html
 EXPOSE 8080

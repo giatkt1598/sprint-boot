@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /connect/
+Disallow: /hubs/
+Disallow: /mcp
+Disallow: /swagger

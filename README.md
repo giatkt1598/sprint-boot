@@ -1,6 +1,6 @@
 # Sprint Boot
 
-Self-hosted, Jira-style work management app.
+Open-source, self-hosted, Jira-style work management app.
 
 ## Requirements
 
@@ -23,6 +23,9 @@ This starts PostgreSQL, Redis, RabbitMQ and Mailpit, applies migrations, then ru
 | RabbitMQ | http://localhost:15672 |
 | Mailpit | http://localhost:8025 |
 
+The landing page (`apps/web/welcome.html`) shows to guests at `/` only when `LANDING_PAGE_ENABLED=true`; set it
+before `pnpm dev` to try it. Signed in, or with the flag unset, `/` is the app.
+
 ## Deployment
 
 Pushes to `master` build two images (`.gitea/workflows/docker-image.yml`):
@@ -40,3 +43,8 @@ Production settings that differ from development:
 | `OpenIddict:Certificate`, `OpenIddict:CertificatePassword` | Base64 PFX used to sign and encrypt tokens. Without it the development certificate is used, which is per container. |
 | `ASPNETCORE_FORWARDEDHEADERS_ENABLED=true` | TLS ends at the proxy; the auth server must see `https`. |
 | `Auth:SpaBaseUrl` | Public URL, used for OAuth redirect URIs and links. |
+| `LANDING_PAGE_ENABLED=true` (web image) | Guests at `/` see the landing page instead of the sign-in screen. Off by default, so an internal install opens on sign-in; changing it needs only a restart. nginx picks the page from the `sb_signed_in` hint cookie the app sets after sign-in, and `/` is sent with `Cache-Control: no-cache, private` and `Vary: Cookie`. |
+
+## License
+
+[MIT](LICENSE). The bundled SVN-Poppins font is under its own SIL Open Font License (`assets/fonts/svn-poppins/OFL.txt`).

@@ -1,9 +1,10 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
+import { landingPage } from './src/landing/vitePlugin.ts';
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), landingPage()],
   server: {
     port: Number(process.env.WEB_PORT ?? 5173),
     // Keep the browser's host so the auth server tickets same-origin URLs and cookies.

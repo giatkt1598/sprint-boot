@@ -7,6 +7,7 @@ import { apiClient, unwrap } from '../api';
 import { setDisplayTimeZone } from '../lib/format';
 import { setAppearance, type Appearance } from '../theme/appearance';
 import { userManager } from './oidc';
+import { clearSignedIn, markSignedIn } from './signedInHint';
 import { TwoFactorRequiredScreen } from './TwoFactor';
 
 export type CurrentUser = components['schemas']['CurrentUserDto'];
@@ -40,12 +41,14 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (session.isSuccess && !signedIn) {
+      clearSignedIn();
       void userManager.signinRedirect({ state: { returnTo: location.pathname + location.search } });
     }
   }, [session.isSuccess, signedIn, location.pathname, location.search]);
 
   useEffect(() => {
     const onExpired = () => {
+      clearSignedIn();
       queryClient.clear();
       void navigate('/session-expired');
     };
@@ -71,6 +74,8 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (me.data) {
+      // Renewed on every start, so the hint lasts as long as people keep using the app.
+      markSignedIn();
       setAppearance({ ...me.data.preferences, backgroundUrl: me.data.backgroundUrl ?? null } as Partial<Appearance>);
     }
   }, [me.data]);

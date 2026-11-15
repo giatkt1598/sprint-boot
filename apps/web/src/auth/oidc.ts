@@ -1,4 +1,5 @@
 import { UserManager } from 'oidc-client-ts';
+import { clearSignedIn } from './signedInHint';
 
 const origin = window.location.origin;
 
@@ -24,6 +25,7 @@ export async function getAccessToken() {
     return user.access_token;
   }
   if (!user.refresh_token) {
+    clearSignedIn();
     return null;
   }
   renewing ??= userManager.signinSilent().finally(() => {
@@ -31,10 +33,16 @@ export async function getAccessToken() {
   });
   await renewing.catch(() => undefined);
   const renewed = await userManager.getUser();
-  return renewed && !renewed.expired ? renewed.access_token : null;
+  if (!renewed || renewed.expired) {
+    // Signing in again is the only way on, so `/` may show the landing page meanwhile.
+    clearSignedIn();
+    return null;
+  }
+  return renewed.access_token;
 }
 
 export async function signOut() {
+  clearSignedIn();
   await userManager.revokeTokens(['refresh_token']).catch(() => undefined);
   const idToken = (await userManager.getUser())?.id_token;
   await userManager.removeUser();

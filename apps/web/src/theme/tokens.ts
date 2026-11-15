@@ -155,6 +155,8 @@ export const font = {
     lg: 'calc(16px * var(--sb-font-scale, 1))',
     xl: 'calc(20px * var(--sb-font-scale, 1))',
   },
+  /** Headings of the landing page (welcome.html), which has no person's preferences to scale by. */
+  display: { md: '28px', lg: '36px', xl: '48px' },
   weight: { regular: 400, medium: 500, semibold: 600 },
   // Vietnamese double diacritics clip below 1.4.
   lineHeight: 1.4,
@@ -207,6 +209,8 @@ export const size = {
   sidebar: 216,
   /** The sidebar as a drawer on small screens. */
   drawer: 280,
+  /** The content column of the landing page. */
+  landing: 1120,
 } as const;
 
 /**

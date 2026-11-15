@@ -1845,5 +1845,88 @@
     "step3": "People are matched by email, so each person only sees what their own account can open.",
     "notConfigured": "Not configured",
     "install": "Install"
+  },
+  "landing": {
+    "appName": "Sprint Boot",
+    "title": "Sprint Boot: open-source, self-hosted work management",
+    "description": "Plan sprints, track tickets and ship with your team on a board you host yourself. Open source under the MIT license, with an AI assistant, workflows, Git integration and SSO.",
+    "skipToContent": "Skip to content",
+    "nav": {
+      "features": "Features",
+      "selfHosted": "Self-hosted",
+      "signIn": "Sign in"
+    },
+    "language": "Language",
+    "hero": {
+      "eyebrow": "Open source · MIT licensed",
+      "title": "Plan, track and ship on a board you own",
+      "lead": "Sprint Boot is a Jira-style work management app you run on your own server: boards, backlogs, sprints and epics, with an AI assistant built in.",
+      "signIn": "Sign in",
+      "source": "View source",
+      "imageAlt": "A Sprint Boot board with tickets in To Do, In Progress and Done columns"
+    },
+    "features": {
+      "title": "Everything a team needs to ship",
+      "lead": "One app for planning and day-to-day work, without per-seat pricing.",
+      "board": {
+        "title": "Board, backlog and sprints",
+        "body": "Drag tickets across columns, groom the backlog and run sprints with story points."
+      },
+      "epics": {
+        "title": "Epics and timeline",
+        "body": "Group work into epics and see start and due dates line up on a timeline."
+      },
+      "assistant": {
+        "title": "AI assistant",
+        "body": "Ask about tickets in plain words. Changes only happen after you confirm them."
+      },
+      "workflows": {
+        "title": "Workflows and automation",
+        "body": "Shape statuses and transitions per space, with required fields and rules."
+      },
+      "git": {
+        "title": "Git integration",
+        "body": "Branches, commits, pull requests and builds show up on the ticket they mention."
+      },
+      "themes": {
+        "title": "Themes",
+        "body": "Thirteen looks, from Classic and Dark to Glass and Vietnamese, in English and Vietnamese."
+      },
+      "mcp": {
+        "title": "MCP for AI agents",
+        "body": "Let AI agents read and update tickets through the built-in MCP server, with your permissions."
+      }
+    },
+    "selfHosted": {
+      "title": "Open source and self-hosted",
+      "lead": "Your data stays on your server. Read the code, change it, run it where you like.",
+      "data": {
+        "title": "Your data, your server",
+        "body": "PostgreSQL, Redis and RabbitMQ that you run. Nothing leaves your network."
+      },
+      "sso": {
+        "title": "Single sign-on",
+        "body": "Sign in with Google, GitHub, any OpenID Connect provider, SAML 2.0 or LDAP."
+      },
+      "docker": {
+        "title": "Deploy with Docker",
+        "body": "Two images, API and web, for Docker Compose or Kubernetes."
+      },
+      "license": {
+        "title": "MIT licensed",
+        "body": "Free to use, change and share, for teams of any size."
+      }
+    },
+    "footer": {
+      "signIn": "Sign in",
+      "source": "Source code",
+      "license": "MIT License",
+      "copyright": "Open source under the MIT License."
+    },
+    "languages": {
+      "en": "English",
+      "vi": "Tiếng Việt"
+    },
+    "home": "Sprint Boot home"
   }
 }

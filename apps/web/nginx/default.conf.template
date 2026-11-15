@@ -1,4 +1,14 @@
 # Serves the SPA and proxies the API paths (same list as the Vite dev proxy) to the API Service.
+# A template: the image's entrypoint replaces ${LANDING_PAGE_ENABLED} (set in the Dockerfile, false unless overridden)
+# and leaves nginx's own variables alone, so switching the landing page needs only an env change and a restart.
+
+# At /, guests get the landing page while it is on. The SPA sets the sb_signed_in hint cookie after sign-in
+# (apps/web/src/auth/signedInHint.ts); with it, or with the landing page off, / is the SPA as before.
+map "${LANDING_PAGE_ENABLED}:$cookie_sb_signed_in" $root_page {
+    default /index.html;
+    "true:"  /welcome.html;
+}
+
 map $http_upgrade $connection_upgrade {
     default upgrade;
     ''      close;
@@ -38,6 +48,13 @@ server {
     location /assets/ {
         add_header Cache-Control "public, max-age=31536000, immutable";
         try_files $uri =404;
+    }
+
+    # The page depends on the cookie: never cache it where one person's page could reach another.
+    location = / {
+        add_header Cache-Control "no-cache, private";
+        add_header Vary Cookie;
+        try_files $root_page =404;
     }
 
     location / {

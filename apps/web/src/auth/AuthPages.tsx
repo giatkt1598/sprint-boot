@@ -15,6 +15,7 @@ import { TextField } from '../components/TextField';
 import { useErrorMessage } from '../lib/errors';
 import { font, radius, sem } from '../theme/tokens';
 import { userManager } from './oidc';
+import { markSignedIn } from './signedInHint';
 
 export function AuthCard({ title, children }: { title: string; children: ReactNode }) {
   const { t } = useTranslation();
@@ -191,6 +192,19 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // Opened from the landing page by someone still signed in in this tab: straight to Home. An authorize request in
+  // progress (ReturnUrl) always shows the form.
+  useEffect(() => {
+    if (returnUrl) {
+      return;
+    }
+    void userManager.getUser().then((user) => {
+      if (user && (!user.expired || user.refresh_token)) {
+        void navigate('/', { replace: true });
+      }
+    });
+  }, [returnUrl, navigate]);
+
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setBusy(true);
@@ -243,6 +257,7 @@ export function AuthCallbackPage() {
     pendingCallback ??= userManager.signinCallback();
     pendingCallback
       .then((user) => {
+        markSignedIn();
         const state = user?.state as { returnTo?: string } | undefined;
         void navigate(state?.returnTo ?? '/', { replace: true });
       })

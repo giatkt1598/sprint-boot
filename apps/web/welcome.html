@@ -1,0 +1,156 @@
+<!doctype html>
+<!--
+  The landing page guests see at / while LANDING_PAGE_ENABLED is true. Plain HTML and CSS, no app bundle.
+  src/landing/vitePlugin.ts fills it at build time: data-i18n and data-i18n-<attribute> take the English text of
+  landing.<key> in the locale files, an icon placeholder (two braces, "icon:", a registry name) becomes an SVG of the Classic icon set, and the tokens and both
+  languages are inlined where the comments below stand.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title data-i18n="title"></title>
+    <meta name="description" data-i18n-content="description" />
+    <meta name="color-scheme" content="light dark" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" data-i18n-content="appName" />
+    <meta property="og:title" data-i18n-content="title" />
+    <meta property="og:description" data-i18n-content="description" />
+    <meta property="og:image" content="/landing/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="preload" href="../../assets/fonts/svn-poppins/woff2/SVN-Poppins-SemiBold.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="../../assets/fonts/svn-poppins/woff2/SVN-Poppins-Regular.woff2" as="font" type="font/woff2" crossorigin />
+    <!--tokens-->
+    <link rel="stylesheet" href="/src/landing/landing.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main" data-i18n="skipToContent"></a>
+    <header class="top">
+      <div class="column top-row">
+        <a class="brand" href="/" data-i18n-aria-label="home">
+          <img src="/favicon-32.png" alt="" width="28" height="28" />
+          <span data-i18n="appName"></span>
+        </a>
+        <nav class="top-nav">
+          <a href="#features" data-i18n="nav.features"></a>
+          <a href="#self-hosted" data-i18n="nav.selfHosted"></a>
+        </nav>
+        <div class="top-actions">
+          <div class="languages" role="group" data-i18n-aria-label="language">
+            <button type="button" data-lang="en" aria-pressed="true" data-i18n="languages.en"></button>
+            <button type="button" data-lang="vi" aria-pressed="false" data-i18n="languages.vi"></button>
+          </div>
+          <a class="button button-primary" href="/login" data-i18n="nav.signIn"></a>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero column" aria-labelledby="hero-title">
+        <div class="hero-text">
+          <p class="eyebrow">{{icon:branch}}<span data-i18n="hero.eyebrow"></span></p>
+          <h1 id="hero-title" data-i18n="hero.title"></h1>
+          <p class="lead" data-i18n="hero.lead"></p>
+          <div class="hero-actions">
+            <a class="button button-primary button-large" href="/login"><span data-i18n="hero.signIn"></span>{{icon:chevronRight}}</a>
+            <a class="button button-secondary button-large" href="https://git.giatk.win/admin/sprint-boot" rel="noopener">{{icon:codeBlock}}<span data-i18n="hero.source"></span></a>
+          </div>
+        </div>
+        <figure class="hero-shot">
+          <img src="/src/landing/board.webp" srcset="/src/landing/board-800.webp 800w, /src/landing/board.webp 1280w" sizes="(min-width: 900px) 640px, calc(100vw - 32px)" width="1280" height="800" fetchpriority="high" data-i18n-alt="hero.imageAlt" />
+        </figure>
+      </section>
+
+      <section id="features" class="section column" aria-labelledby="features-title">
+        <div class="section-head">
+          <h2 id="features-title" data-i18n="features.title"></h2>
+          <p class="lead" data-i18n="features.lead"></p>
+        </div>
+        <ul class="cards">
+          <li class="card">{{icon:board}}<h3 data-i18n="features.board.title"></h3><p data-i18n="features.board.body"></p></li>
+          <li class="card">{{icon:epic}}<h3 data-i18n="features.epics.title"></h3><p data-i18n="features.epics.body"></p></li>
+          <li class="card">{{icon:assistant}}<h3 data-i18n="features.assistant.title"></h3><p data-i18n="features.assistant.body"></p></li>
+          <li class="card">{{icon:settings}}<h3 data-i18n="features.workflows.title"></h3><p data-i18n="features.workflows.body"></p></li>
+          <li class="card">{{icon:pullRequest}}<h3 data-i18n="features.git.title"></h3><p data-i18n="features.git.body"></p></li>
+          <li class="card">{{icon:textColor}}<h3 data-i18n="features.themes.title"></h3><p data-i18n="features.themes.body"></p></li>
+          <li class="card">{{icon:bot}}<h3 data-i18n="features.mcp.title"></h3><p data-i18n="features.mcp.body"></p></li>
+        </ul>
+      </section>
+
+      <section id="self-hosted" class="section column" aria-labelledby="self-hosted-title">
+        <div class="panel">
+          <div class="section-head">
+            <h2 id="self-hosted-title" data-i18n="selfHosted.title"></h2>
+            <p class="lead" data-i18n="selfHosted.lead"></p>
+          </div>
+          <ul class="points">
+            <li>{{icon:admin}}<div><h3 data-i18n="selfHosted.data.title"></h3><p data-i18n="selfHosted.data.body"></p></div></li>
+            <li>{{icon:locked}}<div><h3 data-i18n="selfHosted.sso.title"></h3><p data-i18n="selfHosted.sso.body"></p></div></li>
+            <li>{{icon:upload}}<div><h3 data-i18n="selfHosted.docker.title"></h3><p data-i18n="selfHosted.docker.body"></p></div></li>
+            <li>{{icon:document}}<div><h3 data-i18n="selfHosted.license.title"></h3><p data-i18n="selfHosted.license.body"></p></div></li>
+          </ul>
+          <div class="hero-actions">
+            <a class="button button-primary button-large" href="/login"><span data-i18n="hero.signIn"></span>{{icon:chevronRight}}</a>
+            <a class="button button-secondary button-large" href="https://git.giatk.win/admin/sprint-boot" rel="noopener">{{icon:codeBlock}}<span data-i18n="hero.source"></span></a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="column footer-row">
+        <p class="brand"><img src="/favicon-32.png" alt="" width="20" height="20" /><span data-i18n="footer.copyright"></span></p>
+        <nav class="footer-nav">
+          <a href="/login" data-i18n="footer.signIn"></a>
+          <a href="https://git.giatk.win/admin/sprint-boot" rel="noopener" data-i18n="footer.source"></a>
+          <a href="https://git.giatk.win/admin/sprint-boot/src/branch/master/LICENSE" rel="noopener" data-i18n="footer.license"></a>
+        </nav>
+        <div class="languages" role="group" data-i18n-aria-label="language">
+          <button type="button" data-lang="en" aria-pressed="true" data-i18n="languages.en"></button>
+          <button type="button" data-lang="vi" aria-pressed="false" data-i18n="languages.vi"></button>
+        </div>
+      </div>
+    </footer>
+
+    <!--strings-->
+    <script>
+      // The language: the one picked here or in the app (i18next keeps it under i18nextLng), else the browser's.
+      (function () {
+        var strings = JSON.parse(document.getElementById('strings').textContent);
+        var KEY = 'i18nextLng';
+        function apply(lang) {
+          var words = strings[lang];
+          document.documentElement.lang = lang;
+          document.querySelectorAll('[data-i18n]').forEach(function (node) {
+            node.textContent = words[node.getAttribute('data-i18n')];
+          });
+          document.querySelectorAll('*').forEach(function (node) {
+            for (var i = 0; i < node.attributes.length; i++) {
+              var name = node.attributes[i].name;
+              if (name.indexOf('data-i18n-') === 0) node.setAttribute(name.slice(10), words[node.attributes[i].value]);
+            }
+          });
+          document.querySelectorAll('[data-lang]').forEach(function (button) {
+            button.setAttribute('aria-pressed', String(button.getAttribute('data-lang') === lang));
+          });
+        }
+        var saved = null;
+        try { saved = localStorage.getItem(KEY); } catch (error) {}
+        var wanted = (saved || navigator.language || 'en').slice(0, 2).toLowerCase();
+        var lang = strings[wanted] ? wanted : 'en';
+        if (lang !== 'en') apply(lang);
+        document.addEventListener('click', function (event) {
+          var button = event.target.closest && event.target.closest('[data-lang]');
+          if (!button) return;
+          lang = button.getAttribute('data-lang');
+          try { localStorage.setItem(KEY, lang); } catch (error) {}
+          apply(lang);
+        });
+      })();
+    </script>
+  </body>
+</html>
