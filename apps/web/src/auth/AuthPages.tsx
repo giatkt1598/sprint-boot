@@ -171,6 +171,9 @@ function OrDivider() {
   );
 }
 
+// StrictMode runs effects twice; one authorize request is enough.
+let startedSignIn = false;
+
 export function LoginPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -191,19 +194,27 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Opened with no authorize request (the landing page's link, after sign-out, after a sign-in with Google): start one,
+  // so every way of signing in ends in the app. An error to show keeps the form.
+  const [starting, setStarting] = useState(!returnUrl && !externalError);
 
-  // Opened from the landing page by someone still signed in in this tab: straight to Home. An authorize request in
-  // progress (ReturnUrl) always shows the form.
   useEffect(() => {
-    if (returnUrl) {
+    if (!starting || startedSignIn) {
       return;
     }
-    void userManager.getUser().then((user) => {
+    startedSignIn = true;
+    void (async () => {
+      const user = await userManager.getUser();
       if (user && (!user.expired || user.refresh_token)) {
-        void navigate('/', { replace: true });
+        await navigate('/', { replace: true });
+      } else {
+        // A session at the server comes straight back signed in; without one, here again with a ReturnUrl.
+        await userManager.signinRedirect();
       }
+    })().catch(() => setStarting(false)).finally(() => {
+      startedSignIn = false;
     });
-  }, [returnUrl, navigate]);
+  }, [starting, navigate]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -224,6 +235,10 @@ export function LoginPage() {
       setBusy(false);
     }
   };
+
+  if (starting) {
+    return null;
+  }
 
   return (
     <AuthCard title={t('auth.signIn')}>

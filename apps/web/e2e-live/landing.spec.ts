@@ -35,6 +35,15 @@ test('the app sets and clears the signed-in hint', async ({ browser }) => {
   await page.goto('/login');
   await page.waitForURL((url) => url.pathname === '/');
 
+  // Where a sign-in with Google or another provider ends without an authorize request: a server session, nothing in
+  // this tab. The sign-in page starts the authorize request itself and lands in the app.
+  await page.evaluate(() => sessionStorage.clear());
+  await context.clearCookies({ name: 'sb_signed_in' });
+  await page.goto('/login');
+  await page.waitForURL((url) => url.pathname === '/');
+  await page.getByRole('button', { name: 'Account' }).waitFor();
+  expect((await hint(context))?.value).toBe('1');
+
   await page.getByRole('button', { name: 'Account' }).click();
   await page.getByRole('menuitem', { name: 'Sign out' }).click();
   await page.waitForURL(/\/login/);

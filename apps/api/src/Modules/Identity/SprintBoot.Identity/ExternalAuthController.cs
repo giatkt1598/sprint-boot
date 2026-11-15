@@ -93,7 +93,9 @@ public class ExternalAuthController(
             // The sign-in pages carry on to the authorize endpoint once the second step is done.
             LoginOutcome.TwoFactorCode => Redirect(TwoFactorPage("/two-factor", next)),
             LoginOutcome.TwoFactorSetup => Redirect(TwoFactorPage("/two-factor/setup", next)),
-            _ => Redirect(next ?? "/"),
+            // With no authorize request to continue, the sign-in page starts one; `/` may be the landing page for
+            // someone without the app's signed-in hint yet.
+            _ => Redirect(next ?? "/login"),
         };
     }
 
