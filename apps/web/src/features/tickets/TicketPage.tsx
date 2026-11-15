@@ -38,7 +38,7 @@ import { font, hoverPane, radius, sem } from '../../theme/tokens';
 import { useMembers, useSpace } from '../spaces/api';
 import { ArchivedBanner } from '../spaces/SpaceLifecycle';
 import { LinkedDocuments } from '../docs/LinkedDocuments';
-import { TicketActivityPanel } from './TicketActivityPanel';
+import { TicketActivityPanel, WorkLogDialog } from './TicketActivityPanel';
 import { QuickAssignee, QuickStatus, QuickTitle, TitleEditor } from './QuickFields';
 import { TransitionControl } from './TransitionControl';
 import { EpicProgress } from '../agile/EpicProgress';
@@ -150,6 +150,7 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [addingSubtask, setAddingSubtask] = useState(false);
   const [tab, setTab] = useState('comments');
+  const [loggingWork, setLoggingWork] = useState(false);
   const details = usePersistentWidth('sprint-boot.ticket-sidebar-width', DETAILS_WIDTH);
   const fieldLayout = useFieldLayout(ticket.projectId);
   const sidebarWidth = details.width;
@@ -503,17 +504,25 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
           <Attachments ticket={ticket} canEdit={canEdit} />
 
           <section className="flex flex-col gap-3">
-            <Tabs
-              label={t('tickets.tabComments')}
-              value={tab}
-              onChange={setTab}
-              items={[
-                { value: 'all', label: t('tickets.tabAll') },
-                { value: 'comments', label: t('tickets.tabComments') },
-                { value: 'history', label: t('tickets.tabHistory') },
-                { value: 'worklog', label: t('tickets.tabWorkLog') },
-              ]}
-            />
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <div className="min-w-0 flex-1">
+                <Tabs
+                  label={t('tickets.tabComments')}
+                  value={tab}
+                  onChange={setTab}
+                  items={[
+                    { value: 'all', label: t('tickets.tabAll') },
+                    { value: 'comments', label: t('tickets.tabComments') },
+                    { value: 'history', label: t('tickets.tabHistory') },
+                    { value: 'worklog', label: t('tickets.tabWorkLog') },
+                  ]}
+                />
+              </div>
+              {canEdit && <Button kind="secondary" onClick={() => setLoggingWork(true)}>{t('tickets.logWork')}</Button>}
+            </div>
+            {loggingWork && (
+              <WorkLogDialog ticketId={ticket.id!} onClose={() => setLoggingWork(false)} onLogged={() => toast('success', t('tickets.workLogged'))} />
+            )}
             <TicketActivityPanel tab={tab} ticket={ticket} people={people} canEdit={canEdit} canManage={space.data?.permissions?.includes('Comment.DeleteAny') ?? false} />
           </section>
         </div>

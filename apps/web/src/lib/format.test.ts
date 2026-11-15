@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { formatDate, formatDateTime, formatMinutes, formatRecent, parseDuration, setDisplayTimeZone, todayIso } from './format';
+import { formatDate, formatDateTime, formatMinutes, formatRecent, parseDuration, setDisplayTimeZone, stepDuration, todayIso } from './format';
 
 describe('duration', () => {
   it.each([
@@ -19,6 +19,15 @@ describe('duration', () => {
   it('formats minutes', () => {
     expect(formatMinutes(90)).toBe('1h 30m');
     expect(formatMinutes(0)).toBe('0m');
+  });
+
+  it('steps a typed duration by half an hour, never below 30m', () => {
+    expect(stepDuration('1h 30m', 30)).toBe('2h');
+    expect(stepDuration('1h 30m', -30)).toBe('1h');
+    expect(stepDuration('', 30)).toBe('30m');
+    expect(stepDuration('', -30)).toBeNull();
+    expect(stepDuration('30m', -30)).toBe('30m');
+    expect(stepDuration('soon', 30)).toBeNull();
   });
 });
 

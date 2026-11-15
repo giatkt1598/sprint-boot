@@ -534,7 +534,7 @@
     "tabAll": "All",
     "tabComments": "Comments",
     "tabHistory": "History",
-    "tabWorkLog": "Work Log",
+    "tabWorkLog": "Work Logs",
     "addComment": "Add a comment",
     "reply": "Reply",
     "like": "Like",
@@ -621,7 +621,9 @@
     "sortBy": "Sort by",
     "defaultOrder": "Default order",
     "sortAscending": "Ascending, switch to descending",
-    "sortDescending": "Descending, switch to ascending"
+    "sortDescending": "Descending, switch to ascending",
+    "quickTime": "Quick time",
+    "workLogged": "Work logged"
   },
   "workflows": {
     "title": "Workflows",
@@ -1416,10 +1418,8 @@
     "cutOff": "The answer was cut off at the length limit.",
     "stopped": "The answer stopped early.",
     "aboutTicket": "About ticket",
-    "rename": "Rename {{title}}",
     "renameTitle": "Rename conversation",
     "conversationTitle": "Title",
-    "delete": "Delete {{title}}",
     "deleteTitle": "Delete {{title}}?",
     "deleteBody": "The conversation is removed for good. Changes it made to tickets stay.",
     "unavailable": "The assistant is switched off. An administrator can turn it on under Administration → AI assistant.",
@@ -1446,7 +1446,9 @@
     "runningToolTimes_other": "Running {{tool}}… ({{count}} times)",
     "preparingToolTimes_one": "Preparing {{tool}}… ({{count}} time)",
     "preparingToolTimes_other": "Preparing {{tool}}… ({{count}} times)",
-    "connectionLost": "The connection to the server dropped while the assistant was answering. What it saved is shown; ask again to continue."
+    "connectionLost": "The connection to the server dropped while the assistant was answering. What it saved is shown; ask again to continue.",
+    "actions": "Actions for {{title}}",
+    "resizeList": "Resize conversation list"
   },
   "assistantAdmin": {
     "title": "AI assistant",

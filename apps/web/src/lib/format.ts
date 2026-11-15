@@ -69,3 +69,13 @@ export const parseDuration = (text: string) => {
   }
   return Number(match[1] ?? 0) * 60 + Number(match[2] ?? 0);
 };
+
+/** Moves a typed duration by `step` minutes, never below 30m; an empty one only goes up. Null when there is nothing to move. */
+export const stepDuration = (text: string, step: number) => {
+  const empty = text.trim() === '';
+  const minutes = empty ? 0 : parseDuration(text);
+  if (minutes === null || (empty && step < 0)) {
+    return null;
+  }
+  return formatMinutes(Math.max(30, minutes + step));
+};

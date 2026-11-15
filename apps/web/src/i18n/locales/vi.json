@@ -621,7 +621,9 @@
     "sortBy": "Sắp xếp theo",
     "defaultOrder": "Thứ tự mặc định",
     "sortAscending": "Tăng dần, bấm để đổi sang giảm dần",
-    "sortDescending": "Giảm dần, bấm để đổi sang tăng dần"
+    "sortDescending": "Giảm dần, bấm để đổi sang tăng dần",
+    "quickTime": "Chọn nhanh thời gian",
+    "workLogged": "Đã ghi thời gian"
   },
   "workflows": {
     "title": "Workflow",
@@ -1416,10 +1418,8 @@
     "cutOff": "Câu trả lời bị cắt vì chạm giới hạn độ dài.",
     "stopped": "Câu trả lời dừng sớm.",
     "aboutTicket": "Về ticket",
-    "rename": "Đổi tên {{title}}",
     "renameTitle": "Đổi tên cuộc trò chuyện",
     "conversationTitle": "Tiêu đề",
-    "delete": "Xoá {{title}}",
     "deleteTitle": "Xoá {{title}}?",
     "deleteBody": "Cuộc trò chuyện sẽ bị xoá vĩnh viễn. Các thay đổi nó đã làm trên ticket vẫn giữ nguyên.",
     "unavailable": "Trợ lý đang tắt. Quản trị viên có thể bật trong Quản trị → Trợ lý AI.",
@@ -1446,7 +1446,9 @@
     "runningToolTimes_one": "Đang chạy {{tool}}… ({{count}} lần)",
     "preparingToolTimes_other": "Đang soạn {{tool}}… ({{count}} lần)",
     "preparingToolTimes_one": "Đang soạn {{tool}}… ({{count}} lần)",
-    "connectionLost": "Mất kết nối tới server khi trợ lý đang trả lời. Phần đã lưu được hiển thị; hãy hỏi lại để tiếp tục."
+    "connectionLost": "Mất kết nối tới server khi trợ lý đang trả lời. Phần đã lưu được hiển thị; hãy hỏi lại để tiếp tục.",
+    "actions": "Thao tác cho {{title}}",
+    "resizeList": "Đổi độ rộng danh sách hội thoại"
   },
   "assistantAdmin": {
     "title": "Trợ lý AI",

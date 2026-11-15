@@ -1,3 +1,4 @@
+import ButtonBase from '@mui/material/ButtonBase';
 import IconButton from '@mui/material/IconButton';
 import InputBase from '@mui/material/InputBase';
 import type { PopoverActions } from '@mui/material/Popover';
@@ -22,7 +23,7 @@ import { EmptyState, LoadingState } from '../../components/StateViews';
 import { TextField } from '../../components/TextField';
 import { useToast } from '../../components/ToastHost';
 import { useErrorMessage } from '../../lib/errors';
-import { formatDate, formatDateTime, formatMinutes, parseDuration, todayIso } from '../../lib/format';
+import { formatDate, formatDateTime, formatMinutes, parseDuration, stepDuration, todayIso } from '../../lib/format';
 import { font, radius, sem } from '../../theme/tokens';
 import { RichTextEditor, RichTextView, type MentionUser } from './RichTextEditor';
 import type { Activity, Comment, Ticket } from './api';
@@ -345,7 +346,11 @@ function ActivityLine({ item }: { item: Activity }) {
 
 type WorkLog = components['schemas']['WorkLogDto'];
 
-function WorkLogDialog({ ticketId, log: existing, onClose }: { ticketId: string; log?: WorkLog; onClose: () => void }) {
+const QUICK_HOURS = [1, 2, 3, 4, 6, 8];
+const TIME_STEP = 30;
+
+/** Logs time on a ticket, or changes a log the person wrote. `onLogged` runs after a save, before the dialog closes. */
+export function WorkLogDialog({ ticketId, log: existing, onClose, onLogged }: { ticketId: string; log?: WorkLog; onClose: () => void; onLogged?: () => void }) {
   const { t } = useTranslation();
   const toMessage = useErrorMessage();
   const queryClient = useQueryClient();
@@ -365,6 +370,7 @@ function WorkLogDialog({ ticketId, log: existing, onClose }: { ticketId: string;
       ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['tickets', ticketId] });
+      onLogged?.();
       onClose();
     },
   });
@@ -388,7 +394,54 @@ function WorkLogDialog({ ticketId, log: existing, onClose }: { ticketId: string;
         />
       }
     >
-      <TextField label={t('tickets.timeSpent')} autoFocus placeholder={t('tickets.timeHint')} value={time} error={touched && invalid ? t('tickets.timeInvalid') : undefined} onChange={(event) => setTime(event.target.value)} />
+      <TextField
+        label={t('tickets.timeSpent')}
+        autoFocus
+        placeholder={t('tickets.timeHint')}
+        value={time}
+        error={touched && invalid ? t('tickets.timeInvalid') : undefined}
+        onChange={(event) => setTime(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') {
+            return;
+          }
+          event.preventDefault();
+          const next = stepDuration(time, event.key === 'ArrowUp' ? TIME_STEP : -TIME_STEP);
+          if (next) {
+            setTime(next);
+          } else if (time.trim()) {
+            setTouched(true);
+          }
+        }}
+      />
+      <div role="group" aria-label={t('tickets.quickTime')} className="flex flex-wrap gap-2">
+        {QUICK_HOURS.map((hours) => {
+          const label = formatMinutes(hours * 60);
+          const selected = minutes === hours * 60;
+          return (
+            <ButtonBase
+              key={hours}
+              aria-pressed={selected}
+              onClick={() => setTime(label)}
+              sx={{
+                minWidth: 40,
+                height: 28,
+                paddingInline: 1.25,
+                fontSize: font.size.xs,
+                fontWeight: font.weight.medium,
+                borderRadius: `${radius.full}px`,
+                border: `1px solid ${sem(selected ? 'accent-default' : 'border-default')}`,
+                backgroundColor: selected ? sem('bg-selected') : 'transparent',
+                color: sem(selected ? 'text-accent' : 'text-primary'),
+                '&:hover': { backgroundColor: sem(selected ? 'bg-selected' : 'bg-hover') },
+                '&.Mui-focusVisible': { outline: `2px solid ${sem('accent-default')}`, outlineOffset: 2 },
+              }}
+            >
+              {label}
+            </ButtonBase>
+          );
+        })}
+      </div>
       <DatePicker label={t('tickets.workDate')} value={workDate} onChange={setWorkDate} />
       <TextField label={t('tickets.note')} value={note} onChange={(event) => setNote(event.target.value)} />
       {log.isError && <Typography role="alert" color="error" variant="body2">{toMessage(log.error)}</Typography>}
@@ -396,13 +449,12 @@ function WorkLogDialog({ ticketId, log: existing, onClose }: { ticketId: string;
   );
 }
 
-function WorkLogPanel({ ticket, canEdit, canManage }: { ticket: Ticket; canEdit: boolean; canManage: boolean }) {
+function WorkLogPanel({ ticket, canManage }: { ticket: Ticket; canManage: boolean }) {
   const { t, i18n } = useTranslation();
   const me = useCurrentUser();
   const toMessage = useErrorMessage();
   const toast = useToast();
   const queryClient = useQueryClient();
-  const [logging, setLogging] = useState(false);
   const [editingLog, setEditingLog] = useState<WorkLog | null>(null);
 
   const logs = useQuery({
@@ -418,10 +470,7 @@ function WorkLogPanel({ ticket, canEdit, canManage }: { ticket: Ticket; canEdit:
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center">
-        <span className="flex-1">{t('tickets.totalLogged', { time: formatMinutes(logs.data?.totalMinutes ?? 0) })}</span>
-        {canEdit && <Button kind="secondary" onClick={() => setLogging(true)}>{t('tickets.logWork')}</Button>}
-      </div>
+      <span>{t('tickets.totalLogged', { time: formatMinutes(logs.data?.totalMinutes ?? 0) })}</span>
       {logs.isPending && <LoadingState />}
       {logs.data?.items?.length === 0 && <EmptyState title={t('tickets.noWorkLogs')} />}
       {(logs.data?.items ?? []).map((log) => (
@@ -443,7 +492,6 @@ function WorkLogPanel({ ticket, canEdit, canManage }: { ticket: Ticket; canEdit:
           )}
         </div>
       ))}
-      {logging && <WorkLogDialog ticketId={ticket.id!} onClose={() => setLogging(false)} />}
       {editingLog && <WorkLogDialog ticketId={ticket.id!} log={editingLog} onClose={() => setEditingLog(null)} />}
     </div>
   );
@@ -464,7 +512,7 @@ export function TicketActivityPanel({ tab, ticket, people, canEdit, canManage }:
   }, [linkedComment, comments.isSuccess]);
 
   if (tab === 'worklog') {
-    return <WorkLogPanel ticket={ticket} canEdit={canEdit} canManage={canManage} />;
+    return <WorkLogPanel ticket={ticket} canManage={canManage} />;
   }
 
   const topLevel = (comments.data ?? []).filter((comment) => !comment.parentId);
