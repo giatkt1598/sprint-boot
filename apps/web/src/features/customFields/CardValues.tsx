@@ -38,6 +38,7 @@ export function CardValues({ keys, items }: { keys: string[]; items: TicketCusto
             );
           default: {
             const value = field.type === FieldType.checkbox ? t('customFields.yes')
+              : field.type === FieldType.tags ? (item.tags ?? []).join(', ')
               : field.type === FieldType.date ? formatDate(item.date, i18n.language)
               : field.type === FieldType.number ? String(item.number)
               : item.text;

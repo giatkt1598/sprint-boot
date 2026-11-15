@@ -22,7 +22,7 @@ import { useCurrentUser } from '../../auth/AuthProvider';
 import { priorityLevel, TemplateMode, uploadAttachment, useEpics, useTicketTemplates, useLabels, usePriorities, useTicketTypes } from './api';
 import { RichTextEditor } from './RichTextEditor';
 import { useSpaceFields } from '../customFields/api';
-import { CustomFieldInput, defaultOf, type FieldValue } from '../customFields/CustomFieldInput';
+import { CustomFieldInput, defaultOf, isSet, type FieldValue } from '../customFields/CustomFieldInput';
 
 
 interface CreateTicketDialogProps {
@@ -80,6 +80,7 @@ export function CreateTicketDialog({ onClose, epic }: CreateTicketDialogProps) {
   const [customValues, setCustomValues] = useState<Record<string, FieldValue>>({});
   const editedFields = useRef(new Set<string>());
   const customFields = (spaceFields.data ?? []).filter((item) => item.enabled && item.ticketTypeIds?.includes(typeId)).map((item) => item.field!);
+  const missingRequired = customFields.some((field) => field.isRequired && !isSet(field.key! in customValues ? customValues[field.key!] : defaultOf(field)));
   const allowedTypes = (types.data ?? []).filter((type) => type.hierarchy !== 0 && (!epic || type.hierarchy === 2));
   const [sprintId, setSprintId] = useState('');
   const canHaveEpic = allowedTypes.find((type) => type.id === typeId)?.hierarchy === 1;
@@ -202,7 +203,7 @@ export function CreateTicketDialog({ onClose, epic }: CreateTicketDialogProps) {
           <Checkbox label={t('tickets.createAnother')} checked={another} onChange={(event) => setAnother(event.target.checked)} />
           <DialogFooter
             confirmLabel={t('tickets.createAction')}
-            confirmDisabled={create.isPending || !projectId || !typeId}
+            confirmDisabled={create.isPending || !projectId || !typeId || missingRequired}
             onCancel={onClose}
             onConfirm={submit}
           />
@@ -292,6 +293,7 @@ export function CreateTicketDialog({ onClose, epic }: CreateTicketDialogProps) {
             field={field}
             value={field.key! in customValues ? customValues[field.key!] : defaultOf(field)}
             people={(members.data ?? []).map((member) => member.user!)}
+            projectId={projectId || undefined}
             onChange={(value) => {
               editedFields.current.add(field.key!);
               setCustomValues((current) => ({ ...current, [field.key!]: value }));

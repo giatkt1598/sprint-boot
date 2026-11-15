@@ -42,13 +42,14 @@ public class CustomFieldQueries(
                 ("empty", _) => query.Where(ticket => !mine.Any(value => value.TicketId == ticket.Id)),
                 ("any", _) => query.Where(ticket => mine.Any(value => value.TicketId == ticket.Id)),
                 ("in", CustomFieldType.User) => In(query, mine, Ids(field, text), value => value.UserId),
+                ("in", CustomFieldType.Tags) => Words(query, mine, text),
                 ("in", CustomFieldType.Select or CustomFieldType.MultiSelect) => In(query, mine, Ids(field, text), value => value.OptionId),
                 ("is", CustomFieldType.Checkbox) => Bool(field, text)
                     ? query.Where(ticket => mine.Any(value => value.TicketId == ticket.Id && value.BoolValue == true))
                     : query.Where(ticket => !mine.Any(value => value.TicketId == ticket.Id && value.BoolValue == true)),
                 ("gte" or "lte", CustomFieldType.Number) => Range(query, mine, op, Number(field, text)),
                 ("gte" or "lte", CustomFieldType.Date) => Range(query, mine, op, Date(field, text)),
-                ("has", CustomFieldType.Text or CustomFieldType.Paragraph or CustomFieldType.Url) => Contains(query, mine, text),
+                ("has", CustomFieldType.Text or CustomFieldType.Paragraph or CustomFieldType.Url or CustomFieldType.Tags) => Contains(query, mine, text),
                 _ => throw CustomFieldRules.Invalid(field, "a filter its kind supports"),
             };
         }
@@ -124,6 +125,13 @@ public class CustomFieldQueries(
         op == "gte"
             ? query.Where(ticket => mine.Any(value => value.TicketId == ticket.Id && value.DateValue >= bound))
             : query.Where(ticket => mine.Any(value => value.TicketId == ticket.Id && value.DateValue <= bound));
+
+    /// <summary>Tickets with any of the words, compared without case.</summary>
+    private static IQueryable<Ticket> Words(IQueryable<Ticket> query, IQueryable<TicketFieldValue> mine, string text)
+    {
+        var words = text.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Select(word => word.ToLower()).ToList();
+        return query.Where(ticket => mine.Any(value => value.TicketId == ticket.Id && words.Contains(value.TextValue!.ToLower())));
+    }
 
     private static IQueryable<Ticket> Contains(IQueryable<Ticket> query, IQueryable<TicketFieldValue> mine, string text)
     {

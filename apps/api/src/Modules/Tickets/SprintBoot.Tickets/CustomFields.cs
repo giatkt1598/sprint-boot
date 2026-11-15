@@ -28,6 +28,9 @@ public class CustomField : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// <summary>JSON, as the ticket API takes the value.</summary>
     public string? DefaultValue { get; set; }
 
+    /// <summary>A new ticket needs a value, and a value cannot be emptied.</summary>
+    public bool IsRequired { get; set; }
+
     protected CustomField()
     {
     }
@@ -248,6 +251,24 @@ public static class CustomFieldRules
             case CustomFieldType.Select:
                 return new ParsedValue { OptionIds = [OptionOf(field, value, options)] };
 
+            case CustomFieldType.Tags:
+                if (value.ValueKind != JsonValueKind.Array)
+                {
+                    throw Invalid(field, "list of words");
+                }
+
+                var tags = value.EnumerateArray()
+                    .Select(item => item.ValueKind == JsonValueKind.String ? item.GetString()!.Trim() : throw Invalid(field, "list of words"))
+                    .Where(tag => tag.Length > 0)
+                    .DistinctBy(tag => tag.ToLowerInvariant())
+                    .ToList();
+                if (tags.Count > CustomFieldConsts.MaxTags || tags.Any(tag => tag.Length > CustomFieldConsts.MaxTagLength))
+                {
+                    throw Invalid(field, "list of words");
+                }
+
+                return tags.Count == 0 ? ParsedValue.Empty : new ParsedValue { Tags = [.. tags.Order(StringComparer.CurrentCultureIgnoreCase)] };
+
             case CustomFieldType.MultiSelect:
                 if (value.ValueKind != JsonValueKind.Array)
                 {
@@ -291,5 +312,7 @@ public sealed class ParsedValue
 
     public List<Guid> OptionIds { get; init; } = [];
 
-    public bool IsEmpty => Text is null && Number is null && Date is null && Checked is null && UserId is null && OptionIds.Count == 0;
+    public List<string> Tags { get; init; } = [];
+
+    public bool IsEmpty => Text is null && Number is null && Date is null && Checked is null && UserId is null && OptionIds.Count == 0 && Tags.Count == 0;
 }

@@ -280,7 +280,8 @@
     "CustomFieldOptionInvalid": "That option is not one of the field’s options.",
     "CustomFieldTypeMismatch": "That kind of field does not exist.",
     "CustomFieldNotInSpace": "That field or ticket type is not part of this space.",
-    "CustomFieldInvalidValue": "That value does not fit the field."
+    "CustomFieldInvalidValue": "That value does not fit the field.",
+    "CustomFieldRequired": "Fill in every required field."
   },
   "auth": {
     "ldapTitle": "Sign in to {{provider}}",
@@ -2004,7 +2005,8 @@
       "5": "Multi-select",
       "6": "Person",
       "7": "Checkbox",
-      "8": "Link"
+      "8": "Link",
+      "9": "Tags"
     },
     "yes": "Yes",
     "openLink": "Open link",
@@ -2024,6 +2026,9 @@
     "builtIn": "Built-in",
     "showInDetails": "Show in ticket details",
     "alwaysShown": "Always shown: the status moves the ticket along its workflow.",
-    "alwaysShownShort": "Always shown"
+    "alwaysShownShort": "Always shown",
+    "required": "Required",
+    "requiredHint": "Tickets of the types that show it need a value when they are created, and the value cannot be emptied.",
+    "requiredLabel": "{{name}} *"
   }
 }

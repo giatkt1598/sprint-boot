@@ -314,6 +314,7 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
           value={valueOf(item)}
           disabled={!canEdit}
           people={people}
+          projectId={ticket.projectId}
           onChange={(value) => update.mutate({ [fieldKey(item.field!)]: value })}
         />
       </DetailRow>,

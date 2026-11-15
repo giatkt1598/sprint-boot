@@ -148,6 +148,7 @@ export function SpaceFieldsPage() {
                     <Typography sx={{ fontWeight: 500 }}>{name}</Typography>
                   )}
                   {row.kind === 'custom' && <Badge tone="subtle">{t(`customFields.types.${row.field.type}`)}</Badge>}
+                  {row.kind === 'custom' && row.field.isRequired && <Badge tone="warning">{t('customFields.required')}</Badge>}
                   <Badge tone={row.kind === 'builtIn' ? 'subtle' : own ? 'info' : 'neutral'}>
                     {t(row.kind === 'builtIn' ? 'customFields.builtIn' : own ? 'customFields.thisSpace' : 'customFields.workspace')}
                   </Badge>

@@ -280,7 +280,8 @@
     "CustomFieldOptionInvalid": "Lựa chọn đó không thuộc trường này.",
     "CustomFieldTypeMismatch": "Không có kiểu trường đó.",
     "CustomFieldNotInSpace": "Trường hoặc loại ticket đó không thuộc space này.",
-    "CustomFieldInvalidValue": "Giá trị không hợp với trường."
+    "CustomFieldInvalidValue": "Giá trị không hợp với trường.",
+    "CustomFieldRequired": "Hãy điền đủ các trường bắt buộc."
   },
   "auth": {
     "ldapTitle": "Đăng nhập vào {{provider}}",
@@ -2004,7 +2005,8 @@
       "5": "Chọn nhiều",
       "6": "Người",
       "7": "Hộp kiểm",
-      "8": "Liên kết"
+      "8": "Liên kết",
+      "9": "Thẻ"
     },
     "yes": "Có",
     "openLink": "Mở liên kết",
@@ -2024,6 +2026,9 @@
     "builtIn": "Có sẵn",
     "showInDetails": "Hiện trong chi tiết ticket",
     "alwaysShown": "Luôn hiện: status dùng để chuyển ticket theo workflow.",
-    "alwaysShownShort": "Luôn hiện"
+    "alwaysShownShort": "Luôn hiện",
+    "required": "Bắt buộc",
+    "requiredHint": "Ticket thuộc các loại hiện trường này phải có giá trị khi tạo, và không được để trống giá trị.",
+    "requiredLabel": "{{name}} *"
   }
 }

@@ -30,6 +30,9 @@ public enum CustomFieldType
 
     /// <summary>An http or https address.</summary>
     Url = 8,
+
+    /// <summary>Any number of free words, typed like labels; each field keeps its own words.</summary>
+    Tags = 9,
 }
 
 public static class CustomFieldConsts
@@ -41,6 +44,8 @@ public static class CustomFieldConsts
     public const int MaxOptions = 100;
     public const int MaxTextLength = 2000;
     public const int MaxColorLength = 32;
+    public const int MaxTagLength = 64;
+    public const int MaxTags = 50;
 
     /// <summary>
     /// Field keys of the ticket API and of MCP: "cf." and the field's key, such as "cf.environment", so a custom field
@@ -75,6 +80,7 @@ public static class CustomFieldErrors
     public const string TypeMismatch = "SprintBoot:CustomFieldTypeMismatch";
     public const string NotInSpace = "SprintBoot:CustomFieldNotInSpace";
     public const string InvalidValue = "SprintBoot:CustomFieldInvalidValue";
+    public const string Required = "SprintBoot:CustomFieldRequired";
 }
 
 public class CustomFieldOptionDto
@@ -116,6 +122,9 @@ public class CustomFieldDto
     /// </summary>
     public string? DefaultValue { get; set; }
 
+    /// <summary>Tickets of the types that show it must have a value: on create, and it cannot be emptied.</summary>
+    public required bool IsRequired { get; set; }
+
     /// <summary>How many tickets have a value in it.</summary>
     public required int UsageCount { get; set; }
 }
@@ -153,6 +162,8 @@ public class CreateCustomFieldInput
     public List<SaveCustomFieldOptionInput>? Options { get; set; }
 
     public string? DefaultValue { get; set; }
+
+    public bool IsRequired { get; set; }
 }
 
 /// <summary>Name, description, options and default; the kind and the key stay.</summary>
@@ -169,6 +180,8 @@ public class UpdateCustomFieldInput
     public List<SaveCustomFieldOptionInput>? Options { get; set; }
 
     public string? DefaultValue { get; set; }
+
+    public bool IsRequired { get; set; }
 }
 
 /// <summary>A field as one space uses it.</summary>
@@ -222,6 +235,9 @@ public class TicketCustomFieldDto
 
     public UserRefDto? User { get; set; }
 
+    /// <summary>The words of a tags field, in alphabetical order.</summary>
+    public List<string>? Tags { get; set; }
+
     /// <summary>The chosen options of a select field, in the field's order.</summary>
     public required List<CustomFieldOptionDto> Options { get; set; }
 }
@@ -245,4 +261,7 @@ public interface ICustomFieldAppService : IApplicationService
 
     /// <summary>The order of a ticket's Details sidebar in the space, and the built-in fields it hides.</summary>
     Task<FieldLayoutDto> GetLayoutAsync(Guid projectId);
+
+    /// <summary>The words a tags field already holds on the space's tickets, to offer while typing.</summary>
+    Task<List<string>> GetTagsAsync(Guid id, Guid projectId);
 }

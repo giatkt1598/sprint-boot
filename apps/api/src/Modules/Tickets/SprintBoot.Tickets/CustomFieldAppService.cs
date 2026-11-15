@@ -20,6 +20,7 @@ public class CustomFieldAppService(
     IRepository<TicketFieldValue, Guid> values,
     IRepository<TicketType, Guid> types,
     IRepository<ProjectFieldLayout, Guid> layouts,
+    IRepository<Ticket, Guid> tickets,
     IProjectAccess projectAccess)
     : ApplicationService, ICustomFieldAppService
 {
@@ -42,6 +43,7 @@ public class CustomFieldAppService(
         var field = new CustomField(GuidGenerator.Create(), input.ProjectId, await FreeKeyAsync(input.ProjectId, name), name, input.Type)
         {
             Description = Clean(input.Description),
+            IsRequired = input.IsRequired,
         };
         await fields.InsertAsync(field, autoSave: true);
         await SaveOptionsAsync(field, input.Options);
@@ -65,6 +67,7 @@ public class CustomFieldAppService(
         await CheckManageAsync(field.ProjectId);
         field.Name = CheckName(input.Name);
         field.Description = Clean(input.Description);
+        field.IsRequired = input.IsRequired;
         await SaveOptionsAsync(field, input.Options);
         field.DefaultValue = await CheckDefaultAsync(field, input.DefaultValue);
         await fields.UpdateAsync(field, autoSave: true);
@@ -145,6 +148,22 @@ public class CustomFieldAppService(
             Order = [.. order],
             Hidden = [.. (layout?.Hidden ?? []).Where(key => TicketDetailFields.All.Contains(key) && !TicketDetailFields.AlwaysShown.Contains(key))],
         };
+    }
+
+    public async Task<List<string>> GetTagsAsync(Guid id, Guid projectId)
+    {
+        await projectAccess.CheckAsync(projectId, ProjectPermissions.ViewTickets);
+        var field = await fields.GetAsync(id);
+        if (field.Type != CustomFieldType.Tags || (field.ProjectId is not null && field.ProjectId != projectId))
+        {
+            return [];
+        }
+
+        var ticketIds = (await tickets.GetQueryableAsync()).Where(ticket => ticket.ProjectId == projectId).Select(ticket => ticket.Id);
+        var words = await AsyncExecuter.ToListAsync((await values.GetQueryableAsync())
+            .Where(value => value.FieldId == id && value.TextValue != null && ticketIds.Contains(value.TicketId))
+            .Select(value => value.TextValue!).Distinct());
+        return [.. words.Order(StringComparer.CurrentCultureIgnoreCase)];
     }
 
     private async Task SaveLayoutAsync(Guid projectId, SaveSpaceCustomFieldsInput input)

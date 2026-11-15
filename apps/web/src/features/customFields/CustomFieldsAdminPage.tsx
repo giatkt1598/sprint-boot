@@ -93,7 +93,16 @@ export function CustomFieldsAdminPage() {
                 </span>
               ),
             },
-            { key: 'type', header: t('customFields.type'), render: (item) => t(`customFields.types.${item.type}`) },
+            {
+              key: 'type',
+              header: t('customFields.type'),
+              render: (item) => (
+                <span className="flex flex-wrap items-center gap-1">
+                  {t(`customFields.types.${item.type}`)}
+                  {item.isRequired && <Badge tone="warning">{t('customFields.required')}</Badge>}
+                </span>
+              ),
+            },
             { key: 'key', header: t('customFields.key'), render: (item) => <code style={{ fontFamily: font.mono, fontSize: font.size.xs, color: sem('text-secondary') }}>cf.{item.key}</code> },
             { key: 'used', header: t('customFields.used'), render: (item) => t('customFields.usage', { count: item.usageCount ?? 0 }) },
             {

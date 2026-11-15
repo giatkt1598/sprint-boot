@@ -19,6 +19,7 @@ export const FieldType = {
   user: 6,
   checkbox: 7,
   url: 8,
+  tags: 9,
 } as const;
 
 export const FIELD_TYPES = Object.values(FieldType);
@@ -64,6 +65,15 @@ export const useFieldLayout = (projectId: string | undefined) =>
     queryKey: customFieldKeys.layout(projectId),
     enabled: Boolean(projectId),
     queryFn: () => unwrap(apiClient.GET('/api/v1/custom-field/layout/{projectId}', { params: { path: { projectId: projectId! } } })),
+  });
+
+/** The words a tags field already holds in a space, offered while typing. */
+export const useFieldTags = (fieldId: string | undefined, projectId: string | undefined, enabled = true) =>
+  useQuery({
+    queryKey: ['custom-fields', 'tags', fieldId, projectId],
+    enabled: enabled && Boolean(fieldId && projectId),
+    staleTime: 30_000,
+    queryFn: () => unwrap(apiClient.GET('/api/v1/custom-field/{id}/tags/{projectId}', { params: { path: { id: fieldId!, projectId: projectId! } } })),
   });
 
 /** Workspace fields, or a space's own ones. */

@@ -39,6 +39,7 @@ public class McpCustomFields(ICustomFieldAppService fields, McpResolver resolver
                 CustomFieldType.User => McpViews.Person(item.User),
                 CustomFieldType.Select => item.Options.FirstOrDefault()?.Label,
                 CustomFieldType.MultiSelect => item.Options.Count == 0 ? null : item.Options.Select(option => option.Label).ToList(),
+                CustomFieldType.Tags => item.Tags is { Count: > 0 } ? item.Tags : null,
                 _ => item.Text,
             }));
 
@@ -79,7 +80,7 @@ public class McpCustomFields(ICustomFieldAppService fields, McpResolver resolver
             var field = Find(known, parts[0]);
             var op = parts.Length > 1 ? parts[1].Trim().ToLowerInvariant() : string.Empty;
             var text = parts.Length > 2 ? parts[2] : string.Empty;
-            if (op == "in")
+            if (op == "in" && field.Type != CustomFieldType.Tags)
             {
                 var ids = new List<string>();
                 foreach (var item in text.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))

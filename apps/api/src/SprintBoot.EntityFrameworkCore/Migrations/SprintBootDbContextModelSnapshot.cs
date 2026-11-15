@@ -1769,6 +1769,9 @@ namespace SprintBoot.EntityFrameworkCore.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("IsDeleted");
 
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Key")
                         .IsRequired()
                         .HasMaxLength(48)

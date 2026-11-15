@@ -4356,6 +4356,105 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/custom-field/{id}/tags/{projectId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    projectId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": string[];
+                        "text/json": string[];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+                /** @description Not Implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RemoteServiceErrorResponse"];
+                        "text/json": components["schemas"]["RemoteServiceErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/docs-admin/uninstall": {
         parameters: {
             query?: never;
@@ -23169,6 +23268,7 @@ export interface components {
             type: components["schemas"]["CustomFieldType"];
             options?: components["schemas"]["SaveCustomFieldOptionInput"][] | null;
             defaultValue?: string | null;
+            isRequired?: boolean;
         };
         CreateDocPageInput: {
             title?: string | null;
@@ -23301,6 +23401,7 @@ export interface components {
             type: components["schemas"]["CustomFieldType"];
             options: components["schemas"]["CustomFieldOptionDto"][] | null;
             defaultValue?: string | null;
+            isRequired: boolean;
             /** Format: int32 */
             usageCount: number;
         };
@@ -23315,7 +23416,7 @@ export interface components {
          * Format: int32
          * @enum {integer}
          */
-        CustomFieldType: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+        CustomFieldType: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
         DeletedTicketDto: {
             /** Format: uuid */
             id: string;
@@ -24515,6 +24616,7 @@ export interface components {
             date?: string | null;
             checked?: boolean | null;
             user?: components["schemas"]["UserRefDto"];
+            tags?: string[] | null;
             options: components["schemas"]["CustomFieldOptionDto"][] | null;
         };
         TicketDocPageDto: {
@@ -24727,6 +24829,7 @@ export interface components {
             description?: string | null;
             options?: components["schemas"]["SaveCustomFieldOptionInput"][] | null;
             defaultValue?: string | null;
+            isRequired?: boolean;
         };
         UpdateInvitationRoleInput: {
             /** Format: uuid */

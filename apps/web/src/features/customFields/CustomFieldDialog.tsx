@@ -71,6 +71,7 @@ export function CustomFieldDialog({ field, projectId, onClose }: { field?: Custo
       : [newOption(), newOption()],
   );
   // A select default is stored by option id; the form picks it by label.
+  const [required, setRequired] = useState(field?.isRequired ?? false);
   const [defaultText, setDefaultText] = useState(() => {
     const stored = readDefault(field);
     return field?.options?.find((option) => option.id === stored)?.label ?? stored;
@@ -84,6 +85,7 @@ export function CustomFieldDialog({ field, projectId, onClose }: { field?: Custo
         options: hasOptions(type) ? options.filter((option) => option.label.trim()).map(({ id, label, color, isHidden }) => ({ id, label, color, isHidden })) : null,
         // A default option is picked by its label while it may not have an id yet; the API takes labels too.
         defaultValue: takesDefault(type) ? writeDefault(type, defaultText) : null,
+        isRequired: required,
       };
       return field
         ? unwrap(apiClient.PUT('/api/v1/custom-field/{id}', { params: { path: { id: field.id! } }, body }))
@@ -168,6 +170,8 @@ export function CustomFieldDialog({ field, projectId, onClose }: { field?: Custo
         </fieldset>
       )}
 
+      <Checkbox label={t('customFields.required')} checked={required} onChange={(_, checked) => setRequired(checked)} />
+      {required && <Typography variant="body2" color="textSecondary">{t('customFields.requiredHint')}</Typography>}
       {takesDefault(type) && (type === FieldType.checkbox ? (
         <Checkbox label={t('customFields.defaultValue')} checked={defaultText === 'true'} onChange={(_, checked) => setDefaultText(checked ? 'true' : '')} />
       ) : type === FieldType.select ? (

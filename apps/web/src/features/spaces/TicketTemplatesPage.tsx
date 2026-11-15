@@ -151,6 +151,7 @@ function TemplateDialog({ draft, types, projectId, onClose }: { draft: Draft; ty
               field={field}
               value={value.customFields[field.key!] ?? (field.type === FieldType.multiSelect ? [] : null)}
               people={(members.data ?? []).map((member) => member.user!)}
+              projectId={projectId}
               onChange={(next) => setValue((current) => ({ ...current, customFields: { ...current.customFields, [field.key!]: next } }))}
             />
           ))}

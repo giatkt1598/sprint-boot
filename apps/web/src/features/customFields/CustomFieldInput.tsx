@@ -13,9 +13,10 @@ import { Popover } from '../../components/Popover';
 import { SelectField, TextField } from '../../components/TextField';
 import { UserPicker, type PickerUser } from '../../components/UserPicker';
 import { formatDate } from '../../lib/format';
-import { radius, sem } from '../../theme/tokens';
+import { font, radius, sem } from '../../theme/tokens';
 import { DETAIL_INSET, DetailText } from '../tickets/DetailLayout';
-import { FieldType, optionTone, type CustomField, type CustomFieldOption, type TicketCustomField } from './api';
+import { TagInput } from '../../components/TagInput';
+import { FieldType, optionTone, useFieldTags, type CustomField, type CustomFieldOption, type TicketCustomField } from './api';
 
 /** A value as the ticket API takes it. */
 export type FieldValue = string | number | boolean | string[] | null;
@@ -35,6 +36,8 @@ export function valueOf(item: TicketCustomField): FieldValue {
       return item.options?.[0]?.id ?? null;
     case FieldType.multiSelect:
       return (item.options ?? []).map((option) => option.id!);
+    case FieldType.tags:
+      return item.tags ?? [];
     default:
       return item.text ?? null;
   }
@@ -46,7 +49,7 @@ export const isSet = (value: FieldValue | undefined) => value !== null && value 
 /** What a new ticket starts with in the field, as the form shows it. */
 export function defaultOf(field: CustomField): FieldValue {
   if (!field.defaultValue) {
-    return field.type === FieldType.multiSelect ? [] : null;
+    return field.type === FieldType.multiSelect || field.type === FieldType.tags ? [] : null;
   }
   try {
     return JSON.parse(field.defaultValue) as FieldValue;
@@ -168,20 +171,77 @@ function MultiSelectInput({ field, value, quiet, onChange }: { field: CustomFiel
   );
 }
 
+/** Words shown like labels: outlined, small. */
+function TagList({ tags }: { tags: string[] }) {
+  return (
+    <span className="flex flex-wrap gap-1">
+      {tags.map((tag) => (
+        <span key={tag} className="px-1" style={{ fontSize: font.size.xs, border: `1px solid ${sem('text-tertiary')}`, borderRadius: 4 }}>{tag}</span>
+      ))}
+    </span>
+  );
+}
+
+/**
+ * Free words typed like labels, with the field's words in the space offered. In the sidebar the words show until
+ * clicked, and save when the field is left; in a form they save as they are typed.
+ */
+function TagsInput({ field, value, quiet, projectId, onChange }: { field: CustomField; value: string[]; quiet: boolean; projectId?: string; onChange: (value: FieldValue) => void }) {
+  const { t } = useTranslation();
+  const [draft, setDraft] = useState<string[] | null>(null);
+  const known = useFieldTags(field.id, projectId, !quiet || draft !== null);
+
+  if (!quiet) {
+    return <TagInput label={field.name ?? ''} value={value} options={known.data ?? []} onChange={onChange} />;
+  }
+
+  if (draft === null) {
+    return (
+      <ButtonBase
+        onClick={() => setDraft(value)}
+        className="w-full"
+        sx={{ justifyContent: 'flex-start', minHeight: 32, paddingInline: `${DETAIL_INSET}px`, fontSize: 'inherit', borderRadius: `${radius.control}px`, '&:hover': { backgroundColor: sem('bg-hover') } }}
+      >
+        <span className="sr-only">{field.name}:</span>
+        {value.length > 0 ? <TagList tags={value} /> : <span style={{ color: sem('text-tertiary') }}>{t('common.none')}</span>}
+      </ButtonBase>
+    );
+  }
+
+  return (
+    <div
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          if (draft.join('\n') !== value.join('\n')) {
+            onChange(draft);
+          }
+          setDraft(null);
+        }
+      }}
+    >
+      <TagInput hideLabel autoFocus label={field.name ?? ''} value={draft} options={known.data ?? []} onChange={setDraft} />
+    </div>
+  );
+}
+
 /**
  * Shows or edits one custom field. Quiet in the Details sidebar, framed with its label in a form. Disabled shows the
  * value as text. Typed text saves on blur; pickers save on pick.
  */
-export function CustomFieldInput({ field, value, quiet = false, disabled = false, people = [], onChange }: {
+export function CustomFieldInput({ field: given, value, quiet = false, disabled = false, people = [], projectId, onChange }: {
   field: CustomField;
   value: FieldValue;
   quiet?: boolean;
   disabled?: boolean;
   /** Who a person field can name: the space's members. */
   people?: PickerUser[];
+  /** The space, for the words a tags field offers. */
+  projectId?: string;
   onChange: (value: FieldValue) => void;
 }) {
   const { t, i18n } = useTranslation();
+  // A form marks a required field by its label; a required select offers no "none".
+  const field = !quiet && given.isRequired ? { ...given, name: t('customFields.requiredLabel', { name: given.name }) } : given;
   const none = <span style={{ color: sem('text-tertiary') }}>{t('common.none')}</span>;
   const chosenIds = Array.isArray(value) ? value : typeof value === 'string' ? [value] : [];
 
@@ -198,6 +258,8 @@ export function CustomFieldInput({ field, value, quiet = false, disabled = false
       }
       case FieldType.checkbox:
         return <DetailText>{value === true ? t('customFields.yes') : none}</DetailText>;
+      case FieldType.tags:
+        return <DetailText>{chosenIds.length > 0 ? <TagList tags={chosenIds} /> : none}</DetailText>;
       case FieldType.date:
         return <DetailText>{typeof value === 'string' ? formatDate(value, i18n.language) : none}</DetailText>;
       case FieldType.url:
@@ -256,11 +318,16 @@ export function CustomFieldInput({ field, value, quiet = false, disabled = false
           value={typeof value === 'string' ? value : ''}
           displayEmpty
           onChange={(event) => onChange(event.target.value || null)}
-          options={[{ value: '', label: t('common.none') }, ...offered(field, chosenIds).map((option) => ({ value: option.id!, label: option.label ?? '' }))]}
+          options={[
+            ...(field.isRequired && typeof value === 'string' && value ? [] : [{ value: '', label: t('common.none') }]),
+            ...offered(field, chosenIds).map((option) => ({ value: option.id!, label: option.label ?? '' })),
+          ]}
         />
       );
     case FieldType.multiSelect:
       return <MultiSelectInput field={field} value={chosenIds} quiet={quiet} onChange={onChange} />;
+    case FieldType.tags:
+      return <TagsInput field={field} value={chosenIds} quiet={quiet} projectId={projectId} onChange={onChange} />;
     default:
       return <TextInput field={field} value={value} quiet={quiet} onChange={onChange} />;
   }

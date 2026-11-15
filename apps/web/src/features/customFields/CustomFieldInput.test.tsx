@@ -1,4 +1,6 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../i18n';
 import { FieldType, type CustomField, type TicketCustomField } from './api';
@@ -96,5 +98,27 @@ describe('custom field input', () => {
     expect(onChange).not.toHaveBeenCalled();
     fireEvent.keyDown(screen.getByRole('group'), { key: 'Escape' });
     expect(onChange).toHaveBeenCalledWith(['web', 'ios']);
+  });
+
+  it('marks a required field in a form and offers no "none" once a required select has a value', () => {
+    const required = { ...severity, isRequired: true };
+    render(<CustomFieldInput field={required} value="high" onChange={() => undefined} />);
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: /Field 4 */ }));
+    expect(screen.queryByRole('option', { name: 'None' })).toBeNull();
+  });
+
+  it('shows tags like labels and saves the typed words', () => {
+    const wrap = ({ children }: { children: ReactNode }) => <QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider>;
+    const onChange = vi.fn();
+    const tags = field(FieldType.tags);
+    render(<CustomFieldInput field={tags} value={['api', 'login']} disabled onChange={onChange} />, { wrapper: wrap });
+    expect(screen.getByText('api')).toBeTruthy();
+    cleanup();
+
+    render(<CustomFieldInput field={tags} value={['api']} onChange={onChange} />, { wrapper: wrap });
+    const input = screen.getByLabelText('Field 9');
+    fireEvent.change(input, { target: { value: 'login' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onChange).toHaveBeenCalledWith(['api', 'login']);
   });
 });

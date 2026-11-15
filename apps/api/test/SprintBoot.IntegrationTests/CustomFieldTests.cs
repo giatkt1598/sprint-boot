@@ -314,4 +314,50 @@ public class CustomFieldTests(ApiFixture fixture)
         // The status always shows.
         layout.Hidden.ShouldBe(["reporter", "sprint"], ignoreOrder: true);
     }
+
+    [Fact]
+    public async Task A_tags_field_keeps_free_words_offers_them_again_and_filters_by_them()
+    {
+        var owner = await fixture.CreateUserClientAsync(Token);
+        var (project, types) = await SpaceAsync(owner);
+        var field = await CreateFieldAsync(owner, new { projectId = project.Id, name = "Components", type = CustomFieldType.Tags });
+
+        var ticket = await CreateTicketAsync(owner, project.Id, types["Bug"], new Dictionary<string, object> { [field.Key] = new[] { "login", " API ", "api", "" } });
+        ticket.CustomFields.Single().Tags.ShouldBe(["API", "login"]);
+        await CreateTicketAsync(owner, project.Id, types["Bug"], new Dictionary<string, object> { [field.Key] = new[] { "billing" } });
+
+        (await owner.Http.GetFromJsonAsync<List<string>>($"/api/v1/custom-field/{field.Id}/tags/{project.Id}", Token))!.ShouldBe(["API", "billing", "login"]);
+
+        var updated = await ReadAsync<TicketDto>(await UpdateAsync(owner, ticket, new Dictionary<string, object> { [$"cf.{field.Key}"] = new[] { "login", "ui" } }));
+        updated.CustomFields.Single().Tags.ShouldBe(["login", "ui"]);
+        var activity = await owner.Http.GetFromJsonAsync<List<TicketActivityDto>>($"/api/v1/ticket/{ticket.Id}/activity", Token);
+        activity!.Single(item => item.Field == $"cf.{field.Key}").OldValue.ShouldBe("API, login");
+
+        var found = await owner.Http.GetFromJsonAsync<TicketSearchResultDto>($"/api/v1/ticket/search?projectId={project.Id}&custom={Uri.EscapeDataString($"cf.{field.Key}:in:UI,nothing")}", Token);
+        found!.Items!.ShouldHaveSingleItem().Id.ShouldBe(ticket.Id);
+        (await UpdateAsync(owner, updated, new Dictionary<string, object> { [$"cf.{field.Key}"] = "login" })).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task A_required_field_needs_a_value_on_create_and_cannot_be_emptied()
+    {
+        var owner = await fixture.CreateUserClientAsync(Token);
+        var (project, types) = await SpaceAsync(owner);
+        var field = await CreateFieldAsync(owner, new { projectId = project.Id, name = "Customer", type = CustomFieldType.Text, isRequired = true });
+        field.IsRequired.ShouldBeTrue();
+
+        var missing = await owner.Http.PostAsJsonAsync("/api/v1/ticket", new { projectId = project.Id, typeId = types["Bug"], title = "No customer" }, Token);
+        missing.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await missing.Content.ReadAsStringAsync(Token)).ShouldContain(CustomFieldErrors.Required);
+
+        // Subtasks do not show it, so they need nothing.
+        var ticket = await CreateTicketAsync(owner, project.Id, types["Bug"], new Dictionary<string, object> { [field.Key] = "ACME" });
+        (await UpdateAsync(owner, ticket, new Dictionary<string, object?> { [$"cf.{field.Key}"] = null })).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await UpdateAsync(owner, ticket, new Dictionary<string, object?> { [$"cf.{field.Key}"] = "  " })).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await UpdateAsync(owner, ticket, new Dictionary<string, object?> { [$"cf.{field.Key}"] = "Globex" })).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // A default fills it in.
+        await owner.Http.PutAsJsonAsync($"/api/v1/custom-field/{field.Id}", new { name = "Customer", isRequired = true, defaultValue = "\"Internal\"" }, Token);
+        (await CreateTicketAsync(owner, project.Id, types["Bug"])).CustomFields.Single().Text.ShouldBe("Internal");
+    }
 }

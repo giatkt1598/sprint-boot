@@ -5386,6 +5386,146 @@
         }
       }
     },
+    "/api/v1/custom-field/{id}/tags/{projectId}": {
+      "get": {
+        "tags": [
+          "CustomField"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Not Implemented",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteServiceErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/docs-admin/uninstall": {
       "post": {
         "tags": [
@@ -31054,6 +31194,9 @@
           "defaultValue": {
             "type": "string",
             "nullable": true
+          },
+          "isRequired": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -31498,6 +31641,7 @@
       "CustomFieldDto": {
         "required": [
           "id",
+          "isRequired",
           "key",
           "name",
           "options",
@@ -31540,6 +31684,9 @@
           "defaultValue": {
             "type": "string",
             "nullable": true
+          },
+          "isRequired": {
+            "type": "boolean"
           },
           "usageCount": {
             "type": "integer",
@@ -31584,7 +31731,8 @@
           5,
           6,
           7,
-          8
+          8,
+          9
         ],
         "type": "integer",
         "format": "int32"
@@ -35894,6 +36042,13 @@
           "user": {
             "$ref": "#/components/schemas/UserRefDto"
           },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
           "options": {
             "type": "array",
             "items": {
@@ -36664,6 +36819,9 @@
           "defaultValue": {
             "type": "string",
             "nullable": true
+          },
+          "isRequired": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

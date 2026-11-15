@@ -113,7 +113,7 @@ export function TicketsListPage() {
         <Typography variant="h1" className="flex-1 max-sm:basis-full">{t(spaceKey ? 'tickets.title' : 'tickets.searchResults')}</Typography>
         {spaceKey && <FilterControls filters={filters} onChange={() => setSkip(0)} />}
         {spaceKey && (
-          <CustomFieldsButton fields={customFields} people={people} filters={customFilters} columns={customColumns} onToggleColumn={toggleColumn} onChange={() => setSkip(0)} />
+          <CustomFieldsButton fields={customFields} people={people} projectId={projectId} filters={customFilters} columns={customColumns} onToggleColumn={toggleColumn} onChange={() => setSkip(0)} />
         )}
         <SearchInput label={t('tickets.search')} value={text} onChange={(event) => { setText(event.target.value); setSkip(0); }} sx={{ flex: { xs: '1 1 140px', md: '0 0 auto' } }} />
       </div>

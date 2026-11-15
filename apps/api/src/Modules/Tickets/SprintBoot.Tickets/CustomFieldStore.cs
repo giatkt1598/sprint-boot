@@ -45,6 +45,7 @@ public class CustomFieldStore(
         Type = field.Type,
         Options = [.. fieldOptions.OrderBy(option => option.Order).Select(ToDto)],
         DefaultValue = field.DefaultValue,
+        IsRequired = field.IsRequired,
         UsageCount = usage,
     };
 
@@ -90,12 +91,15 @@ public class CustomFieldStore(
                 result[ticket.Id].Add(new TicketCustomFieldDto
                 {
                     Field = ToDto(applicable.Field, applicable.Options, 0),
-                    Text = first?.TextValue,
+                    Text = applicable.Field.Type == CustomFieldType.Tags ? null : first?.TextValue,
                     Number = first?.NumberValue,
                     Date = first?.DateValue,
                     Checked = first?.BoolValue,
                     User = first?.UserId is { } userId ? users.GetValueOrDefault(userId) : null,
                     Options = [.. applicable.Options.Where(option => chosen.Contains(option.Id)).Select(ToDto)],
+                    Tags = applicable.Field.Type == CustomFieldType.Tags
+                        ? [.. rows.Select(row => row.TextValue!).Order(StringComparer.CurrentCultureIgnoreCase)]
+                        : null,
                 });
             }
         }
@@ -137,6 +141,10 @@ public class CustomFieldStore(
                 using var document = JsonDocument.Parse(fallback);
                 await WriteAsync(ticket, item, document.RootElement.Clone());
             }
+            else if (item.Field.IsRequired)
+            {
+                throw Required(item.Field);
+            }
         }
     }
 
@@ -149,7 +157,8 @@ public class CustomFieldStore(
     }
 
     public static bool HasValue(TicketCustomFieldDto item) =>
-        item.Text is not null || item.Number is not null || item.Date is not null || item.Checked is not null || item.User is not null || item.Options.Count > 0;
+        item.Text is not null || item.Number is not null || item.Date is not null || item.Checked is not null || item.User is not null || item.Options.Count > 0
+        || item.Tags is { Count: > 0 };
 
     /// <summary>Whether the ticket has a value in the field.</summary>
     public async Task<bool> HasValueAsync(Guid ticketId, Guid fieldId) =>
@@ -159,6 +168,11 @@ public class CustomFieldStore(
     {
         var field = applicable.Field;
         var parsed = CustomFieldRules.Parse(field, value, applicable.Options);
+        if (parsed.IsEmpty && field.IsRequired)
+        {
+            throw Required(field);
+        }
+
         var rows = await values.GetListAsync(row => row.TicketId == ticket.Id && row.FieldId == field.Id);
 
         // A hidden option is no longer offered, but a ticket that has it keeps it.
@@ -176,7 +190,13 @@ public class CustomFieldStore(
         var before = Display(field, rows, applicable.Options);
         await values.DeleteManyAsync(rows, autoSave: true);
         var next = new List<TicketFieldValue>();
-        if (!parsed.IsEmpty)
+        if (parsed.Tags.Count > 0)
+        {
+            // A row per word, like the options of a multi-select.
+            next.AddRange(parsed.Tags.Select(tag => new TicketFieldValue(guids.Create(), ticket.Id, field.Id) { TextValue = tag }));
+            await values.InsertManyAsync(next, autoSave: true);
+        }
+        else if (!parsed.IsEmpty)
         {
             IEnumerable<Guid?> optionIds = parsed.OptionIds.Count > 0 ? parsed.OptionIds.Select(id => (Guid?)id) : new Guid?[] { null };
             next.AddRange(optionIds.Select(optionId => new TicketFieldValue(guids.Create(), ticket.Id, field.Id)
@@ -194,6 +214,9 @@ public class CustomFieldStore(
         var after = Display(field, next, applicable.Options);
         return before == after ? null : (before, after);
     }
+
+    private static BusinessException Required(CustomField field) =>
+        new BusinessException(CustomFieldErrors.Required).WithData("field", field.Name);
 
     /// <summary>
     /// What history keeps: the text, number or date; option labels; a user's id, which readers turn into the current
@@ -213,6 +236,7 @@ public class CustomFieldStore(
             CustomFieldType.Date => first.DateValue?.ToString("O"),
             CustomFieldType.Checkbox => first.BoolValue?.ToString().ToLowerInvariant(),
             CustomFieldType.User => first.UserId?.ToString(),
+            CustomFieldType.Tags => string.Join(", ", rows.Select(row => row.TextValue).Order(StringComparer.CurrentCultureIgnoreCase)),
             CustomFieldType.Select or CustomFieldType.MultiSelect => string.Join(", ", fieldOptions
                 .Where(option => rows.Any(row => row.OptionId == option.Id)).Select(option => option.Label)),
             _ => first.TextValue is { Length: > 200 } lengthy ? lengthy[..200] + "…" : first.TextValue,

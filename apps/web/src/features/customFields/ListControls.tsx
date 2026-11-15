@@ -1,6 +1,6 @@
 import ButtonBase from '@mui/material/ButtonBase';
 import Chip from '@mui/material/Chip';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
 import { Button } from '../../components/Button';
@@ -13,7 +13,7 @@ import type { PickerUser } from '../../components/UserPicker';
 import { formatDate } from '../../lib/format';
 import { useCompact } from '../../lib/responsive';
 import { font, radius, sem } from '../../theme/tokens';
-import { FieldType, hasOptions, type CustomField } from './api';
+import { FieldType, hasOptions, useFieldTags, type CustomField } from './api';
 
 /** A custom field filter as the search API takes it: "key:operator:value". */
 type Op = 'in' | 'is' | 'gte' | 'lte' | 'has' | 'empty' | 'any';
@@ -89,7 +89,28 @@ export function useCustomColumns(projectId: string | undefined) {
 }
 
 /** The filter of one field, by its kind. */
-function FieldFilter({ field, people, filters }: { field: CustomField; people: PickerUser[]; filters: CustomFilters }) {
+/** The words a tags field holds in the space, each a checkbox; or any word that contains some text. */
+function TagsFilter({ field, projectId, chosen, toggle, filters, presence }: {
+  field: CustomField;
+  projectId?: string;
+  chosen: string[];
+  toggle: (word: string) => void;
+  filters: CustomFilters;
+  presence: ReactNode;
+}) {
+  const { t } = useTranslation();
+  const known = useFieldTags(field.id, projectId);
+  const text = filters.get(field.key!, 'has')?.value ?? '';
+  return (
+    <>
+      {(known.data ?? []).map((word) => <Checkbox key={word} label={word} checked={chosen.includes(word)} onChange={() => toggle(word)} />)}
+      <BufferedTextField key={`has-${text}`} label={t('customFields.contains')} value={text} onCommit={(value) => filters.set(field.key!, 'has', value.trim() || null)} />
+      {presence}
+    </>
+  );
+}
+
+function FieldFilter({ field, people, projectId, filters }: { field: CustomField; people: PickerUser[]; projectId?: string; filters: CustomFilters }) {
   const { t } = useTranslation();
   const key = field.key!;
   const chosen = filters.get(key, 'in')?.value.split(',').filter(Boolean) ?? [];
@@ -104,6 +125,9 @@ function FieldFilter({ field, people, filters }: { field: CustomField; people: P
     </>
   );
 
+  if (field.type === FieldType.tags) {
+    return <TagsFilter field={field} projectId={projectId} chosen={chosen} toggle={toggleIn} filters={filters} presence={presence} />;
+  }
   if (hasOptions(field.type)) {
     return (
       <>
@@ -164,8 +188,9 @@ function FieldFilter({ field, people, filters }: { field: CustomField; people: P
  * One button for the custom fields of a space's list: per field, show it as a column and filter by it. Filters apply as
  * they are picked, like the other filters.
  */
-export function CustomFieldsButton({ fields, people, filters, columns, onToggleColumn, onChange }: {
+export function CustomFieldsButton({ fields, people, projectId, filters, columns, onToggleColumn, onChange }: {
   fields: CustomField[];
+  projectId?: string;
   people: PickerUser[];
   filters: CustomFilters;
   columns: string[];
@@ -211,7 +236,7 @@ export function CustomFieldsButton({ fields, people, filters, columns, onToggleC
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <Checkbox label={t('customFields.showColumn')} checked={columns.includes(field.key!)} onChange={() => onToggleColumn(field.key!)} />
             <div className="pt-2" style={{ fontSize: font.size.xs, fontWeight: font.weight.medium, color: sem('text-secondary') }}>{t('customFields.filterBy')}</div>
-            <FieldFilter key={field.id} field={field} people={people} filters={wrapped} />
+            <FieldFilter key={field.id} field={field} people={people} projectId={projectId} filters={wrapped} />
           </div>
         </div>
       </Sheet>
