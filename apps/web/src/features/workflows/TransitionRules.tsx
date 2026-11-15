@@ -3,7 +3,7 @@ import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { CloseIcon } from '../../components/icons';
-import { useState, type ReactNode } from 'react';
+import { createContext, use, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Checkbox } from '../../components/Checkbox';
 import { PickerPopover } from '../../components/PickerPopover';
@@ -36,6 +36,16 @@ const ROLES = ['Admin', 'Member', 'Viewer'];
 const PEOPLE = ['assignee', 'reporter'];
 const PERMISSIONS = ['Project.Manage', 'Project.Members.Manage', 'Ticket.Edit', 'Ticket.Transition', 'Sprint.Manage'];
 const REQUIRED_FIELDS = ['assignee', 'reporter', 'description', 'labels', 'storyPoints', 'startDate', 'dueDate', 'parent'];
+/** The custom fields a workflow's transitions may require: the workspace's, or a space's in use. */
+export const CustomFieldNamesContext = createContext<{ key: string; name: string }[]>([]);
+
+/** A field's name: built-in ones from the locale files, custom ones ("cf." keys) as they are called now. */
+function useFieldName() {
+  const { t } = useTranslation();
+  const custom = use(CustomFieldNamesContext);
+  return (name: string) => (name.startsWith('cf.') ? custom.find((item) => item.key === name)?.name ?? name.slice(3) : t(`designer.field.${name}`));
+}
+
 const SETTABLE_FIELDS = ['assignee', 'priority', 'labels', 'storyPoints', 'dueDate'];
 const ASSIGN_TO = ['reporter', 'actor'];
 
@@ -57,7 +67,8 @@ function RuleConfig({ rule, onChange }: { rule: NestedRule; onChange: (config: R
       ))}
     </div>
   );
-  const field = (name: string) => t(`designer.field.${name}`);
+  const field = useFieldName();
+  const custom = use(CustomFieldNamesContext);
 
   switch (rule.key) {
     case 'role':
@@ -76,7 +87,7 @@ function RuleConfig({ rule, onChange }: { rule: NestedRule; onChange: (config: R
         />
       );
     case 'required-field':
-      return toggles('fields', REQUIRED_FIELDS, field);
+      return toggles('fields', [...REQUIRED_FIELDS, ...custom.map((item) => item.key)], field);
     case 'set-field':
       return (
         <>
@@ -120,10 +131,11 @@ const NO_SETTINGS = ['subtasks-done', 'comment-required', 'linked-pull-request']
 /** One line that says what the rule does, which is what the chip shows until it is opened. */
 function useRuleSummary() {
   const { t } = useTranslation();
+  const fieldName = useFieldName();
   return (rule: NestedRule) => {
     const config = rule.config ?? {};
     const list = (name: string) => (Array.isArray(config[name]) ? (config[name] as string[]) : []);
-    const fields = (name: string) => list(name).map((value) => t(`designer.field.${value}`)).join(', ');
+    const fields = (name: string) => list(name).map(fieldName).join(', ');
     const value = (name: string) => (typeof config[name] === 'string' ? (config[name] as string) : '');
     const details: Record<string, string> = {
       role: list('roles').map((role) => t(`invitations.roles.${role}`)).join(', '),

@@ -24,7 +24,8 @@ import { formatRelative } from '../../lib/format';
 import { font, radius, sem } from '../../theme/tokens';
 import { useStatuses, type Status } from '../tickets/api';
 import { StatusOrderList, WorkflowHistory } from './WorkflowSidePanels';
-import { TransitionRules, type DraftRule } from './TransitionRules';
+import { CustomFieldNamesContext, TransitionRules, type DraftRule } from './TransitionRules';
+import { fieldKey, useCustomFields, useSpaceFields } from '../customFields/api';
 import { ANY, arrow, edgeTypes, facingSides, nodeTypes, parallelOffset } from './WorkflowCanvas';
 import { layeredLayout, replaceStatus, unreachableStatuses, type DraftTransition } from './workflowGraph';
 import { usePageTitle } from '../../lib/pageTitle';
@@ -111,6 +112,11 @@ export function WorkflowDesignerPage() {
   });
   usePageTitle(detail.data?.name, t('workflows.title'));
   const projectId = detail.data?.projectId ?? undefined;
+  // A space's workflow can require the space's custom fields; a workspace one the workspace's.
+  const workspaceFields = useCustomFields();
+  const spaceFields = useSpaceFields(projectId);
+  const customFieldNames = (projectId ? (spaceFields.data ?? []).filter((item) => item.enabled).map((item) => item.field!) : (workspaceFields.data ?? []))
+    .map((field) => ({ key: fieldKey(field), name: field.name ?? '' }));
   const statuses = useStatuses(projectId);
   const summaries = useQuery({
     queryKey: ['admin', 'workflows', 'list', projectId],
@@ -423,6 +429,7 @@ export function WorkflowDesignerPage() {
   const saveState = dirty || save.isPending ? t('designer.saving') : savedAt ? t('designer.saved', { time: formatRelative(savedAt, i18n.language) }) : '';
 
   return (
+    <CustomFieldNamesContext value={customFieldNames}>
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <header className="flex flex-wrap items-center gap-2 px-4 py-2" style={{ backgroundColor: sem('bg-surface'), borderBottom: `1px solid ${sem('border-default')}` }}>
         <IconButton size="small" aria-label={t('designer.back')} onClick={() => void goBack()}>
@@ -660,6 +667,7 @@ export function WorkflowDesignerPage() {
         </Dialog>
       )}
     </div>
+    </CustomFieldNamesContext>
   );
 }
 

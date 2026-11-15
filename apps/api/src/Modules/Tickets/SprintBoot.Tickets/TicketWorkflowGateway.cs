@@ -27,7 +27,8 @@ public class TicketWorkflowGateway(
     IDataFilter dataFilter,
     IDistributedEventBus eventBus,
     RichTextSanitizer sanitizer,
-    TicketAppService ticketService)
+    TicketAppService ticketService,
+    CustomFieldStore customFieldStore)
     : IWorkflowTicketGateway, ITransientDependency
 {
     public async Task<TransitionSubject> GetSubjectAsync(Guid ticketId)
@@ -35,6 +36,26 @@ public class TicketWorkflowGateway(
         var ticket = await tickets.GetAsync(ticketId);
         var project = await projectAccess.GetRefAsync(ticket.ProjectId);
         var hasLabels = await ticketLabels.AnyAsync(link => link.TicketId == ticketId);
+        var custom = (await customFieldStore.ReadAsync([ticket]))[ticket.Id];
+
+        var filled = new Dictionary<string, bool>
+        {
+            [TicketFieldKeys.Title] = true,
+            [TicketFieldKeys.Description] = ticket.DescriptionText.Length > 0,
+            [TicketFieldKeys.Assignee] = ticket.AssigneeId.HasValue,
+            [TicketFieldKeys.Reporter] = ticket.ReporterId.HasValue,
+            [TicketFieldKeys.Parent] = ticket.ParentId.HasValue,
+            [TicketFieldKeys.Labels] = hasLabels,
+            [TicketFieldKeys.StoryPoints] = ticket.StoryPoints.HasValue,
+            [TicketFieldKeys.StartDate] = ticket.StartDate.HasValue,
+            [TicketFieldKeys.DueDate] = ticket.DueDate.HasValue,
+        };
+
+        // The custom fields the ticket's type shows, as "cf." keys; a field it does not show is not listed at all.
+        foreach (var item in custom)
+        {
+            filled[CustomFieldConsts.KeyPrefix + item.Field.Key] = CustomFieldStore.HasValue(item);
+        }
 
         return new TransitionSubject(
             ticket.Id,
@@ -46,18 +67,7 @@ public class TicketWorkflowGateway(
             ticket.AssigneeId,
             ticket.ReporterId,
             ticket.ConcurrencyStamp,
-            new Dictionary<string, bool>
-            {
-                [TicketFieldKeys.Title] = true,
-                [TicketFieldKeys.Description] = ticket.DescriptionText.Length > 0,
-                [TicketFieldKeys.Assignee] = ticket.AssigneeId.HasValue,
-                [TicketFieldKeys.Reporter] = ticket.ReporterId.HasValue,
-                [TicketFieldKeys.Parent] = ticket.ParentId.HasValue,
-                [TicketFieldKeys.Labels] = hasLabels,
-                [TicketFieldKeys.StoryPoints] = ticket.StoryPoints.HasValue,
-                [TicketFieldKeys.StartDate] = ticket.StartDate.HasValue,
-                [TicketFieldKeys.DueDate] = ticket.DueDate.HasValue,
-            });
+            filled);
     }
 
     public async Task<List<Guid>> GetSubtaskStatusIdsAsync(Guid ticketId)

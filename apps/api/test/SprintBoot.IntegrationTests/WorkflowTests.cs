@@ -182,6 +182,36 @@ public class WorkflowTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task A_transition_can_require_a_custom_field_and_takes_its_value()
+    {
+        var name = $"Risk {Random.Shared.Next(10000, 99999)}";
+        var key = name.ToLowerInvariant().Replace(' ', '_');
+        var (admin, project, typeId, _) = await ProjectWithWorkflowAsync(new[]
+        {
+            Move("Finish", null, Done, Rule(1, "required-field", new { fields = new[] { $"cf.{key}", "cf.not_shown" } })),
+        });
+        var created = await admin.Http.PostAsJsonAsync("/api/v1/custom-field", new { projectId = project.Id, name, type = CustomFieldType.Select, options = new[] { new { label = "Low" }, new { label = "High" } } }, Token);
+        var field = (await created.Content.ReadFromJsonAsync<CustomFieldDto>(Token))!;
+        field.Key.ShouldBe(key);
+        var ticket = await CreateTicketAsync(admin, project.Id, typeId);
+
+        // Only the field the type shows is missing: one it does not show cannot block.
+        var move = (await AvailableAsync(admin, ticket.Id))!.Single();
+        move.MissingFields.ShouldBe([$"cf.{key}"]);
+        (await ExecuteAsync(admin, ticket, move.Id)).IsSuccessStatusCode.ShouldBeFalse();
+
+        var high = field.Options.Single(option => option.Label == "High").Id;
+        var response = await admin.Http.PostAsJsonAsync(
+            $"/api/v1/transition/execute/{ticket.Id}",
+            new { transitionId = move.Id, concurrencyStamp = ticket.ConcurrencyStamp, fields = new Dictionary<string, object> { [$"cf.{key}"] = high } },
+            Token);
+        response.IsSuccessStatusCode.ShouldBeTrue(await response.Content.ReadAsStringAsync(Token));
+        var done = (await ReloadAsync(admin, ticket.Key))!;
+        done.Status.Name.ShouldBe("Done");
+        done.CustomFields.Single().Options.ShouldHaveSingleItem().Id.ShouldBe(high);
+    }
+
+    [Fact]
     public async Task Failing_internal_post_function_rolls_everything_back()
     {
         var (admin, project, typeId, _) = await ProjectWithWorkflowAsync(new[]

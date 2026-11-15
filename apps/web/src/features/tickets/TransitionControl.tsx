@@ -17,6 +17,8 @@ import { UserPicker, type PickerUser } from '../../components/UserPicker';
 import { useErrorMessage } from '../../lib/errors';
 import { font, radius, sem } from '../../theme/tokens';
 import { statusCategory, type Ticket } from './api';
+import { fieldKey } from '../customFields/api';
+import { CustomFieldInput, isSet, type FieldValue } from '../customFields/CustomFieldInput';
 
 export type Available = components['schemas']['AvailableTransitionDto'];
 
@@ -70,13 +72,26 @@ export function TransitionDialog({ ticket, transition, people, onConflict, onClo
   const [comment, setComment] = useState('');
   const [assignee, setAssignee] = useState<PickerUser | null>(ticket.assignee ?? null);
   const [values, setValues] = useState<Record<string, string>>({});
+  const [customValues, setCustomValues] = useState<Record<string, FieldValue>>({});
 
   const missing = transition.missingFields ?? [];
+  // A required custom field ("cf." key) needs the field's kind and options, which the full ticket carries.
+  const needsCustom = missing.some((field) => field.startsWith('cf.'));
+  const full = useQuery({
+    queryKey: ['tickets', ticket.key],
+    enabled: needsCustom,
+    queryFn: () => unwrap(apiClient.GET('/api/v1/ticket/by-key', { params: { query: { key: ticket.key ?? undefined } } })),
+  });
+  const customFieldOf = (key: string) => full.data?.customFields?.find((item) => fieldKey(item.field!) === key)?.field;
   const problems = transition.problems ?? [];
-  const fieldsFilled = missing.every((field) => (field === 'assignee' ? Boolean(assignee) : Boolean(values[field])));
+  const fieldsFilled = missing.every((field) =>
+    field.startsWith('cf.') ? isSet(customValues[field]) : field === 'assignee' ? Boolean(assignee) : Boolean(values[field]));
   const commentMissing = transition.requiresComment && !comment.trim();
 
   const fieldValue = (field: string) => {
+    if (field.startsWith('cf.')) {
+      return customValues[field];
+    }
     if (field === 'assignee') {
       return assignee?.id;
     }
@@ -123,7 +138,17 @@ export function TransitionDialog({ ticket, transition, people, onConflict, onClo
         </div>
       ))}
       {missing.map((field) =>
-        field === 'assignee' ? (
+        field.startsWith('cf.') ? (
+          customFieldOf(field) && (
+            <CustomFieldInput
+              key={field}
+              field={customFieldOf(field)!}
+              value={customValues[field] ?? null}
+              people={people}
+              onChange={(value) => setCustomValues({ ...customValues, [field]: value })}
+            />
+          )
+        ) : field === 'assignee' ? (
           <UserPicker key={field} label={fieldLabel(field)} options={people} value={assignee} onChange={setAssignee} />
         ) : DATE_FIELDS.includes(field) ? (
           <DatePicker key={field} label={fieldLabel(field)} value={values[field] ?? ''} onChange={(value) => setValues({ ...values, [field]: value })} />

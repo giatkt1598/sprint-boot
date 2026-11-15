@@ -183,8 +183,9 @@ public class RequiredFieldValidator : ITransitionValidator, ITransientDependency
     {
         IReadOnlyList<RuleProblem> problems =
         [
+            // A custom field ("cf." key) the ticket's type does not show cannot be filled in, so it does not block.
             .. RuleConfig.Strings(config, "fields")
-                .Where(field => !context.Subject.FieldHasValue.GetValueOrDefault(field))
+                .Where(field => context.Subject.FieldHasValue.TryGetValue(field, out var filled) ? !filled : !field.StartsWith("cf.", StringComparison.Ordinal))
                 .Select(field => new RuleProblem(WorkflowErrors.MissingField, field)),
         ];
         return Task.FromResult(problems);
