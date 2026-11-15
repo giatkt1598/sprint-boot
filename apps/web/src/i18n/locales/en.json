@@ -2029,6 +2029,7 @@
     "alwaysShownShort": "Always shown",
     "required": "Required",
     "requiredHint": "Tickets of the types that show it need a value when they are created, and the value cannot be emptied.",
-    "requiredLabel": "{{name}} *"
+    "requiredLabel": "{{name}} *",
+    "dragField": "Drag {{name}} to move it"
   }
 }

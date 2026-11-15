@@ -1,16 +1,18 @@
+import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { useMutation } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOutletContext } from 'react-router';
 import { apiClient, unwrap } from '../../api';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { Checkbox } from '../../components/Checkbox';
-import { ArrowDownIcon, ArrowUpIcon } from '../../components/icons';
+import { DragHandleIcon } from '../../components/icons';
 import { ErrorState, LoadingState } from '../../components/StateViews';
 import { TicketTypeIcon, type TicketType as IconType } from '../../components/TicketIcons';
 import { useToast } from '../../components/ToastHost';
@@ -52,6 +54,46 @@ function toRows(fields: SpaceCustomField[], order: string[], hidden: string[]): 
 }
 
 const inUse = (row: Row) => row.kind === 'builtIn' || row.enabled;
+
+/** A field's card, dragged by the six dots before it; a field the space does not use has no place to move to. */
+function SortableField({ id, name, draggable, muted, children }: { id: string; name: string; draggable: boolean; muted: boolean; children: ReactNode }) {
+  const { t } = useTranslation();
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: !draggable });
+
+  return (
+    <Box
+      component="li"
+      ref={setNodeRef}
+      className="flex items-start gap-1 py-3 pl-1 pr-3"
+      sx={{
+        border: `1px solid ${sem('border-default')}`,
+        borderRadius: `${radius.card}px`,
+        backgroundColor: 'var(--sb-card-bg)',
+        opacity: isDragging ? 0.6 : muted ? 0.75 : 1,
+        transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
+        transition,
+        position: 'relative',
+        zIndex: isDragging ? 1 : undefined,
+      }}
+    >
+      {draggable ? (
+        <IconButton
+          ref={setActivatorNodeRef}
+          size="small"
+          aria-label={t('customFields.dragField', { name })}
+          sx={{ cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
+          {...attributes}
+          {...listeners}
+        >
+          <DragHandleIcon size={16} strokeWidth={1.5} aria-hidden />
+        </IconButton>
+      ) : (
+        <span aria-hidden style={{ width: 30, flexShrink: 0 }} />
+      )}
+      <div className="flex min-w-0 flex-1 flex-col gap-2 pt-1">{children}</div>
+    </Box>
+  );
+}
 
 /**
  * Space settings → Fields: every field of a ticket's Details sidebar, built-in and custom, in the order the sidebar
@@ -104,13 +146,20 @@ export function SpaceFieldsPage() {
     setRows([...list.filter(inUse), ...list.filter((row) => !inUse(row))]);
     setDirty(true);
   };
-  const move = (index: number, step: number) => {
-    const next = [...rows];
-    [next[index], next[index + step]] = [next[index + step], next[index]];
-    setRows(next);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+  // Only among the fields in use: the ones the space has not turned on stay below them.
+  const onDragEnd = ({ active, over }: DragEndEvent) => {
+    const from = rows.findIndex((row) => row.key === active.id);
+    const to = rows.findIndex((row) => row.key === over?.id);
+    if (from < 0 || to < 0 || from === to || !inUse(rows[to])) {
+      return;
+    }
+    setRows(arrayMove(rows, from, to));
     setDirty(true);
   };
-  const usedCount = rows.filter(inUse).length;
   const standardTypes = (types.data ?? []).filter((type) => type.hierarchy !== 0).map((type) => type.id!);
 
   return (
@@ -125,18 +174,15 @@ export function SpaceFieldsPage() {
       {(fields.isPending || layout.isPending || types.isPending) && <LoadingState />}
       {(fields.isError || layout.isError) && <ErrorState onRetry={() => { void fields.refetch(); void layout.refetch(); }} />}
       {rows.length > 0 && types.data && (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+        <SortableContext items={rows.map((row) => row.key)} strategy={verticalListSortingStrategy}>
         <ul className="m-0 flex list-none flex-col gap-3 p-0" aria-label={t('customFields.spaceTitle')}>
           {rows.map((row, index) => {
             const name = row.kind === 'builtIn' ? t(BUILT_IN_FIELDS[row.key]) : row.field.name ?? '';
             const own = row.kind === 'custom' && row.field.projectId === space.id;
             const muted = row.kind === 'builtIn' ? !row.shown : !row.enabled;
             return (
-              <Box
-                component="li"
-                key={row.key}
-                className="flex flex-col gap-2 p-3"
-                sx={{ border: `1px solid ${sem('border-default')}`, borderRadius: `${radius.card}px`, opacity: muted ? 0.75 : 1 }}
-              >
+              <SortableField key={row.key} id={row.key} name={name} draggable={canManage && inUse(row)} muted={muted}>
                 <div className="flex flex-wrap items-center gap-2">
                   {row.kind === 'custom' && !own && canManage ? (
                     <Checkbox
@@ -172,16 +218,6 @@ export function SpaceFieldsPage() {
                       </Link>
                     </span>
                   )}
-                  {canManage && inUse(row) && (
-                    <span className="flex">
-                      <IconButton size="small" aria-label={t('customFields.moveUp', { name })} disabled={index === 0} onClick={() => move(index, -1)}>
-                        <ArrowUpIcon size={16} strokeWidth={1.5} aria-hidden />
-                      </IconButton>
-                      <IconButton size="small" aria-label={t('customFields.moveDown', { name })} disabled={index >= usedCount - 1} onClick={() => move(index, 1)}>
-                        <ArrowDownIcon size={16} strokeWidth={1.5} aria-hidden />
-                      </IconButton>
-                    </span>
-                  )}
                 </div>
                 {row.kind === 'custom' && (
                   <>
@@ -208,10 +244,12 @@ export function SpaceFieldsPage() {
                     )}
                   </>
                 )}
-              </Box>
+              </SortableField>
             );
           })}
         </ul>
+        </SortableContext>
+        </DndContext>
       )}
       {canManage && rows.length > 0 && (
         <div className="flex justify-end">

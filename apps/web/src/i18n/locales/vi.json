@@ -2029,6 +2029,7 @@
     "alwaysShownShort": "Luôn hiện",
     "required": "Bắt buộc",
     "requiredHint": "Ticket thuộc các loại hiện trường này phải có giá trị khi tạo, và không được để trống giá trị.",
-    "requiredLabel": "{{name}} *"
+    "requiredLabel": "{{name}} *",
+    "dragField": "Kéo {{name}} để đổi vị trí"
   }
 }

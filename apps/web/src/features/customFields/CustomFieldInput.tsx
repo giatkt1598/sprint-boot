@@ -136,7 +136,8 @@ function MultiSelectInput({ field, value, quiet, onChange }: { field: CustomFiel
   };
 
   return (
-    <>
+    <div className="flex flex-col gap-1">
+      {!quiet && <span aria-hidden style={{ fontSize: font.size.xs, fontWeight: font.weight.medium, color: sem('text-secondary') }}>{field.name}</span>}
       <ButtonBase
         aria-haspopup="dialog"
         aria-expanded={Boolean(anchor)}
@@ -167,7 +168,7 @@ function MultiSelectInput({ field, value, quiet, onChange }: { field: CustomFiel
           ))}
         </div>
       </Popover>
-    </>
+    </div>
   );
 }
 
@@ -288,8 +289,11 @@ export function CustomFieldInput({ field: given, value, quiet = false, disabled 
     case FieldType.date:
       return <DatePicker quiet={quiet} label={field.name ?? ''} value={typeof value === 'string' ? value : ''} onChange={(text) => onChange(text || null)} />;
     case FieldType.checkbox:
+      if (!quiet) {
+        return <Checkbox label={field.name ?? ''} checked={value === true} onChange={(_, checked) => onChange(checked ? true : null)} />;
+      }
       return (
-        <span className="flex" style={{ paddingLeft: quiet ? DETAIL_INSET - 9 : 0 }}>
+        <span className="flex" style={{ paddingLeft: DETAIL_INSET - 9 }}>
           <MuiCheckbox
             checked={value === true}
             onChange={(_, checked) => onChange(checked ? true : null)}

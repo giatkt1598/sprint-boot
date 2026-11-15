@@ -78,10 +78,16 @@ test('a custom field is set on create, edited in the sidebar and kept in history
 
   // Space settings → Fields orders built-in and custom fields together and hides built-in ones; the sidebar follows.
   await page.goto(`/spaces/${key}/settings/fields`);
-  const severityRow = page.getByRole('listitem').filter({ hasText: 'Severity' });
-  for (let step = 0; step < 10; step++) {
-    await severityRow.getByRole('button', { name: 'Move Severity up' }).click();
+  // Moved by its six dots to the top of the list, with the keyboard the handle also answers to.
+  const handle = page.getByRole('button', { name: 'Drag Severity to move it' });
+  await handle.focus();
+  await page.keyboard.press('Space');
+  for (let step = 0; step < 12; step++) {
+    await page.keyboard.press('ArrowUp');
+    await page.waitForTimeout(150);
   }
+  await page.keyboard.press('Space');
+  await expect(page.getByRole('listitem').first()).toContainText('Severity');
   await page.getByRole('listitem').filter({ hasText: 'Reporter' }).getByLabel('Show in ticket details').uncheck();
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.getByText('Fields saved')).toBeVisible();
