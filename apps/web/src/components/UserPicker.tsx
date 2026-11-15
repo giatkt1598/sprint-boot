@@ -62,7 +62,8 @@ export function UserPicker({ label, hideLabel, options, value, onChange, onInput
             {...params}
             placeholder={emptyLabel}
             sx={[
-              hideLabel ? { '&:not(:hover):not(:focus-within) fieldset': { borderColor: 'transparent' } } : {},
+              // Without a label it sits in a property list: the avatar starts where the quiet fields start their text.
+              hideLabel ? { '&:not(:hover):not(:focus-within) fieldset': { borderColor: 'transparent' }, '& .MuiAutocomplete-inputRoot.MuiOutlinedInput-root': { paddingLeft: '8px' } } : {},
               emptyLabel ? { '& input::placeholder': { color: sem('text-primary'), opacity: 1 } } : {},
             ]}
             slotProps={{

@@ -51,6 +51,13 @@ import { useCompact } from '../../lib/responsive';
 
 const DETAIL_LABEL_WIDTH = 88;
 const DETAIL_GAP = 12;
+// Where every value starts inside its row: the padding of the quiet fields, so read-only text lines up with them.
+const DETAIL_INSET = 8;
+
+/** A read-only detail value, set in like the fields beside it. */
+function DetailText({ children }: { children: ReactNode }) {
+  return <span className="flex min-h-8 items-center gap-2" style={{ paddingInline: DETAIL_INSET }}>{children}</span>;
+}
 
 function DetailRow({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -392,7 +399,9 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
           {detailsOpen && (
           <>
           <DetailRow label={t('tickets.status')}>
-            <TransitionControl ticket={ticket} people={people} onConflict={() => setConflict(true)} />
+            <span className="flex" style={{ paddingLeft: DETAIL_INSET }}>
+              <TransitionControl ticket={ticket} people={people} onConflict={() => setConflict(true)} />
+            </span>
           </DetailRow>
           <DetailRow label={t('tickets.assignee')}>
             {canEdit ? (
@@ -405,17 +414,17 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
                 onChange={(user) => update.mutate({ assignee: user?.id ?? null })}
               />
             ) : (
-              <Person name={ticket.assignee?.name} src={ticket.assignee?.avatarUrl} />
+              <DetailText><Person name={ticket.assignee?.name} src={ticket.assignee?.avatarUrl} /></DetailText>
             )}
           </DetailRow>
           {canEdit && !ticket.assignee && (
-            <div style={{ paddingLeft: DETAIL_LABEL_WIDTH + DETAIL_GAP }}>
+            <div style={{ paddingLeft: DETAIL_LABEL_WIDTH + DETAIL_GAP + DETAIL_INSET }}>
               <Button kind="link" sx={{ minHeight: 0, padding: 0 }} onClick={() => update.mutate({ assignee: me.id })}>{t('tickets.assignToMe')}</Button>
             </div>
           )}
           {/* Whoever created the ticket; it never changes. */}
           <DetailRow label={t('tickets.reporter')}>
-            <Person name={ticket.reporter?.name} src={ticket.reporter?.avatarUrl} />
+            <DetailText><Person name={ticket.reporter?.name} src={ticket.reporter?.avatarUrl} /></DetailText>
           </DetailRow>
           <DetailRow label={t('tickets.priority')}>
             {canEdit ? (
@@ -431,7 +440,7 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
                 }))}
               />
             ) : (
-              <span className="flex items-center gap-2"><PriorityIcon priority={priorityLevel(ticket.priority)} />{ticket.priority?.name}</span>
+              <DetailText><PriorityIcon priority={priorityLevel(ticket.priority)} />{ticket.priority?.name}</DetailText>
             )}
           </DetailRow>
           {ticket.type?.hierarchy === 1 && space.data?.type === 0 && (
@@ -553,7 +562,7 @@ function EpicField({ ticket, canEdit, epics, onPick }: { ticket: Ticket; canEdit
   const tag = name ? <span style={epicTagStyle} title={name}>{name}</span> : <span>{t('common.none')}</span>;
 
   if (!canEdit) {
-    return parent ? <RouterLink to={`/browse/${parent.key}`} style={{ textDecoration: 'none' }}>{tag}</RouterLink> : tag;
+    return <DetailText>{parent ? <RouterLink to={`/browse/${parent.key}`} style={{ textDecoration: 'none' }}>{tag}</RouterLink> : tag}</DetailText>;
   }
 
   return (
@@ -561,7 +570,7 @@ function EpicField({ ticket, canEdit, epics, onPick }: { ticket: Ticket; canEdit
       <ButtonBase
         aria-haspopup="dialog"
         onClick={(event) => setAnchor(event.currentTarget)}
-        sx={{ justifyContent: 'flex-start', width: '100%', minHeight: 32, paddingInline: 1, fontSize: 'inherit', borderRadius: `${radius.control}px` }}
+        sx={{ justifyContent: 'flex-start', width: '100%', minHeight: 32, paddingInline: `${DETAIL_INSET}px`, fontSize: 'inherit', borderRadius: `${radius.control}px` }}
       >
         <span className="sr-only">{t('tickets.epic')}:</span>
         {tag}
@@ -615,7 +624,7 @@ function SprintField({ ticket, canEdit, onError }: { ticket: Ticket; canEdit: bo
 
   if (!canEdit) {
     const name = current.data?.state === 2 ? t('agile.closedSprint', { name: current.data.name }) : current.data?.name;
-    return <span>{name ?? t('common.none')}</span>;
+    return <DetailText>{name ?? t('common.none')}</DetailText>;
   }
 
   const options = (backlog.data?.sprints ?? []).map((item) => ({ value: item.sprint!.id!, label: item.sprint!.name! }));
@@ -746,7 +755,7 @@ function PointsField({ value, disabled, onSave }: { value: string; disabled: boo
   const [draft, setDraft] = useState<string | null>(null);
 
   if (disabled) {
-    return <span>{value || t('common.none')}</span>;
+    return <DetailText>{value || t('common.none')}</DetailText>;
   }
 
   const commit = () => {
@@ -813,7 +822,7 @@ function LabelsField({ ticket, disabled, onSave }: { ticket: Ticket; disabled: b
   ) : t('common.none');
 
   if (disabled) {
-    return tagList;
+    return <DetailText>{tagList}</DetailText>;
   }
 
   if (!editing) {
@@ -821,7 +830,7 @@ function LabelsField({ ticket, disabled, onSave }: { ticket: Ticket; disabled: b
       <ButtonBase
         onClick={() => setEditing(true)}
         className="w-full"
-        sx={{ justifyContent: 'flex-start', minHeight: 32, paddingInline: 1, fontSize: 'inherit', borderRadius: `${radius.control}px`, '&:hover': { backgroundColor: sem('bg-hover') } }}
+        sx={{ justifyContent: 'flex-start', minHeight: 32, paddingInline: `${DETAIL_INSET}px`, fontSize: 'inherit', borderRadius: `${radius.control}px`, '&:hover': { backgroundColor: sem('bg-hover') } }}
       >
         <span className="sr-only">{t('tickets.labels')}:</span>
         {tagList}
