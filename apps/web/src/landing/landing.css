@@ -109,15 +109,13 @@ a {
   gap: var(--sb-space-24);
 }
 
-.top-nav a,
-.footer-nav a {
+.top-nav a {
   color: var(--sb-text-secondary);
   font-size: var(--sb-font-md);
   text-decoration: none;
 }
 
-.top-nav a:hover,
-.footer-nav a:hover {
+.top-nav a:hover {
   color: var(--sb-text-primary);
 }
 
@@ -128,35 +126,98 @@ a {
   margin-left: auto;
 }
 
-.top-actions .languages {
-  display: none;
+/* Language: the flag of the language in use, a menu of the others. */
+
+.language {
+  position: relative;
 }
 
-.languages {
-  display: flex;
+.language-button {
+  display: inline-flex;
+  align-items: center;
   gap: var(--sb-space-4);
-}
-
-.languages button {
   min-height: var(--sb-size-control);
   padding: 0 var(--sb-space-8);
   border: 1px solid transparent;
   border-radius: var(--sb-radius-control);
   background: none;
   color: var(--sb-text-secondary);
-  font: inherit;
-  font-size: var(--sb-font-md);
   cursor: pointer;
 }
 
-.languages button:hover {
+.language-button:hover,
+.language-button[aria-expanded='true'] {
   background: var(--sb-bg-hover);
 }
 
-.languages button[aria-pressed='true'] {
-  border-color: var(--sb-border-strong);
+.language-button svg:not(.flag) {
+  width: var(--sb-space-16);
+  height: var(--sb-space-16);
+}
+
+.flag {
+  display: block;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px var(--sb-border-default);
+}
+
+:root[lang='en'] .language-button [data-flag='vi'],
+:root[lang='vi'] .language-button [data-flag='en'] {
+  display: none;
+}
+
+.language-menu {
+  position: absolute;
+  top: calc(100% + var(--sb-space-4));
+  right: 0;
+  z-index: 2;
+  min-width: calc(var(--sb-size-landing) / 6);
+  margin: 0;
+  padding: var(--sb-space-4);
+  border: 1px solid var(--sb-border-default);
+  border-radius: var(--sb-radius-card);
+  background: var(--sb-bg-surface);
+  box-shadow: var(--sb-shadow-popover);
+}
+
+.language-menu[hidden] {
+  display: none;
+}
+
+.language-menu button {
+  display: flex;
+  align-items: center;
+  gap: var(--sb-space-8);
+  width: 100%;
+  min-height: var(--sb-size-input);
+  padding: 0 var(--sb-space-8);
+  border: none;
+  border-radius: var(--sb-radius-control);
+  background: none;
   color: var(--sb-text-primary);
-  font-weight: var(--sb-weight-medium);
+  font: inherit;
+  font-size: var(--sb-font-md);
+  text-align: left;
+  cursor: pointer;
+}
+
+.language-menu button:hover,
+.language-menu button:focus-visible {
+  background: var(--sb-bg-hover);
+}
+
+.language-menu button span {
+  flex: 1;
+}
+
+.language-menu button svg:not(.flag) {
+  width: var(--sb-space-16);
+  height: var(--sb-space-16);
+  color: var(--sb-text-accent);
+}
+
+.language-menu button[aria-checked='false'] svg:not(.flag) {
+  visibility: hidden;
 }
 
 /* Buttons */
@@ -257,12 +318,102 @@ h3 {
   gap: var(--sb-space-12);
 }
 
-.hero-shot {
-  overflow: hidden;
+/* Screens: a strip that snaps one screen at a time, with a caption and controls below. */
+
+.shots {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sb-space-12);
+  min-width: 0;
+}
+
+.shots-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
   border: 1px solid var(--sb-border-default);
   border-radius: var(--sb-radius-card);
   background: var(--sb-bg-surface);
   box-shadow: var(--sb-shadow-dialog);
+}
+
+.shots-track::-webkit-scrollbar {
+  display: none;
+}
+
+.shot {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+}
+
+.shot img {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+}
+
+.shots-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sb-space-8);
+}
+
+.shots-caption {
+  color: var(--sb-text-secondary);
+  font-size: var(--sb-font-md);
+}
+
+.shots-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--sb-space-4);
+}
+
+.shots-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sb-size-control);
+  height: var(--sb-size-control);
+  border: 1px solid var(--sb-border-strong);
+  border-radius: var(--sb-radius-full);
+  background: var(--sb-bg-surface);
+  color: var(--sb-text-primary);
+  cursor: pointer;
+}
+
+.shots-step:hover {
+  background: var(--sb-bg-hover);
+}
+
+/* A dot is small to see but a full control to hit. */
+.shots-dot {
+  position: relative;
+  width: var(--sb-space-24);
+  height: var(--sb-size-control);
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.shots-dot::before {
+  content: '';
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: var(--sb-space-8);
+  height: var(--sb-space-8);
+  border-radius: var(--sb-radius-full);
+  background: var(--sb-border-strong);
+  transform: translate(-50%, -50%);
+  transition: width var(--sb-motion-slow);
+}
+
+.shots-dot[aria-current]::before {
+  width: var(--sb-space-16);
+  background: var(--sb-accent-default);
 }
 
 /* Sections */
@@ -346,29 +497,18 @@ h3 {
 
 .footer-row {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--sb-space-16);
-  padding-block: var(--sb-space-24);
-}
-
-.footer .brand {
+  gap: var(--sb-space-8);
+  padding-block: var(--sb-space-12);
   color: var(--sb-text-secondary);
-  font-size: var(--sb-font-md);
-  font-weight: var(--sb-weight-regular);
+  font-size: var(--sb-font-xs);
 }
 
-.footer-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sb-space-16);
-}
-
-/* Motion: the screenshot rises as the page opens, not when the device asks for less. */
+/* Motion: the screens rise as the page opens, not when the device asks for less. */
 
 @media (prefers-reduced-motion: no-preference) {
   /* Only the picture moves: text that starts hidden would hold back the first paint of the words. */
-  .hero-shot {
+  .shots {
     animation: rise var(--sb-motion-slow) ease-out both;
     animation-duration: calc(var(--sb-motion-slow) * 3);
   }
@@ -379,7 +519,8 @@ h3 {
     scroll-behavior: auto;
   }
 
-  .button {
+  .button,
+  .shots-dot::before {
     transition: none;
   }
 }
@@ -394,10 +535,6 @@ h3 {
 /* Wider screens */
 
 @media (min-width: bp(sm)) {
-  .top-actions .languages {
-    display: flex;
-  }
-
   /* Seven cards: the first one wide, so the rest pair up. */
   .cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -415,9 +552,6 @@ h3 {
     padding: var(--sb-space-32);
   }
 
-  .footer-nav {
-    margin-left: auto;
-  }
 }
 
 @media (min-width: bp(md)) {

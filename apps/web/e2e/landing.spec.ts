@@ -12,6 +12,11 @@ const hint = (baseURL: string) => [{ name: 'sb_signed_in', value: '1', url: base
 const isLanding = (page: Page) => page.locator('h1#hero-title').isVisible();
 const isApp = async (page: Page) => (await page.locator('#root').count()) === 1;
 
+// No auth server, even when the preview proxy finds a running dev API (see a11y.spec.ts).
+test.beforeEach(async ({ page }) => {
+  await page.route('**/.well-known/**', (route) => route.abort());
+});
+
 test.describe('landing page on', () => {
   test('guests at / get the landing page, the address stays /, and no app script loads', async ({ page }) => {
     const scripts: string[] = [];
@@ -43,14 +48,35 @@ test.describe('landing page on', () => {
     await expect(page.locator('h1')).toHaveText(vi.landing.hero.title);
     await expect(page).toHaveTitle(vi.landing.title);
 
-    await page.getByRole('button', { name: en.landing.languages.en }).first().click();
+    // The flag opens a menu of languages; Escape closes it again.
+    const picker = page.getByRole('button', { name: vi.landing.language });
+    await picker.click();
+    await expect(page.getByRole('menuitemradio', { name: vi.landing.languages.vi })).toHaveAttribute('aria-checked', 'true');
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('menu')).toBeHidden();
+    await picker.click();
+    await page.getByRole('menuitemradio', { name: en.landing.languages.en }).click();
+    await expect(page.getByRole('menu')).toBeHidden();
     await expect(page.locator('h1')).toHaveText(en.landing.hero.title);
-    await expect(page.getByRole('img', { name: en.landing.hero.imageAlt })).toBeVisible();
+    await expect(page.getByRole('img', { name: en.landing.shots.board })).toBeVisible();
     expect(await page.evaluate(() => localStorage.getItem('i18nextLng'))).toBe('en');
 
     await page.reload();
     await expect(page.locator('h1')).toHaveText(en.landing.hero.title);
     await context.close();
+  });
+
+  test('the screens move with the arrows and the dots, and the caption follows', async ({ page }) => {
+    await page.goto('/');
+    const caption = page.locator('.shots-caption');
+    await expect(caption).toHaveText(en.landing.shots.board);
+    await page.getByRole('button', { name: en.landing.shots.next }).click();
+    await expect(caption).toHaveText(en.landing.shots.backlog);
+    await page.getByRole('button', { name: en.landing.shots.mcp }).click();
+    await expect(caption).toHaveText(en.landing.shots.mcp);
+    await expect(page.getByRole('button', { name: en.landing.shots.mcp })).toHaveAttribute('aria-current', 'true');
+    await page.getByRole('button', { name: en.landing.shots.next }).click();
+    await expect(caption).toHaveText(en.landing.shots.board);
   });
 
   test('people with the signed-in hint get the app at /', async ({ context, page, baseURL }) => {

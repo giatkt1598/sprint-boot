@@ -1862,8 +1862,7 @@
       "title": "Plan, track and ship on a board you own",
       "lead": "Sprint Boot is a Jira-style work management app you run on your own server: boards, backlogs, sprints and epics, with an AI assistant built in.",
       "signIn": "Sign in",
-      "source": "View source",
-      "imageAlt": "A Sprint Boot board with tickets in To Do, In Progress and Done columns"
+      "source": "View source"
     },
     "features": {
       "title": "Everything a team needs to ship",
@@ -1918,15 +1917,24 @@
       }
     },
     "footer": {
-      "signIn": "Sign in",
-      "source": "Source code",
-      "license": "MIT License",
-      "copyright": "Open source under the MIT License."
+      "poweredBy": "Powered by GiaTK"
     },
     "languages": {
       "en": "English",
       "vi": "Tiếng Việt"
     },
-    "home": "Sprint Boot home"
+    "home": "Sprint Boot home",
+    "shots": {
+      "label": "Sprint Boot screens",
+      "previous": "Previous screen",
+      "next": "Next screen",
+      "board": "Board: drag tickets through your workflow",
+      "backlog": "Backlog and sprints: plan what comes next",
+      "timeline": "Timeline: see when the work lands",
+      "ticket": "Ticket detail: everything about one piece of work",
+      "assistant": "AI assistant: changes run only after you confirm",
+      "themes": "Themes: Aurora and twelve more looks",
+      "mcp": "MCP: connect Claude Code, Codex or Copilot"
+    }
   }
 }

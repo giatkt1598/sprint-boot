@@ -25,6 +25,7 @@
     <link rel="preload" href="../../assets/fonts/svn-poppins/woff2/SVN-Poppins-SemiBold.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="../../assets/fonts/svn-poppins/woff2/SVN-Poppins-Regular.woff2" as="font" type="font/woff2" crossorigin />
     <!--tokens-->
+    <!-- The screens live in public/landing/shots, unhashed: all but the first load only after the page, from JavaScript. -->
     <link rel="stylesheet" href="/src/landing/landing.css" />
   </head>
   <body>
@@ -40,9 +41,14 @@
           <a href="#self-hosted" data-i18n="nav.selfHosted"></a>
         </nav>
         <div class="top-actions">
-          <div class="languages" role="group" data-i18n-aria-label="language">
-            <button type="button" data-lang="en" aria-pressed="true" data-i18n="languages.en"></button>
-            <button type="button" data-lang="vi" aria-pressed="false" data-i18n="languages.vi"></button>
+          <div class="language">
+            <button type="button" class="language-button" aria-haspopup="true" aria-expanded="false" aria-controls="language-menu" data-i18n-aria-label="language">
+              <span data-flag="en">{{flag:en}}</span><span data-flag="vi">{{flag:vi}}</span>{{icon:chevronDown}}
+            </button>
+            <ul id="language-menu" class="language-menu" role="menu" data-i18n-aria-label="language" hidden>
+              <li role="none"><button type="button" role="menuitemradio" aria-checked="true" data-lang="en">{{flag:en}}<span data-i18n="languages.en"></span>{{icon:check}}</button></li>
+              <li role="none"><button type="button" role="menuitemradio" aria-checked="false" data-lang="vi">{{flag:vi}}<span data-i18n="languages.vi"></span>{{icon:check}}</button></li>
+            </ul>
           </div>
           <a class="button button-primary" href="/login" data-i18n="nav.signIn"></a>
         </div>
@@ -60,8 +66,44 @@
             <a class="button button-secondary button-large" href="https://git.giatk.win/admin/sprint-boot" rel="noopener">{{icon:codeBlock}}<span data-i18n="hero.source"></span></a>
           </div>
         </div>
-        <figure class="hero-shot">
-          <img src="/src/landing/board.webp" srcset="/src/landing/board-800.webp 800w, /src/landing/board.webp 1280w" sizes="(min-width: 900px) 640px, calc(100vw - 32px)" width="1280" height="800" fetchpriority="high" data-i18n-alt="hero.imageAlt" />
+        <figure class="shots" aria-roledescription="carousel" data-i18n-aria-label="shots.label">
+          <div class="shots-track" tabindex="0">
+            <div class="shot" role="group" aria-roledescription="slide" data-i18n-aria-label="shots.board">
+              <img src="/landing/shots/board.webp" srcset="/landing/shots/board-800.webp 800w, /landing/shots/board.webp 1280w" sizes="(min-width: 900px) 640px, calc(100vw - 32px)" width="1280" height="800" fetchpriority="high" data-i18n-alt="shots.board" />
+            </div>
+            <div class="shot" role="group" aria-roledescription="slide" data-i18n-aria-label="shots.backlog">
+              <img data-src="/landing/shots/backlog.webp" data-srcset="/landing/shots/backlog-800.webp 800w, /landing/shots/backlog.webp 1280w" sizes="(min-width: 900px) 640px, calc(100vw - 32px)" width="1280" height="800" data-i18n-alt="shots.backlog" />
+            </div>
+            <div class="shot" role="group" aria-roledescription="slide" data-i18n-aria-label="shots.timeline">
+              <img data-src="/landing/shots/timeline.webp" data-srcset="/landing/shots/timeline-800.webp 800w, /landing/shots/timeline.webp 1280w" sizes="(min-width: 900px) 640px, calc(100vw - 32px)" width="1280" height="800" data-i18n-alt="shots.timeline" />
+            </div>
+            <div class="shot" role="group" aria-roledescription="slide" data-i18n-aria-label="shots.ticket">
+              <img data-src="/landing/shots/ticket.webp" data-srcset="/landing/shots/ticket-800.webp 800w, /landing/shots/ticket.webp 1280w" sizes="(min-width: 900px) 640px, calc(100vw - 32px)" width="1280" height="800" data-i18n-alt="shots.ticket" />
+            </div>
+            <div class="shot" role="group" aria-roledescription="slide" data-i18n-aria-label="shots.assistant">
+              <img data-src="/landing/shots/assistant.webp" data-srcset="/landing/shots/assistant-800.webp 800w, /landing/shots/assistant.webp 1280w" sizes="(min-width: 900px) 640px, calc(100vw - 32px)" width="1280" height="800" data-i18n-alt="shots.assistant" />
+            </div>
+            <div class="shot" role="group" aria-roledescription="slide" data-i18n-aria-label="shots.themes">
+              <img data-src="/landing/shots/themes.webp" data-srcset="/landing/shots/themes-800.webp 800w, /landing/shots/themes.webp 1280w" sizes="(min-width: 900px) 640px, calc(100vw - 32px)" width="1280" height="800" data-i18n-alt="shots.themes" />
+            </div>
+            <div class="shot" role="group" aria-roledescription="slide" data-i18n-aria-label="shots.mcp">
+              <img data-src="/landing/shots/mcp.webp" data-srcset="/landing/shots/mcp-800.webp 800w, /landing/shots/mcp.webp 1280w" sizes="(min-width: 900px) 640px, calc(100vw - 32px)" width="1280" height="800" data-i18n-alt="shots.mcp" />
+            </div>
+          </div>
+          <figcaption class="shots-bar">
+            <span class="shots-caption" aria-live="polite" data-i18n="shots.board"></span>
+            <div class="shots-controls">
+              <button type="button" class="shots-step" data-step="-1" data-i18n-aria-label="shots.previous">{{icon:chevronLeft}}</button>
+              <button type="button" class="shots-dot" data-slide="0" data-i18n-aria-label="shots.board" aria-current="true"></button>
+              <button type="button" class="shots-dot" data-slide="1" data-i18n-aria-label="shots.backlog"></button>
+              <button type="button" class="shots-dot" data-slide="2" data-i18n-aria-label="shots.timeline"></button>
+              <button type="button" class="shots-dot" data-slide="3" data-i18n-aria-label="shots.ticket"></button>
+              <button type="button" class="shots-dot" data-slide="4" data-i18n-aria-label="shots.assistant"></button>
+              <button type="button" class="shots-dot" data-slide="5" data-i18n-aria-label="shots.themes"></button>
+              <button type="button" class="shots-dot" data-slide="6" data-i18n-aria-label="shots.mcp"></button>
+              <button type="button" class="shots-step" data-step="1" data-i18n-aria-label="shots.next">{{icon:chevronRight}}</button>
+            </div>
+          </figcaption>
         </figure>
       </section>
 
@@ -103,53 +145,115 @@
 
     <footer class="footer">
       <div class="column footer-row">
-        <p class="brand"><img src="/favicon-32.png" alt="" width="20" height="20" /><span data-i18n="footer.copyright"></span></p>
-        <nav class="footer-nav">
-          <a href="/login" data-i18n="footer.signIn"></a>
-          <a href="https://git.giatk.win/admin/sprint-boot" rel="noopener" data-i18n="footer.source"></a>
-          <a href="https://git.giatk.win/admin/sprint-boot/src/branch/master/LICENSE" rel="noopener" data-i18n="footer.license"></a>
-        </nav>
-        <div class="languages" role="group" data-i18n-aria-label="language">
-          <button type="button" data-lang="en" aria-pressed="true" data-i18n="languages.en"></button>
-          <button type="button" data-lang="vi" aria-pressed="false" data-i18n="languages.vi"></button>
-        </div>
+        <img src="/favicon-32.png" alt="" width="16" height="16" />
+        <span data-i18n="footer.poweredBy"></span>
       </div>
     </footer>
 
     <!--strings-->
     <script>
-      // The language: the one picked here or in the app (i18next keeps it under i18nextLng), else the browser's.
       (function () {
         var strings = JSON.parse(document.getElementById('strings').textContent);
-        var KEY = 'i18nextLng';
+        var $ = function (selector, root) { return (root || document).querySelectorAll(selector); };
+
+        // Language: the one picked here or in the app (i18next keeps it under i18nextLng), else the browser's.
         function apply(lang) {
           var words = strings[lang];
           document.documentElement.lang = lang;
-          document.querySelectorAll('[data-i18n]').forEach(function (node) {
-            node.textContent = words[node.getAttribute('data-i18n')];
-          });
-          document.querySelectorAll('*').forEach(function (node) {
+          $('[data-i18n]').forEach(function (node) { node.textContent = words[node.getAttribute('data-i18n')]; });
+          $('*').forEach(function (node) {
             for (var i = 0; i < node.attributes.length; i++) {
               var name = node.attributes[i].name;
               if (name.indexOf('data-i18n-') === 0) node.setAttribute(name.slice(10), words[node.attributes[i].value]);
             }
           });
-          document.querySelectorAll('[data-lang]').forEach(function (button) {
-            button.setAttribute('aria-pressed', String(button.getAttribute('data-lang') === lang));
-          });
+          $('[data-lang]').forEach(function (item) { item.setAttribute('aria-checked', String(item.getAttribute('data-lang') === lang)); });
         }
         var saved = null;
-        try { saved = localStorage.getItem(KEY); } catch (error) {}
+        try { saved = localStorage.getItem('i18nextLng'); } catch (error) {}
         var wanted = (saved || navigator.language || 'en').slice(0, 2).toLowerCase();
-        var lang = strings[wanted] ? wanted : 'en';
-        if (lang !== 'en') apply(lang);
-        document.addEventListener('click', function (event) {
-          var button = event.target.closest && event.target.closest('[data-lang]');
-          if (!button) return;
-          lang = button.getAttribute('data-lang');
-          try { localStorage.setItem(KEY, lang); } catch (error) {}
+        if (strings[wanted] && wanted !== 'en') apply(wanted);
+
+        var button = document.querySelector('.language-button');
+        var menu = document.getElementById('language-menu');
+        function openMenu(open) {
+          menu.hidden = !open;
+          button.setAttribute('aria-expanded', String(open));
+          if (open) menu.querySelector('[aria-checked="true"]').focus();
+        }
+        button.addEventListener('click', function () { openMenu(menu.hidden); });
+        menu.addEventListener('click', function (event) {
+          var item = event.target.closest('[data-lang]');
+          if (!item) return;
+          var lang = item.getAttribute('data-lang');
+          try { localStorage.setItem('i18nextLng', lang); } catch (error) {}
           apply(lang);
+          openMenu(false);
+          button.focus();
         });
+        menu.addEventListener('keydown', function (event) {
+          var items = Array.prototype.slice.call($('[role="menuitemradio"]', menu));
+          var at = items.indexOf(document.activeElement);
+          if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault();
+            items[(at + (event.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length].focus();
+          }
+        });
+        document.addEventListener('keydown', function (event) {
+          if (event.key === 'Escape' && !menu.hidden) { openMenu(false); button.focus(); }
+        });
+        document.addEventListener('click', function (event) {
+          if (!menu.hidden && !event.target.closest('.language')) openMenu(false);
+        });
+
+        // Screens: a scroll-snap strip. It moves on by itself until someone touches it, never with reduced motion.
+        var track = document.querySelector('.shots-track');
+        var slides = $('.shot', track);
+        var dots = $('.shots-dot');
+        var caption = document.querySelector('.shots-caption');
+        var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var current = 0;
+        var shown = 0;
+        function show(index) {
+          current = (index + slides.length) % slides.length;
+          track.scrollTo({ left: current * track.clientWidth, behavior: still ? 'auto' : 'smooth' });
+        }
+        // Buttons, dots, swipes and the timer all scroll the strip; the caption and dots follow where it settles.
+        track.addEventListener('scroll', function () {
+          var index = Math.round(track.scrollLeft / track.clientWidth);
+          if (index === shown) return;
+          shown = current = index;
+          dots.forEach(function (dot, at) { if (at === index) dot.setAttribute('aria-current', 'true'); else dot.removeAttribute('aria-current'); });
+          var key = dots[index].getAttribute('data-i18n-aria-label');
+          caption.setAttribute('data-i18n', key);
+          caption.textContent = strings[document.documentElement.lang][key];
+        }, { passive: true });
+        // The other screens load once the page has, so they never compete with the first one.
+        function loadAll() {
+          $('img[data-src]', track).forEach(function (image) {
+            image.srcset = image.getAttribute('data-srcset');
+            image.src = image.getAttribute('data-src');
+            image.removeAttribute('data-src');
+          });
+        }
+        if (document.readyState === 'complete') setTimeout(loadAll, 1000);
+        else addEventListener('load', function () { setTimeout(loadAll, 1000); });
+        track.addEventListener('pointerdown', loadAll, { once: true });
+        $('.shots-controls button').forEach(function (control) { control.addEventListener('click', loadAll, { once: true }); });
+        var timer = null;
+        function stop() { clearInterval(timer); timer = null; }
+        $('.shots-step').forEach(function (step) {
+          step.addEventListener('click', function () { stop(); show(current + Number(step.getAttribute('data-step'))); });
+        });
+        dots.forEach(function (dot) {
+          dot.addEventListener('click', function () { stop(); show(Number(dot.getAttribute('data-slide'))); });
+        });
+        ['pointerdown', 'wheel', 'focusin'].forEach(function (name) {
+          document.querySelector('.shots').addEventListener(name, stop, { passive: true });
+        });
+        if (!still) {
+          timer = setInterval(function () { if (!document.querySelector('.shots:hover')) show(current + 1); }, 6000);
+        }
       })();
     </script>
   </body>

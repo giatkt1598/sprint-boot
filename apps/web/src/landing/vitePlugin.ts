@@ -58,6 +58,34 @@ export function tokenStyles() {
   );
 }
 
+/**
+ * Flags of the languages on offer. A flag keeps its own colours whatever the theme, like the brand colours in tokens.ts.
+ * Each copy gets its own ids, since the page shows a flag more than once.
+ */
+let flagCount = 0;
+const star = (cx: number, cy: number, outer: number) =>
+  Array.from({ length: 10 }, (_, index) => {
+    const radius = index % 2 === 0 ? outer : outer * 0.382;
+    const angle = -Math.PI / 2 + (index * Math.PI) / 5;
+    return `${(cx + radius * Math.cos(angle)).toFixed(2)},${(cy + radius * Math.sin(angle)).toFixed(2)}`;
+  }).join(' ');
+const flags: Record<string, () => string> = {
+  // The Union Flag, for English.
+  en: () => {
+    const id = `flag-${++flagCount}`;
+    return (
+      `<svg class="flag" viewBox="0 0 60 30" width="24" height="16" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">` +
+      `<clipPath id="${id}"><path d="M30,15h30v15zv15h-30zh-30v-15zv-15h30z"/></clipPath>` +
+      `<path d="M0,0v30h60v-30z" fill="#012169"/><path d="M0,0L60,30M60,0L0,30" stroke="#fff" stroke-width="6"/>` +
+      `<path d="M0,0L60,30M60,0L0,30" clip-path="url(#${id})" stroke="#C8102E" stroke-width="4"/>` +
+      `<path d="M30,0v30M0,15h60" stroke="#fff" stroke-width="10"/><path d="M30,0v30M0,15h60" stroke="#C8102E" stroke-width="6"/></svg>`
+    );
+  },
+  vi: () =>
+    `<svg class="flag" viewBox="0 0 30 20" width="24" height="16" aria-hidden="true" focusable="false">` +
+    `<rect width="30" height="20" fill="#DA251D"/><polygon points="${star(15, 10, 6)}" fill="#FFFF00"/></svg>`,
+};
+
 /** Fills the page: English text in place (what crawlers and first paint see), both languages for the switch. */
 export function renderLanding(html: string) {
   const strings = { en: flatten(en.landing), vi: flatten(vi.landing) };
@@ -70,6 +98,9 @@ export function renderLanding(html: string) {
   };
 
   return html
+    // The inline script ships without its comment lines and indentation.
+    .replace(/<script>([\s\S]*?)<\/script>/g, (_, code: string) =>
+      `<script>${code.split('\n').map((line) => line.trim()).filter((line) => line && !line.startsWith('//')).join('\n')}</script>`)
     .replace('<!--tokens-->', `<style>${tokenStyles()}</style>`)
     .replace('<!--strings-->', () => `<script type="application/json" id="strings">${JSON.stringify(strings).replace(/</g, '\\u003c')}</script>`)
     // <h1 data-i18n="hero.title"></h1>: the element's text.
@@ -83,6 +114,14 @@ export function renderLanding(html: string) {
         throw new Error(`welcome.html uses the unknown icon ${name}`);
       }
       return renderToStaticMarkup(createElement(icon, { size: 20, strokeWidth: 1.5, 'aria-hidden': true, focusable: false }));
+    })
+    // {{flag:vi}}: the flag of a language.
+    .replace(/\{\{flag:(\w+)\}\}/g, (_, language: string) => {
+      const flag = flags[language];
+      if (!flag) {
+        throw new Error(`welcome.html uses the unknown flag ${language}`);
+      }
+      return flag();
     });
 }
 

@@ -9,6 +9,12 @@ const expectNoViolations = async (page: import('@playwright/test').Page) => {
   expect(results.violations.map((violation) => `${violation.id}: ${violation.nodes[0]?.html}`)).toEqual([]);
 };
 
+// No auth server, even when the preview proxy finds a running dev API: the sign-in page then shows its form instead of
+// starting an authorize request.
+test.beforeEach(async ({ page }) => {
+  await page.route('**/.well-known/**', (route) => route.abort());
+});
+
 for (const language of ['en', 'vi']) {
   test.describe(language, () => {
     test.use({ locale: language });

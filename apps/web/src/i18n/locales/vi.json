@@ -1862,8 +1862,7 @@
       "title": "Lên kế hoạch, theo dõi và hoàn thành trên bảng của riêng bạn",
       "lead": "Sprint Boot là ứng dụng quản lý công việc kiểu Jira chạy trên máy chủ của bạn: board, backlog, sprint và epic, kèm sẵn trợ lý AI.",
       "signIn": "Đăng nhập",
-      "source": "Xem mã nguồn",
-      "imageAlt": "Một board Sprint Boot với các ticket ở cột To Do, In Progress và Done"
+      "source": "Xem mã nguồn"
     },
     "features": {
       "title": "Mọi thứ nhóm cần để hoàn thành công việc",
@@ -1918,15 +1917,24 @@
       }
     },
     "footer": {
-      "signIn": "Đăng nhập",
-      "source": "Mã nguồn",
-      "license": "Giấy phép MIT",
-      "copyright": "Mã nguồn mở theo giấy phép MIT."
+      "poweredBy": "Powered by GiaTK"
     },
     "languages": {
       "en": "English",
       "vi": "Tiếng Việt"
     },
-    "home": "Trang chủ Sprint Boot"
+    "home": "Trang chủ Sprint Boot",
+    "shots": {
+      "label": "Các màn hình của Sprint Boot",
+      "previous": "Màn trước",
+      "next": "Màn sau",
+      "board": "Board: kéo ticket qua từng bước của workflow",
+      "backlog": "Backlog và sprint: lên kế hoạch cho việc tiếp theo",
+      "timeline": "Timeline: xem khi nào công việc hoàn thành",
+      "ticket": "Chi tiết ticket: mọi thứ về một đầu việc",
+      "assistant": "Trợ lý AI: thay đổi chỉ chạy khi bạn xác nhận",
+      "themes": "Giao diện: Aurora và mười hai phong cách khác",
+      "mcp": "MCP: kết nối Claude Code, Codex hoặc Copilot"
+    }
   }
 }
