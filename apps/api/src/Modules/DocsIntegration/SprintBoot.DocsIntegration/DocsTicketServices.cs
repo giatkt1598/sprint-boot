@@ -61,21 +61,25 @@ public class DocsTicketAppService(
         var canEdit = await projectAccess.IsGrantedAsync(projectId, ProjectPermissions.EditTickets);
         var configured = await gateway.IsConfiguredAsync();
         var rows = await links.GetListAsync(item => item.TicketId == ticketId);
+        var linked = rows
+            .Where(item => item.Source is DocLinkSource.Manual or DocLinkSource.Text)
+            .GroupBy(item => item.PageId)
+            // A hand link can be removed; a chip only goes with the text it is in.
+            .Select(group => group.OrderBy(item => item.Source == DocLinkSource.Manual ? 0 : 1).First())
+            .ToList();
+        var linkedPages = linked.Select(item => item.PageId).ToHashSet();
 
         return new TicketDocsDto
         {
             Configured = configured,
             CanEdit = canEdit,
             CanCreatePage = configured && canEdit && await spaces.AnyAsync(item => item.ProjectId == projectId),
-            Linked = [.. rows
-                .Where(item => item.Source is DocLinkSource.Manual or DocLinkSource.Text)
-                .GroupBy(item => item.PageId)
-                // A hand link can be removed; a chip only goes with the text it is in.
-                .Select(group => group.OrderBy(item => item.Source == DocLinkSource.Manual ? 0 : 1).First())
+            Linked = [.. linked
                 .OrderBy(item => item.Title, StringComparer.CurrentCultureIgnoreCase)
                 .Select(ToDto)],
+            // A linked page is listed once, under Linked; its mention row stays, so it shows here again once unlinked.
             Mentions = [.. rows
-                .Where(item => item.Source == DocLinkSource.Mention)
+                .Where(item => item.Source == DocLinkSource.Mention && !linkedPages.Contains(item.PageId))
                 .OrderByDescending(item => item.UpdatedAt)
                 .Select(ToDto)],
         };

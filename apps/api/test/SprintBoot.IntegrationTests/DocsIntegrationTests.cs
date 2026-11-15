@@ -503,6 +503,25 @@ public class DocsIntegrationTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task A_linked_page_that_mentions_the_ticket_is_listed_once_until_it_is_unlinked()
+    {
+        var secret = await ConnectAsync(await AdminAsync());
+        var (owner, _, ticket) = await SpaceAsync();
+        (await owner.Http.PostAsJsonAsync($"/api/v1/docs-ticket/link/{ticket.Id}", new { pageId = FakeDocmostServer.PageId }, Token)).EnsureSuccessStatusCode();
+        (await Docmost(secret).PostAsJsonAsync("/api/v1/docs-bridge/page-links", new { pageId = FakeDocmostServer.PageId, title = "Design notes", url = "http://docmost.fake/s/e/p/design-notes-1", keys = new[] { ticket.Key } }, Token))
+            .EnsureSuccessStatusCode();
+
+        var docs = (await PagesAsync(owner, ticket))!;
+        var linked = docs.Linked.ShouldHaveSingleItem();
+        docs.Mentions.ShouldBeEmpty();
+
+        (await owner.Http.DeleteAsync($"/api/v1/docs-ticket/{linked.Id}", Token)).EnsureSuccessStatusCode();
+        docs = (await PagesAsync(owner, ticket))!;
+        docs.Linked.ShouldBeEmpty();
+        docs.Mentions.ShouldHaveSingleItem().Source.ShouldBe(DocLinkSource.Mention);
+    }
+
+    [Fact]
     public async Task Docmost_unfurls_tickets_and_creates_them_as_the_person_by_email()
     {
         var secret = await ConnectAsync(await AdminAsync());
