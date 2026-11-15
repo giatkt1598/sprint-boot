@@ -33,6 +33,8 @@ import { SpaceGuard } from './features/spaces/SpaceGuard';
 import { SpaceWorkflowsPage } from './features/spaces/SpaceWorkflowsPage';
 import { SpaceTicketTemplatesPage } from './features/spaces/TicketTemplatesPage';
 import { AssistantSettingsPage } from './features/admin/AssistantSettingsPage';
+import { CustomFieldsAdminPage } from './features/customFields/CustomFieldsAdminPage';
+import { SpaceFieldsPage } from './features/customFields/SpaceFieldsPage';
 import { DocsSettingsPage } from './features/docs/DocsSettingsPage';
 import { DocmostAuthorizePage } from './features/docs/DocmostAuthorizePage';
 import { IntegrationsPage } from './features/docs/IntegrationsPage';
@@ -86,6 +88,7 @@ export function App() {
                 <Route path="workflows" element={<AdminWorkflowsPage />} />
                 <Route path="ticket-link-types" element={<TicketLinkTypesPage />} />
                 <Route path="ticket-templates" element={<GlobalTicketTemplatesPage />} />
+                <Route path="custom-fields" element={<CustomFieldsAdminPage />} />
                 <Route path="notification-schemes" element={<NotificationSchemesPage />} />
                 <Route path="notification-schemes/:schemeId" element={<EditSchemePage />} />
                 <Route path="statuses" element={<StatusesPage />} />
@@ -102,6 +105,7 @@ export function App() {
                 <Route path="board" element={<SpaceBoardPage />} />
                 <Route path="workflows" element={<SpaceWorkflowsPage />} />
                 <Route path="ticket-templates" element={<SpaceTicketTemplatesPage />} />
+                <Route path="fields" element={<SpaceFieldsPage />} />
                 <Route path="git" element={<GitConnectionsPage />} />
                 <Route path="git/:connectionId" element={<GitRepositoriesPage />} />
                 <Route path="docs" element={<SpaceDocsPage />} />

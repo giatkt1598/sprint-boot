@@ -49,25 +49,9 @@ import { priorityLevel, uploadAttachment, useEpics, useTicketTypes, useLabels, u
 import { DatePicker } from '../../components/DatePicker';
 import { useCompact } from '../../lib/responsive';
 import { PageTitleScope, usePageTitle } from '../../lib/pageTitle';
-
-const DETAIL_LABEL_WIDTH = 88;
-const DETAIL_GAP = 12;
-// Where every value starts inside its row: the padding of the quiet fields, so read-only text lines up with them.
-const DETAIL_INSET = 8;
-
-/** A read-only detail value, set in like the fields beside it. */
-function DetailText({ children }: { children: ReactNode }) {
-  return <span className="flex min-h-8 items-center gap-2" style={{ paddingInline: DETAIL_INSET }}>{children}</span>;
-}
-
-function DetailRow({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex min-h-9 items-center gap-3">
-      <span style={{ width: DETAIL_LABEL_WIDTH, flexShrink: 0, fontSize: font.size.xs, color: sem('text-tertiary') }}>{label}</span>
-      <div className="min-w-0 flex-1">{children}</div>
-    </div>
-  );
-}
+import { DETAIL_GAP, DETAIL_INSET, DETAIL_LABEL_WIDTH, DetailRow, DetailText } from './DetailLayout';
+import { fieldKey } from '../customFields/api';
+import { CustomFieldInput, valueOf } from '../customFields/CustomFieldInput';
 
 const useTicket = (key: string | undefined) =>
   useQuery({
@@ -501,6 +485,19 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
           <DetailRow label={t('tickets.dueDate')}>
             <DatePicker quiet label={t('tickets.dueDate')} value={ticket.dueDate ?? ''} rangeStart={ticket.startDate ?? ''} disabled={!canEdit} onChange={(text) => update.mutate({ dueDate: text || null })} />
           </DetailRow>
+          {/* The space's custom fields for this type, in its order, after the built-in ones. */}
+          {(ticket.customFields ?? []).map((item) => (
+            <DetailRow key={item.field!.id} label={item.field!.name ?? ''} hint={item.field!.description}>
+              <CustomFieldInput
+                quiet
+                field={item.field!}
+                value={valueOf(item)}
+                disabled={!canEdit}
+                people={people}
+                onChange={(value) => update.mutate({ [fieldKey(item.field!)]: value })}
+              />
+            </DetailRow>
+          ))}
           {fieldError && <Typography role="alert" variant="body2" color="error">{fieldError}</Typography>}
           </>
           )}

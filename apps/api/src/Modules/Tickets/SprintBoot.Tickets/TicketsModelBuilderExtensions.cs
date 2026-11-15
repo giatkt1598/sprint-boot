@@ -200,5 +200,50 @@ public static class TicketsModelBuilderExtensions
             b.Property(log => log.Note).HasMaxLength(1000);
             b.HasIndex(log => log.TicketId);
         });
+
+        builder.Entity<CustomField>(b =>
+        {
+            b.ToTable("custom_fields", Schema);
+            b.ConfigureByConvention();
+            b.Property(field => field.Key).HasMaxLength(CustomFieldConsts.MaxKeyLength).IsRequired();
+            b.Property(field => field.Name).HasMaxLength(CustomFieldConsts.MaxNameLength).IsRequired();
+            b.Property(field => field.Description).HasMaxLength(CustomFieldConsts.MaxDescriptionLength);
+            b.Property(field => field.DefaultValue).HasMaxLength(CustomFieldConsts.MaxTextLength * 2);
+            b.HasIndex(field => new { field.ProjectId, field.Key });
+        });
+
+        builder.Entity<CustomFieldOption>(b =>
+        {
+            b.ToTable("custom_field_options", Schema);
+            b.ConfigureByConvention();
+            b.Property(option => option.Label).HasMaxLength(CustomFieldConsts.MaxOptionLength).IsRequired();
+            b.Property(option => option.Color).HasMaxLength(CustomFieldConsts.MaxColorLength);
+            b.HasOne<CustomField>().WithMany().HasForeignKey(option => option.FieldId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<ProjectCustomField>(b =>
+        {
+            b.ToTable("project_custom_fields", Schema);
+            b.ConfigureByConvention();
+            b.HasIndex(row => new { row.ProjectId, row.FieldId }).IsUnique();
+            b.HasOne<CustomField>().WithMany().HasForeignKey(row => row.FieldId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // One column per kind, each indexed with the field, so a filter or a sort by a custom field reads an index.
+        builder.Entity<TicketFieldValue>(b =>
+        {
+            b.ToTable("ticket_field_values", Schema);
+            b.ConfigureByConvention();
+            b.Property(value => value.TextValue).HasMaxLength(CustomFieldConsts.MaxTextLength);
+            b.Property(value => value.NumberValue).HasPrecision(18, 4);
+            b.HasIndex(value => new { value.TicketId, value.FieldId });
+            b.HasIndex(value => new { value.FieldId, value.NumberValue });
+            b.HasIndex(value => new { value.FieldId, value.DateValue });
+            b.HasIndex(value => new { value.FieldId, value.OptionId });
+            b.HasIndex(value => new { value.FieldId, value.UserId });
+            b.HasOne<CustomField>().WithMany().HasForeignKey(value => value.FieldId).OnDelete(DeleteBehavior.Cascade);
+            b.HasOne<CustomFieldOption>().WithMany().HasForeignKey(value => value.OptionId).OnDelete(DeleteBehavior.Restrict);
+            b.HasOne<Ticket>().WithMany().HasForeignKey(value => value.TicketId).OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }

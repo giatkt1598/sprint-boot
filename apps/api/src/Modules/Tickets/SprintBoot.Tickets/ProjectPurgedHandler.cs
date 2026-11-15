@@ -30,6 +30,10 @@ public class ProjectPurgedHandler(
     IRepository<GoalUpdate, Guid> goalUpdates,
     IRepository<RecentTicket, Guid> recents,
     IRepository<RichTextFile, Guid> richTextFiles,
+    IRepository<CustomField, Guid> customFields,
+    IRepository<CustomFieldOption, Guid> customFieldOptions,
+    IRepository<ProjectCustomField, Guid> spaceFields,
+    IRepository<TicketFieldValue, Guid> fieldValues,
     IBlobContainer<AttachmentContainer> container,
     IUploadStorage uploadStorage,
     IDataFilter dataFilter)
@@ -67,6 +71,7 @@ public class ProjectPurgedHandler(
         await workLogs.DeleteDirectAsync(log => ticketIds.Contains(log.TicketId));
         await watchers.DeleteDirectAsync(watcher => ticketIds.Contains(watcher.TicketId));
         await ticketLabels.DeleteDirectAsync(link => ticketIds.Contains(link.TicketId));
+        await fieldValues.DeleteDirectAsync(value => ticketIds.Contains(value.TicketId));
         await recents.DeleteDirectAsync(recent => ticketIds.Contains(recent.TicketId));
 
         // Links to tickets of other spaces go too; those tickets keep their history line.
@@ -81,6 +86,12 @@ public class ProjectPurgedHandler(
         await introductions.DeleteDirectAsync(introduction => introduction.ProjectId == projectId);
         await labels.DeleteDirectAsync(label => label.ProjectId == projectId);
         await templates.DeleteDirectAsync(template => template.ProjectId == projectId);
+
+        // The space's own custom fields go; workspace fields only lose the space's settings.
+        var ownFieldIds = (await customFields.GetQueryableAsync()).Where(field => field.ProjectId == projectId).Select(field => field.Id);
+        await spaceFields.DeleteDirectAsync(row => row.ProjectId == projectId || ownFieldIds.Contains(row.FieldId));
+        await customFieldOptions.DeleteDirectAsync(option => ownFieldIds.Contains(option.FieldId));
+        await customFields.DeleteDirectAsync(field => field.ProjectId == projectId);
         await tickets.DeleteDirectAsync(ticket => ticket.ProjectId == projectId);
         await types.DeleteDirectAsync(type => type.ProjectId == projectId);
     }

@@ -14,6 +14,9 @@ public static class SprintBootPermissions
     public const string ManageWorkflows = Group + ".Workflows.Manage";
     public const string ManageTicketLinkTypes = Group + ".TicketLinkTypes.Manage";
     public const string ManageTicketTemplates = Group + ".TicketTemplates.Manage";
+
+    /// <summary>Define the custom fields every space can turn on.</summary>
+    public const string ManageCustomFields = Group + ".CustomFields.Manage";
     public const string ManageAi = Group + ".Ai.Manage";
     public const string AccessAllProjects = Group + ".Projects.AccessAll";
 

@@ -26,6 +26,8 @@ public partial class TicketAppService(
     IRepository<Label, Guid> labels,
     IRepository<TicketLabel, Guid> ticketLabels,
     IRepository<TicketActivity, Guid> activities,
+    IRepository<CustomField, Guid> customFields,
+    CustomFieldStore customFieldStore,
     IProjectAccess projectAccess,
     ITicketFieldPolicy fieldPolicy,
     IWorkflowRuntime workflowRuntime,
@@ -97,6 +99,7 @@ public partial class TicketAppService(
 
         await tickets.InsertAsync(ticket, autoSave: true);
         await SetLabelsAsync(ticket, input.Labels ?? []);
+        await customFieldStore.SetOnCreateAsync(ticket, input.CustomFields);
         await richTextFiles.SyncAsync(ticket.ProjectId, ticket.Id, ticket.Description);
         await watcherStore.EnsureAsync(ticket.Id, ticket.ReporterId, ticket.AssigneeId);
         await eventBus.PublishAsync(
@@ -309,6 +312,7 @@ public partial class TicketAppService(
 
         var list = await activities.GetListAsync(activity => activity.TicketId == id);
         var names = await ActivityNamesAsync(list);
+        var fieldNames = await CustomFieldNamesAsync(ticket.ProjectId, list);
         var users = await userDirectory.GetByIdsAsync(list.Select(activity => activity.ActorId));
         string? Show(string? value) => value is not null && Guid.TryParse(value, out var key) && names.TryGetValue(key, out var name) ? name : value;
         return [.. list.OrderByDescending(activity => activity.CreatedAt).Select(activity => new TicketActivityDto
@@ -317,10 +321,28 @@ public partial class TicketAppService(
             Actor = users.GetValueOrDefault(activity.ActorId),
             ActorType = activity.ActorType,
             Field = activity.Field,
+            FieldName = fieldNames.GetValueOrDefault(activity.Field),
             OldValue = Show(activity.OldValue),
             NewValue = Show(activity.NewValue),
             CreatedAt = activity.CreatedAt,
         })];
+    }
+
+    /// <summary>The current names of the custom fields in a ticket's history, deleted fields included, by "cf." key.</summary>
+    private async Task<Dictionary<string, string>> CustomFieldNamesAsync(Guid projectId, List<TicketActivity> list)
+    {
+        var keys = list.Select(activity => activity.Field).Where(field => field.StartsWith(CustomFieldConsts.KeyPrefix, StringComparison.Ordinal))
+            .Select(CustomFieldRules.StripPrefix).Distinct().ToList();
+        if (keys.Count == 0)
+        {
+            return [];
+        }
+
+        using (dataFilter.Disable<ISoftDelete>())
+        {
+            var found = await customFields.GetListAsync(field => (field.ProjectId == null || field.ProjectId == projectId) && keys.Contains(field.Key));
+            return found.GroupBy(field => field.Key).ToDictionary(group => CustomFieldConsts.KeyPrefix + group.Key, group => group.OrderBy(field => field.IsDeleted).First().Name);
+        }
     }
 
     /// <summary>
@@ -336,7 +358,9 @@ public partial class TicketAppService(
                 .Where(key => key != Guid.Empty)];
 
         var names = new Dictionary<Guid, string>();
-        var people = IdsOf(TicketFieldKeys.Assignee, TicketFieldKeys.Reporter);
+        // A person field of a custom field keeps the person's id too.
+        var customFieldKeys = list.Select(activity => activity.Field).Where(field => field.StartsWith(CustomFieldConsts.KeyPrefix, StringComparison.Ordinal)).Distinct();
+        var people = IdsOf([TicketFieldKeys.Assignee, TicketFieldKeys.Reporter, .. customFieldKeys]);
         foreach (var (key, user) in await userDirectory.GetByIdsAsync(people))
         {
             names[key] = user.Name;
@@ -620,6 +644,9 @@ public partial class TicketAppService(
                 var oldText = string.Join(", ", before);
                 var newText = string.Join(", ", names.Select(name => name.Trim()).Where(name => name.Length > 0).Distinct().Order());
                 return oldText == newText ? null : (oldText, newText);
+
+            case not null when field.StartsWith(CustomFieldConsts.KeyPrefix, StringComparison.Ordinal):
+                return await customFieldStore.SetAsync(ticket, field, value);
 
             default:
                 throw new BusinessException(TicketErrors.UnknownField).WithData("field", field);

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using SprintBoot.Identity;
 using SprintBoot.Projects;
@@ -24,6 +25,9 @@ public class TicketTemplate : Entity<Guid>
     public Guid? GlobalTemplateId { get; set; }
 
     public bool IsDefault { get; set; }
+
+    /// <summary>Custom field values a new ticket starts with, as a JSON object by field key.</summary>
+    public string? CustomFieldValues { get; set; }
 
     protected TicketTemplate()
     {
@@ -69,7 +73,8 @@ public class TicketTemplateAppService(
     IRepository<GlobalTicketTemplate, Guid> globals,
     IRepository<TicketType, Guid> types,
     IProjectAccess projectAccess,
-    RichTextSanitizer sanitizer)
+    RichTextSanitizer sanitizer,
+    CustomFieldStore customFieldStore)
     : ApplicationService, ITicketTemplateAppService
 {
     public async Task<List<TicketTemplateDto>> GetListAsync(Guid projectId)
@@ -115,6 +120,7 @@ public class TicketTemplateAppService(
 
         template.TicketTypeId = type.Id;
         template.IsDefault = input.IsDefault;
+        template.CustomFieldValues = await CheckCustomFieldsAsync(template.ProjectId, type.Id, input.CustomFields);
         if (input.GlobalTemplateId is { } globalId)
         {
             // Copies, kept in step by the workspace service, so reading a space needs no join.
@@ -150,6 +156,30 @@ public class TicketTemplateAppService(
         }
     }
 
+    /// <summary>Only fields the space shows for the type, each value checked like on a ticket; stored by key.</summary>
+    private async Task<string?> CheckCustomFieldsAsync(Guid projectId, Guid typeId, Dictionary<string, JsonElement>? given)
+    {
+        if (given is not { Count: > 0 })
+        {
+            return null;
+        }
+
+        var applicable = await customFieldStore.GetApplicableAsync(projectId, typeId);
+        var kept = new Dictionary<string, JsonElement>();
+        foreach (var (key, value) in given)
+        {
+            var plain = CustomFieldRules.StripPrefix(key);
+            var item = applicable.FirstOrDefault(candidate => candidate.Field.Key == plain)
+                ?? throw new BusinessException(TicketErrors.UnknownField).WithData("field", CustomFieldConsts.KeyPrefix + plain);
+            if (!CustomFieldRules.Parse(item.Field, value, item.Options).IsEmpty)
+            {
+                kept[plain] = value;
+            }
+        }
+
+        return kept.Count == 0 ? null : JsonSerializer.Serialize(kept);
+    }
+
     private static TicketTemplateDto ToDto(TicketTemplate template) => new()
     {
         Id = template.Id,
@@ -160,6 +190,7 @@ public class TicketTemplateAppService(
         Mode = template.Mode,
         GlobalTemplateId = template.GlobalTemplateId,
         IsDefault = template.IsDefault,
+        CustomFields = template.CustomFieldValues is { } json ? JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json) : null,
     };
 }
 

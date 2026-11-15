@@ -319,7 +319,12 @@ function CommentItem({ comment, ticket, replies, people, canEdit, canManage }: {
 
 function ActivityLine({ item }: { item: Activity }) {
   const { t, i18n } = useTranslation();
-  const field = i18n.exists(`tickets.field.${item.field}`) ? t(`tickets.field.${item.field}`) : item.field;
+  // A custom field ("cf." keys) goes by its current name.
+  const field = item.fieldName ?? (i18n.exists(`tickets.field.${item.field}`) ? t(`tickets.field.${item.field}`) : item.field);
+  const custom = item.field?.startsWith('cf.') ?? false;
+  // Custom checkbox and date values are stored as true and ISO dates.
+  const show = (value: string | null | undefined) =>
+    !custom || !value ? value : value === 'true' ? t('customFields.yes') : value === 'false' ? t('common.none') : /^d{4}-d{2}-d{2}$/.test(value) ? formatDate(value, i18n.language) : value;
   const showValues = item.field !== 'description';
 
   return (
@@ -331,7 +336,7 @@ function ActivityLine({ item }: { item: Activity }) {
       </div>
       {showValues && (
         <Typography variant="body2" color="textSecondary" className="pl-8">
-          {item.oldValue || t('common.none')} → {item.newValue || t('common.none')}
+          {show(item.oldValue) || t('common.none')} → {show(item.newValue) || t('common.none')}
         </Typography>
       )}
     </div>

@@ -84,6 +84,7 @@ export function SpaceSettingsLayout() {
           <SettingsMenuItem to="board" label={t('agile.board')} />
           <SettingsMenuItem to="workflows" label={t('workflows.title')} />
           <SettingsMenuItem to="ticket-templates" label={t('templates.title')} />
+          <SettingsMenuItem to="fields" label={t('customFields.spaceTitle')} />
           {space.data.permissions?.includes(SpacePermission.manage) && <SettingsMenuItem to="git" label={t('git.title')} />}
           <SettingsMenuItem to="docs" label={t('docs.spaceSettingsTitle')} />
         </>

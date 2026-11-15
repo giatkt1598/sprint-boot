@@ -21,6 +21,8 @@ import { useBacklog } from '../agile/api';
 import { useCurrentUser } from '../../auth/AuthProvider';
 import { priorityLevel, TemplateMode, uploadAttachment, useEpics, useTicketTemplates, useLabels, usePriorities, useTicketTypes } from './api';
 import { RichTextEditor } from './RichTextEditor';
+import { useSpaceFields } from '../customFields/api';
+import { CustomFieldInput, defaultOf, type FieldValue } from '../customFields/CustomFieldInput';
 
 
 interface CreateTicketDialogProps {
@@ -73,6 +75,11 @@ export function CreateTicketDialog({ onClose, epic }: CreateTicketDialogProps) {
   const backlog = useBacklog(projectId || undefined);
   const knownLabels = useLabels(projectId || undefined);
   const templates = useTicketTemplates(projectId || undefined);
+  const spaceFields = useSpaceFields(projectId || undefined);
+  // Typed custom values stay when the type changes, so switching back keeps them; only the fields of the type are sent.
+  const [customValues, setCustomValues] = useState<Record<string, FieldValue>>({});
+  const editedFields = useRef(new Set<string>());
+  const customFields = (spaceFields.data ?? []).filter((item) => item.enabled && item.ticketTypeIds?.includes(typeId)).map((item) => item.field!);
   const allowedTypes = (types.data ?? []).filter((type) => type.hierarchy !== 0 && (!epic || type.hierarchy === 2));
   const [sprintId, setSprintId] = useState('');
   const canHaveEpic = allowedTypes.find((type) => type.id === typeId)?.hierarchy === 1;
@@ -94,6 +101,22 @@ export function CreateTicketDialog({ onClose, epic }: CreateTicketDialogProps) {
 
   // A fill template becomes the description; a placeholder one only shows while the description is empty.
   const defaultTemplate = templates.data?.find((item) => item.ticketTypeId === typeId && item.isDefault);
+  // The default template's custom values fill the fields the person has not touched.
+  const templateValues = defaultTemplate?.customFields;
+  useEffect(() => {
+    if (!templateValues) {
+      return;
+    }
+    setCustomValues((current) => {
+      const next = { ...current };
+      for (const [key, value] of Object.entries(templateValues)) {
+        if (!editedFields.current.has(key)) {
+          next[key] = value as FieldValue;
+        }
+      }
+      return next;
+    });
+  }, [templateValues]);
   const asPlaceholder = defaultTemplate?.mode === TemplateMode.placeholder;
   const fill = asPlaceholder ? '' : (defaultTemplate?.content ?? '');
   const ghost = asPlaceholder ? (defaultTemplate.content ?? '') : '';
@@ -124,6 +147,8 @@ export function CreateTicketDialog({ onClose, epic }: CreateTicketDialogProps) {
             labels,
             startDate: startDate || null,
             dueDate: dueDate || null,
+            // Fields left alone start with their default on the server.
+            customFields: Object.fromEntries(customFields.filter((field) => field.key! in customValues).map((field) => [field.key!, customValues[field.key!]])),
           },
         }),
       ),
@@ -261,6 +286,18 @@ export function CreateTicketDialog({ onClose, epic }: CreateTicketDialogProps) {
         <TagInput label={t('tickets.labels')} value={labels} options={knownLabels.data ?? []} onChange={setLabels} />
         <DatePicker label={t('tickets.startDate')} value={startDate} rangeEnd={dueDate} onChange={setStartDate} />
         <DatePicker label={t('tickets.dueDate')} value={dueDate} rangeStart={startDate} onChange={setDueDate} />
+        {customFields.map((field) => (
+          <CustomFieldInput
+            key={field.id}
+            field={field}
+            value={field.key! in customValues ? customValues[field.key!] : defaultOf(field)}
+            people={(members.data ?? []).map((member) => member.user!)}
+            onChange={(value) => {
+              editedFields.current.add(field.key!);
+              setCustomValues((current) => ({ ...current, [field.key!]: value }));
+            }}
+          />
+        ))}
       </div>
       {dateError && <Typography role="alert" color="error" variant="body2">{dateError}</Typography>}
       <div className="flex flex-col items-start gap-1">

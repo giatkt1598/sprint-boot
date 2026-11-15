@@ -221,6 +221,10 @@ public class SpaceArchiveTests(ApiFixture fixture)
     {
         var (owner, project, ticket, _) = await SpaceAsync();
         (await owner.Http.PostAsJsonAsync("/api/v1/comment", new { ticketId = ticket.Id, body = "<p>gone soon</p>" }, Token)).EnsureSuccessStatusCode();
+        var field = await (await owner.Http.PostAsJsonAsync("/api/v1/custom-field", new { projectId = project.Id, name = "Customer", type = CustomFieldType.Text }, Token))
+            .Content.ReadFromJsonAsync<CustomFieldDto>(Token);
+        var valued = await owner.Http.PutAsJsonAsync($"/api/v1/ticket/{ticket.Id}", new { concurrencyStamp = ticket.ConcurrencyStamp, fields = new Dictionary<string, string> { [$"cf.{field!.Key}"] = "ACME" } }, Token);
+        valued.StatusCode.ShouldBe(HttpStatusCode.OK, await valued.Content.ReadAsStringAsync(Token));
         (await owner.Http.PostAsJsonAsync("/api/v1/sprint", new { projectId = project.Id, name = "S1" }, Token)).EnsureSuccessStatusCode();
         var bytes = new ByteArrayContent(new byte[64]);
         bytes.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
@@ -246,6 +250,8 @@ public class SpaceArchiveTests(ApiFixture fixture)
             && await RowsAsync<Comment, int>(query => query.Count(item => item.TicketId == ticket.Id)) == 0
             && await RowsAsync<Attachment, int>(query => query.Count(item => item.TicketId == ticket.Id)) == 0
             && await RowsAsync<Board, int>(query => query.Count(item => item.ProjectId == project.Id)) == 0
+            && await RowsAsync<CustomField, int>(query => query.Count(item => item.ProjectId == project.Id)) == 0
+            && await RowsAsync<TicketFieldValue, int>(query => query.Count(item => item.TicketId == ticket.Id)) == 0
             && await RowsAsync<SprintBoot.Workflows.ProjectWorkflowMapping, int>(query => query.Count(item => item.ProjectId == project.Id)) == 0);
 
         using (var scope = fixture.Factory.Services.CreateScope())

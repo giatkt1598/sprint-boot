@@ -18,6 +18,7 @@ public class SprintBootPermissionDefinitionProvider : PermissionDefinitionProvid
         group.AddPermission(SprintBootPermissions.ManageWorkflows, new FixedLocalizableString("Manage workflows"));
         group.AddPermission(SprintBootPermissions.ManageTicketLinkTypes, new FixedLocalizableString("Manage ticket link types"));
         group.AddPermission(SprintBootPermissions.ManageTicketTemplates, new FixedLocalizableString("Manage workspace ticket templates"));
+        group.AddPermission(SprintBootPermissions.ManageCustomFields, new FixedLocalizableString("Manage workspace custom fields"));
         group.AddPermission(SprintBootPermissions.ManageAi, new FixedLocalizableString("Manage the AI assistant"));
         group.AddPermission(SprintBootPermissions.AccessAllProjects, new FixedLocalizableString("Access all projects"));
         group.AddPermission(SprintBootPermissions.DeleteProjects, new FixedLocalizableString("Delete spaces"));

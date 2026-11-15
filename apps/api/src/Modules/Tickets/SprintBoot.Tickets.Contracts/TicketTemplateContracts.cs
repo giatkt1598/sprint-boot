@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 using Volo.Abp.Application.Services;
 
 namespace SprintBoot.Tickets;
@@ -37,6 +38,9 @@ public class TicketTemplateDto
 
     /// <summary>The one template of its type that new tickets start with.</summary>
     public required bool IsDefault { get; set; }
+
+    /// <summary>Custom field values a ticket made from it starts with, by field key.</summary>
+    public Dictionary<string, JsonElement>? CustomFields { get; set; }
 }
 
 public class SaveTicketTemplateInput
@@ -55,6 +59,9 @@ public class SaveTicketTemplateInput
     public TicketTemplateMode Mode { get; set; }
 
     public bool IsDefault { get; set; }
+
+    /// <summary>Values for the custom fields the space shows for the type, by key, as the ticket API takes them.</summary>
+    public Dictionary<string, JsonElement>? CustomFields { get; set; }
 }
 
 /// <summary>A template workspace admins keep for every space to reuse.</summary>

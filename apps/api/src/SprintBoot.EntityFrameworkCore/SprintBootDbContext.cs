@@ -90,6 +90,14 @@ public class SprintBootDbContext(DbContextOptions<SprintBootDbContext> options)
 
     public DbSet<GlobalTicketTemplate> GlobalTicketTemplates { get; set; } = null!;
 
+    public DbSet<CustomField> CustomFields { get; set; } = null!;
+
+    public DbSet<CustomFieldOption> CustomFieldOptions { get; set; } = null!;
+
+    public DbSet<ProjectCustomField> ProjectCustomFields { get; set; } = null!;
+
+    public DbSet<TicketFieldValue> TicketFieldValues { get; set; } = null!;
+
     public DbSet<ProjectIntroduction> ProjectIntroductions { get; set; } = null!;
 
     public DbSet<RecentTicket> RecentTickets { get; set; } = null!;

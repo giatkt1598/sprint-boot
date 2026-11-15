@@ -95,6 +95,9 @@ public class TicketDto
     public required int TotalMinutesLogged { get; set; }
 
     public required string ConcurrencyStamp { get; set; }
+
+    /// <summary>The custom fields the space shows for the ticket's type, in order, with their values.</summary>
+    public List<TicketCustomFieldDto> CustomFields { get; set; } = [];
 }
 
 public class TicketSummaryDto
@@ -166,6 +169,12 @@ public class CreateTicketInput
     public DateOnly? StartDate { get; set; }
 
     public DateOnly? DueDate { get; set; }
+
+    /// <summary>
+    /// Custom field values by key, with or without the "cf." prefix, written as the update API takes them. Fields left
+    /// out start with their default.
+    /// </summary>
+    public Dictionary<string, JsonElement>? CustomFields { get; set; }
 }
 
 /// <summary>
@@ -254,6 +263,9 @@ public class TicketActivityDto
     public required ActorType ActorType { get; set; }
 
     public required string Field { get; set; }
+
+    /// <summary>The name of a custom field ("cf." keys), as it is now.</summary>
+    public string? FieldName { get; set; }
 
     public required string? OldValue { get; set; }
 

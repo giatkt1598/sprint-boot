@@ -392,7 +392,7 @@ public class AuthAppService(
     private async Task<CurrentUserDto> ToDtoAsync(IdentityUser user)
     {
         var permissions = new List<string>();
-        foreach (var permission in new[] { SprintBootPermissions.ManageUsers, SprintBootPermissions.RestoreTickets, SprintBootPermissions.ManageWorkflows, SprintBootPermissions.ManageNotificationSchemes, SprintBootPermissions.ManageSso, SprintBootPermissions.ManageEmail, SprintBootPermissions.ManageInvitations, SprintBootPermissions.ManageGit, SprintBootPermissions.ManageTicketLinkTypes, SprintBootPermissions.ManageTicketTemplates, SprintBootPermissions.ManageAi, SprintBootPermissions.DeleteProjects, SprintBootPermissions.ManageDocs })
+        foreach (var permission in new[] { SprintBootPermissions.ManageUsers, SprintBootPermissions.RestoreTickets, SprintBootPermissions.ManageWorkflows, SprintBootPermissions.ManageNotificationSchemes, SprintBootPermissions.ManageSso, SprintBootPermissions.ManageEmail, SprintBootPermissions.ManageInvitations, SprintBootPermissions.ManageGit, SprintBootPermissions.ManageTicketLinkTypes, SprintBootPermissions.ManageTicketTemplates, SprintBootPermissions.ManageCustomFields, SprintBootPermissions.ManageAi, SprintBootPermissions.DeleteProjects, SprintBootPermissions.ManageDocs })
         {
             if (await AuthorizationService.IsGrantedAsync(permission))
             {

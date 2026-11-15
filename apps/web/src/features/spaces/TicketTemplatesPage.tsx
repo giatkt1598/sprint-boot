@@ -32,7 +32,9 @@ import {
 } from '../tickets/api';
 import { RichTextEditor, RichTextView } from '../tickets/RichTextEditor';
 import { TemplateModeField } from '../tickets/TemplateModeField';
-import { SpacePermission, type Space } from './api';
+import { SpacePermission, useMembers, type Space } from './api';
+import { FieldType, useSpaceFields } from '../customFields/api';
+import { CustomFieldInput, isSet, type FieldValue } from '../customFields/CustomFieldInput';
 import { usePageTitle } from '../../lib/pageTitle';
 
 /** Epic first, then the standard types; subtasks have no templates. */
@@ -47,6 +49,8 @@ interface Draft {
   /** Empty for a template written for this space. */
   globalTemplateId: string;
   isDefault: boolean;
+  /** Custom field values a ticket made from it starts with, by field key. */
+  customFields: Record<string, FieldValue>;
 }
 
 const OWN = '';
@@ -64,12 +68,17 @@ function TemplateDialog({ draft, types, projectId, onClose }: { draft: Draft; ty
   const globals = useGlobalTicketTemplates();
   const offered = (globals.data ?? []).filter((item) => item.ticketTypeKey === type?.icon);
   const reused = offered.find((item) => item.id === value.globalTemplateId);
+  const spaceFields = useSpaceFields(projectId);
+  const members = useMembers(projectId);
+  const fields = (spaceFields.data ?? []).filter((item) => item.enabled && item.ticketTypeIds?.includes(value.ticketTypeId)).map((item) => item.field!);
+  // Only the fields of the type, and only those with a value.
+  const customFields = Object.fromEntries(fields.filter((field) => isSet(value.customFields[field.key!])).map((field) => [field.key!, value.customFields[field.key!]]));
 
   const save = useMutation({
     mutationFn: () => {
       const body = value.globalTemplateId
-        ? { ticketTypeId: value.ticketTypeId, globalTemplateId: value.globalTemplateId, isDefault: value.isDefault }
-        : { ticketTypeId: value.ticketTypeId, name: value.name, content: value.content || null, mode: value.mode, isDefault: value.isDefault };
+        ? { ticketTypeId: value.ticketTypeId, globalTemplateId: value.globalTemplateId, isDefault: value.isDefault, customFields }
+        : { ticketTypeId: value.ticketTypeId, name: value.name, content: value.content || null, mode: value.mode, isDefault: value.isDefault, customFields };
       return value.id
         ? unwrap(apiClient.PUT('/api/v1/ticket-template/{id}', { params: { path: { id: value.id } }, body }))
         : unwrap(apiClient.POST('/api/v1/ticket-template', { params: { query: { projectId } }, body }));
@@ -133,6 +142,20 @@ function TemplateDialog({ draft, types, projectId, onClose }: { draft: Draft; ty
           <TemplateModeField value={value.mode} onChange={(mode) => setValue({ ...value, mode })} />
         </>
       )}
+      {fields.length > 0 && (
+        <section className="flex flex-col gap-3" aria-labelledby="template-fields">
+          <Typography id="template-fields" variant="h3">{t('customFields.title')}</Typography>
+          {fields.map((field) => (
+            <CustomFieldInput
+              key={field.id}
+              field={field}
+              value={value.customFields[field.key!] ?? (field.type === FieldType.multiSelect ? [] : null)}
+              people={(members.data ?? []).map((member) => member.user!)}
+              onChange={(next) => setValue((current) => ({ ...current, customFields: { ...current.customFields, [field.key!]: next } }))}
+            />
+          ))}
+        </section>
+      )}
       <Checkbox
         label={t('templates.makeDefault')}
         checked={value.isDefault}
@@ -177,8 +200,8 @@ export function SpaceTicketTemplatesPage() {
       }
       const own = template.item;
       const body = own.globalTemplateId
-        ? { ticketTypeId, globalTemplateId: own.globalTemplateId, isDefault: true }
-        : { ticketTypeId, name: own.name!, content: own.content || null, mode: own.mode ?? TemplateMode.fill, isDefault: true };
+        ? { ticketTypeId, globalTemplateId: own.globalTemplateId, isDefault: true, customFields: own.customFields }
+        : { ticketTypeId, name: own.name!, content: own.content || null, mode: own.mode ?? TemplateMode.fill, isDefault: true, customFields: own.customFields };
       return unwrap(apiClient.PUT('/api/v1/ticket-template/{id}', { params: { path: { id: own.id! } }, body }));
     },
     onSuccess: async (_, { template }) => {
@@ -223,7 +246,7 @@ export function SpaceTicketTemplatesPage() {
                   startIcon={<AddIcon size={16} strokeWidth={1.5} aria-hidden />}
                   aria-label={t('templates.addFor', { type: typeName })}
                   onClick={() =>
-                    setDraft({ ticketTypeId: type.id!, name: '', content: '', mode: TemplateMode.fill, globalTemplateId: OWN, isDefault: own.length === 0 })
+                    setDraft({ ticketTypeId: type.id!, name: '', content: '', mode: TemplateMode.fill, globalTemplateId: OWN, isDefault: own.length === 0, customFields: {} })
                   }
                 >
                   {t('templates.add')}
@@ -276,6 +299,7 @@ export function SpaceTicketTemplatesPage() {
                             mode: row.item.mode ?? TemplateMode.fill,
                             globalTemplateId: row.item.globalTemplateId ?? OWN,
                             isDefault: row.item.isDefault ?? false,
+                            customFields: (row.item.customFields ?? {}) as Record<string, FieldValue>,
                           })
                         }
                       >
