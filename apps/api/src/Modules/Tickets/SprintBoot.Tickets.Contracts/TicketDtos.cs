@@ -98,6 +98,9 @@ public class TicketDto
 
     /// <summary>The custom fields the space shows for the ticket's type, in order, with their values.</summary>
     public List<TicketCustomFieldDto> CustomFields { get; set; } = [];
+
+    /// <summary>How the ticket's space lays out the Details sidebar, so it shows in that order from the first render.</summary>
+    public required FieldLayoutDto FieldLayout { get; set; }
 }
 
 public class TicketSummaryDto

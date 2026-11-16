@@ -36145,6 +36145,7 @@
           "createdAt",
           "description",
           "dueDate",
+          "fieldLayout",
           "id",
           "key",
           "labels",
@@ -36261,6 +36262,9 @@
               "$ref": "#/components/schemas/TicketCustomFieldDto"
             },
             "nullable": true
+          },
+          "fieldLayout": {
+            "$ref": "#/components/schemas/FieldLayoutDto"
           }
         },
         "additionalProperties": false

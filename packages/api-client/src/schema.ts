@@ -24669,6 +24669,7 @@ export interface components {
             totalMinutesLogged: number;
             concurrencyStamp: string | null;
             customFields?: components["schemas"]["TicketCustomFieldDto"][] | null;
+            fieldLayout: components["schemas"]["FieldLayoutDto"];
         };
         /**
          * Format: int32

@@ -19,7 +19,8 @@ public class TicketMapper(
     ITicketSprintNames sprintNames,
     RichTextFileStore richTextFiles,
     ITicketFieldPolicy fieldPolicy,
-    CustomFieldStore customFieldStore) : ITransientDependency
+    CustomFieldStore customFieldStore,
+    FieldLayoutReader fieldLayouts) : ITransientDependency
 {
     public static TicketTypeDto ToDto(TicketType type) => new()
     {
@@ -160,6 +161,7 @@ public class TicketMapper(
             TotalMinutesLogged = minutes,
             ConcurrencyStamp = ticket.ConcurrencyStamp,
             CustomFields = (await customFieldStore.ReadAsync([ticket]))[ticket.Id],
+            FieldLayout = await fieldLayouts.ReadAsync(project.Id),
         };
 
         await fieldPolicy.ApplyReadAsync(dto);

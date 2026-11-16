@@ -21,6 +21,7 @@ public class CustomFieldAppService(
     IRepository<TicketType, Guid> types,
     IRepository<ProjectFieldLayout, Guid> layouts,
     IRepository<Ticket, Guid> tickets,
+    FieldLayoutReader layoutReader,
     IProjectAccess projectAccess)
     : ApplicationService, ICustomFieldAppService
 {
@@ -137,17 +138,7 @@ public class CustomFieldAppService(
     public async Task<FieldLayoutDto> GetLayoutAsync(Guid projectId)
     {
         await projectAccess.CheckAsync(projectId, ProjectPermissions.ViewTickets);
-        var layout = await layouts.FirstOrDefaultAsync(item => item.ProjectId == projectId);
-        var custom = await CustomKeysAsync(projectId);
-        var known = TicketDetailFields.All.Concat(custom).ToList();
-        // Fields the stored order does not know yet (a new field, a new built-in) go after the others.
-        var order = (layout?.Order ?? []).Where(known.Contains).Distinct().ToList();
-        order.AddRange(known.Where(key => !order.Contains(key)));
-        return new FieldLayoutDto
-        {
-            Order = [.. order],
-            Hidden = [.. (layout?.Hidden ?? []).Where(key => TicketDetailFields.All.Contains(key) && !TicketDetailFields.AlwaysShown.Contains(key))],
-        };
+        return await layoutReader.ReadAsync(projectId);
     }
 
     public async Task<List<string>> GetTagsAsync(Guid id, Guid projectId)
@@ -179,7 +170,7 @@ public class CustomFieldAppService(
             layout = await layouts.InsertAsync(new ProjectFieldLayout(GuidGenerator.Create(), projectId), autoSave: true);
         }
 
-        var known = TicketDetailFields.All.Concat(await CustomKeysAsync(projectId)).ToHashSet();
+        var known = TicketDetailFields.All.Concat(await layoutReader.CustomKeysAsync(projectId)).ToHashSet();
         if (input.Order is { } order)
         {
             layout.Order = [.. order.Where(known.Contains).Distinct()];
@@ -191,15 +182,6 @@ public class CustomFieldAppService(
         }
 
         await layouts.UpdateAsync(layout, autoSave: true);
-    }
-
-    /// <summary>The fields on in the space as "cf." keys, in their order.</summary>
-    private async Task<List<string>> CustomKeysAsync(Guid projectId)
-    {
-        var rows = await spaceFields.GetListAsync(row => row.ProjectId == projectId);
-        var ids = rows.Select(row => row.FieldId).ToList();
-        var keys = (await fields.GetListAsync(field => ids.Contains(field.Id))).ToDictionary(field => field.Id, field => field.Key);
-        return [.. rows.OrderBy(row => row.Order).Where(row => keys.ContainsKey(row.FieldId)).Select(row => CustomFieldConsts.KeyPrefix + keys[row.FieldId])];
     }
 
     private async Task CheckManageAsync(Guid? projectId)

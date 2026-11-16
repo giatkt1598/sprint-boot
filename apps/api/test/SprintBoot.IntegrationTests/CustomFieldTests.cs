@@ -290,7 +290,7 @@ public class CustomFieldTests(ApiFixture fixture)
     public async Task A_space_orders_built_in_and_custom_fields_together_and_hides_built_in_ones()
     {
         var owner = await fixture.CreateUserClientAsync(Token);
-        var (project, _) = await SpaceAsync(owner);
+        var (project, types) = await SpaceAsync(owner);
         var field = await CreateFieldAsync(owner, new { projectId = project.Id, name = "Customer", type = CustomFieldType.Text });
         var custom = $"cf.{field.Key}";
 
@@ -313,6 +313,11 @@ public class CustomFieldTests(ApiFixture fixture)
         layout.Order.Length.ShouldBe(TicketDetailFields.All.Length + 1);
         // The status always shows.
         layout.Hidden.ShouldBe(["reporter", "sprint"], ignoreOrder: true);
+
+        // A ticket brings the layout along, so its Details sidebar needs no second request.
+        var ticket = await CreateTicketAsync(owner, project.Id, types["Bug"]);
+        ticket.FieldLayout.Order.ShouldBe(layout.Order);
+        ticket.FieldLayout.Hidden.ShouldBe(layout.Hidden, ignoreOrder: true);
     }
 
     [Fact]
