@@ -3,6 +3,7 @@ import ButtonBase from '@mui/material/ButtonBase';
 import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Menu from '@mui/material/Menu';
+import Skeleton from '@mui/material/Skeleton';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -321,7 +322,9 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
       </DetailRow>,
     ])),
   };
-  // Until the layout loads, and for fields it does not know yet, the default order.
+  // The rows wait for the layout, so they never show in the default order and then jump. If it fails to load,
+  // and for fields it does not know yet, the default order.
+  const layoutPending = fieldLayout.isPending && Boolean(ticket.projectId);
   const hiddenFields = fieldLayout.data?.hidden ?? [];
   const layoutOrder = fieldLayout.data?.order ?? Object.keys(BUILT_IN_FIELDS);
   const fieldOrder = [...layoutOrder, ...Object.keys(detailRows).filter((key) => !layoutOrder.includes(key))]
@@ -536,7 +539,13 @@ function TicketView({ ticket, compact, panelHeader }: { ticket: Ticket; compact?
           <CollapseHeading label={t('tickets.details')} open={detailsOpen} onToggle={() => setDetailsOpen(!detailsOpen)} />
           {detailsOpen && (
           <>
-          {fieldOrder.map((key) => detailRows[key]).filter(Boolean)}
+          {layoutPending
+            ? Object.keys(detailRows).map((key) => (
+              <div key={key} data-testid="detail-row-skeleton" className="flex min-h-9 items-center">
+                <Skeleton variant="rounded" width="100%" height={20} />
+              </div>
+            ))
+            : fieldOrder.map((key) => detailRows[key]).filter(Boolean)}
           {fieldError && <Typography role="alert" variant="body2" color="error">{fieldError}</Typography>}
           </>
           )}
